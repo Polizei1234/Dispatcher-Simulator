@@ -14,43 +14,37 @@ class Game {
         this.selectedIncident = null;
         this.apiKey = '';
         this.soundEnabled = CONFIG.SOUND_ENABLED;
+        this.pendingCall = null; // Wartender Anruf
         
         this.incidentCounter = 0;
         this.lastIncidentTime = Date.now();
+        
+        this.vehicleUpdateInterval = null;
     }
     
     init() {
-        // Lade gespeicherte Einstellungen
         this.loadSettings();
-        
-        // Initialisiere Wachen basierend auf Startstation
         this.initializeStations();
-        
-        // Update Game Speed Anzeige
         document.getElementById('game-speed-indicator').textContent = this.gameSpeed + 'x';
-        
-        // Starte Spielschleife
         this.start();
     }
     
     initializeStations() {
-        // Kopiere alle Stationen
         this.stations = JSON.parse(JSON.stringify(STATIONS));
         
-        // WICHTIG: Startfahrzeuge von der Startstation
         const startStation = this.stations[CONFIG.STARTING_STATION];
         if (startStation) {
-            // Markiere Startfahrzeuge als "owned"
             this.vehicles = startStation.vehicles.map(v => ({
                 ...v,
                 station: startStation.id,
                 position: [...startStation.position],
-                owned: true
+                homePosition: [...startStation.position],
+                owned: true,
+                route: null,
+                routeProgress: 0
             }));
             
             console.log('Startfahrzeuge geladen:', this.vehicles.length);
-        } else {
-            console.error('Startstation nicht gefunden:', CONFIG.STARTING_STATION);
         }
     }
     
@@ -59,18 +53,79 @@ class Game {
         console.log('Spiel gestartet');
         this.gameLoop();
         this.incidentGenerationLoop();
+        this.startVehicleUpdates();
+    }
+    
+    startVehicleUpdates() {
+        this.vehicleUpdateInterval = setInterval(() => {
+            this.updateVehiclePositions();
+        }, CONFIG.VEHICLE_UPDATE_INTERVAL);
+    }
+    
+    updateVehiclePositions() {
+        this.vehicles.forEach(vehicle => {
+            if (vehicle.route && vehicle.status === 'dispatched') {
+                // Berechne Fortschritt basierend auf Geschwindigkeit und Zeit
+                const speedFactor = (CONFIG.VEHICLE_SPEED_SONDERSIGNAL / 3600) * (CONFIG.VEHICLE_UPDATE_INTERVAL / 1000) * this.gameSpeed;
+                vehicle.routeProgress += speedFactor / vehicle.totalDistance;
+                
+                if (vehicle.routeProgress >= 1) {
+                    // Ziel erreicht
+                    vehicle.routeProgress = 1;
+                    vehicle.position = [...vehicle.targetPosition];
+                    vehicle.status = 'on-scene';
+                    addRadioMessage(vehicle.callsign, `${vehicle.callsign} vor Ort`, 'incoming');
+                    
+                    // Starte Einsatzzeit
+                    this.startIncidentWork(vehicle);
+                } else {
+                    // Interpoliere Position entlang der Route
+                    if (vehicle.route && vehicle.route.length > 1) {
+                        const segmentIndex = Math.floor(vehicle.routeProgress * (vehicle.route.length - 1));
+                        const segment = vehicle.route[segmentIndex];
+                        vehicle.position = segment || vehicle.position;
+                    }
+                }
+            }
+        });
+        
+        updateMap();
+        updateVehicleList();
+    }
+    
+    startIncidentWork(vehicle) {
+        const workTime = 1200000 / this.gameSpeed; // 20 Minuten in Spielzeit
+        
+        setTimeout(() => {
+            vehicle.status = 'available';
+            vehicle.assignedIncident = null;
+            vehicle.route = null;
+            vehicle.routeProgress = 0;
+            
+            // Fahrzeug zurück zur Wache
+            vehicle.position = [...vehicle.homePosition];
+            
+            addRadioMessage(vehicle.callsign, `${vehicle.callsign} Einsatz abgeschlossen, wieder frei`, 'incoming');
+            
+            // Einsatz abschließen
+            const incident = this.incidents.find(i => i.assignedVehicles && i.assignedVehicles.includes(vehicle.id));
+            if (incident) {
+                incident.status = 'completed';
+                const reward = CONFIG.CREDITS_PER_INCIDENT[incident.keyword] || 100;
+                this.credits += reward;
+            }
+            
+            updateUI();
+            updateVehicleList();
+            updateIncidentList();
+            updateMap();
+        }, workTime);
     }
     
     gameLoop() {
         if (!this.running) return;
-        
-        // Update Spielzeit
         this.gameTime = new Date(this.gameTime.getTime() + (1000 * this.gameSpeed));
-        
-        // Update UI
         this.updateUI();
-        
-        // Nächster Frame
         setTimeout(() => this.gameLoop(), CONFIG.TIME_UPDATE_INTERVAL);
     }
     
@@ -80,52 +135,83 @@ class Game {
         const now = Date.now();
         const timeSinceLastIncident = now - this.lastIncidentTime;
         
-        // Generiere neuen Einsatz wenn genug Zeit vergangen ist
         if (timeSinceLastIncident > CONFIG.MIN_INCIDENT_INTERVAL) {
             const randomChance = Math.random();
-            if (randomChance < 0.4) { // 40% Chance pro Intervall
+            if (randomChance < 0.4) {
                 this.generateIncident();
                 this.lastIncidentTime = now;
             }
         }
         
-        // Nächste Prüfung
-        setTimeout(() => this.incidentGenerationLoop(), 20000); // Alle 20 Sekunden prüfen
+        setTimeout(() => this.incidentGenerationLoop(), 20000);
     }
     
     generateIncident() {
-        // Wähle zufälligen vordefinierten Einsatz
         const template = PREDEFINED_INCIDENTS[Math.floor(Math.random() * PREDEFINED_INCIDENTS.length)];
         
         const incident = {
             id: 'incident-' + (++this.incidentCounter),
             keyword: template.keyword,
-            description: template.description,
-            location: template.location,
+            description: null, // Wird erst nach Gespräch bekannt
+            location: null, // Wird erst nach Gespräch bekannt
             position: template.position,
             time: new Date(this.gameTime),
-            status: 'new',
+            status: 'incoming', // NEUER Status: incoming = Anruf wartet
             assignedVehicles: [],
             caller: template.caller,
-            details: template.details
+            initialMessage: template.initialMessage,
+            fullDetails: template.fullDetails,
+            actualLocation: template.location,
+            conversationState: {
+                locationKnown: false,
+                detailsKnown: false,
+                ageKnown: false,
+                symptomsKnown: false
+            }
         };
         
         this.incidents.push(incident);
+        this.pendingCall = incident;
         
-        console.log('Neuer Einsatz generiert:', incident.keyword);
+        console.log('Neuer Anruf eingehend:', incident.keyword);
         
-        // Zeige Notruf-Dialog
-        if (this.apiKey) {
-            showCallDialog(incident);
-        } else {
-            // Ohne KI: Zeige einfach den Einsatz
-            addRadioMessage('Leitstelle', `Neuer Einsatz: ${incident.keyword} - ${incident.description}`);
-            updateIncidentList();
-            updateMap();
-        }
+        // Zeige Anruf-Benachrichtigung
+        showIncomingCallNotification(incident);
     }
     
-    dispatchVehicle(vehicleId, incidentId) {
+    acceptCall(incidentId) {
+        const incident = this.incidents.find(i => i.id === incidentId);
+        if (!incident) return;
+        
+        incident.status = 'in-call';
+        this.pendingCall = null;
+        showCallDialog(incident);
+    }
+    
+    checkRequiredVehicles(incidentKeyword) {
+        const keywordInfo = KEYWORDS_BW[incidentKeyword];
+        if (!keywordInfo) return { hasAll: true, missing: [] };
+        
+        const requiredTypes = keywordInfo.vehicles;
+        const availableTypes = this.vehicles
+            .filter(v => v.owned && v.status === 'available')
+            .map(v => v.type);
+        
+        const missing = [];
+        requiredTypes.forEach(reqType => {
+            if (!availableTypes.includes(reqType)) {
+                missing.push(reqType);
+            }
+        });
+        
+        return {
+            hasAll: missing.length === 0,
+            missing: missing,
+            required: requiredTypes
+        };
+    }
+    
+    async dispatchVehicle(vehicleId, incidentId) {
         const vehicle = this.vehicles.find(v => v.id === vehicleId);
         const incident = this.incidents.find(i => i.id === incidentId);
         
@@ -136,13 +222,12 @@ class Game {
             return false;
         }
         
-        // Alarmiere Fahrzeug
         vehicle.status = 'dispatched';
         vehicle.assignedIncident = incidentId;
+        vehicle.targetPosition = [...incident.position];
         incident.assignedVehicles.push(vehicleId);
         incident.status = 'dispatched';
         
-        // Funkspruch
         addRadioMessage('Leitstelle', 
             `${vehicle.callsign}, Einsatz ${incident.keyword} in ${incident.location}`, 
             'outgoing'
@@ -155,54 +240,34 @@ class Game {
             );
         }, 2000);
         
-        // Simuliere Anfahrt
-        this.simulateVehicleResponse(vehicle, incident);
+        // Berechne Route
+        await this.calculateRoute(vehicle, incident.position);
         
         return true;
     }
     
-    simulateVehicleResponse(vehicle, incident) {
-        // Berechne Fahrtzeit (vereinfacht)
-        const distance = this.calculateDistance(vehicle.position, incident.position);
-        const travelTime = (distance / CONFIG.VEHICLE_SPEED_SONDERSIGNAL) * 3600000; // in ms
+    async calculateRoute(vehicle, targetPosition) {
+        // Vereinfachte Route: Direkte Linie mit Wegpunkten
+        const start = vehicle.position;
+        const end = targetPosition;
         
-        // Fahrzeug zur Einsatzstelle
-        setTimeout(() => {
-            vehicle.status = 'on-scene';
-            vehicle.position = [...incident.position];
-            addRadioMessage(vehicle.callsign, `${vehicle.callsign} vor Ort`, 'incoming');
-            updateVehicleList();
-            updateMap();
-        }, travelTime / this.gameSpeed);
+        // Erstelle einfache Route mit 10 Zwischenpunkten
+        const steps = 20;
+        vehicle.route = [];
         
-        // Einsatz abarbeiten
-        const workTime = 1200000; // 20 Minuten
-        setTimeout(() => {
-            vehicle.status = 'available';
-            vehicle.assignedIncident = null;
-            
-            // Fahrzeug zurück zur Wache
-            const station = this.stations[vehicle.station];
-            vehicle.position = [...station.position];
-            
-            addRadioMessage(vehicle.callsign, `${vehicle.callsign} Einsatz abgeschlossen, wieder frei`, 'incoming');
-            
-            // Einsatz abschließen
-            incident.status = 'completed';
-            
-            // Credits verdienen
-            const reward = CONFIG.CREDITS_PER_INCIDENT[incident.keyword] || 100;
-            this.credits += reward;
-            
-            updateUI();
-            updateVehicleList();
-            updateIncidentList();
-            updateMap();
-        }, (travelTime + workTime) / this.gameSpeed);
+        for (let i = 0; i <= steps; i++) {
+            const lat = start[0] + (end[0] - start[0]) * (i / steps);
+            const lng = start[1] + (end[1] - start[1]) * (i / steps);
+            vehicle.route.push([lat, lng]);
+        }
+        
+        vehicle.routeProgress = 0;
+        vehicle.totalDistance = this.calculateDistance(start, end);
+        
+        console.log(`Route berechnet für ${vehicle.callsign}: ${vehicle.totalDistance.toFixed(2)} km`);
     }
     
     calculateDistance(pos1, pos2) {
-        // Haversine Formel (vereinfacht)
         const lat1 = pos1[0] * Math.PI / 180;
         const lat2 = pos2[0] * Math.PI / 180;
         const dLat = (pos2[0] - pos1[0]) * Math.PI / 180;
@@ -212,66 +277,24 @@ class Game {
                 Math.cos(lat1) * Math.cos(lat2) *
                 Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = 6371 * c; // in km
-        
-        return distance;
-    }
-    
-    buyVehicle(vehicleType, stationId) {
-        const price = CONFIG.VEHICLE_PRICES[vehicleType];
-        
-        if (this.credits < price) {
-            alert('Nicht genug Credits!');
-            return false;
-        }
-        
-        const station = this.stations[stationId];
-        if (!station) {
-            alert('Wache nicht gefunden!');
-            return false;
-        }
-        
-        // Erstelle neues Fahrzeug
-        const newVehicle = {
-            id: `${vehicleType.toLowerCase()}-${stationId}-${Date.now()}`,
-            type: vehicleType,
-            callsign: `Florian ${station.name} ${vehicleType}`,
-            status: 'available',
-            station: stationId,
-            position: [...station.position],
-            owned: true
-        };
-        
-        this.vehicles.push(newVehicle);
-        station.vehicles.push(newVehicle);
-        this.credits -= price;
-        
-        alert(`${vehicleType} erfolgreich gekauft!`);
-        updateUI();
-        updateVehicleList();
-        
-        return true;
+        return 6371 * c;
     }
     
     updateUI() {
-        // Update Zeit
         const timeStr = this.gameTime.toLocaleTimeString('de-DE');
         const timeEl = document.getElementById('current-time');
         if (timeEl) timeEl.textContent = timeStr;
         
-        // Update Credits
         const creditsEl = document.getElementById('credits');
         if (creditsEl) creditsEl.textContent = this.credits.toLocaleString();
         
-        // Update Fahrzeuge
         const activeVehicles = this.vehicles.filter(v => v.status !== 'available').length;
         const activeEl = document.getElementById('active-vehicles');
         const totalEl = document.getElementById('total-vehicles');
         if (activeEl) activeEl.textContent = activeVehicles;
         if (totalEl) totalEl.textContent = this.vehicles.length;
         
-        // Update Einsatzzähler
-        const activeIncidents = this.incidents.filter(i => i.status !== 'completed').length;
+        const activeIncidents = this.incidents.filter(i => i.status !== 'completed' && i.status !== 'incoming').length;
         const incidentEl = document.getElementById('incident-count');
         if (incidentEl) incidentEl.textContent = activeIncidents;
     }
@@ -293,10 +316,8 @@ class Game {
             this.gameSpeed = settings.gameSpeed || CONFIG.DEFAULT_GAME_SPEED;
             this.apiKey = settings.apiKey || '';
             this.soundEnabled = settings.soundEnabled !== undefined ? settings.soundEnabled : true;
-            console.log('Einstellungen geladen:', settings);
         }
     }
 }
 
-// Globale Spielinstanz
 let game = null;

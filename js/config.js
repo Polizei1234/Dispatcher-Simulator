@@ -20,12 +20,13 @@ const CONFIG = {
     // Fahrzeugeinstellungen
     VEHICLE_SPEED_NORMAL: 50, // km/h
     VEHICLE_SPEED_SONDERSIGNAL: 80, // km/h
+    VEHICLE_UPDATE_INTERVAL: 2000, // Fahrzeugposition alle 2 Sekunden aktualisieren
     
     // Karteneinstellungen
-    MAP_CENTER: [48.9578, 9.3658], // Waiblingen
-    MAP_ZOOM: 11,
+    MAP_CENTER: [48.9458, 9.4325], // Backnang (Startstation)
+    MAP_ZOOM: 12,
     MAP_MIN_ZOOM: 9,
-    MAP_MAX_ZOOM: 16,
+    MAP_MAX_ZOOM: 18,
     
     // Credits pro Einsatz
     CREDITS_PER_INCIDENT: {
@@ -59,8 +60,8 @@ const CONFIG = {
     PERPLEXITY_API_URL: 'https://api.perplexity.ai/chat/completions',
     PERPLEXITY_MODEL: 'sonar',
     
-    // OpenRouteService für Routing
-    ROUTING_API_URL: 'https://api.openrouteservice.org/v2/directions/driving-car',
+    // OpenRouteService für Routing (kostenlos, kein API Key nötig für geringe Nutzung)
+    ROUTING_ENABLED: true,
     
     // Sound
     SOUND_ENABLED: true,
@@ -140,7 +141,26 @@ const KEYWORDS_BW = {
     }
 };
 
+// Funkrufnamen nach Landesfeuerwehrschule BW
+// Quelle: https://www.lfs-bw.de
+const CALLSIGN_PATTERNS_BW = {
+    // Rettungsdienst (Florian + Ort + Fahrzeugkennung)
+    'RTW': (city, number) => `Florian ${city} ${83}/${number}`, // 83 = RTW
+    'NEF': (city, number) => `Florian ${city} ${97}/${number}`, // 97 = NEF
+    'KTW': (city, number) => `Florian ${city} ${85}/${number}`, // 85 = KTW
+    
+    // Feuerwehr
+    'LF 10': (city, number) => `Florian ${city} ${40}/${number}`, // 40 = LF
+    'LF 20': (city, number) => `Florian ${city} ${43}/${number}`, // 43 = LF 20
+    'DLK 23': (city, number) => `Florian ${city} ${33}/${number}`, // 33 = DLK
+    'TLF': (city, number) => `Florian ${city} ${26}/${number}`, // 26 = TLF
+    'RW': (city, number) => `Florian ${city} ${58}/${number}`, // 58 = RW
+    
+    // Polizei (andere Nomenklatur)
+    'FuStW': (city, number) => `2/${city.substring(0, 2).toUpperCase()}-${number}` // z.B. 2/WN-1
+};
+
 // Export für andere Module
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { CONFIG, KEYWORDS_BW };
+    module.exports = { CONFIG, KEYWORDS_BW, CALLSIGN_PATTERNS_BW };
 }
