@@ -29,6 +29,7 @@
             <div class="welcome-buttons" style="margin-top: 20px;">
                 <button class="btn btn-primary" onclick="startNewGame('career')"><i class="fas fa-trophy"></i> Karrieremodus</button>
                 <button class="btn btn-success" onclick="startNewGame('free')"><i class="fas fa-infinity"></i> Freies Spiel</button>
+                <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial</button>
                 <button class="btn btn-secondary" onclick="showSettings()"><i class="fas fa-cog"></i> Einstellungen</button>
             </div>
             <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
@@ -176,15 +177,29 @@
         </div>
     </div>
 
+    <!-- Skripte in KORREKTER Reihenfolge! -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- 1. Konfiguration -->
     <script src="js/config.js"></script>
+    
+    <!-- 2. Daten -->
     <script src="js/data.js"></script>
-    <script src="js/game.js"></script>
+    
+    <!-- 3. Karte (definiert map) -->
     <script src="js/map.js"></script>
+    
+    <!-- 4. Spiel-Logik -->
+    <script src="js/game.js"></script>
+    
+    <!-- 5. Features -->
     <script src="js/incidents.js"></script>
     <script src="js/ai.js"></script>
+    <script src="js/tutorial.js"></script>
     <script src="js/ui.js"></script>
-    <script src="js/main.js"></script>
     <script src="js/draggable.js"></script>
+    
+    <!-- 6. Main (initialisiert alles) -->
+    <script src="js/main.js"></script>
 </body>
 </html>
