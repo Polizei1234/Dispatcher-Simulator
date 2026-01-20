@@ -1,129 +1,156 @@
 // =========================
-// EINSATZGENERIERUNG
-// Nur machbare Einsätze basierend auf verfügbaren Fahrzeugen
+// EINSATZGENERIERUNG MIT GROQ AI
+// Realistische, zufällige Einsätze
 // =========================
 
-const PREDEFINED_INCIDENTS = [
-    {
-        keyword: 'RD 1',
-        initialMessage: 'Hier ist jemand gestürzt!',
-        actualLocation: 'Grabenstraße 12, Backnang',
-        position: [48.9461, 9.4321],
-        caller: 'Passant',
-        fullDetails: {
-            description: 'Person nach Sturz mit Kopfplatzwunde',
-            conscious: true,
-            breathing: true,
-            age: '62 Jahre',
-            injuries: 'Kopfplatzwunde, Schmerzen im Handgelenk'
-        }
-    },
-    {
-        keyword: 'RD 2',
-        initialMessage: 'Mein Vater... er atmet ganz komisch!',
-        actualLocation: 'Bahnhofstraße 45, Waiblingen',
-        position: [48.8315, 9.3159],
-        caller: 'Angehöriger',
-        fullDetails: {
-            description: 'Männliche Person mit akuter Atemnot',
-            conscious: true,
-            breathing: false,
-            age: '78 Jahre',
-            injuries: 'Atemnot, Brustschmerzen, Zyanose'
-        }
-    },
-    {
-        keyword: 'B 1',
-        initialMessage: 'Es brennt hier, irgendein Müll!',
-        actualLocation: 'Schulstraße 8, Backnang',
-        position: [48.9450, 9.4280],
-        caller: 'Anwohner',
-        fullDetails: {
-            description: 'Brennender Müllcontainer',
-            conscious: true,
-            breathing: true
-        }
-    },
-    {
-        keyword: 'B 2',
-        initialMessage: 'Ein Auto brennt auf dem Parkplatz!',
-        actualLocation: 'Mayenner Straße 15, Waiblingen',
-        position: [48.8305, 9.3145],
-        caller: 'Zeuge',
-        fullDetails: {
-            description: 'PKW-Brand auf Parkplatz, Flammen sichtbar',
-            conscious: true,
-            breathing: true
-        }
-    },
-    {
-        keyword: 'THL 1',
-        initialMessage: 'Meine Katze sitzt auf dem Baum fest!',
-        actualLocation: 'Gartenstraße 22, Winnenden',
-        position: [48.8758, 9.3991],
-        caller: 'Bürger',
-        fullDetails: {
-            description: 'Katze in ca. 8m Höhe auf Baum',
-            conscious: true,
-            breathing: true
-        }
-    },
-    {
-        keyword: 'VU',
-        initialMessage: 'Unfall! Zwei Autos!',
-        actualLocation: 'B14, Backnang Richtung Waiblingen',
-        position: [48.9400, 9.4100],
-        caller: 'Unfallbeteiligter',
-        fullDetails: {
-            description: 'Verkehrsunfall 2 PKW, 1 Person leicht verletzt',
-            conscious: true,
-            breathing: true,
-            injured: '1 Person'
-        }
-    }
+const INCIDENT_LOCATIONS_WAIBLINGEN = [
+    { name: 'Bahnhofstraße 15, Waiblingen', pos: [48.8295, 9.3165] },
+    { name: 'Korber Straße 32, Waiblingen', pos: [48.8340, 9.3180] },
+    { name: 'Devizesstraße 8, Waiblingen', pos: [48.8312, 9.3142] },
+    { name: 'Winnender Straße 51, Waiblingen', pos: [48.8350, 9.3210] },
+    { name: 'Schorndorfer Straße 22, Waiblingen', pos: [48.8285, 9.3220] },
+    { name: 'Ringstraße 45, Waiblingen', pos: [48.8290, 9.3100] },
+    { name: 'Stuttgarter Straße 67, Waiblingen', pos: [48.8250, 9.3080] },
+    { name: 'B29, Waiblingen Richtung Schorndorf', pos: [48.8270, 9.3350] },
+    { name: 'Alte Bundesstraße 12, Waiblingen', pos: [48.8380, 9.3190] },
+    { name: 'Industriestraße 8, Waiblingen', pos: [48.8305, 9.3250] }
 ];
 
-function generateIncident(ownedVehicles) {
-    // Prüfe welche Einsatzarten machbar sind
-    const feasibleIncidents = PREDEFINED_INCIDENTS.filter(template => {
-        const keywordInfo = KEYWORDS_BW[template.keyword];
-        if (!keywordInfo || !keywordInfo.required) return true;
+async function generateIncidentWithAI(ownedVehicles, apiKey) {
+    // Prüfe welche Keywords machbar sind
+    const feasibleKeywords = Object.keys(KEYWORDS_BW).filter(keyword => {
+        const keywordInfo = KEYWORDS_BW[keyword];
+        if (!keywordInfo.required) return true;
         
-        // Prüfe ob ALLE benötigten Fahrzeugtypen verfügbar sind
-        return keywordInfo.required.every(requiredType => {
-            return ownedVehicles.some(v => v.type === requiredType && v.owned);
-        });
+        return keywordInfo.required.every(reqType => 
+            ownedVehicles.some(v => v.type === reqType && v.owned)
+        );
     });
     
-    if (feasibleIncidents.length === 0) {
-        console.warn('Keine machbaren Einsätze verfügbar mit aktueller Fahrzeugflotte!');
+    if (feasibleKeywords.length === 0) {
+        console.warn('Keine machbaren Einsätze!');
         return null;
     }
     
-    const template = feasibleIncidents[Math.floor(Math.random() * feasibleIncidents.length)];
+    const keyword = feasibleKeywords[Math.floor(Math.random() * feasibleKeywords.length)];
+    const keywordInfo = KEYWORDS_BW[keyword];
+    const location = INCIDENT_LOCATIONS_WAIBLINGEN[Math.floor(Math.random() * INCIDENT_LOCATIONS_WAIBLINGEN.length)];
     
+    // Generiere mit Groq AI
+    if (!apiKey) {
+        // Fallback ohne AI
+        return createFallbackIncident(keyword, keywordInfo, location);
+    }
+    
+    try {
+        const response = await fetch(CONFIG.GROQ_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: CONFIG.GROQ_MODEL,
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: `Du bist ein deutscher Notruf-Generator für Rettungsleitstellen. Erstelle einen realistischen Notruf für Stichwort "${keyword}" (${keywordInfo.name}). Antworte NUR mit JSON im Format:
+{
+  "initialMessage": "Erste aufgeregte Meldung des Anrufers (1 Satz, vage)",
+  "caller": "Art des Anrufers (z.B. Passant, Angehöriger, Zeuge)",
+  "description": "Detaillierte Situationsbeschreibung (2-3 Sätze)",
+  "age": "Alter der Person (z.B. 45 Jahre) oder null",
+  "conscious": true/false,
+  "breathing": true/false
+}`
+                    },
+                    { role: 'user', content: `Generiere Notruf für: ${keyword}` }
+                ],
+                temperature: 0.9,
+                max_tokens: 250
+            })
+        });
+        
+        const data = await response.json();
+        const aiData = JSON.parse(data.choices[0].message.content);
+        
+        return createIncidentFromAI(keyword, keywordInfo, location, aiData);
+        
+    } catch (error) {
+        console.error('Groq API Fehler:', error);
+        return createFallbackIncident(keyword, keywordInfo, location);
+    }
+}
+
+function createIncidentFromAI(keyword, keywordInfo, location, aiData) {
     return {
         id: `incident_${Date.now()}`,
-        keyword: template.keyword,
-        initialMessage: template.initialMessage,
-        actualLocation: template.actualLocation,
-        position: template.position,
-        caller: template.caller,
-        fullDetails: template.fullDetails,
-        
-        // Protokollfelder
-        location: null,  // Wird erst nach Anruf bekannt
+        keyword: keyword,
+        initialMessage: aiData.initialMessage,
+        actualLocation: location.name,
+        position: location.pos,
+        caller: aiData.caller,
+        fullDetails: {
+            description: aiData.description,
+            conscious: aiData.conscious,
+            breathing: aiData.breathing,
+            age: aiData.age
+        },
+        location: null,
         description: null,
         patientAge: null,
         patientGender: null,
         onSceneSituation: null,
         measures: null,
         notes: null,
-        
-        status: 'incoming',  // incoming -> in-call -> new -> dispatched -> on-scene -> completed
+        status: 'incoming',
         assignedVehicles: [],
         timestamp: Date.now(),
-        
+        conversationState: {
+            locationKnown: false,
+            detailsKnown: false,
+            symptomsKnown: false,
+            ageKnown: false
+        }
+    };
+}
+
+function createFallbackIncident(keyword, keywordInfo, location) {
+    const fallbackMessages = {
+        'RD 1': 'Hilfe, hier ist jemand gestürzt!',
+        'RD 2': 'Schnell, mein Mann atmet nicht richtig!',
+        'B 1': 'Es brennt hier, ein Mülleimer!',
+        'B 2': 'Ein Auto brennt!',
+        'B 3': 'Feuer! Das ganze Gebäude steht in Flammen!',
+        'THL 1': 'Hilfe, meine Katze sitzt auf dem Baum!',
+        'THL 2': 'Ein Baum ist auf die Straße gestürzt!',
+        'THL VU': 'Schwerer Unfall, Person eingeklemmt!',
+        'VU': 'Unfall, es gibt Verletzte!'
+    };
+    
+    return {
+        id: `incident_${Date.now()}`,
+        keyword: keyword,
+        initialMessage: fallbackMessages[keyword] || 'Notfall!',
+        actualLocation: location.name,
+        position: location.pos,
+        caller: 'Unbekannt',
+        fullDetails: {
+            description: keywordInfo.description,
+            conscious: true,
+            breathing: true,
+            age: null
+        },
+        location: null,
+        description: null,
+        patientAge: null,
+        patientGender: null,
+        onSceneSituation: null,
+        measures: null,
+        notes: null,
+        status: 'incoming',
+        assignedVehicles: [],
+        timestamp: Date.now(),
         conversationState: {
             locationKnown: false,
             detailsKnown: false,
