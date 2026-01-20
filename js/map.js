@@ -5,6 +5,7 @@
 let map = null;
 let stationMarkers = [];
 let vehicleMarkers = [];
+let stationsVisible = true;
 
 function initMap() {
     if (map) return;
@@ -46,6 +47,18 @@ function createStationMarkers() {
     });
 }
 
+function toggleStations() {
+    stationsVisible = !stationsVisible;
+    
+    stationMarkers.forEach(marker => {
+        if (stationsVisible) {
+            map.addLayer(marker);
+        } else {
+            map.removeLayer(marker);
+        }
+    });
+}
+
 function createStationPixelIcon(category) {
     const colors = {
         'rettungswache': '#dc3545',
@@ -54,12 +67,13 @@ function createStationPixelIcon(category) {
     };
     
     const color = colors[category] || '#6c757d';
+    const lightColor = lightenColor(color.replace('#', ''), 20);
     
     return `
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
             <!-- Pixel Art Gebäude -->
             <rect x="8" y="12" width="16" height="16" fill="${color}" stroke="#000" stroke-width="1"/>
-            <rect x="8" y="8" width="16" height="4" fill="#${lightenColor(color.replace('#', ''), 20)}" stroke="#000" stroke-width="1"/>
+            <rect x="8" y="8" width="16" height="4" fill="#${lightColor}" stroke="#000" stroke-width="1"/>
             <!-- Kreuz -->
             <rect x="14" y="16" width="4" height="8" fill="#fff"/>
             <rect x="12" y="18" width="8" height="4" fill="#fff"/>
@@ -119,14 +133,26 @@ function updateMap() {
             })
         }).addTo(map);
         
+        const statusText = {
+            'available': 'Verfügbar',
+            'dispatched': 'Unterwegs',
+            'on-scene': 'Vor Ort'
+        };
+        
         marker.bindPopup(`
             <strong>${vehicle.name}</strong><br>
-            Status: ${vehicle.status}<br>
+            Status: ${statusText[vehicle.status] || vehicle.status}<br>
             <small>${vehicle.type}</small>
         `);
         
         vehicleMarkers.push(marker);
     });
+}
+
+function centerMap() {
+    if (map) {
+        map.setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
+    }
 }
 
 function lightenColor(hex, percent) {
