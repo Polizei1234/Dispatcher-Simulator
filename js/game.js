@@ -155,5 +155,5 @@ class Game {
     }
 }
 
+// KEIN let map = null; hier! Wird in map.js definiert
 let game = null;
-let map = null;

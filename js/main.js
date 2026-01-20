@@ -94,7 +94,7 @@ function updateVehicleSelectionList(incident) {
             <label style="display: block; padding: 8px; margin: 5px 0; background: #1e2a38; border-radius: 6px; cursor: pointer;">
                 <input type="checkbox" class="vehicle-checkbox" data-vehicle-id="${v.id}" 
                     ${required.includes(v.type) ? 'checked' : ''}>
-                ${v.icon} <strong>${v.callsign}</strong>
+                ${getVehicleIcon(v.type)} <strong>${v.callsign}</strong>
                 <small style="color: #a0a0a0;">${v.type}</small>
             </label>
         `).join('')}
@@ -173,7 +173,7 @@ function updateVehicleList() {
         
         return `
             <div class="vehicle-item" style="padding: 10px; margin: 8px 0; background: #1e2a38; border-radius: 6px; border-left: 4px solid ${statusColor};">
-                ${v.icon} <strong>${v.callsign}</strong><br>
+                ${getVehicleIcon(v.type)} <strong>${v.name}</strong><br>
                 <small>${v.type}</small><br>
                 <span style="color: ${statusColor}; font-size: 0.9em;">● ${statusText}</span>
             </div>
@@ -203,16 +203,25 @@ function playSound(type) {
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing...');
     initializeVehicles();
     game = new Game();
-    initMap();
+    
+    // Initialisiere Karte
+    if (typeof initMap === 'function') {
+        initMap();
+    } else {
+        console.error('initMap function not found!');
+    }
     
     setInterval(() => {
         if (game) {
             game.update();
             updateIncidentList();
             updateVehicleList();
-            updateMap();
+            if (typeof updateMap === 'function') {
+                updateMap();
+            }
         }
     }, 2000);
 });
