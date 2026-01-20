@@ -1,29 +1,31 @@
 // =========================
 // KI-MODUL & TELEFON-SYSTEM
-// Perplexity AI Integration + Interaktives Telefon
+// Groq AI Integration + Interaktives Telefon
 // =========================
 
 let currentCall = null;
 let conversationHistory = [];
+let aiCallCount = 0;
+let lastAiCallReset = Date.now();
 
 function showIncomingCallNotification(incident) {
     const callList = document.getElementById('call-list');
     if (!callList) return;
     
+    // KEINE Details vor Anrufannahme!
     callList.innerHTML = `
         <div class="incoming-call blinking" onclick="acceptIncomingCall('${incident.id}')" style="cursor: pointer; padding: 15px; background: #dc3545; border-radius: 8px; margin: 10px 0;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <i class="fas fa-phone-volume" style="font-size: 1.5em; margin-right: 10px;"></i>
-                    <strong style="font-size: 1.1em;">NOTRUF 112</strong>
+                    <strong style="font-size: 1.1em;">EINGEHENDER NOTRUF 112</strong>
                 </div>
                 <button class="btn btn-success btn-small">Annehmen</button>
             </div>
-            <p style="margin-top: 10px; font-size: 0.9em;">Anrufer: ${incident.caller}</p>
+            <p style="margin-top: 10px; font-size: 0.9em; color: #ffeb3b;">Unbekannter Anrufer wartet...</p>
         </div>
     `;
     
-    // Spiele Sound (optional)
     playSound('incoming-call');
 }
 
@@ -32,7 +34,6 @@ function acceptIncomingCall(incidentId) {
         game.acceptCall(incidentId);
     }
     
-    // Leere Anrufliste
     const callList = document.getElementById('call-list');
     if (callList) {
         callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
@@ -52,12 +53,12 @@ function showCallDialog(incident) {
     
     // Begrüßung durch Dispatcher
     addCallMessage('Disponent', 'Notruf 112, wo genau ist der Notfall?', 'dispatcher');
-    conversationHistory.push({ role: 'dispatcher', message: 'Notruf 112, wo genau ist der Notfall?' });
+    conversationHistory.push({ role: 'assistant', content: 'Notruf 112, wo genau ist der Notfall?' });
     
-    // Erste Meldung des Anrufers
+    // Erste vage Meldung des Anrufers
     setTimeout(() => {
         addCallMessage('Anrufer', incident.initialMessage, 'caller');
-        conversationHistory.push({ role: 'caller', message: incident.initialMessage });
+        conversationHistory.push({ role: 'user', content: incident.initialMessage });
         showCallResponses(incident);
     }, 1000);
     
@@ -82,14 +83,15 @@ function showCallResponses(incident) {
     inputContainer.style.cssText = 'margin-bottom: 15px;';
     inputContainer.innerHTML = `
         <input type="text" id="custom-message-input" placeholder="Eigene Nachricht eingeben..." 
-            style="width: 100%; padding: 10px; border: 2px solid #2d3748; border-radius: 6px; background: #0f1419; color: white; margin-bottom: 5px;">
+            style="width: 100%; padding: 10px; border: 2px solid #2d3748; border-radius: 6px; background: #0f1419; color: white; margin-bottom: 5px;"
+            onkeypress="if(event.key==='Enter') sendCustomMessage()">
         <button class="btn btn-primary btn-small" onclick="sendCustomMessage()">
             <i class="fas fa-paper-plane"></i> Senden
         </button>
     `;
     responses.appendChild(inputContainer);
     
-    // Textbausteine basierend auf Gesprächszustand
+    // Textbausteine
     const suggestions = getContextualSuggestions(incident);
     
     const suggestionContainer = document.createElement('div');
@@ -104,7 +106,7 @@ function showCallResponses(incident) {
         responses.appendChild(btn);
     });
     
-    // Einsatz erstellen Button (nur wenn genug Infos vorhanden)
+    // Einsatz erstellen Button
     if (incident.conversationState.locationKnown) {
         const createBtn = document.createElement('button');
         createBtn.className = 'btn btn-success';
@@ -131,7 +133,6 @@ function getContextualSuggestions(incident) {
     if (incident.keyword.includes('RD') && !incident.conversationState.symptomsKnown) {
         suggestions.push('Ist die Person ansprechbar?');
         suggestions.push('Atmet die Person normal?');
-        suggestions.push('Welche Beschwerden hat die Person?');
     }
     
     if (!incident.conversationState.ageKnown) {
@@ -139,9 +140,8 @@ function getContextualSuggestions(incident) {
     }
     
     suggestions.push('Bleiben Sie am Telefon, Hilfe ist unterwegs.');
-    suggestions.push('Sind Sie selbst in Sicherheit?');
     
-    return suggestions.slice(0, 4); // Max 4 Vorschläge
+    return suggestions.slice(0, 4);
 }
 
 function sendCustomMessage() {
@@ -155,72 +155,109 @@ function sendCustomMessage() {
 
 async function askQuestion(question, incident) {
     addCallMessage('Disponent', question, 'dispatcher');
-    conversationHistory.push({ role: 'dispatcher', message: question });
+    conversationHistory.push({ role: 'assistant', content: question });
     
-    // Simuliere Antwort basierend auf Frage
-    setTimeout(() => {
-        const answer = generateCallerResponse(question, incident);
-        addCallMessage('Anrufer', answer, 'caller');
-        conversationHistory.push({ role: 'caller', message: answer });
-        
-        // Aktualisiere Gesprächszustand
-        updateConversationState(question, incident);
-        
-        // Aktualisiere Antwortmöglichkeiten
-        showCallResponses(incident);
-    }, 1500 + Math.random() * 1000);
+    // Versuche erst einfache Pattern-Matching-Antwort
+    const simpleAnswer = generateSimpleResponse(question, incident);
+    
+    if (simpleAnswer) {
+        // Einfache Antwort gefunden
+        setTimeout(() => {
+            addCallMessage('Anrufer', simpleAnswer, 'caller');
+            conversationHistory.push({ role: 'user', content: simpleAnswer });
+            updateConversationState(question, incident);
+            showCallResponses(incident);
+        }, 1000 + Math.random() * 1000);
+    } else {
+        // Unerwartete Frage -> KI nutzen
+        const aiAnswer = await generateAIResponse(question, incident);
+        setTimeout(() => {
+            addCallMessage('Anrufer', aiAnswer, 'caller');
+            conversationHistory.push({ role: 'user', content: aiAnswer });
+            showCallResponses(incident);
+        }, 1500);
+    }
 }
 
-function generateCallerResponse(question, incident) {
+function generateSimpleResponse(question, incident) {
     const q = question.toLowerCase();
     
-    // Adresse/Ort
     if (q.includes('wo') || q.includes('adresse') || q.includes('ort')) {
         return incident.actualLocation;
     }
-    
-    // Was ist passiert
     if (q.includes('passiert') || q.includes('situation')) {
-        return incident.fullDetails.description || 'Wie am Anfang gesagt...';
+        return incident.fullDetails.description || 'Wie ich sagte...';
     }
-    
-    // Ansprechbar
     if (q.includes('ansprechbar') || q.includes('bewusstsein')) {
-        return incident.fullDetails.conscious ? 'Ja, die Person ist bei Bewusstsein.' : 'Nein, die Person reagiert nicht!';
+        return incident.fullDetails.conscious ? 'Ja, die Person ist bei Bewusstsein.' : 'Nein, sie reagiert nicht!';
     }
-    
-    // Atmung
     if (q.includes('atmet') || q.includes('atmung')) {
-        return incident.fullDetails.breathing ? 'Ja, ich sehe Atmung.' : 'Ich weiß nicht... ich glaube ja?';
+        return incident.fullDetails.breathing ? 'Ja, ich sehe Atmung.' : 'Ich weiß es nicht genau...';
     }
-    
-    // Alter
     if (q.includes('alt') || q.includes('alter')) {
-        return incident.fullDetails.age || 'Ca. 50 Jahre, schätze ich.';
+        return incident.fullDetails.age || 'Schwer zu sagen, vielleicht 50?';
     }
-    
-    // Verletzungen
-    if (q.includes('verletz') || q.includes('beschwerden') || q.includes('symptome')) {
-        return incident.fullDetails.injuries || incident.fullDetails.symptoms || 'Wie gesagt, es sieht ernst aus.';
-    }
-    
-    // Anzahl Personen
-    if (q.includes('wie viele') || q.includes('personen')) {
-        return incident.fullDetails.injured || 'Eine Person.';
-    }
-    
-    // Sicherheit
     if (q.includes('sicherheit')) {
         return 'Ja, ich bin in Sicherheit.';
     }
-    
-    // Bleiben Sie dran
     if (q.includes('bleiben') || q.includes('telefon')) {
-        return 'Ja, ich bleibe hier. Bitte beeilen Sie sich!';
+        return 'Ja, ich bleibe hier!';
     }
     
-    // Standard
-    return 'Ja... bitte schicken Sie schnell jemanden!';
+    return null; // Keine einfache Antwort gefunden
+}
+
+async function generateAIResponse(question, incident) {
+    // Rate Limiting
+    const now = Date.now();
+    if (now - lastAiCallReset > 60000) {
+        aiCallCount = 0;
+        lastAiCallReset = now;
+    }
+    
+    if (aiCallCount >= CONFIG.MAX_AI_CALLS_PER_MINUTE) {
+        return 'Entschuldigung, können Sie das wiederholen?';
+    }
+    
+    if (!game || !game.apiKey) {
+        return 'Ja... bitte schicken Sie schnell jemanden!';
+    }
+    
+    try {
+        aiCallCount++;
+        
+        const systemPrompt = `Du bist ein aufgeregter Notrufer in einer Notsituation (${incident.keyword}). 
+Du hast bereits gemeldet: "${incident.initialMessage}"
+Die Situation: ${incident.fullDetails.description || 'Notfall'}
+Ort: ${incident.actualLocation}
+
+Antworte kurz (max 2 Sätze), authentisch und leicht gestresst auf Fragen des Disponenten. Gib nur Infos die du wirklich weißt.`;
+        
+        const response = await fetch(CONFIG.GROQ_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${game.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: CONFIG.GROQ_MODEL,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...conversationHistory.slice(-6),
+                    { role: 'user', content: question }
+                ],
+                temperature: 0.8,
+                max_tokens: 100
+            })
+        });
+        
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+        
+    } catch (error) {
+        console.error('Groq API Fehler:', error);
+        return 'Bitte beeilen Sie sich, ich habe Angst!';
+    }
 }
 
 function updateConversationState(question, incident) {
@@ -230,88 +267,32 @@ function updateConversationState(question, incident) {
         incident.conversationState.locationKnown = true;
         incident.location = incident.actualLocation;
     }
-    
     if (q.includes('passiert') || q.includes('situation')) {
         incident.conversationState.detailsKnown = true;
         incident.description = incident.fullDetails.description;
     }
-    
-    if (q.includes('alt') || q.includes('alter')) {
+    if (q.includes('alt')) {
         incident.conversationState.ageKnown = true;
     }
-    
-    if (q.includes('ansprechbar') || q.includes('atmet') || q.includes('verletz') || q.includes('symptome')) {
+    if (q.includes('ansprechbar') || q.includes('atmet') || q.includes('verletz')) {
         incident.conversationState.symptomsKnown = true;
     }
 }
 
 function createIncidentFromCall(incident) {
-    // Schließe Dialog
     document.getElementById('call-dialog').classList.remove('active');
     
-    // Setze Status auf "new" damit es in der Einsatzliste erscheint
     incident.status = 'new';
     
-    // Prüfe ob alle benötigten Fahrzeuge verfügbar sind
     const check = game.checkRequiredVehicles(incident.keyword);
     
     if (!check.hasAll) {
         const missingStr = check.missing.join(', ');
-        alert(`WARNUNG: Nicht alle benötigten Fahrzeuge verfügbar!\n\nFehlend: ${missingStr}\n\nEmpfohlen: ${check.required.join(', ')}\n\nSie können den Einsatz trotzdem disponieren, aber möglicherweise reichen die Einsatzmittel nicht aus.`);
+        alert(`WARNUNG: Nicht alle benötigten Fahrzeuge verfügbar!\n\nFehlend: ${missingStr}\n\nEmpfohlen: ${check.required.join(', ')}`);
     }
     
     addRadioMessage('Leitstelle', `Neuer Einsatz erfasst: ${incident.keyword} - ${incident.description}`);
     updateIncidentList();
     updateMap();
-    
-    // Wähle Einsatz automatisch aus
     selectIncident(incident.id);
-}
-
-// KI-generierte Einsätze (optional, wenn API Key vorhanden)
-async function generateIncidentWithAI() {
-    if (!game || !game.apiKey) {
-        return null;
-    }
-    
-    try {
-        const prompt = `Generiere einen realistischen Notruf für die ILS Waiblingen (Rems-Murr-Kreis, Baden-Württemberg).
-        
-Gib zurück (nur JSON):
-{
-  "keyword": "RD 1/RD 2/B 1/B 2/B 3/THL 1/THL 2/THL VU/VU",
-  "initialMessage": "Erste kurze Meldung des Anrufers (panisch, unklar)",
-  "location": "Straße Hausnummer, Stadt im Rems-Murr-Kreis",
-  "caller": "Wer ruft an",
-  "description": "Kurze Beschreibung"
-}`;
-        
-        const response = await fetch(CONFIG.PERPLEXITY_API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${game.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: CONFIG.PERPLEXITY_MODEL,
-                messages: [
-                    { role: 'system', content: 'Du bist ein Notruf-Simulator. Antworte nur mit JSON.' },
-                    { role: 'user', content: prompt }
-                ]
-            })
-        });
-        
-        const data = await response.json();
-        const content = data.choices[0].message.content;
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-        
-        return null;
-    } catch (error) {
-        console.error('AI Fehler:', error);
-        return null;
-    }
 }

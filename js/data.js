@@ -1,315 +1,143 @@
 // =========================
-// DATEN - Wachen & Fahrzeuge
-// ILS Waiblingen - Rems-Murr-Kreis
+// WACHEN & FAHRZEUGE
+// Adressen von BOS-Fahrzeuge.info
 // =========================
 
-// Hilfsfunktion für Funkrufnamen
-function generateCallsign(type, city, number) {
-    const pattern = CALLSIGN_PATTERNS_BW[type];
-    if (pattern) {
-        return pattern(city, number);
-    }
-    return `${type} ${city} ${number}`;
-}
-
-// Alle Rettungswachen im Rems-Murr-Kreis
 const STATIONS = {
-    // DRK Rettungswachen
-    'backnang': {
-        id: 'backnang',
-        name: 'DRK RW Backnang',
-        city: 'Backnang',
-        type: 'rettungswache',
-        organization: 'DRK',
-        position: [48.9458, 9.4325],
-        address: 'Sulzbacher Str. 69, 71522 Backnang',
+    // RETTUNGSDIENST
+    'rw_backnang': {
+        id: 'rw_backnang',
+        name: 'Rettungswache Backnang',
+        organization: 'DRK Rems-Murr',
+        address: 'Sulzbacher Str. 90, 71522 Backnang',
+        position: [48.9474, 9.4328],  // Korrekte Position laut BOS-Fahrzeuge.info
         icon: '🚑',
-        vehicles: [
-            { id: 'rtw-backnang-1', type: 'RTW', callsign: generateCallsign('RTW', 'Backnang', 1), status: 'available' },
-            { id: 'nef-backnang-1', type: 'NEF', callsign: generateCallsign('NEF', 'Backnang', 1), status: 'available' }
-        ]
+        type: 'rescue'
     },
-    'waiblingen': {
-        id: 'waiblingen',
-        name: 'DRK RW Waiblingen',
-        city: 'Waiblingen',
-        type: 'rettungswache',
-        organization: 'DRK',
-        position: [48.8298, 9.3167],
-        address: 'Fronackerstraße 5, 71332 Waiblingen',
+    'rw_waiblingen': {
+        id: 'rw_waiblingen',
+        name: 'Rettungswache Waiblingen',
+        organization: 'DRK Rems-Murr',
+        address: 'Mayenner Str. 63, 71332 Waiblingen',
+        position: [48.8315, 9.3159],  // Korrekte Position
         icon: '🚑',
-        vehicles: [
-            { id: 'rtw-waiblingen-1', type: 'RTW', callsign: generateCallsign('RTW', 'Waiblingen', 1), status: 'available' },
-            { id: 'rtw-waiblingen-2', type: 'RTW', callsign: generateCallsign('RTW', 'Waiblingen', 2), status: 'available' },
-            { id: 'nef-waiblingen-1', type: 'NEF', callsign: generateCallsign('NEF', 'Waiblingen', 1), status: 'available' },
-            { id: 'ktw-waiblingen-1', type: 'KTW', callsign: generateCallsign('KTW', 'Waiblingen', 1), status: 'available' }
-        ]
+        type: 'rescue'
     },
-    'winnenden': {
-        id: 'winnenden',
-        name: 'DRK RW Winnenden',
-        city: 'Winnenden',
-        type: 'rettungswache',
-        organization: 'DRK',
-        position: [48.8756, 9.4008],
+    'rw_schorndorf': {
+        id: 'rw_schorndorf',
+        name: 'Rettungswache Schorndorf',
+        organization: 'DRK Rems-Murr',
+        address: 'Rötestr. 9, 73614 Schorndorf',
+        position: [48.8047, 9.5314],  // Korrekte Position
+        icon: '🚑',
+        type: 'rescue'
+    },
+    'rw_winnenden': {
+        id: 'rw_winnenden',
+        name: 'Rettungswache Winnenden',
+        organization: 'DRK Rems-Murr',
         address: 'Ringstraße 5, 71364 Winnenden',
+        position: [48.8758, 9.3991],  // Korrekte Position
         icon: '🚑',
-        vehicles: [
-            { id: 'rtw-winnenden-1', type: 'RTW', callsign: generateCallsign('RTW', 'Winnenden', 1), status: 'available' }
-        ]
-    },
-    'schorndorf': {
-        id: 'schorndorf',
-        name: 'DRK RW Schorndorf',
-        city: 'Schorndorf',
-        type: 'rettungswache',
-        organization: 'DRK',
-        position: [48.8056, 9.5278],
-        address: 'Johann-Philipp-Palm-Straße 23, 73614 Schorndorf',
-        icon: '🚑',
-        vehicles: [
-            { id: 'rtw-schorndorf-1', type: 'RTW', callsign: generateCallsign('RTW', 'Schorndorf', 1), status: 'available' },
-            { id: 'ktw-schorndorf-1', type: 'KTW', callsign: generateCallsign('KTW', 'Schorndorf', 1), status: 'available' }
-        ]
-    },
-    'fellbach': {
-        id: 'fellbach',
-        name: 'DRK RW Fellbach',
-        city: 'Fellbach',
-        type: 'rettungswache',
-        organization: 'DRK',
-        position: [48.8108, 9.2764],
-        address: 'Ringstraße 101, 70736 Fellbach',
-        icon: '🚑',
-        vehicles: [
-            { id: 'rtw-fellbach-1', type: 'RTW', callsign: generateCallsign('RTW', 'Fellbach', 1), status: 'available' },
-            { id: 'rtw-fellbach-2', type: 'RTW', callsign: generateCallsign('RTW', 'Fellbach', 2), status: 'available' }
-        ]
-    },
-    'murrhardt': {
-        id: 'murrhardt',
-        name: 'DRK RW Murrhardt',
-        city: 'Murrhardt',
-        type: 'rettungswache',
-        organization: 'DRK',
-        position: [48.9767, 9.5719],
-        address: 'Seegasse 25, 71540 Murrhardt',
-        icon: '🚑',
-        vehicles: [
-            { id: 'rtw-murrhardt-1', type: 'RTW', callsign: generateCallsign('RTW', 'Murrhardt', 1), status: 'available' }
-        ]
+        type: 'rescue'
     },
     
-    // Feuerwehren (Auswahl wichtiger Standorte)
-    'fw-waiblingen': {
-        id: 'fw-waiblingen',
+    // FEUERWEHR
+    'fw_waiblingen': {
+        id: 'fw_waiblingen',
         name: 'Feuerwehr Waiblingen',
-        city: 'Waiblingen',
-        type: 'feuerwehr',
-        organization: 'Feuerwehr',
-        position: [48.8315, 9.3145],
-        address: 'Fronackerstraße 3, 71332 Waiblingen',
+        organization: 'Feuerwehr Waiblingen',
+        address: 'Fronackerstraße 5, 71332 Waiblingen',
+        position: [48.8289, 9.3187],  // Korrekte Position
         icon: '🚒',
-        vehicles: [
-            { id: 'lf-waiblingen-1', type: 'LF 10', callsign: generateCallsign('LF 10', 'Waiblingen', 1), status: 'available' },
-            { id: 'dlk-waiblingen-1', type: 'DLK 23', callsign: generateCallsign('DLK 23', 'Waiblingen', 1), status: 'available' }
-        ]
+        type: 'fire'
     },
-    'fw-backnang': {
-        id: 'fw-backnang',
+    'fw_backnang': {
+        id: 'fw_backnang',
         name: 'Feuerwehr Backnang',
-        city: 'Backnang',
-        type: 'feuerwehr',
-        organization: 'Feuerwehr',
-        position: [48.9465, 9.4312],
-        address: 'Sulzbacher Str. 67, 71522 Backnang',
+        organization: 'Feuerwehr Backnang',
+        address: 'Erbställer Str. 1, 71522 Backnang',
+        position: [48.9447, 9.4254],  // Korrekte Position
         icon: '🚒',
-        vehicles: [
-            { id: 'lf-backnang-1', type: 'LF 20', callsign: generateCallsign('LF 20', 'Backnang', 1), status: 'available' },
-            { id: 'tlf-backnang-1', type: 'TLF', callsign: generateCallsign('TLF', 'Backnang', 1), status: 'available' }
-        ]
+        type: 'fire'
+    },
+    'fw_fellbach': {
+        id: 'fw_fellbach',
+        name: 'Feuerwehr Fellbach',
+        organization: 'Feuerwehr Fellbach',
+        address: 'Ringstraße 5, 70736 Fellbach',
+        position: [48.8109, 9.2758],  // Korrekte Position
+        icon: '🚒',
+        type: 'fire'
     },
     
-    // Polizei
-    'pol-waiblingen': {
-        id: 'pol-waiblingen',
+    // POLIZEI
+    'pr_waiblingen': {
+        id: 'pr_waiblingen',
         name: 'Polizeirevier Waiblingen',
-        city: 'WN',
-        type: 'polizei',
-        organization: 'Polizei',
-        position: [48.8308, 9.3189],
+        organization: 'Polizei Baden-Württemberg',
         address: 'Fronackerstraße 14, 71332 Waiblingen',
+        position: [48.8297, 9.3195],  // Korrekte Position
         icon: '🚓',
-        vehicles: [
-            { id: 'fustw-waiblingen-1', type: 'FuStW', callsign: generateCallsign('FuStW', 'WN', 1), status: 'available' },
-            { id: 'fustw-waiblingen-2', type: 'FuStW', callsign: generateCallsign('FuStW', 'WN', 2), status: 'available' }
-        ]
+        type: 'police'
     },
-    'pol-backnang': {
-        id: 'pol-backnang',
+    'pr_backnang': {
+        id: 'pr_backnang',
         name: 'Polizeirevier Backnang',
-        city: 'BK',
-        type: 'polizei',
-        organization: 'Polizei',
-        position: [48.9451, 9.4335],
-        address: 'Erbstetter Straße 26, 71522 Backnang',
+        organization: 'Polizei Baden-Württemberg',
+        address: 'Bahnhofstraße 31, 71522 Backnang',
+        position: [48.9461, 9.4321],  // Korrekte Position
         icon: '🚓',
-        vehicles: [
-            { id: 'fustw-backnang-1', type: 'FuStW', callsign: generateCallsign('FuStW', 'BK', 1), status: 'available' }
-        ]
+        type: 'police'
     }
 };
 
-// Vordefinierte Einsätze (falls keine KI verfügbar)
-// WICHTIG: Nur minimale Infos am Anfang!
-const PREDEFINED_INCIDENTS = [
-    {
-        keyword: 'RD 1',
-        initialMessage: 'Hallo... ähm... hier ist jemand gestürzt!',
-        location: 'Grabenstraße 12, Backnang',
-        position: [48.9468, 9.4289],
-        caller: 'Angehöriger',
-        fullDetails: {
-            description: 'Person gestürzt, Schmerzen im Bein',
-            age: '82 Jahre',
-            gender: 'weiblich',
-            conscious: true,
-            breathing: true,
-            exactLocation: 'Wohnung im 2. OG',
-            injuries: 'Schmerzen im rechten Bein, kann nicht mehr aufstehen'
-        }
-    },
-    {
-        keyword: 'RD 2',
-        initialMessage: 'Schnell! Hier liegt jemand am Boden und reagiert nicht!',
-        location: 'Bahnhofstraße 45, Waiblingen',
-        position: [48.8312, 9.3178],
-        caller: 'Passant',
-        fullDetails: {
-            description: 'Bewusstlose Person',
-            age: 'ca. 50 Jahre',
-            gender: 'männlich',
-            conscious: false,
-            breathing: true,
-            exactLocation: 'Gehweg vor dem Supermarkt',
-            injuries: 'Bewusstlos, reagiert nicht auf Ansprache, Atmung vorhanden'
-        }
-    },
-    {
-        keyword: 'B 1',
-        initialMessage: 'Hier brennt eine Mülltonne!',
-        location: 'Schillerstraße 8, Winnenden',
-        position: [48.8745, 9.4012],
-        caller: 'Anwohner',
-        fullDetails: {
-            description: 'Mülltonnenbrand',
-            exactLocation: 'Hinterhof',
-            danger: 'Feuer droht auf Gebäude überzugreifen',
-            people: 'Keine Personen in Gefahr'
-        }
-    },
-    {
-        keyword: 'B 2',
-        initialMessage: 'Feuer! Es kommt Rauch aus einem Fenster!',
-        location: 'Kornwestheimer Straße 23, Fellbach',
-        position: [48.8115, 9.2756],
-        caller: 'Nachbar',
-        fullDetails: {
-            description: 'Wohnungsbrand',
-            exactLocation: '2. Obergeschoss',
-            danger: 'Starke Rauchentwicklung',
-            people: 'Personen eventuell noch im Gebäude'
-        }
-    },
-    {
-        keyword: 'THL 1',
-        initialMessage: 'Ein Baum ist auf die Straße gefallen!',
-        location: 'B14 zwischen Murrhardt und Backnang',
-        position: [48.9612, 9.5123],
-        caller: 'Autofahrer',
-        fullDetails: {
-            description: 'Baum auf Fahrbahn',
-            exactLocation: 'B14, Fahrtrichtung Backnang',
-            danger: 'Straße komplett blockiert',
-            people: 'Keine Verletzten'
-        }
-    },
-    {
-        keyword: 'THL VU',
-        initialMessage: 'Unfall! Zwei Autos... eine Person ist eingeklemmt!',
-        location: 'L1140 bei Schorndorf',
-        position: [48.8089, 9.5312],
-        caller: 'Ersthelfer',
-        fullDetails: {
-            description: 'Verkehrsunfall mit eingeklemmter Person',
-            vehicles: '2 PKW',
-            injured: '3 Personen',
-            trapped: '1 Person eingeklemmt',
-            danger: 'Benzin läuft aus'
-        }
-    },
-    {
-        keyword: 'VU',
-        initialMessage: 'Ich hatte gerade einen Unfall...',
-        location: 'Winnender Straße 56, Waiblingen',
-        position: [48.8289, 9.3201],
-        caller: 'Unfallbeteiligter',
-        fullDetails: {
-            description: 'Verkehrsunfall',
-            vehicles: '2 PKW',
-            injured: '2 Personen mit Nackenschmerzen',
-            danger: 'Keine akute Gefahr'
-        }
-    },
-    {
-        keyword: 'RD 2',
-        initialMessage: 'Mein Mann... er hat plötzlich Schmerzen in der Brust!',
-        location: 'Am Marktplatz 3, Backnang',
-        position: [48.9476, 9.4298],
-        caller: 'Ehefrau',
-        fullDetails: {
-            description: 'Brustschmerzen',
-            age: '58 Jahre',
-            gender: 'männlich',
-            symptoms: 'Starke Schmerzen in der Brust, Schwitzen, Atemnot',
-            conscious: true,
-            breathing: true
-        }
-    }
+const VEHICLES = [
+    // RETTUNGSWACHE BACKNANG
+    { type: 'RTW', station: 'rw_backnang', cost: 0, owned: true },
+    { type: 'RTW', station: 'rw_backnang', cost: 120000, owned: false },
+    { type: 'NEF', station: 'rw_backnang', cost: 150000, owned: true },
+    { type: 'KTW', station: 'rw_backnang', cost: 60000, owned: false },
+    
+    // RETTUNGSWACHE WAIBLINGEN
+    { type: 'RTW', station: 'rw_waiblingen', cost: 120000, owned: false },
+    { type: 'RTW', station: 'rw_waiblingen', cost: 120000, owned: false },
+    { type: 'NEF', station: 'rw_waiblingen', cost: 150000, owned: false },
+    
+    // RETTUNGSWACHE SCHORNDORF
+    { type: 'RTW', station: 'rw_schorndorf', cost: 120000, owned: false },
+    { type: 'NEF', station: 'rw_schorndorf', cost: 150000, owned: false },
+    
+    // RETTUNGSWACHE WINNENDEN
+    { type: 'RTW', station: 'rw_winnenden', cost: 120000, owned: false },
+    
+    // FEUERWEHR WAIBLINGEN
+    { type: 'LF 10', station: 'fw_waiblingen', cost: 0, owned: true },
+    { type: 'DLK 23', station: 'fw_waiblingen', cost: 600000, owned: false },
+    { type: 'RW', station: 'fw_waiblingen', cost: 250000, owned: false },
+    
+    // FEUERWEHR BACKNANG
+    { type: 'LF 20', station: 'fw_backnang', cost: 350000, owned: false },
+    { type: 'TLF 16', station: 'fw_backnang', cost: 400000, owned: false },
+    
+    // FEUERWEHR FELLBACH
+    { type: 'LF 10', station: 'fw_fellbach', cost: 300000, owned: false },
+    
+    // POLIZEI
+    { type: 'FuStW', station: 'pr_waiblingen', cost: 50000, owned: false },
+    { type: 'FuStW', station: 'pr_backnang', cost: 50000, owned: false }
 ];
 
-// Textbausteine für Dispatcher
-const DISPATCHER_PHRASES = [
-    'Notruf 112, wo genau ist der Notfall?',
-    'Wie viele Personen sind betroffen?',
-    'Ist die Person ansprechbar?',
-    'Atmet die Person normal?',
-    'Können Sie die Verletzungen genauer beschreiben?',
-    'Sind weitere Personen in Gefahr?',
-    'Wie alt ist die Person ungefähr?',
-    'Was ist genau passiert?',
-    'Wo befinden Sie sich genau?',
-    'Bleiben Sie bitte am Telefon, Hilfe ist bereits unterwegs.',
-    'Haben Sie bereits Erste Hilfe geleistet?',
-    'Sind Sie selbst in Sicherheit?'
-];
-
-// Funksprüche Textbausteine
-const RADIO_PHRASES = {
-    dispatch: [
-        'Einsatz für {callsign}: {keyword} in {location}',
-        '{callsign}, kommen Sie',
-        'Rückmeldung erbeten',
-        'Weitere Informationen folgen'
-    ],
-    vehicle: [
-        '{callsign} verstanden, rücken aus',
-        '{callsign} vor Ort',
-        '{callsign} Patient übernommen',
-        '{callsign} auf Transportfahrt',
-        '{callsign} am Ziel',
-        '{callsign} wieder frei',
-        '{callsign} benötigen Nachforderung',
-        '{callsign} Einsatz abgeschlossen'
-    ]
-};
+// Initialisiere Fahrzeuge mit Funkrufnamen
+function initializeVehicles() {
+    VEHICLES.forEach((vehicle, index) => {
+        const station = STATIONS[vehicle.station];
+        if (!station) return;
+        
+        vehicle.id = `vehicle_${index}`;
+        vehicle.callsign = generateCallsign(vehicle.type, station.name);
+        vehicle.status = 'available';
+        vehicle.position = [...station.position];
+        vehicle.totalDistance = 0;
+    });
+}
