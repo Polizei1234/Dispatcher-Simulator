@@ -1,188 +1,139 @@
 // =========================
-// KARTENMODUL
-// Leaflet.js + OpenStreetMap
+// KARTENLOGIK MIT PIXEL ART ICONS
 // =========================
 
-let mapMarkers = {
-    stations: [],
-    vehicles: [],
-    incidents: []
-};
-
-let vehicleIcons = {};
+let map = null;
+let stationMarkers = [];
+let vehicleMarkers = [];
 
 function initMap() {
-    console.log('Initialisiere Karte...');
+    if (map) return;
     
-    const mapElement = document.getElementById('map');
-    if (!mapElement) {
-        console.error('Map-Element nicht gefunden!');
-        return;
-    }
+    map = L.map('map', {
+        center: CONFIG.MAP_CENTER,
+        zoom: CONFIG.MAP_ZOOM,
+        minZoom: CONFIG.MAP_MIN_ZOOM,
+        maxZoom: CONFIG.MAP_MAX_ZOOM
+    });
     
-    try {
-        map = L.map('map', {
-            center: CONFIG.MAP_CENTER,
-            zoom: CONFIG.MAP_ZOOM,
-            zoomControl: true
-        });
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            minZoom: CONFIG.MAP_MIN_ZOOM,
-            maxZoom: CONFIG.MAP_MAX_ZOOM
-        }).addTo(map);
-        
-        setTimeout(() => {
-            map.invalidateSize();
-            console.log('Karte erfolgreich initialisiert');
-        }, 100);
-        
-        showStationsOnMap();
-        
-    } catch (error) {
-        console.error('Fehler beim Initialisieren der Karte:', error);
-    }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+    
+    createStationMarkers();
 }
 
-function showStationsOnMap() {
-    if (!game || !map) return;
-    
-    mapMarkers.stations.forEach(marker => map.removeLayer(marker));
-    mapMarkers.stations = [];
-    
-    Object.values(game.stations).forEach(station => {
-        const hasVehicles = game.vehicles.some(v => v.station === station.id && v.owned);
-        if (!hasVehicles) return;
+function createStationMarkers() {
+    Object.values(STATIONS).forEach(station => {
+        const iconHtml = createStationPixelIcon(station.category);
         
-        // Verwende Emoji als Icon
-        const emoji = station.icon || '🏥';
+        const marker = L.marker(station.position, {
+            icon: L.divIcon({
+                html: iconHtml,
+                className: 'station-marker',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            })
+        }).addTo(map);
         
-        const icon = L.divIcon({
-            className: 'custom-station-marker',
-            html: `<div style="font-size: 32px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32]
-        });
-        
-        const marker = L.marker(station.position, { icon: icon }).addTo(map);
         marker.bindPopup(`
             <strong>${station.name}</strong><br>
-            ${station.organization}<br>
-            <small>${station.address}</small><br>
-            <small>Fahrzeuge: ${game.vehicles.filter(v => v.station === station.id && v.owned).length}</small>
+            ${station.address}<br>
+            <small>${station.category} (${station.type})</small>
         `);
         
-        mapMarkers.stations.push(marker);
+        stationMarkers.push(marker);
     });
+}
+
+function createStationPixelIcon(category) {
+    const colors = {
+        'rettungswache': '#dc3545',
+        'notarztwache': '#ffc107',
+        'ortsverein': '#ff0000'
+    };
+    
+    const color = colors[category] || '#6c757d';
+    
+    return `
+        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <!-- Pixel Art Gebäude -->
+            <rect x="8" y="12" width="16" height="16" fill="${color}" stroke="#000" stroke-width="1"/>
+            <rect x="8" y="8" width="16" height="4" fill="#${lightenColor(color.replace('#', ''), 20)}" stroke="#000" stroke-width="1"/>
+            <!-- Kreuz -->
+            <rect x="14" y="16" width="4" height="8" fill="#fff"/>
+            <rect x="12" y="18" width="8" height="4" fill="#fff"/>
+            <!-- Fenster -->
+            <rect x="10" y="10" width="2" height="2" fill="#add8e6"/>
+            <rect x="20" y="10" width="2" height="2" fill="#add8e6"/>
+        </svg>
+    `;
+}
+
+function createVehiclePixelIcon(type) {
+    const colors = {
+        'RTW': '#dc3545',
+        'NEF': '#ffc107',
+        'KTW': '#28a745',
+        'Kdow': '#17a2b8',
+        'GW-San': '#6c757d'
+    };
+    
+    const color = colors[type] || '#007bff';
+    
+    return `
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- Pixel Art Fahrzeug -->
+            <!-- Fahrzeugkörper -->
+            <rect x="6" y="10" width="12" height="8" fill="${color}" stroke="#000" stroke-width="1"/>
+            <!-- Fahrerhaus -->
+            <rect x="14" y="8" width="4" height="4" fill="${color}" stroke="#000" stroke-width="1"/>
+            <!-- Windschutzscheibe -->
+            <rect x="15" y="9" width="2" height="2" fill="#add8e6"/>
+            <!-- Räder -->
+            <circle cx="9" cy="18" r="2" fill="#000"/>
+            <circle cx="15" cy="18" r="2" fill="#000"/>
+            <!-- Blaulicht -->
+            <rect x="10" y="8" width="2" height="1" fill="#0000ff"/>
+        </svg>
+    `;
 }
 
 function updateMap() {
-    if (!game || !map) return;
-    updateVehiclesOnMap();
-    updateIncidentsOnMap();
-}
-
-function updateVehiclesOnMap() {
-    if (!map) return;
+    // Lösche alte Fahrzeugmarker
+    vehicleMarkers.forEach(m => map.removeLayer(m));
+    vehicleMarkers = [];
     
-    mapMarkers.vehicles.forEach(marker => map.removeLayer(marker));
-    mapMarkers.vehicles = [];
+    // Erstelle neue Fahrzeugmarker
+    if (!game) return;
     
-    // Zeige alle Fahrzeuge (auch verfügbare an der Wache)
     game.vehicles.filter(v => v.owned).forEach(vehicle => {
-        let emoji = '🚑'; // RTW
-        let bgColor = '#c8102e';
+        const iconHtml = createVehiclePixelIcon(vehicle.type);
         
-        if (vehicle.type === 'NEF') {
-            emoji = '🚑';
-            bgColor = '#ffc107';
-        } else if (vehicle.type === 'KTW') {
-            emoji = '🚐';
-            bgColor = '#2196f3';
-        } else if (vehicle.type.includes('LF') || vehicle.type.includes('DLK') || vehicle.type.includes('TLF')) {
-            emoji = '🚒';
-            bgColor = '#ff5722';
-        } else if (vehicle.type.includes('FuStW')) {
-            emoji = '🚓';
-            bgColor = '#2196f3';
-        }
-        
-        // Zeige nur aktive Fahrzeuge auf der Karte fahrend
-        if (vehicle.status !== 'available') {
-            const callsignShort = vehicle.callsign.split(' ').slice(-2).join(' ');
-            
-            const icon = L.divIcon({
-                className: 'vehicle-marker-active',
-                html: `
-                    <div style="display: flex; align-items: center; background: ${bgColor}; padding: 4px 8px; border-radius: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 2px solid white;">
-                        <span style="font-size: 16px; margin-right: 4px;">${emoji}</span>
-                        <span style="color: white; font-size: 11px; font-weight: bold; white-space: nowrap;">${callsignShort}</span>
-                    </div>
-                `,
-                iconSize: [100, 30],
-                iconAnchor: [50, 15]
-            });
-            
-            const marker = L.marker(vehicle.position, { icon: icon }).addTo(map);
-            marker.bindPopup(`
-                <strong>${vehicle.callsign}</strong><br>
-                ${vehicle.type}<br>
-                Status: ${getStatusText(vehicle.status)}<br>
-                ${vehicle.totalDistance ? `Distanz: ${vehicle.totalDistance.toFixed(1)} km` : ''}
-            `);
-            
-            mapMarkers.vehicles.push(marker);
-        }
-    });
-}
-
-function getStatusText(status) {
-    switch(status) {
-        case 'available': return 'Verfügbar';
-        case 'dispatched': return 'Alarmiert - unterwegs';
-        case 'on-scene': return 'Vor Ort';
-        default: return status;
-    }
-}
-
-function updateIncidentsOnMap() {
-    if (!map) return;
-    
-    mapMarkers.incidents.forEach(marker => map.removeLayer(marker));
-    mapMarkers.incidents = [];
-    
-    game.incidents.filter(i => i.status !== 'completed' && i.status !== 'incoming' && i.status !== 'in-call').forEach(incident => {
-        const keywordInfo = KEYWORDS_BW[incident.keyword];
-        const color = keywordInfo ? keywordInfo.color : '#dc3545';
-        
-        const icon = L.divIcon({
-            className: 'incident-marker',
-            html: `
-                <div style="background: ${color}; color: white; padding: 8px; border-radius: 50%; font-size: 12px; font-weight: bold; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.4); border: 3px solid white;">
-                    ${incident.keyword}
-                </div>
-            `,
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
-        });
-        
-        const marker = L.marker(incident.position, { icon: icon }).addTo(map);
-        
-        const assignedVehiclesText = incident.assignedVehicles && incident.assignedVehicles.length > 0
-            ? `<br><small>Alarmiert: ${incident.assignedVehicles.length} Fahrzeug(e)</small>`
-            : '<br><small style="color: #ffc107;">Noch keine Fahrzeuge alarmiert!</small>';
+        const marker = L.marker(vehicle.position, {
+            icon: L.divIcon({
+                html: iconHtml,
+                className: 'vehicle-marker',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            })
+        }).addTo(map);
         
         marker.bindPopup(`
-            <strong style="color: ${color};">${incident.keyword}</strong><br>
-            ${incident.description || 'Details noch unklar'}<br>
-            <small>${incident.location || 'Adresse wird ermittelt'}</small>
-            ${assignedVehiclesText}
+            <strong>${vehicle.name}</strong><br>
+            Status: ${vehicle.status}<br>
+            <small>${vehicle.type}</small>
         `);
         
-        marker.on('click', () => selectIncident(incident.id));
-        
-        mapMarkers.incidents.push(marker);
+        vehicleMarkers.push(marker);
     });
+}
+
+function lightenColor(hex, percent) {
+    const num = parseInt(hex, 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
 }
