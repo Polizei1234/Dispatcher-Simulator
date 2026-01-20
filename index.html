@@ -53,9 +53,16 @@
                     </select>
                 </div>
                 <div class="setting-item">
-                    <label>Perplexity API Key:</label>
-                    <input type="password" id="api-key" placeholder="pplx-..." value="">
-                    <small>Optional: Für KI-generierte Einsätze und Telefongespräche</small>
+                    <label><i class="fas fa-robot"></i> Groq API Key:</label>
+                    <input type="password" id="groq-api-key" placeholder="gsk_..." value="">
+                    <button class="btn btn-small" onclick="toggleAPIKeyVisibility()" style="margin-left: 5px;">
+                        <i class="fas fa-eye" id="api-key-toggle-icon"></i>
+                    </button>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        🤖 Für realistische KI-Telefonate mit Notrufer<br>
+                        🌐 Kostenlos: <a href="https://console.groq.com/keys" target="_blank" style="color: #4a9eff;">console.groq.com/keys</a><br>
+                        ⚡ Rate Limit: 15 Anfragen/Minute
+                    </small>
                 </div>
                 <div class="setting-item">
                     <label>Sound:</label>
@@ -149,7 +156,7 @@
                 <div class="panel-header">
                     <h3><i class="fas fa-walkie-talkie"></i> Funkverkehr</h3>
                 </div>
-                <div class="panel-content radio-log" id="radio-log">
+                <div class="panel-content radio-log" id="radio-feed">
                     <!-- Wird dynamisch gefüllt -->
                 </div>
             </div>
@@ -173,36 +180,6 @@
         </div>
     </div>
 
-    <!-- Disposition-Dialog -->
-    <div id="dispatch-dialog" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-truck-medical"></i> Einsatzmittel alarmieren</h3>
-                <button class="close-btn" onclick="closeDispatchDialog()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="dispatch-content">
-                    <!-- Wird dynamisch gefüllt -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Shop-Dialog -->
-    <div id="shop-dialog" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-shopping-cart"></i> Fahrzeuge kaufen</h3>
-                <button class="close-btn" onclick="closeShopDialog()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="shop-content">
-                    <!-- Wird dynamisch gefüllt -->
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/config.js"></script>
@@ -210,7 +187,6 @@
     <script src="js/game.js"></script>
     <script src="js/map.js"></script>
     <script src="js/incidents.js"></script>
-    <script src="js/vehicles.js"></script>
     <script src="js/ai.js"></script>
     <script src="js/tutorial.js"></script>
     <script src="js/ui.js"></script>

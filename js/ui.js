@@ -1,172 +1,117 @@
 // =========================
-// UI-HILFSFUNKTIONEN
+// UI-FUNKTIONEN
 // =========================
 
-// Hilfsfunktionen für UI-Updates und Interaktionen
+function startNewGame() {
+    document.getElementById('welcome-screen').classList.remove('active');
+    document.getElementById('game-container').classList.remove('hidden');
+    
+    // Lade gespeicherten API-Key falls vorhanden
+    const savedKey = localStorage.getItem('groq_api_key');
+    if (savedKey && game) {
+        game.apiKey = savedKey;
+        console.log('✅ Groq API-Key geladen');
+    }
+    
+    addRadioMessage('System', 'ILS Waiblingen einsatzbereit. Dienst beginnt.');
+}
 
-function formatTime(date) {
-    return date.toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+function startTutorial() {
+    document.getElementById('welcome-screen').classList.remove('active');
+    document.getElementById('tutorial-overlay').classList.add('active');
+    loadTutorialStep(0);
+}
+
+function showSettings() {
+    const overlay = document.getElementById('settings-overlay');
+    overlay.classList.add('active');
+    
+    // Lade aktuelle Einstellungen
+    const savedKey = localStorage.getItem('groq_api_key') || '';
+    document.getElementById('groq-api-key').value = savedKey;
+    
+    const savedSpeed = localStorage.getItem('game_speed') || '5';
+    document.getElementById('game-speed').value = savedSpeed;
+    
+    const soundEnabled = localStorage.getItem('sound_enabled') !== 'false';
+    document.getElementById('sound-enabled').checked = soundEnabled;
+}
+
+function closeSettings() {
+    document.getElementById('settings-overlay').classList.remove('active');
+}
+
+function saveSettings() {
+    // Speichere Groq API-Key
+    const apiKey = document.getElementById('groq-api-key').value.trim();
+    if (apiKey) {
+        localStorage.setItem('groq_api_key', apiKey);
+        if (game) {
+            game.apiKey = apiKey;
+        }
+        console.log('✅ Groq API-Key gespeichert');
+    } else {
+        localStorage.removeItem('groq_api_key');
+        if (game) {
+            game.apiKey = null;
+        }
+    }
+    
+    // Speichere Spielgeschwindigkeit
+    const speed = document.getElementById('game-speed').value;
+    localStorage.setItem('game_speed', speed);
+    if (game) {
+        CONFIG.SIMULATION_SPEED = parseInt(speed);
+    }
+    
+    // Speichere Sound-Einstellung
+    const soundEnabled = document.getElementById('sound-enabled').checked;
+    localStorage.setItem('sound_enabled', soundEnabled);
+    CONFIG.SOUND_ENABLED = soundEnabled;
+    
+    alert('✅ Einstellungen gespeichert!');
+    closeSettings();
+}
+
+function toggleAPIKeyVisibility() {
+    const input = document.getElementById('groq-api-key');
+    const icon = document.getElementById('api-key-toggle-icon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function updateGameSpeed() {
+    const speed = document.getElementById('game-speed').value;
+    document.getElementById('game-speed-indicator').textContent = `${speed}x`;
+}
+
+function showVehicleTab(type) {
+    // Tab-Buttons aktualisieren
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
     });
+    event.target.classList.add('active');
+    
+    // Fahrzeuge filtern
+    updateVehicleList();
 }
 
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('de-DE', {
-        style: 'currency',
-        currency: 'EUR'
-    }).format(amount);
-}
-
-function showNotification(message, type = 'info') {
-    // Erstelle Notification Element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10001;
-        animation: slideIn 0.3s;
-    `;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    // Entferne nach 3 Sekunden
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
-function playSound(soundType) {
-    if (!game || !game.soundEnabled) return;
-    
-    // Hier könnten Sounds abgespielt werden
-    // Für jetzt: nur Konsolen-Log
-    console.log('Sound:', soundType);
-}
-
-// Tastaturkürzel
-document.addEventListener('keydown', function(e) {
-    if (!game || !game.running) return;
-    
-    // ESC: Schließe geöffnete Dialoge
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal.active').forEach(modal => {
-            modal.classList.remove('active');
-        });
+function centerMap() {
+    if (map) {
+        map.setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
     }
-    
-    // Zahlen 1-5: Wähle Einsatz
-    if (e.key >= '1' && e.key <= '5') {
-        const index = parseInt(e.key) - 1;
-        const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
-        if (activeIncidents[index]) {
-            selectIncident(activeIncidents[index].id);
-        }
-    }
-});
-
-// Animation CSS für Notifications
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// Export für Spielstand
-function exportGameState() {
-    if (!game) return;
-    
-    const state = {
-        credits: game.credits,
-        gameTime: game.gameTime,
-        incidents: game.incidents,
-        vehicles: game.vehicles,
-        stations: game.stations
-    };
-    
-    const json = JSON.stringify(state, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'dispatcher-spielstand.json';
-    a.click();
-    
-    URL.revokeObjectURL(url);
 }
 
-// Import Spielstand
-function importGameState(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const state = JSON.parse(e.target.result);
-            
-            // Lade Spielstand
-            game.credits = state.credits;
-            game.gameTime = new Date(state.gameTime);
-            game.incidents = state.incidents;
-            game.vehicles = state.vehicles;
-            game.stations = state.stations;
-            
-            updateUI();
-            updateVehicleList();
-            updateIncidentList();
-            updateMap();
-            
-            showNotification('Spielstand geladen!', 'success');
-        } catch (error) {
-            showNotification('Fehler beim Laden!', 'error');
-            console.error(error);
-        }
-    };
-    reader.readAsText(file);
+function closeDispatchDialog() {
+    document.getElementById('dispatch-dialog').classList.remove('active');
 }
 
-// Hilfsfunktion: Zufällige Position in der Nähe
-function getRandomNearbyPosition(center, radiusKm = 5) {
-    const radiusInDegrees = radiusKm / 111.32; // Ungefähr 1 Grad = 111.32 km
-    
-    const u = Math.random();
-    const v = Math.random();
-    const w = radiusInDegrees * Math.sqrt(u);
-    const t = 2 * Math.PI * v;
-    const x = w * Math.cos(t);
-    const y = w * Math.sin(t);
-    
-    const newLat = center[0] + x;
-    const newLng = center[1] + y;
-    
-    return [newLat, newLng];
+function closeShopDialog() {
+    document.getElementById('shop-dialog').classList.remove('active');
 }

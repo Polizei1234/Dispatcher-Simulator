@@ -1,156 +1,125 @@
 // =========================
-// TUTORIAL-MODUL
+// TUTORIAL-SYSTEM
 // =========================
+
+let currentTutorialStep = 0;
 
 const TUTORIAL_STEPS = [
     {
-        title: 'Willkommen beim Tutorial',
+        title: 'Willkommen bei der ILS Waiblingen',
         content: `
-            <p>Herzlich willkommen beim Leitstellensimulator der ILS Waiblingen!</p>
-            <p>In diesem Tutorial lernen Sie die Grundlagen der Einsatzdisposition.</p>
-            <ul>
-                <li>Notrufannahme</li>
-                <li>Einsatzmittel alarmieren</li>
-                <li>Einsätze überwachen</li>
-                <li>Funkverkehr</li>
-            </ul>
-        `
-    },
-    {
-        title: 'Die Spieloberfläche',
-        content: `
-            <p>Die Oberfläche ist in mehrere Bereiche unterteilt:</p>
-            <ul>
-                <li><strong>Links:</strong> Einsatzliste und eingehende Anrufe</li>
-                <li><strong>Mitte:</strong> Karte mit Einsatzorten und Fahrzeugen</li>
-                <li><strong>Rechts:</strong> Verfügbare Fahrzeuge und Einsatzdetails</li>
-                <li><strong>Unten:</strong> Funkverkehr</li>
-                <li><strong>Oben:</strong> Zeit, Credits und Status</li>
-            </ul>
+            <p>Willkommen im Leitstellensimulator für den Rems-Murr-Kreis!</p>
+            <p>Sie sind verantwortlich für die Disposition von Rettungsdienst, Feuerwehr und Polizei.</p>
+            <img src="https://via.placeholder.com/400x200/1e2a38/ffffff?text=ILS+Waiblingen" alt="ILS" style="width: 100%; border-radius: 8px; margin: 10px 0;">
+            <p>Ihr Ziel: Schnelle und effiziente Hilfe für Notfälle im gesamten Kreisgebiet.</p>
         `
     },
     {
         title: 'Notrufannahme',
         content: `
-            <p>Eingehende Notrufe erscheinen als Dialog.</p>
-            <p>Sie können dem Anrufer Fragen stellen:</p>
-            <ul>
-                <li>"Wo genau ist der Einsatzort?"</li>
-                <li>"Wie viele Personen sind betroffen?"</li>
-                <li>"Ist die Person ansprechbar?"</li>
-            </ul>
-            <p>Basierend auf den Informationen vergeben Sie ein <strong>Stichwort</strong> nach dem Baden-Württemberg System.</p>
+            <p><strong>Schritt 1: Notruf annehmen</strong></p>
+            <p>Wenn ein Notruf eingeht, sehen Sie nur:</p>
+            <div style="background: #dc3545; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                <strong>📢 EINGEHENDER NOTRUF 112</strong>
+            </div>
+            <p>Klicken Sie auf "Annehmen" um das Gespräch zu beginnen.</p>
+            <p><em>Wichtig: Keine Details vor der Anrufannahme!</em></p>
         `
     },
     {
-        title: 'Stichwort-System BW',
+        title: 'Telefondialog',
         content: `
-            <p>Baden-Württemberg verwendet ein standardisiertes Stichwort-System:</p>
+            <p><strong>Schritt 2: Informationen sammeln</strong></p>
+            <p>Der Anrufer gibt zunächst nur vage Infos:</p>
+            <blockquote style="background: #1e2a38; padding: 10px; border-left: 4px solid #4a9eff; margin: 10px 0;">
+                🗣️ "Hier ist jemand gestürzt!"
+            </blockquote>
+            <p>Stellen Sie gezielte Fragen:</p>
             <ul>
-                <li><strong>RD 1:</strong> Rettungsdienst ohne Notarzt</li>
-                <li><strong>RD 2:</strong> Rettungsdienst mit Notarzt</li>
-                <li><strong>B 1-6:</strong> Brand (1=klein, 6=sehr groß)</li>
-                <li><strong>THL 1-4:</strong> Technische Hilfeleistung</li>
-                <li><strong>THL VU:</strong> Verkehrsunfall mit Eingeklemmten</li>
-                <li><strong>VU:</strong> Einfacher Verkehrsunfall</li>
+                <li>📍 "Wo genau befinden Sie sich?"</li>
+                <li>❓ "Was ist genau passiert?"</li>
+                <li>🩺 "Ist die Person ansprechbar?"</li>
             </ul>
+            <p>Oder geben Sie eine eigene Nachricht ein!</p>
+        `
+    },
+    {
+        title: 'Einsatz erstellen',
+        content: `
+            <p><strong>Schritt 3: Einsatz disponieren</strong></p>
+            <p>Sobald Sie die Adresse haben, klicken Sie:</p>
+            <button class="btn btn-success" disabled>✅ Einsatz erstellen und disponieren</button>
+            <p style="margin-top: 15px;">Das System erstellt automatisch ein Protokoll mit allen gesammelten Informationen.</p>
+            <p>Sie können alle Felder nachträglich bearbeiten!</p>
         `
     },
     {
         title: 'Fahrzeuge alarmieren',
         content: `
-            <p>So alarmieren Sie Einsatzmittel:</p>
-            <ol>
-                <li>Wählen Sie einen Einsatz aus der Liste</li>
-                <li>Prüfen Sie die empfohlenen Fahrzeuge</li>
-                <li>Klicken Sie auf "Einsatzmittel alarmieren"</li>
-                <li>Wählen Sie verfügbare Fahrzeuge aus</li>
-                <li>Die Fahrzeuge werden automatisch alarmiert</li>
-            </ol>
-            <p><strong>Tipp:</strong> Achten Sie auf die richtigen Fahrzeugtypen für den Einsatz!</p>
+            <p><strong>Schritt 4: Einsatzmittel auswählen</strong></p>
+            <p>Wählen Sie passende Fahrzeuge per Checkbox:</p>
+            <div style="background: #1e2a38; padding: 10px; border-radius: 6px; margin: 10px 0;">
+                <label style="display: block; margin: 5px 0;">
+                    <input type="checkbox" checked disabled> <strong>Florian Backnang 83/1</strong> (RTW)
+                </label>
+                <label style="display: block; margin: 5px 0;">
+                    <input type="checkbox" checked disabled> <strong>Florian Backnang 82/1</strong> (NEF)
+                </label>
+            </div>
+            <p>Das System schlägt automatisch benötigte Fahrzeuge vor!</p>
         `
     },
     {
-        title: 'Funkverkehr',
+        title: 'Funkrufnamen Baden-Württemberg',
         content: `
-            <p>Der Funkverkehr läuft automatisch:</p>
-            <ul>
-                <li><span style="color: #28a745;">Grün:</span> Ausgehende Meldungen (Leitstelle)</li>
-                <li><span style="color: #17a2b8;">Blau:</span> Eingehende Meldungen (Fahrzeuge)</li>
+            <p><strong>Realistischer Funkverkehr</strong></p>
+            <p>Alle Funkrufnamen entsprechen dem offiziellen Digitalfunkatlas BW 2023:</p>
+            <ul style="list-style: none; padding: 0;">
+                <li>🚑 <strong>Florian Backnang 83/1</strong> → RTW</li>
+                <li>🚑 <strong>Florian Backnang 82/1</strong> → NEF</li>
+                <li>🚒 <strong>Florian Waiblingen 40/1</strong> → LF 10</li>
+                <li>🚓 <strong>2/WN-1</strong> → Polizei Waiblingen</li>
             </ul>
-            <p>Typische Funksprüche:</p>
-            <ul>
-                <li>"Florian Backnang 83/1, rücken aus"</li>
-                <li>"Florian Backnang 83/1 vor Ort"</li>
-                <li>"Florian Backnang 83/1, Einsatz abgeschlossen"</li>
-            </ul>
+            <p>Alle Wachen haben die korrekten Adressen von BOS-Fahrzeuge.info!</p>
         `
     },
     {
-        title: 'Credits und Wirtschaft',
+        title: 'Los geht\'s!',
         content: `
-            <p>Für jeden abgeschlossenen Einsatz erhalten Sie Credits:</p>
+            <p><strong>🎉 Sie sind bereit!</strong></p>
+            <p>Tipps für den Start:</p>
             <ul>
-                <li>RD 1: 150 €</li>
-                <li>RD 2: 300 €</li>
-                <li>Brand: 200-800 €</li>
-                <li>THL: 250-500 €</li>
+                <li>🔑 Groq API-Key in Einstellungen für KI-Telefonate (optional)</li>
+                <li>⏱️ Spielgeschwindigkeit anpassen für schnelleres Gameplay</li>
+                <li>💰 Kaufen Sie weitere Fahrzeuge um komplexere Einsätze zu bewältigen</li>
+                <li>🎯 Achten Sie auf die benötigten Fahrzeuge je Stichwort</li>
             </ul>
-            <p>Mit Credits können Sie neue Fahrzeuge kaufen und Ihre Leitstelle erweitern!</p>
-        `
-    },
-    {
-        title: 'Tutorial abgeschlossen!',
-        content: `
-            <p>🎉 Glückwunsch! Sie haben das Tutorial abgeschlossen.</p>
-            <p>Sie wissen jetzt:</p>
-            <ul>
-                <li>✅ Wie Sie Notrufe annehmen</li>
-                <li>✅ Wie das Stichwort-System funktioniert</li>
-                <li>✅ Wie Sie Fahrzeuge alarmieren</li>
-                <li>✅ Wie der Funkverkehr abläuft</li>
-            </ul>
-            <p><strong>Viel Erfolg beim Disponieren!</strong></p>
+            <p style="margin-top: 20px; font-size: 1.1em;">
+                <strong>Viel Erfolg bei Ihrem Dienst in der ILS Waiblingen! 🚑</strong>
+            </p>
         `
     }
 ];
 
-let currentTutorialStep = 0;
-
-function initTutorial() {
-    currentTutorialStep = 0;
-    showTutorialStep();
-}
-
-function showTutorialStep() {
-    const step = TUTORIAL_STEPS[currentTutorialStep];
-    const content = document.getElementById('tutorial-content');
+function loadTutorialStep(stepIndex) {
+    currentTutorialStep = stepIndex;
+    const step = TUTORIAL_STEPS[stepIndex];
     
+    const content = document.getElementById('tutorial-content');
     content.innerHTML = `
         <h3>${step.title}</h3>
-        ${step.content}
-        <p style="margin-top: 20px; color: #a0a0a0;">
-            Schritt ${currentTutorialStep + 1} von ${TUTORIAL_STEPS.length}
+        <div class="tutorial-step-content">
+            ${step.content}
+        </div>
+        <p style="text-align: center; margin-top: 20px; color: #a0a0a0;">
+            Schritt ${stepIndex + 1} von ${TUTORIAL_STEPS.length}
         </p>
     `;
-    
-    // Update Buttons
-    const prevBtn = document.querySelector('.tutorial-buttons .btn-secondary');
-    const nextBtn = document.querySelector('.tutorial-buttons .btn-primary');
-    
-    prevBtn.disabled = currentTutorialStep === 0;
-    
-    if (currentTutorialStep === TUTORIAL_STEPS.length - 1) {
-        nextBtn.innerHTML = 'Tutorial beenden <i class="fas fa-check"></i>';
-    } else {
-        nextBtn.innerHTML = 'Weiter <i class="fas fa-arrow-right"></i>';
-    }
 }
 
 function nextTutorialStep() {
     if (currentTutorialStep < TUTORIAL_STEPS.length - 1) {
-        currentTutorialStep++;
-        showTutorialStep();
+        loadTutorialStep(currentTutorialStep + 1);
     } else {
         // Tutorial beenden
         document.getElementById('tutorial-overlay').classList.remove('active');
@@ -160,7 +129,6 @@ function nextTutorialStep() {
 
 function previousTutorialStep() {
     if (currentTutorialStep > 0) {
-        currentTutorialStep--;
-        showTutorialStep();
+        loadTutorialStep(currentTutorialStep - 1);
     }
 }
