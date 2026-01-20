@@ -1,6 +1,5 @@
 // =========================
-// KI-MODUL & TELEFON-SYSTEM
-// Groq AI Integration + Interaktives Telefon
+// KI-TELEFONSYSTEM MIT GROQ
 // =========================
 
 let currentCall = null;
@@ -12,7 +11,6 @@ function showIncomingCallNotification(incident) {
     const callList = document.getElementById('call-list');
     if (!callList) return;
     
-    // KEINE Details vor Anrufannahme!
     callList.innerHTML = `
         <div class="incoming-call blinking" onclick="acceptIncomingCall('${incident.id}')" style="cursor: pointer; padding: 15px; background: #dc3545; border-radius: 8px; margin: 10px 0;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -30,39 +28,35 @@ function showIncomingCallNotification(incident) {
 }
 
 function acceptIncomingCall(incidentId) {
-    if (game) {
-        game.acceptCall(incidentId);
-    }
+    if (game) game.acceptCall(incidentId);
     
     const callList = document.getElementById('call-list');
-    if (callList) {
-        callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
-    }
+    if (callList) callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
 }
 
 function showCallDialog(incident) {
     currentCall = incident;
     conversationHistory = [];
     
-    const modal = document.getElementById('call-dialog');
+    const dialog = document.getElementById('call-dialog');
     const conversation = document.getElementById('call-conversation');
     const responses = document.querySelector('.call-responses');
     
     conversation.innerHTML = '';
     responses.innerHTML = '';
     
-    // Begrüßung durch Dispatcher
+    dialog.style.display = 'block';
+    dialog.style.top = '100px';
+    dialog.style.left = '100px';
+    
     addCallMessage('Disponent', 'Notruf 112, wo genau ist der Notfall?', 'dispatcher');
     conversationHistory.push({ role: 'assistant', content: 'Notruf 112, wo genau ist der Notfall?' });
     
-    // Erste vage Meldung des Anrufers
     setTimeout(() => {
         addCallMessage('Anrufer', incident.initialMessage, 'caller');
         conversationHistory.push({ role: 'user', content: incident.initialMessage });
         showCallResponses(incident);
     }, 1000);
-    
-    modal.classList.add('active');
 }
 
 function addCallMessage(speaker, message, type) {
@@ -76,42 +70,29 @@ function addCallMessage(speaker, message, type) {
 
 function showCallResponses(incident) {
     const responses = document.querySelector('.call-responses');
-    responses.innerHTML = '';
-    
-    // Eingabefeld für eigene Nachricht
-    const inputContainer = document.createElement('div');
-    inputContainer.style.cssText = 'margin-bottom: 15px;';
-    inputContainer.innerHTML = `
-        <input type="text" id="custom-message-input" placeholder="Eigene Nachricht eingeben..." 
-            style="width: 100%; padding: 10px; border: 2px solid #2d3748; border-radius: 6px; background: #0f1419; color: white; margin-bottom: 5px;"
+    responses.innerHTML = `
+        <input type="text" id="custom-message-input" placeholder="Eigene Nachricht..." 
+            style="width: 100%; padding: 8px; border: 2px solid #2d3748; border-radius: 6px; background: #0f1419; color: white; margin-bottom: 10px;"
             onkeypress="if(event.key==='Enter') sendCustomMessage()">
-        <button class="btn btn-primary btn-small" onclick="sendCustomMessage()">
+        <button class="btn btn-primary btn-small" onclick="sendCustomMessage()" style="width: 100%; margin-bottom: 10px;">
             <i class="fas fa-paper-plane"></i> Senden
         </button>
     `;
-    responses.appendChild(inputContainer);
     
-    // Textbausteine
     const suggestions = getContextualSuggestions(incident);
-    
-    const suggestionContainer = document.createElement('div');
-    suggestionContainer.innerHTML = '<p style="margin: 10px 0; color: #a0a0a0; font-size: 0.9em;">Textbausteine:</p>';
-    responses.appendChild(suggestionContainer);
-    
-    suggestions.forEach(suggestion => {
+    suggestions.forEach(s => {
         const btn = document.createElement('button');
         btn.className = 'response-btn';
-        btn.textContent = suggestion;
-        btn.onclick = () => askQuestion(suggestion, incident);
+        btn.textContent = s;
+        btn.onclick = () => askQuestion(s, incident);
         responses.appendChild(btn);
     });
     
-    // Einsatz erstellen Button
     if (incident.conversationState.locationKnown) {
         const createBtn = document.createElement('button');
         createBtn.className = 'btn btn-success';
         createBtn.style.marginTop = '15px';
-        createBtn.innerHTML = '<i class="fas fa-check"></i> Einsatz erstellen und disponieren';
+        createBtn.innerHTML = '<i class="fas fa-check"></i> Einsatz erstellen';
         createBtn.onclick = () => createIncidentFromCall(incident);
         responses.appendChild(createBtn);
     }
@@ -122,25 +103,19 @@ function getContextualSuggestions(incident) {
     
     if (!incident.conversationState.locationKnown) {
         suggestions.push('Wo genau befinden Sie sich?');
-        suggestions.push('Können Sie mir die genaue Adresse nennen?');
+        suggestions.push('Welche Straße?');
     }
     
     if (!incident.conversationState.detailsKnown) {
-        suggestions.push('Was ist genau passiert?');
-        suggestions.push('Können Sie die Situation genauer beschreiben?');
+        suggestions.push('Was ist passiert?');
     }
     
     if (incident.keyword.includes('RD') && !incident.conversationState.symptomsKnown) {
         suggestions.push('Ist die Person ansprechbar?');
-        suggestions.push('Atmet die Person normal?');
+        suggestions.push('Atmet die Person?');
     }
     
-    if (!incident.conversationState.ageKnown) {
-        suggestions.push('Wie alt ist die Person ungefähr?');
-    }
-    
-    suggestions.push('Bleiben Sie am Telefon, Hilfe ist unterwegs.');
-    
+    suggestions.push('Bleiben Sie am Telefon.');
     return suggestions.slice(0, 4);
 }
 
@@ -157,82 +132,53 @@ async function askQuestion(question, incident) {
     addCallMessage('Disponent', question, 'dispatcher');
     conversationHistory.push({ role: 'assistant', content: question });
     
-    // Versuche erst einfache Pattern-Matching-Antwort
     const simpleAnswer = generateSimpleResponse(question, incident);
     
     if (simpleAnswer) {
-        // Einfache Antwort gefunden
         setTimeout(() => {
             addCallMessage('Anrufer', simpleAnswer, 'caller');
             conversationHistory.push({ role: 'user', content: simpleAnswer });
             updateConversationState(question, incident);
             showCallResponses(incident);
-        }, 1000 + Math.random() * 1000);
+        }, 800);
     } else {
-        // Unerwartete Frage -> KI nutzen
         const aiAnswer = await generateAIResponse(question, incident);
         setTimeout(() => {
             addCallMessage('Anrufer', aiAnswer, 'caller');
             conversationHistory.push({ role: 'user', content: aiAnswer });
             showCallResponses(incident);
-        }, 1500);
+        }, 1200);
     }
 }
 
 function generateSimpleResponse(question, incident) {
     const q = question.toLowerCase();
     
-    if (q.includes('wo') || q.includes('adresse') || q.includes('ort')) {
+    if (q.includes('wo') || q.includes('adresse') || q.includes('straße')) {
         return incident.actualLocation;
     }
-    if (q.includes('passiert') || q.includes('situation')) {
-        return incident.fullDetails.description || 'Wie ich sagte...';
+    if (q.includes('passiert')) {
+        return incident.fullDetails.description;
     }
-    if (q.includes('ansprechbar') || q.includes('bewusstsein')) {
-        return incident.fullDetails.conscious ? 'Ja, die Person ist bei Bewusstsein.' : 'Nein, sie reagiert nicht!';
+    if (q.includes('ansprechbar')) {
+        return incident.fullDetails.conscious ? 'Ja, bei Bewusstsein.' : 'Nein, reagiert nicht!';
     }
-    if (q.includes('atmet') || q.includes('atmung')) {
-        return incident.fullDetails.breathing ? 'Ja, ich sehe Atmung.' : 'Ich weiß es nicht genau...';
+    if (q.includes('atmet')) {
+        return incident.fullDetails.breathing ? 'Ja, atmet.' : 'Keine Atmung!';
     }
-    if (q.includes('alt') || q.includes('alter')) {
-        return incident.fullDetails.age || 'Schwer zu sagen, vielleicht 50?';
-    }
-    if (q.includes('sicherheit')) {
-        return 'Ja, ich bin in Sicherheit.';
-    }
-    if (q.includes('bleiben') || q.includes('telefon')) {
-        return 'Ja, ich bleibe hier!';
+    if (q.includes('alt')) {
+        return incident.fullDetails.age || 'Weiß ich nicht genau...';
     }
     
-    return null; // Keine einfache Antwort gefunden
+    return null;
 }
 
 async function generateAIResponse(question, incident) {
-    // Rate Limiting
-    const now = Date.now();
-    if (now - lastAiCallReset > 60000) {
-        aiCallCount = 0;
-        lastAiCallReset = now;
-    }
-    
-    if (aiCallCount >= CONFIG.MAX_AI_CALLS_PER_MINUTE) {
-        return 'Entschuldigung, können Sie das wiederholen?';
-    }
-    
     if (!game || !game.apiKey) {
-        return 'Ja... bitte schicken Sie schnell jemanden!';
+        return 'Bitte schicken Sie schnell jemanden!';
     }
     
     try {
-        aiCallCount++;
-        
-        const systemPrompt = `Du bist ein aufgeregter Notrufer in einer Notsituation (${incident.keyword}). 
-Du hast bereits gemeldet: "${incident.initialMessage}"
-Die Situation: ${incident.fullDetails.description || 'Notfall'}
-Ort: ${incident.actualLocation}
-
-Antworte kurz (max 2 Sätze), authentisch und leicht gestresst auf Fragen des Disponenten. Gib nur Infos die du wirklich weißt.`;
-        
         const response = await fetch(CONFIG.GROQ_API_URL, {
             method: 'POST',
             headers: {
@@ -242,56 +188,47 @@ Antworte kurz (max 2 Sätze), authentisch und leicht gestresst auf Fragen des Di
             body: JSON.stringify({
                 model: CONFIG.GROQ_MODEL,
                 messages: [
-                    { role: 'system', content: systemPrompt },
+                    { role: 'system', content: `Du bist ein aufgeregter Notrufer. Situation: ${incident.fullDetails.description}. Ort: ${incident.actualLocation}. Antworte kurz (max 2 Sätze) und leicht gestresst.` },
                     ...conversationHistory.slice(-6),
                     { role: 'user', content: question }
                 ],
                 temperature: 0.8,
-                max_tokens: 100
+                max_tokens: 80
             })
         });
         
         const data = await response.json();
         return data.choices[0].message.content.trim();
-        
     } catch (error) {
         console.error('Groq API Fehler:', error);
-        return 'Bitte beeilen Sie sich, ich habe Angst!';
+        return 'Bitte beeilen Sie sich!';
     }
 }
 
 function updateConversationState(question, incident) {
     const q = question.toLowerCase();
     
-    if (q.includes('wo') || q.includes('adresse') || q.includes('ort')) {
+    if (q.includes('wo') || q.includes('adresse') || q.includes('straße')) {
         incident.conversationState.locationKnown = true;
         incident.location = incident.actualLocation;
     }
-    if (q.includes('passiert') || q.includes('situation')) {
+    if (q.includes('passiert')) {
         incident.conversationState.detailsKnown = true;
         incident.description = incident.fullDetails.description;
     }
     if (q.includes('alt')) {
         incident.conversationState.ageKnown = true;
     }
-    if (q.includes('ansprechbar') || q.includes('atmet') || q.includes('verletz')) {
+    if (q.includes('ansprechbar') || q.includes('atmet')) {
         incident.conversationState.symptomsKnown = true;
     }
 }
 
 function createIncidentFromCall(incident) {
-    document.getElementById('call-dialog').classList.remove('active');
-    
+    document.getElementById('call-dialog').style.display = 'none';
     incident.status = 'new';
     
-    const check = game.checkRequiredVehicles(incident.keyword);
-    
-    if (!check.hasAll) {
-        const missingStr = check.missing.join(', ');
-        alert(`WARNUNG: Nicht alle benötigten Fahrzeuge verfügbar!\n\nFehlend: ${missingStr}\n\nEmpfohlen: ${check.required.join(', ')}`);
-    }
-    
-    addRadioMessage('Leitstelle', `Neuer Einsatz erfasst: ${incident.keyword} - ${incident.description}`);
+    addRadioMessage('Leitstelle', `Einsatz erfasst: ${incident.keyword}`);
     updateIncidentList();
     updateMap();
     selectIncident(incident.id);

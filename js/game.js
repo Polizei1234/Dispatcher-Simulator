@@ -1,5 +1,5 @@
 // =========================
-// SPIEL-LOGIK
+// SPIEL-LOGIK MIT GROQ AI
 // =========================
 
 class Game {
@@ -8,7 +8,7 @@ class Game {
         this.vehicles = VEHICLES;
         this.incidents = [];
         this.selectedIncident = null;
-        this.money = 50000;
+        this.money = CONFIG.GAME_MODE === 'free' ? 999999999 : 50000;
         this.reputation = 100;
         this.apiKey = null;
         
@@ -21,17 +21,20 @@ class Game {
                Math.random() * (CONFIG.INCIDENT_SPAWN_MAX - CONFIG.INCIDENT_SPAWN_MIN);
     }
     
-    update() {
+    async update() {
         const now = Date.now();
         
-        // Spawne neue Einsätze (nur machbare!)
+        // Spawne neue Einsätze mit Groq AI
         if (now - this.lastIncidentSpawn > this.nextIncidentTime) {
-            const incident = generateIncident(this.vehicles);
+            const ownedVehicles = this.vehicles.filter(v => v.owned);
+            const incident = await generateIncidentWithAI(ownedVehicles, this.apiKey);
+            
             if (incident) {
                 this.incidents.push(incident);
                 showIncomingCallNotification(incident);
-                addRadioMessage('System', 'Neuer Notruf eingegangen!');
+                addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
             }
+            
             this.lastIncidentSpawn = now;
             this.nextIncidentTime = this.getRandomIncidentTime();
         }
@@ -42,6 +45,32 @@ class Game {
                 this.updateVehiclePosition(vehicle);
             }
         });
+        
+        // Verdiene Geld für abgeschlossene Einsätze (Karrieremodus)
+        if (CONFIG.GAME_MODE === 'career') {
+            this.incidents.filter(i => i.status === 'completed' && !i.rewarded).forEach(incident => {
+                const reward = this.calculateReward(incident.keyword);
+                this.money += reward;
+                incident.rewarded = true;
+                addRadioMessage('System', `€ ${reward} für ${incident.keyword} erhalten`);
+                document.getElementById('credits').textContent = this.money.toLocaleString();
+            });
+        }
+    }
+    
+    calculateReward(keyword) {
+        const rewards = {
+            'RD 1': 500,
+            'RD 2': 800,
+            'B 1': 300,
+            'B 2': 600,
+            'B 3': 1200,
+            'THL 1': 400,
+            'THL 2': 700,
+            'THL VU': 1000,
+            'VU': 600
+        };
+        return rewards[keyword] || 500;
     }
     
     acceptCall(incidentId) {
@@ -59,9 +88,9 @@ class Game {
         const required = keywordInfo.required || [];
         const owned = this.vehicles.filter(v => v.owned);
         
-        const missing = required.filter(reqType => {
-            return !owned.some(v => v.type === reqType);
-        });
+        const missing = required.filter(reqType => 
+            !owned.some(v => v.type === reqType)
+        );
         
         return {
             hasAll: missing.length === 0,
@@ -74,98 +103,55 @@ class Game {
         const vehicle = this.vehicles.find(v => v.id === vehicleId);
         const incident = this.incidents.find(i => i.id === incidentId);
         
-        if (!vehicle || !incident) return;
-        if (vehicle.status !== 'available') {
-            alert(`${vehicle.callsign} ist nicht verfügbar!`);
-            return;
-        }
+        if (!vehicle || !incident || vehicle.status !== 'available') return;
         
         vehicle.status = 'dispatched';
         vehicle.targetIncident = incidentId;
         
-        if (!incident.assignedVehicles) {
-            incident.assignedVehicles = [];
-        }
+        if (!incident.assignedVehicles) incident.assignedVehicles = [];
         incident.assignedVehicles.push(vehicleId);
         
-        // Berechne Route
         const station = this.stations[vehicle.station];
-        const start = station.position;
-        const end = incident.position;
-        
-        vehicle.route = this.calculateRoute(start, end);
+        vehicle.route = this.calculateRoute(station.position, incident.position);
         vehicle.routeIndex = 0;
-        vehicle.position = [...start];
         
-        const distance = this.calculateDistance(start, end);
-        const travelTime = (distance / CONFIG.VEHICLE_SPEED_KMH) * 60; // Minuten
-        vehicle.eta = Date.now() + (travelTime * 60 * 1000);
-        vehicle.totalDistance = distance;
-        
-        addRadioMessage('Leitstelle', `${vehicle.callsign} alarmiert zu ${incident.keyword}`);
-        addRadioMessage(vehicle.callsign, 'Rückmeldung: Einsatz übernommen, rücke aus!');
+        addRadioMessage('Leitstelle', `${vehicle.callsign} zu ${incident.keyword}`);
+        addRadioMessage(vehicle.callsign, 'Einsatz übernommen, rücke aus!');
     }
     
     calculateRoute(start, end) {
-        // Einfache Interpolation in 20 Schritten für realistische Bewegung
-        const steps = 20;
+        const steps = 30;
         const route = [];
-        
         for (let i = 0; i <= steps; i++) {
             const t = i / steps;
-            const lat = start[0] + (end[0] - start[0]) * t;
-            const lon = start[1] + (end[1] - start[1]) * t;
-            route.push([lat, lon]);
+            route.push([
+                start[0] + (end[0] - start[0]) * t,
+                start[1] + (end[1] - start[1]) * t
+            ]);
         }
-        
         return route;
-    }
-    
-    calculateDistance(pos1, pos2) {
-        // Haversine-Formel für präzise Distanzberechnung
-        const R = 6371; // Erdradius in km
-        const dLat = (pos2[0] - pos1[0]) * Math.PI / 180;
-        const dLon = (pos2[1] - pos1[1]) * Math.PI / 180;
-        
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(pos1[0] * Math.PI / 180) * Math.cos(pos2[0] * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
     }
     
     updateVehiclePosition(vehicle) {
         if (!vehicle.route || vehicle.routeIndex >= vehicle.route.length) {
-            // Ziel erreicht
             vehicle.status = 'on-scene';
-            vehicle.position = vehicle.route[vehicle.route.length - 1];
-            
             const incident = this.incidents.find(i => i.id === vehicle.targetIncident);
             if (incident) {
-                addRadioMessage(vehicle.callsign, `Vor Ort am Einsatzort ${incident.keyword}`);
+                addRadioMessage(vehicle.callsign, `Vor Ort am Einsatzort`);
+                
+                // Nach 2 Minuten: Einsatz abgeschlossen
+                setTimeout(() => {
+                    vehicle.status = 'available';
+                    incident.status = 'completed';
+                    addRadioMessage(vehicle.callsign, 'Einsatz beendet, Status 4');
+                }, 120000 / CONFIG.SIMULATION_SPEED);
             }
-            
             vehicle.route = null;
-            vehicle.routeIndex = 0;
             return;
         }
         
         vehicle.position = vehicle.route[vehicle.routeIndex];
         vehicle.routeIndex++;
-    }
-    
-    buyVehicle(vehicleIndex) {
-        const vehicle = this.vehicles[vehicleIndex];
-        if (!vehicle || vehicle.owned) return;
-        
-        if (this.money >= vehicle.cost) {
-            this.money -= vehicle.cost;
-            vehicle.owned = true;
-            alert(`✅ ${vehicle.type} gekauft!`);
-        } else {
-            alert(`❌ Nicht genug Geld! Benötigt: €${vehicle.cost.toLocaleString()}`);
-        }
     }
 }
 
