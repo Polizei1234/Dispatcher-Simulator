@@ -1,192 +1,202 @@
-# 🚨 Leitstellensimulator - ILS Waiblingen
+# ILS Waiblingen - Leitstellensimulator
 
-Ein realistisches browserbasiertes Dispatcher-Spiel für die Integrierte Leitstelle Waiblingen im Rems-Murr-Kreis.
+## 🚑 Über das Spiel
 
-## ✨ Features
+Ein realistischer Dispatcher-Simulator für die **Integrierte Leitstelle Waiblingen** im Rems-Murr-Kreis, Baden-Württemberg.
 
-### Spielmechanik
-- **Realistische Einsätze** basierend auf dem Baden-Württemberg Stichwort-System (RD, B, THL, etc.)
-- **KI-gestützte Notrufgespräche** mit Perplexity AI
-- **Echte Karte** mit OpenStreetMap und realistischen Fahrzeiten
-- **Wirtschaftssystem** - Verdiene Credits und kaufe neue Fahrzeuge
-- **Zeitsteuerung** - Wähle zwischen 1x bis 60x Zeitraffer
-- **Tutorial-System** für Einsteiger
+### Features
 
-### Realistisches Einsatzgebiet
-- Über **60 echte Wachen** im Rems-Murr-Kreis
-- **Rettungsdienst**: DRK Wachen in Waiblingen, Backnang, Winnenden, Schorndorf, Fellbach, Welzheim
-- **Feuerwehr**: Städtische Feuerwehren mit realistischen Fahrzeugen
-- **Polizei**: Polizeireviere mit Funkstreifenwagen
-- **THW**: Ortsverbände Waiblingen und Backnang
+✅ **Realistische Einsatzgebiete**
+- Kompletter Rems-Murr-Kreis mit allen Städten und Gemeinden
+- OpenStreetMap Integration für echte Karten
+- Realistische Fahrzeiten mit Sondersignalberechnung
 
-### Fahrzeuge
-- **Rettungsdienst**: RTW, NEF, KTW, NAW, ITW
-- **Feuerwehr**: LF 20, LF 16, DLK 23, RW, TLF, SW, GW-L, GW-A/S
-- **Polizei**: FuStW, VKW, GruKW
-- **THW**: GKW, MzKW, MLW
+✅ **Alle BOS-Organisationen**
+- Rettungsdienst (DRK, Malteser, ASB, JUH)
+- Feuerwehr (Berufsfeuerwehr & Freiwillige Feuerwehren)
+- Polizei (Polizeipräsidium Aalen - Reviere im Rems-Murr-Kreis)
+- Sonstige (THW, etc.)
 
-### Kommunikation
-- **Notrufgespräche** mit KI-generierten Anrufern
-- **Schnellantworten** für Disponenten
-- **Funkverkehr** mit Fahrzeugen
-- **Einsatzprotokoll** mit allen Ereignissen
+✅ **Realistische Fahrzeuge**
+- Alle echten Fahrzeuge der Wachen im Rems-Murr-Kreis
+- RTW, NEF, KTW, Feuerwehrfahrzeuge, Polizeifahrzeuge
+- Basierend auf Daten von [BOS-Fahrzeuge.info](https://bos-fahrzeuge.info)
 
-## 🚀 Installation & Start
+✅ **Baden-Württemberg Stichwort-System**
+- RD 1, RD 2 (Rettungsdienst)
+- B 1-6 (Brand)
+- THL 1-4 (Technische Hilfeleistung)
+- Weitere Einsatzstichwörter nach DV 100
 
-### Voraussetzungen
-- **Node.js** (Version 14 oder höher) - [Download](https://nodejs.org/)
-- Einen modernen Webbrowser (Chrome, Firefox, Edge, Safari)
-- Optional: Perplexity AI API-Key für KI-Funktionen
+✅ **KI-Integration (Perplexity AI)**
+- Realistische Einsatzgenerierung
+- Dynamische Telefongespräche mit Anrufern
+- Einsatzentwicklungen und Nachforderungen
+- Funkverkehr-Simulation
 
-### Schritt 1: Repository klonen
-```bash
-git clone https://github.com/Polizei1234/Dispatcher-Simulator.git
-cd Dispatcher-Simulator
-```
+✅ **Spielmechanik**
+- Wirtschaftssystem: Fahrzeuge kaufen mit Credits
+- Einsätze bearbeiten und Credits verdienen
+- Start mit einer kleinen Wache (z.B. DRK Backnang)
+- Erweiterbar auf andere Leitstellen
 
-### Schritt 2: Abhängigkeiten installieren
-```bash
-npm install
-```
+✅ **Tutorial-System**
+- Interaktives Tutorial für Einsteiger
+- Vorgefertigte Textbausteine für Dispatcher
+- Funkverkehr mit Textbausteinen
 
-### Schritt 3: Spiel starten
-```bash
-npm start
-```
+## 🎮 Installation & Spielen
 
-Das Spiel öffnet sich automatisch im Browser unter `http://localhost:8080`
+### Lokal spielen
 
-Alternativ kannst du die `index.html` direkt in einem Browser öffnen (eingeschränkte Funktionalität).
-
-## 🔑 Perplexity AI API einrichten
-
-Für realistische KI-generierte Notrufgespräche benötigst du einen Perplexity API-Key:
-
-1. Gehe zu [https://www.perplexity.ai/](https://www.perplexity.ai/)
-2. Erstelle einen Account und erhalte deinen API-Key
-3. Öffne die Datei `js/ai.js`
-4. Füge deinen API-Key ein:
-   ```javascript
-   this.apiKey = 'DEIN_API_KEY_HIER';
+1. Repository klonen oder herunterladen:
+   ```bash
+   git clone https://github.com/Polizei1234/Dispatcher-Simulator.git
+   cd Dispatcher-Simulator
    ```
 
-**Wichtig**: Der API-Key wird im Code gespeichert. Publiziere das Repository NICHT mit deinem persönlichen API-Key!
+2. `index.html` im Browser öffnen:
+   - Doppelklick auf `index.html`
+   - Oder mit lokalem Webserver (empfohlen):
+     ```bash
+     # Python 3
+     python -m http.server 8000
+     # Dann im Browser: http://localhost:8000
+     ```
 
-### Alternative ohne API-Key
-Das Spiel funktioniert auch ohne API-Key mit vordefinierten Textbausteinen.
+3. **Optional**: Perplexity API Key eintragen
+   - In den Einstellungen API Key eingeben
+   - Für KI-generierte Einsätze und Telefongespräche
 
-## 🎮 Spielanleitung
+## ⚙️ Konfiguration
+
+### Spielgeschwindigkeit
+- Echtzeit (1:1)
+- 2x, 5x, 10x, 30x beschleunigt
+- Einstellbar im Einstellungsmenü
+
+### API Integration
+
+Für KI-Features (optional):
+1. Perplexity API Key bei [Perplexity.ai](https://www.perplexity.ai) erstellen
+2. Im Spiel unter Einstellungen eintragen
+3. Modell: `sonar`
+
+**Hinweis**: Ohne API Key funktioniert das Spiel mit vordefinierten Einsätzen.
+
+## 📋 Spielanleitung
 
 ### Spielstart
-1. Du startest mit der **DRK Rettungswache Backnang**
-2. Drei Fahrzeuge stehen dir zur Verfügung: **1x RTW, 1x NEF, 1x KTW**
-3. Startkapital: **10.000 €**
+1. **Neues Spiel** starten oder **Tutorial** durchspielen
+2. Du startest mit einer kleinen Wache (z.B. DRK Backnang)
+3. Startkapital: 50.000 €
+4. Erste Fahrzeuge: 1 RTW, 1 NEF
 
-### Einsatz abarbeiten
-1. **Notruf annehmen**: Klicke auf einen neuen Einsatz (orange markiert)
-2. **Gespräch führen**: Stelle Fragen mit den Schnellantworten
-3. **Fahrzeuge alarmieren**: Wähle passende Fahrzeuge basierend auf dem Stichwort
-4. **Einsatz beobachten**: Verfolge die Fahrzeuge auf der Karte
-5. **Abschluss**: Nach Einsatzende erhältst du Credits
+### Einsätze bearbeiten
+1. **Notruf annehmen**: Telefongespräch führen
+2. **Stichwort vergeben**: Nach BW-System (z.B. RD 2, B 3)
+3. **Fahrzeuge alarmieren**: Passende Einsatzmittel auswählen
+4. **Einsatz überwachen**: Status verfolgen
+5. **Nachforderungen**: Bei Bedarf weitere Kräfte alarmieren
 
 ### Fahrzeuge kaufen
-- Verdiene Credits durch erfolgreiche Einsätze
-- Kaufe neue Fahrzeuge über den Shop (Button in Entwicklung)
-- Erweitere dein Netzwerk im ganzen Rems-Murr-Kreis
+- Im Shop nur **reale Fahrzeuge** der Wachen kaufbar
+- Fahrzeuge kosten je nach Typ:
+  - RTW: ~195.000 €
+  - NEF: ~120.000 €
+  - KTW: ~80.000 €
+  - Feuerwehr: variabel
 
-### Stichwort-System verstehen
-- **RD 1**: Lebensbedrohlich → RTW + NEF
-- **RD 2**: Dringend → RTW
-- **RD 3**: Nicht dringend → KTW
-- **B 1-4**: Brände (1=klein, 4=groß)
-- **THL 1-3**: Technische Hilfeleistung
-- **VU 1-3**: Verkehrsunfälle
+### Credits verdienen
+- Pro abgeschlossenem Einsatz
+- Bonus für schnelle Reaktion
+- Bonus für korrekte Disposition
 
-## 🛠️ Erweiterungsmöglichkeiten
+## 🗺️ Einsatzgebiet
 
-### Weitere Leitstellen hinzufügen
-Das Spiel ist vorbereitet für die Erweiterung auf andere Leitstellen:
-1. Füge neue Wachen in `data/stations.json` hinzu
-2. Passe die Startposition in `js/game.js` an
-3. Erweitere die Einsatzgenerierung auf das neue Gebiet
+**Rems-Murr-Kreis** - Alle Städte und Gemeinden:
+- Waiblingen, Winnenden, Schorndorf, Backnang
+- Fellbach, Weinstadt, Kernen, Korb
+- Murrhardt, Welzheim, Rudersberg
+- Und alle weiteren 31 Gemeinden
 
-### Multiplayer (geplant)
-- Gemeinsames Disponieren mit Freunden
-- Wettbewerb um schnellste Einsatzzeiten
-- Chat-Funktion zwischen Disponenten
+## 🏥 Rettungswachen (DRK)
 
-### Weitere Features (geplant)
-- Echtzeit-Wetterdaten
-- Tages-/Nachtzyklen mit angepassten Einsätzen
-- Statistiken und Ranglisten
-- Ausbildungsmodus für echte Disponenten
-- Voice-Integration für Notrufgespräche
+1. **RW Waiblingen** (Lehrrettungswache)
+   - 1 NEF 24/7
+   - 1 RTW 24/7 + 1 RTW 12h
+   - 4 KTW
 
-## 📝 Projektstruktur
+2. **RW Backnang** (Lehrrettungswache)
+   - 1 NEF 24/7
+   - 1 RTW 24/7 + 1 RTW 12h
 
-```
-Dispatcher-Simulator/
-├── index.html          # Hauptseite
-├── css/
-│   └── style.css       # Alle Styles
-├── js/
-│   ├── game.js         # Hauptspiellogik
-│   ├── map.js          # Kartenverwaltung & Routing
-│   ├── ai.js           # Perplexity AI Integration
-│   └── incidents.js    # Einsatzgenerierung
-├── data/
-│   ├── stations.json   # Alle Wachen im Rems-Murr-Kreis
-│   ├── vehicles.json   # Fahrzeugtypen mit Specs
-│   └── keywords.json   # BW Stichwort-System
-├── package.json      # NPM Konfiguration
-└── README.md         # Diese Datei
-```
+3. **RW Winnenden**
+   - 1 RTW 24/7
 
-## ❓ Häufige Fragen (FAQ)
+4. **RW Schorndorf**
+   - 1 RTW 24/7
+   - KTW
 
-### Das Spiel lädt nicht
-- Stelle sicher, dass alle Dateien korrekt heruntergeladen wurden
-- Prüfe die Browser-Console (F12) auf Fehler
-- Verwende `npm start` statt direktem Öffnen der HTML-Datei
+5. **RW Fellbach**
+   - 2 RTW 24/7
 
-### KI-Gespräche funktionieren nicht
-- Prüfe ob dein API-Key korrekt eingetragen ist
-- Das Spiel funktioniert auch ohne API-Key mit Templates
+6. **RW Murrhardt**
+   - 1 RTW 24/7
 
-### Fahrzeuge bewegen sich nicht
-- Die Routenberechnung ist vereinfacht
-- Für echtes Routing würde OpenRouteService API benötigt
+7. **RW Rudersberg**
+   - 1 RTW
 
-### Kann ich eigene Einsätze erstellen?
-- Ja! Bearbeite `js/incidents.js` und füge eigene Szenarien hinzu
+8. Weitere Wachen in Weinstadt, Welzheim, etc.
 
-## 👥 Mitwirken
+## 🚒 Feuerwehren
 
-Du möchtest das Projekt verbessern? Super!
+Alle Freiwilligen Feuerwehren im Rems-Murr-Kreis mit realistischen Fahrzeugen:
+- LF 10, LF 16, LF 20
+- DLK 23, TLF 16/25, TLF 20/40
+- RW, GW-L, KdoW
 
-1. Fork das Repository
-2. Erstelle einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit deine Änderungen (`git commit -m 'Add AmazingFeature'`)
-4. Push zum Branch (`git push origin feature/AmazingFeature`)
-5. Öffne einen Pull Request
+## 🚓 Polizei
 
-## 📜 Lizenz
+Polizeipräsidium Aalen - Dienststellen im Rems-Murr-Kreis:
+- Polizeirevier Backnang
+- Polizeirevier Waiblingen
+- Polizeirevier Winnenden
+- Polizeiposten
 
-MIT License - siehe [LICENSE](LICENSE) Datei
+## 🎯 Geplante Features
 
-## 🚑 Danksagungen
+- [ ] Multiplayer-Modus
+- [ ] Weitere Leitstellen (ILS Stuttgart, ILS Ludwigsburg)
+- [ ] Statistiken und Auswertungen
+- [ ] Ereignislog exportieren
+- [ ] Erweiterte KI-Funktionen (Voice)
+- [ ] MANV-Szenarien (Massenanfall von Verletzten)
+- [ ] Katastrophenschutz-Einsätze
 
-- **OpenStreetMap** für die Kartendaten
-- **Leaflet.js** für die Kartenbibliothek
-- **Perplexity AI** für die KI-Integration
-- **BOS-Fahrzeuge.info** für Fahrzeuginformationen
-- Allen Einsatzkräften im Rems-Murr-Kreis 💙
+## 🛠️ Technologie
+
+- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+- **Karte**: Leaflet.js + OpenStreetMap
+- **Routing**: OpenRouteService API
+- **KI**: Perplexity AI (sonar)
+- **Daten**: JSON-basiert
+
+## 📝 Lizenz
+
+Dieses Projekt ist für private, nicht-kommerzielle Nutzung bestimmt.
+
+## 🙏 Danksagungen
+
+- [BOS-Fahrzeuge.info](https://bos-fahrzeuge.info) für Fahrzeugdaten
+- DRK Rems-Murr e.V. für öffentliche Informationen
+- OpenStreetMap Contributors
+- Perplexity AI
 
 ## 📧 Kontakt
 
-Bei Fragen oder Problemen:
-- GitHub Issues: [https://github.com/Polizei1234/Dispatcher-Simulator/issues](https://github.com/Polizei1234/Dispatcher-Simulator/issues)
+Bei Fragen oder Problemen: GitHub Issues erstellen
 
 ---
 
-**Viel Spaß beim Disponieren!** 🚨🚑🚒🚓
+**Viel Erfolg beim Disponieren! 🚑🚒🚓**
