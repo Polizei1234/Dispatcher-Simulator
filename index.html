@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitstellensimulator - ILS Waiblingen</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <h1>🚨 Leitstellensimulator - ILS Waiblingen</h1>
+                <div class="status-bar">
+                    <span id="current-time">00:00:00</span>
+                    <span id="active-incidents">Aktive Einsätze: 0</span>
+                    <span id="available-vehicles">Verfügbar: 0</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span id="credits">Credits: 10000 €</span>
+                <div class="time-controls">
+                    <label>Zeitraffer:</label>
+                    <select id="time-speed">
+                        <option value="1">1x (Echtzeit)</option>
+                        <option value="2">2x</option>
+                        <option value="5">5x</option>
+                        <option value="10" selected>10x</option>
+                        <option value="30">30x</option>
+                        <option value="60">60x</option>
+                    </select>
+                </div>
+                <button id="tutorial-btn" class="btn btn-info">📖 Tutorial</button>
+                <button id="settings-btn" class="btn btn-secondary">⚙️ Einstellungen</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar - Incidents -->
+            <aside class="sidebar-left">
+                <div class="panel">
+                    <h2>📋 Einsatzliste</h2>
+                    <div id="incident-filter">
+                        <button class="filter-btn active" data-filter="all">Alle</button>
+                        <button class="filter-btn" data-filter="new">Neu</button>
+                        <button class="filter-btn" data-filter="active">Aktiv</button>
+                        <button class="filter-btn" data-filter="completed">Abgeschlossen</button>
+                    </div>
+                    <div id="incidents-list" class="scrollable"></div>
+                </div>
+            </aside>
+
+            <!-- Center - Map -->
+            <main class="map-container">
+                <div id="map"></div>
+                <div id="notification-container"></div>
+            </main>
+
+            <!-- Right Sidebar - Vehicles & Details -->
+            <aside class="sidebar-right">
+                <div class="panel">
+                    <h2>🚑 Fahrzeuge</h2>
+                    <div id="vehicle-filter">
+                        <button class="filter-btn active" data-org="all">Alle</button>
+                        <button class="filter-btn" data-org="rd">RD</button>
+                        <button class="filter-btn" data-org="fw">FW</button>
+                        <button class="filter-btn" data-org="pol">POL</button>
+                    </div>
+                    <div id="vehicles-list" class="scrollable"></div>
+                </div>
+                <div class="panel" id="detail-panel" style="display: none;">
+                    <h2>Details</h2>
+                    <div id="detail-content"></div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Bar - Communications -->
+        <footer class="bottom-bar">
+            <div class="comm-tabs">
+                <button class="tab-btn active" data-tab="phone">📞 Notruf</button>
+                <button class="tab-btn" data-tab="radio">📡 Funk</button>
+                <button class="tab-btn" data-tab="log">📝 Protokoll</button>
+            </div>
+            <div id="comm-content" class="comm-content scrollable">
+                <div id="phone-tab" class="tab-content active">
+                    <div id="phone-messages"></div>
+                </div>
+                <div id="radio-tab" class="tab-content">
+                    <div id="radio-messages"></div>
+                </div>
+                <div id="log-tab" class="tab-content">
+                    <div id="log-messages"></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay" style="display: none;">
+        <div class="modal" id="incident-modal">
+            <div class="modal-header">
+                <h2>🚨 Neuer Einsatz</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="incident-modal-body"></div>
+            <div class="modal-footer">
+                <button id="incident-accept" class="btn btn-primary">Einsatz annehmen</button>
+                <button class="modal-close btn btn-secondary">Abbrechen</button>
+            </div>
+        </div>
+
+        <div class="modal" id="phone-modal" style="display: none;">
+            <div class="modal-header">
+                <h2>📞 Notrufgespräch</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="phone-conversation" class="conversation"></div>
+                <div class="quick-responses">
+                    <h3>Schnellantworten:</h3>
+                    <div id="quick-response-buttons"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="phone-end" class="btn btn-danger">Gespräch beenden</button>
+            </div>
+        </div>
+
+        <div class="modal" id="dispatch-modal" style="display: none;">
+            <div class="modal-header">
+                <h2>🚑 Fahrzeuge alarmieren</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="suggested-vehicles">
+                    <h3>Empfohlene Alarmierung:</h3>
+                    <div id="suggested-list"></div>
+                </div>
+                <div id="available-vehicles-dispatch">
+                    <h3>Verfügbare Fahrzeuge:</h3>
+                    <div id="dispatch-vehicle-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="dispatch-confirm" class="btn btn-primary">Alarmieren</button>
+                <button class="modal-close btn btn-secondary">Abbrechen</button>
+            </div>
+        </div>
+
+        <div class="modal" id="tutorial-modal" style="display: none;">
+            <div class="modal-header">
+                <h2>📖 Tutorial</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="tutorial-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="tutorial-prev" class="btn btn-secondary">⬅ Zurück</button>
+                <button id="tutorial-next" class="btn btn-primary">Weiter ➡</button>
+                <button id="tutorial-skip" class="btn btn-secondary">Tutorial überspringen</button>
+            </div>
+        </div>
+
+        <div class="modal" id="shop-modal" style="display: none;">
+            <div class="modal-header">
+                <h2>🛒 Fahrzeuge kaufen</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="shop-content"></div>
+            <div class="modal-footer">
+                <button class="modal-close btn btn-secondary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/game.js" type="module"></script>
+</body>
+</html>
