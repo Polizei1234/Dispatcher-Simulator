@@ -9,10 +9,11 @@ let mapMarkers = {
     incidents: []
 };
 
+let vehicleIcons = {};
+
 function initMap() {
     console.log('Initialisiere Karte...');
     
-    // Warte kurz, bis das Map-Element sichtbar ist
     const mapElement = document.getElementById('map');
     if (!mapElement) {
         console.error('Map-Element nicht gefunden!');
@@ -20,27 +21,23 @@ function initMap() {
     }
     
     try {
-        // Erstelle Karte
         map = L.map('map', {
             center: CONFIG.MAP_CENTER,
             zoom: CONFIG.MAP_ZOOM,
             zoomControl: true
         });
         
-        // Füge OpenStreetMap Tiles hinzu
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             minZoom: CONFIG.MAP_MIN_ZOOM,
             maxZoom: CONFIG.MAP_MAX_ZOOM
         }).addTo(map);
         
-        // Wichtig: Karte neu rendern
         setTimeout(() => {
             map.invalidateSize();
             console.log('Karte erfolgreich initialisiert');
         }, 100);
         
-        // Zeige Wachen
         showStationsOnMap();
         
     } catch (error) {
@@ -51,38 +48,30 @@ function initMap() {
 function showStationsOnMap() {
     if (!game || !map) return;
     
-    // Lösche alte Marker
     mapMarkers.stations.forEach(marker => map.removeLayer(marker));
     mapMarkers.stations = [];
     
-    // Zeige nur eigene Wachen
     Object.values(game.stations).forEach(station => {
-        // Prüfe ob Spieler Fahrzeuge in dieser Wache hat
         const hasVehicles = game.vehicles.some(v => v.station === station.id && v.owned);
         if (!hasVehicles) return;
         
-        // Erstelle einfachen Marker (keine externen Icons wegen CORS)
-        let markerColor = '#c8102e'; // Rot für Rettungswache
-        
-        if (station.type === 'feuerwehr') {
-            markerColor = '#ff5722'; // Orange
-        } else if (station.type === 'polizei') {
-            markerColor = '#2196f3'; // Blau
-        }
+        // Verwende Emoji als Icon
+        const emoji = station.icon || '🏥';
         
         const icon = L.divIcon({
             className: 'custom-station-marker',
-            html: `<div style="background: ${markerColor}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-            popupAnchor: [0, -12]
+            html: `<div style="font-size: 32px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
         });
         
         const marker = L.marker(station.position, { icon: icon }).addTo(map);
         marker.bindPopup(`
             <strong>${station.name}</strong><br>
             ${station.organization}<br>
-            <small>${station.address}</small>
+            <small>${station.address}</small><br>
+            <small>Fahrzeuge: ${game.vehicles.filter(v => v.station === station.id && v.owned).length}</small>
         `);
         
         mapMarkers.stations.push(marker);
@@ -91,61 +80,105 @@ function showStationsOnMap() {
 
 function updateMap() {
     if (!game || !map) return;
-    
-    // Update Fahrzeuge
     updateVehiclesOnMap();
-    
-    // Update Einsätze
     updateIncidentsOnMap();
 }
 
 function updateVehiclesOnMap() {
     if (!map) return;
     
-    // Lösche alte Marker
     mapMarkers.vehicles.forEach(marker => map.removeLayer(marker));
     mapMarkers.vehicles = [];
     
-    // Zeige nur aktive Fahrzeuge
-    game.vehicles.filter(v => v.status !== 'available' && v.owned).forEach(vehicle => {
-        const icon = L.divIcon({
-            className: 'vehicle-marker',
-            html: `<div style="background: #ffc107; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${vehicle.callsign.split(' ').pop()}</div>`,
-            iconSize: [60, 20]
-        });
+    // Zeige alle Fahrzeuge (auch verfügbare an der Wache)
+    game.vehicles.filter(v => v.owned).forEach(vehicle => {
+        let emoji = '🚑'; // RTW
+        let bgColor = '#c8102e';
         
-        const marker = L.marker(vehicle.position, { icon: icon }).addTo(map);
-        marker.bindPopup(`
-            <strong>${vehicle.callsign}</strong><br>
-            ${vehicle.type}<br>
-            Status: ${vehicle.status === 'dispatched' ? 'Alarmiert' : 'Vor Ort'}
-        `);
+        if (vehicle.type === 'NEF') {
+            emoji = '🚑';
+            bgColor = '#ffc107';
+        } else if (vehicle.type === 'KTW') {
+            emoji = '🚐';
+            bgColor = '#2196f3';
+        } else if (vehicle.type.includes('LF') || vehicle.type.includes('DLK') || vehicle.type.includes('TLF')) {
+            emoji = '🚒';
+            bgColor = '#ff5722';
+        } else if (vehicle.type.includes('FuStW')) {
+            emoji = '🚓';
+            bgColor = '#2196f3';
+        }
         
-        mapMarkers.vehicles.push(marker);
+        // Zeige nur aktive Fahrzeuge auf der Karte fahrend
+        if (vehicle.status !== 'available') {
+            const callsignShort = vehicle.callsign.split(' ').slice(-2).join(' ');
+            
+            const icon = L.divIcon({
+                className: 'vehicle-marker-active',
+                html: `
+                    <div style="display: flex; align-items: center; background: ${bgColor}; padding: 4px 8px; border-radius: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 2px solid white;">
+                        <span style="font-size: 16px; margin-right: 4px;">${emoji}</span>
+                        <span style="color: white; font-size: 11px; font-weight: bold; white-space: nowrap;">${callsignShort}</span>
+                    </div>
+                `,
+                iconSize: [100, 30],
+                iconAnchor: [50, 15]
+            });
+            
+            const marker = L.marker(vehicle.position, { icon: icon }).addTo(map);
+            marker.bindPopup(`
+                <strong>${vehicle.callsign}</strong><br>
+                ${vehicle.type}<br>
+                Status: ${getStatusText(vehicle.status)}<br>
+                ${vehicle.totalDistance ? `Distanz: ${vehicle.totalDistance.toFixed(1)} km` : ''}
+            `);
+            
+            mapMarkers.vehicles.push(marker);
+        }
     });
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'available': return 'Verfügbar';
+        case 'dispatched': return 'Alarmiert - unterwegs';
+        case 'on-scene': return 'Vor Ort';
+        default: return status;
+    }
 }
 
 function updateIncidentsOnMap() {
     if (!map) return;
     
-    // Lösche alte Marker
     mapMarkers.incidents.forEach(marker => map.removeLayer(marker));
     mapMarkers.incidents = [];
     
-    // Zeige aktive Einsätze
-    game.incidents.filter(i => i.status !== 'completed').forEach(incident => {
+    game.incidents.filter(i => i.status !== 'completed' && i.status !== 'incoming' && i.status !== 'in-call').forEach(incident => {
+        const keywordInfo = KEYWORDS_BW[incident.keyword];
+        const color = keywordInfo ? keywordInfo.color : '#dc3545';
+        
         const icon = L.divIcon({
             className: 'incident-marker',
-            html: `<div style="background: #dc3545; color: white; padding: 6px; border-radius: 50%; font-size: 14px; font-weight: bold; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">!</div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
+            html: `
+                <div style="background: ${color}; color: white; padding: 8px; border-radius: 50%; font-size: 12px; font-weight: bold; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.4); border: 3px solid white;">
+                    ${incident.keyword}
+                </div>
+            `,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
         });
         
         const marker = L.marker(incident.position, { icon: icon }).addTo(map);
+        
+        const assignedVehiclesText = incident.assignedVehicles && incident.assignedVehicles.length > 0
+            ? `<br><small>Alarmiert: ${incident.assignedVehicles.length} Fahrzeug(e)</small>`
+            : '<br><small style="color: #ffc107;">Noch keine Fahrzeuge alarmiert!</small>';
+        
         marker.bindPopup(`
-            <strong>${incident.keyword}</strong><br>
-            ${incident.description}<br>
-            <small>${incident.location}</small>
+            <strong style="color: ${color};">${incident.keyword}</strong><br>
+            ${incident.description || 'Details noch unklar'}<br>
+            <small>${incident.location || 'Adresse wird ermittelt'}</small>
+            ${assignedVehiclesText}
         `);
         
         marker.on('click', () => selectIncident(incident.id));
