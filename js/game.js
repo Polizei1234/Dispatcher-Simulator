@@ -1,182 +1,47 @@
 // =========================
-// SPIELLOGIK
+// SPIEL-LOGIK
 // =========================
 
 class Game {
     constructor() {
-        this.credits = CONFIG.INITIAL_CREDITS;
-        this.gameTime = new Date();
-        this.gameSpeed = CONFIG.DEFAULT_GAME_SPEED;
-        this.running = false;
+        this.stations = STATIONS;
+        this.vehicles = VEHICLES;
         this.incidents = [];
-        this.vehicles = [];
-        this.stations = {};
         this.selectedIncident = null;
-        this.apiKey = '';
-        this.soundEnabled = CONFIG.SOUND_ENABLED;
-        this.pendingCall = null; // Wartender Anruf
+        this.money = 50000;
+        this.reputation = 100;
+        this.apiKey = null;
         
-        this.incidentCounter = 0;
-        this.lastIncidentTime = Date.now();
-        
-        this.vehicleUpdateInterval = null;
+        this.lastIncidentSpawn = Date.now();
+        this.nextIncidentTime = this.getRandomIncidentTime();
     }
     
-    init() {
-        this.loadSettings();
-        this.initializeStations();
-        document.getElementById('game-speed-indicator').textContent = this.gameSpeed + 'x';
-        this.start();
+    getRandomIncidentTime() {
+        return CONFIG.INCIDENT_SPAWN_MIN + 
+               Math.random() * (CONFIG.INCIDENT_SPAWN_MAX - CONFIG.INCIDENT_SPAWN_MIN);
     }
     
-    initializeStations() {
-        this.stations = JSON.parse(JSON.stringify(STATIONS));
+    update() {
+        const now = Date.now();
         
-        const startStation = this.stations[CONFIG.STARTING_STATION];
-        if (startStation) {
-            this.vehicles = startStation.vehicles.map(v => ({
-                ...v,
-                station: startStation.id,
-                position: [...startStation.position],
-                homePosition: [...startStation.position],
-                owned: true,
-                route: null,
-                routeProgress: 0
-            }));
-            
-            console.log('Startfahrzeuge geladen:', this.vehicles.length);
+        // Spawne neue Einsätze (nur machbare!)
+        if (now - this.lastIncidentSpawn > this.nextIncidentTime) {
+            const incident = generateIncident(this.vehicles);
+            if (incident) {
+                this.incidents.push(incident);
+                showIncomingCallNotification(incident);
+                addRadioMessage('System', 'Neuer Notruf eingegangen!');
+            }
+            this.lastIncidentSpawn = now;
+            this.nextIncidentTime = this.getRandomIncidentTime();
         }
-    }
-    
-    start() {
-        this.running = true;
-        console.log('Spiel gestartet');
-        this.gameLoop();
-        this.incidentGenerationLoop();
-        this.startVehicleUpdates();
-    }
-    
-    startVehicleUpdates() {
-        this.vehicleUpdateInterval = setInterval(() => {
-            this.updateVehiclePositions();
-        }, CONFIG.VEHICLE_UPDATE_INTERVAL);
-    }
-    
-    updateVehiclePositions() {
+        
+        // Update Fahrzeuge
         this.vehicles.forEach(vehicle => {
-            if (vehicle.route && vehicle.status === 'dispatched') {
-                // Berechne Fortschritt basierend auf Geschwindigkeit und Zeit
-                const speedFactor = (CONFIG.VEHICLE_SPEED_SONDERSIGNAL / 3600) * (CONFIG.VEHICLE_UPDATE_INTERVAL / 1000) * this.gameSpeed;
-                vehicle.routeProgress += speedFactor / vehicle.totalDistance;
-                
-                if (vehicle.routeProgress >= 1) {
-                    // Ziel erreicht
-                    vehicle.routeProgress = 1;
-                    vehicle.position = [...vehicle.targetPosition];
-                    vehicle.status = 'on-scene';
-                    addRadioMessage(vehicle.callsign, `${vehicle.callsign} vor Ort`, 'incoming');
-                    
-                    // Starte Einsatzzeit
-                    this.startIncidentWork(vehicle);
-                } else {
-                    // Interpoliere Position entlang der Route
-                    if (vehicle.route && vehicle.route.length > 1) {
-                        const segmentIndex = Math.floor(vehicle.routeProgress * (vehicle.route.length - 1));
-                        const segment = vehicle.route[segmentIndex];
-                        vehicle.position = segment || vehicle.position;
-                    }
-                }
+            if (vehicle.status === 'dispatched' && vehicle.route) {
+                this.updateVehiclePosition(vehicle);
             }
         });
-        
-        updateMap();
-        updateVehicleList();
-    }
-    
-    startIncidentWork(vehicle) {
-        const workTime = 1200000 / this.gameSpeed; // 20 Minuten in Spielzeit
-        
-        setTimeout(() => {
-            vehicle.status = 'available';
-            vehicle.assignedIncident = null;
-            vehicle.route = null;
-            vehicle.routeProgress = 0;
-            
-            // Fahrzeug zurück zur Wache
-            vehicle.position = [...vehicle.homePosition];
-            
-            addRadioMessage(vehicle.callsign, `${vehicle.callsign} Einsatz abgeschlossen, wieder frei`, 'incoming');
-            
-            // Einsatz abschließen
-            const incident = this.incidents.find(i => i.assignedVehicles && i.assignedVehicles.includes(vehicle.id));
-            if (incident) {
-                incident.status = 'completed';
-                const reward = CONFIG.CREDITS_PER_INCIDENT[incident.keyword] || 100;
-                this.credits += reward;
-            }
-            
-            updateUI();
-            updateVehicleList();
-            updateIncidentList();
-            updateMap();
-        }, workTime);
-    }
-    
-    gameLoop() {
-        if (!this.running) return;
-        this.gameTime = new Date(this.gameTime.getTime() + (1000 * this.gameSpeed));
-        this.updateUI();
-        setTimeout(() => this.gameLoop(), CONFIG.TIME_UPDATE_INTERVAL);
-    }
-    
-    incidentGenerationLoop() {
-        if (!this.running) return;
-        
-        const now = Date.now();
-        const timeSinceLastIncident = now - this.lastIncidentTime;
-        
-        if (timeSinceLastIncident > CONFIG.MIN_INCIDENT_INTERVAL) {
-            const randomChance = Math.random();
-            if (randomChance < 0.4) {
-                this.generateIncident();
-                this.lastIncidentTime = now;
-            }
-        }
-        
-        setTimeout(() => this.incidentGenerationLoop(), 20000);
-    }
-    
-    generateIncident() {
-        const template = PREDEFINED_INCIDENTS[Math.floor(Math.random() * PREDEFINED_INCIDENTS.length)];
-        
-        const incident = {
-            id: 'incident-' + (++this.incidentCounter),
-            keyword: template.keyword,
-            description: null, // Wird erst nach Gespräch bekannt
-            location: null, // Wird erst nach Gespräch bekannt
-            position: template.position,
-            time: new Date(this.gameTime),
-            status: 'incoming', // NEUER Status: incoming = Anruf wartet
-            assignedVehicles: [],
-            caller: template.caller,
-            initialMessage: template.initialMessage,
-            fullDetails: template.fullDetails,
-            actualLocation: template.location,
-            conversationState: {
-                locationKnown: false,
-                detailsKnown: false,
-                ageKnown: false,
-                symptomsKnown: false
-            }
-        };
-        
-        this.incidents.push(incident);
-        this.pendingCall = incident;
-        
-        console.log('Neuer Anruf eingehend:', incident.keyword);
-        
-        // Zeige Anruf-Benachrichtigung
-        showIncomingCallNotification(incident);
     }
     
     acceptCall(incidentId) {
@@ -184,140 +49,125 @@ class Game {
         if (!incident) return;
         
         incident.status = 'in-call';
-        this.pendingCall = null;
         showCallDialog(incident);
     }
     
-    checkRequiredVehicles(incidentKeyword) {
-        const keywordInfo = KEYWORDS_BW[incidentKeyword];
-        if (!keywordInfo) return { hasAll: true, missing: [] };
+    checkRequiredVehicles(keyword) {
+        const keywordInfo = KEYWORDS_BW[keyword];
+        if (!keywordInfo) return { hasAll: true, required: [], missing: [] };
         
-        const requiredTypes = keywordInfo.vehicles;
-        const availableTypes = this.vehicles
-            .filter(v => v.owned && v.status === 'available')
-            .map(v => v.type);
+        const required = keywordInfo.required || [];
+        const owned = this.vehicles.filter(v => v.owned);
         
-        const missing = [];
-        requiredTypes.forEach(reqType => {
-            if (!availableTypes.includes(reqType)) {
-                missing.push(reqType);
-            }
+        const missing = required.filter(reqType => {
+            return !owned.some(v => v.type === reqType);
         });
         
         return {
             hasAll: missing.length === 0,
-            missing: missing,
-            required: requiredTypes
+            required: required,
+            missing: missing
         };
     }
     
-    async dispatchVehicle(vehicleId, incidentId) {
+    dispatchVehicle(vehicleId, incidentId) {
         const vehicle = this.vehicles.find(v => v.id === vehicleId);
         const incident = this.incidents.find(i => i.id === incidentId);
         
-        if (!vehicle || !incident) return false;
-        
+        if (!vehicle || !incident) return;
         if (vehicle.status !== 'available') {
-            alert('Fahrzeug ist nicht verfügbar!');
-            return false;
+            alert(`${vehicle.callsign} ist nicht verfügbar!`);
+            return;
         }
         
         vehicle.status = 'dispatched';
-        vehicle.assignedIncident = incidentId;
-        vehicle.targetPosition = [...incident.position];
+        vehicle.targetIncident = incidentId;
+        
+        if (!incident.assignedVehicles) {
+            incident.assignedVehicles = [];
+        }
         incident.assignedVehicles.push(vehicleId);
-        incident.status = 'dispatched';
-        
-        addRadioMessage('Leitstelle', 
-            `${vehicle.callsign}, Einsatz ${incident.keyword} in ${incident.location}`, 
-            'outgoing'
-        );
-        
-        setTimeout(() => {
-            addRadioMessage(vehicle.callsign, 
-                `${vehicle.callsign} verstanden, rücken aus`, 
-                'incoming'
-            );
-        }, 2000);
         
         // Berechne Route
-        await this.calculateRoute(vehicle, incident.position);
+        const station = this.stations[vehicle.station];
+        const start = station.position;
+        const end = incident.position;
         
-        return true;
+        vehicle.route = this.calculateRoute(start, end);
+        vehicle.routeIndex = 0;
+        vehicle.position = [...start];
+        
+        const distance = this.calculateDistance(start, end);
+        const travelTime = (distance / CONFIG.VEHICLE_SPEED_KMH) * 60; // Minuten
+        vehicle.eta = Date.now() + (travelTime * 60 * 1000);
+        vehicle.totalDistance = distance;
+        
+        addRadioMessage('Leitstelle', `${vehicle.callsign} alarmiert zu ${incident.keyword}`);
+        addRadioMessage(vehicle.callsign, 'Rückmeldung: Einsatz übernommen, rücke aus!');
     }
     
-    async calculateRoute(vehicle, targetPosition) {
-        // Vereinfachte Route: Direkte Linie mit Wegpunkten
-        const start = vehicle.position;
-        const end = targetPosition;
-        
-        // Erstelle einfache Route mit 10 Zwischenpunkten
+    calculateRoute(start, end) {
+        // Einfache Interpolation in 20 Schritten für realistische Bewegung
         const steps = 20;
-        vehicle.route = [];
+        const route = [];
         
         for (let i = 0; i <= steps; i++) {
-            const lat = start[0] + (end[0] - start[0]) * (i / steps);
-            const lng = start[1] + (end[1] - start[1]) * (i / steps);
-            vehicle.route.push([lat, lng]);
+            const t = i / steps;
+            const lat = start[0] + (end[0] - start[0]) * t;
+            const lon = start[1] + (end[1] - start[1]) * t;
+            route.push([lat, lon]);
         }
         
-        vehicle.routeProgress = 0;
-        vehicle.totalDistance = this.calculateDistance(start, end);
-        
-        console.log(`Route berechnet für ${vehicle.callsign}: ${vehicle.totalDistance.toFixed(2)} km`);
+        return route;
     }
     
     calculateDistance(pos1, pos2) {
-        const lat1 = pos1[0] * Math.PI / 180;
-        const lat2 = pos2[0] * Math.PI / 180;
+        // Haversine-Formel für präzise Distanzberechnung
+        const R = 6371; // Erdradius in km
         const dLat = (pos2[0] - pos1[0]) * Math.PI / 180;
         const dLon = (pos2[1] - pos1[1]) * Math.PI / 180;
         
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1) * Math.cos(lat2) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
+                  Math.cos(pos1[0] * Math.PI / 180) * Math.cos(pos2[0] * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return 6371 * c;
+        return R * c;
     }
     
-    updateUI() {
-        const timeStr = this.gameTime.toLocaleTimeString('de-DE');
-        const timeEl = document.getElementById('current-time');
-        if (timeEl) timeEl.textContent = timeStr;
+    updateVehiclePosition(vehicle) {
+        if (!vehicle.route || vehicle.routeIndex >= vehicle.route.length) {
+            // Ziel erreicht
+            vehicle.status = 'on-scene';
+            vehicle.position = vehicle.route[vehicle.route.length - 1];
+            
+            const incident = this.incidents.find(i => i.id === vehicle.targetIncident);
+            if (incident) {
+                addRadioMessage(vehicle.callsign, `Vor Ort am Einsatzort ${incident.keyword}`);
+            }
+            
+            vehicle.route = null;
+            vehicle.routeIndex = 0;
+            return;
+        }
         
-        const creditsEl = document.getElementById('credits');
-        if (creditsEl) creditsEl.textContent = this.credits.toLocaleString();
-        
-        const activeVehicles = this.vehicles.filter(v => v.status !== 'available').length;
-        const activeEl = document.getElementById('active-vehicles');
-        const totalEl = document.getElementById('total-vehicles');
-        if (activeEl) activeEl.textContent = activeVehicles;
-        if (totalEl) totalEl.textContent = this.vehicles.length;
-        
-        const activeIncidents = this.incidents.filter(i => i.status !== 'completed' && i.status !== 'incoming').length;
-        const incidentEl = document.getElementById('incident-count');
-        if (incidentEl) incidentEl.textContent = activeIncidents;
+        vehicle.position = vehicle.route[vehicle.routeIndex];
+        vehicle.routeIndex++;
     }
     
-    saveSettings() {
-        const settings = {
-            gameSpeed: this.gameSpeed,
-            apiKey: this.apiKey,
-            soundEnabled: this.soundEnabled
-        };
-        localStorage.setItem('dispatcher-settings', JSON.stringify(settings));
-        console.log('Einstellungen gespeichert:', settings);
-    }
-    
-    loadSettings() {
-        const saved = localStorage.getItem('dispatcher-settings');
-        if (saved) {
-            const settings = JSON.parse(saved);
-            this.gameSpeed = settings.gameSpeed || CONFIG.DEFAULT_GAME_SPEED;
-            this.apiKey = settings.apiKey || '';
-            this.soundEnabled = settings.soundEnabled !== undefined ? settings.soundEnabled : true;
+    buyVehicle(vehicleIndex) {
+        const vehicle = this.vehicles[vehicleIndex];
+        if (!vehicle || vehicle.owned) return;
+        
+        if (this.money >= vehicle.cost) {
+            this.money -= vehicle.cost;
+            vehicle.owned = true;
+            alert(`✅ ${vehicle.type} gekauft!`);
+        } else {
+            alert(`❌ Nicht genug Geld! Benötigt: €${vehicle.cost.toLocaleString()}`);
         }
     }
 }
 
 let game = null;
+let map = null;
