@@ -1,197 +1,145 @@
-class AIManager {
-    constructor(game) {
-        this.game = game;
-        this.apiKey = ''; // Will be set by user
-        this.currentConversation = [];
-    }
+// =========================
+// KI-MODUL
+// Perplexity AI Integration
+// =========================
 
-    async startPhoneCall(incident) {
-        this.currentConversation = [];
+async function generateIncidentWithAI() {
+    if (!game || !game.apiKey) {
+        console.log('Kein API Key - verwende vordefinierte Einsätze');
+        return null;
+    }
+    
+    try {
+        const prompt = `Generiere einen realistischen Rettungsdienst- oder Feuerwehreinsatz für die ILS Waiblingen (Rems-Murr-Kreis, Baden-Württemberg).
         
-        // Generate caller persona and situation
-        const callerInfo = await this.generateCallerPersona(incident);
+Gib zurück (nur JSON, keine Erklärung):
+{
+  "keyword": "RD 1/RD 2/B 1/B 2/B 3/THL 1/THL 2/THL VU/VU",
+  "description": "Kurze Beschreibung",
+  "location": "Straße Hausnummer, Stadt im Rems-Murr-Kreis",
+  "caller": "Wer ruft an",
+  "details": "Detaillierte Schilderung"
+}`;
         
-        this.game.showModal('phone-modal');
-        this.setupPhoneInterface(incident, callerInfo);
-        
-        // Initial caller message
-        const initialMessage = await this.generateCallerMessage(incident, callerInfo, 'initial');
-        this.addConversationMessage(initialMessage, 'caller');
-    }
-
-    async generateCallerPersona(incident) {
-        // Simplified version - in production use Perplexity API
-        const personas = [
-            { name: 'Max Mustermann', age: 45, emotion: 'panicked', relationship: 'self' },
-            { name: 'Anna Schmidt', age: 32, emotion: 'worried', relationship: 'bystander' },
-            { name: 'Hans Müller', age: 67, emotion: 'calm', relationship: 'patient' }
-        ];
-        
-        return personas[Math.floor(Math.random() * personas.length)];
-    }
-
-    async generateCallerMessage(incident, callerInfo, context) {
-        if (!this.apiKey) {
-            // Fallback to template-based responses
-            return this.getTemplateResponse(incident, callerInfo, context);
-        }
-
-        try {
-            const prompt = this.buildPrompt(incident, callerInfo, context);
-            const response = await this.callPerplexityAPI(prompt);
-            return response;
-        } catch (error) {
-            console.error('AI API Error:', error);
-            return this.getTemplateResponse(incident, callerInfo, context);
-        }
-    }
-
-    getTemplateResponse(incident, callerInfo, context) {
-        const templates = {
-            'initial': [
-                `Hallo, hier spricht ${callerInfo.name}. Es ist ein Notfall! ${incident.description}`,
-                `Schnell, bitte helfen Sie! ${incident.description}`,
-                `Guten Tag, ich brauche dringend Hilfe. ${incident.description}`
-            ],
-            'location': [
-                `Wir sind in ${incident.location}.`,
-                `Der Einsatzort ist ${incident.location}.`
-            ],
-            'patient': [
-                `Die Person ist bei Bewusstsein und hat Schmerzen.`,
-                `Der Patient ist ansprechbar aber verletzt.`,
-                `Es geht der Person nicht gut.`
-            ],
-            'details': [
-                `Ich glaube es ist ernst. Bitte kommen Sie schnell!`,
-                `Die Situation ist kritisch!`,
-                `Wir brauchen sofort Hilfe!`
-            ]
-        };
-
-        const options = templates[context] || templates['details'];
-        return options[Math.floor(Math.random() * options.length)];
-    }
-
-    buildPrompt(incident, callerInfo, context) {
-        return `Du bist ${callerInfo.name}, ${callerInfo.age} Jahre alt, und rufst gerade beim Notruf an.
-        
-Einsatzsituation: ${incident.description}
-Ort: ${incident.location}
-Deine Emotion: ${callerInfo.emotion}
-Deine Rolle: ${callerInfo.relationship}
-
-Kontext der Frage: ${context}
-
-Antworte als diese Person in 1-2 kurzen, realistischen Sätzen auf Deutsch. Sei ${callerInfo.emotion}.`;
-    }
-
-    async callPerplexityAPI(prompt) {
-        if (!this.apiKey) {
-            throw new Error('No API key set');
-        }
-
-        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        const response = await fetch(CONFIG.PERPLEXITY_API_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
+                'Authorization': `Bearer ${game.apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'sonar',
+                model: CONFIG.PERPLEXITY_MODEL,
                 messages: [
-                    { role: 'system', content: 'Du bist ein realistischer Notrufer in einer Notfallsituation.' },
-                    { role: 'user', content: prompt }
-                ],
-                max_tokens: 150,
-                temperature: 0.8
+                    {
+                        role: 'system',
+                        content: 'Du bist ein Einsatzgenerator für Rettungsleitstellen. Antworte nur mit JSON.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ]
             })
         });
-
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
-        }
-
+        
         const data = await response.json();
-        return data.choices[0].message.content;
-    }
-
-    setupPhoneInterface(incident, callerInfo) {
-        const container = document.getElementById('phone-conversation');
-        container.innerHTML = '';
-
-        const quickResponses = [
-            { text: 'Wo genau ist der Einsatzort?', context: 'location' },
-            { text: 'Was ist genau passiert?', context: 'details' },
-            { text: 'Wie geht es der betroffenen Person?', context: 'patient' },
-            { text: 'Ist die Person ansprechbar?', context: 'consciousness' },
-            { text: 'Wie viele Personen sind betroffen?', context: 'count' },
-            { text: 'Gespräch beenden', context: 'end' }
-        ];
-
-        const buttonsContainer = document.getElementById('quick-response-buttons');
-        buttonsContainer.innerHTML = quickResponses.map(response => `
-            <button onclick="game.aiManager.handleQuickResponse('${response.context}', '${response.text}', '${incident.id}')">
-                ${response.text}
-            </button>
-        `).join('');
-    }
-
-    async handleQuickResponse(context, questionText, incidentId) {
-        const incident = this.game.incidents.find(i => i.id === incidentId);
-        if (!incident) return;
-
-        // Add dispatcher question
-        this.addConversationMessage(questionText, 'dispatcher');
-        this.game.addPhoneMessage(questionText, 'dispatcher');
-
-        if (context === 'end') {
-            this.endPhoneCall(incident);
-            return;
-        }
-
-        // Generate and add caller response
-        const callerInfo = { name: 'Anrufer', age: 30, emotion: 'worried', relationship: 'bystander' };
-        const response = await this.generateCallerMessage(incident, callerInfo, context);
+        const content = data.choices[0].message.content;
         
-        setTimeout(() => {
-            this.addConversationMessage(response, 'caller');
-            this.game.addPhoneMessage(response, 'caller');
-        }, 1000);
-    }
-
-    addConversationMessage(text, sender) {
-        const container = document.getElementById('phone-conversation');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `conversation-message ${sender}`;
-        messageDiv.textContent = text;
-        container.appendChild(messageDiv);
-        container.scrollTop = container.scrollHeight;
-
-        this.currentConversation.push({ sender, text, time: Date.now() });
-    }
-
-    endPhoneCall(incident) {
-        this.addConversationMessage('Gespräch beendet. Hilfe ist unterwegs!', 'system');
-        this.game.addLogMessage(`Notrufgespräch beendet - ${incident.keyword} - ${incident.location}`);
-        
-        setTimeout(() => {
-            this.game.closeAllModals();
-            this.game.showDispatchModal(incident);
-        }, 1500);
-    }
-
-    setApiKey(key) {
-        this.apiKey = key;
-        localStorage.setItem('perplexity_api_key', key);
-    }
-
-    loadApiKey() {
-        const stored = localStorage.getItem('perplexity_api_key');
-        if (stored) {
-            this.apiKey = stored;
+        // Extrahiere JSON
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
         }
+        
+        return null;
+    } catch (error) {
+        console.error('AI Fehler:', error);
+        return null;
     }
 }
 
-export { AIManager };
+function showCallDialog(incident) {
+    const modal = document.getElementById('call-dialog');
+    const conversation = document.getElementById('call-conversation');
+    const responses = document.querySelector('.call-responses');
+    
+    conversation.innerHTML = '';
+    responses.innerHTML = '';
+    
+    // Startmeldung
+    addCallMessage('Anrufer', `Hallo, hier ist ein Notruf! ${incident.details}`, 'caller');
+    
+    // Zeige Antwortmöglichkeiten
+    showCallResponses(incident);
+    
+    modal.classList.add('active');
+}
+
+function addCallMessage(speaker, message, type) {
+    const conversation = document.getElementById('call-conversation');
+    const div = document.createElement('div');
+    div.className = `call-message ${type}`;
+    div.innerHTML = `<strong>${speaker}:</strong> ${message}`;
+    conversation.appendChild(div);
+    conversation.scrollTop = conversation.scrollHeight;
+}
+
+function showCallResponses(incident) {
+    const responses = document.querySelector('.call-responses');
+    responses.innerHTML = '';
+    
+    // Wähle passende Fragen
+    const questions = DISPATCHER_PHRASES.slice(0, 3);
+    
+    questions.forEach(question => {
+        const btn = document.createElement('button');
+        btn.className = 'response-btn';
+        btn.textContent = question;
+        btn.onclick = () => askQuestion(question, incident);
+        responses.appendChild(btn);
+    });
+    
+    // Einsatz erstellen Button
+    const createBtn = document.createElement('button');
+    createBtn.className = 'btn btn-success';
+    createBtn.style.marginTop = '10px';
+    createBtn.innerHTML = '<i class="fas fa-check"></i> Einsatz erstellen';
+    createBtn.onclick = () => createIncidentFromCall(incident);
+    responses.appendChild(createBtn);
+}
+
+async function askQuestion(question, incident) {
+    addCallMessage('Disponent', question, 'dispatcher');
+    
+    // Simuliere Antwort (ohne KI: vordefiniert)
+    setTimeout(() => {
+        let answer = 'Ja, genau.';
+        
+        if (question.includes('Einsatzort')) {
+            answer = incident.location;
+        } else if (question.includes('Personen')) {
+            answer = 'Eine Person ist betroffen.';
+        } else if (question.includes('ansprechbar')) {
+            answer = incident.keyword === 'RD 2' ? 'Nein, nicht ansprechbar!' : 'Ja, die Person ist bei Bewusstsein.';
+        } else if (question.includes('Atmet')) {
+            answer = 'Ja, ich sehe Atmung.';
+        }
+        
+        addCallMessage('Anrufer', answer, 'caller');
+    }, 1000);
+}
+
+function createIncidentFromCall(incident) {
+    // Schließe Dialog
+    document.getElementById('call-dialog').classList.remove('active');
+    
+    // Füge Einsatz hinzu wenn noch nicht vorhanden
+    const exists = game.incidents.find(i => i.id === incident.id);
+    if (!exists) {
+        game.incidents.push(incident);
+    }
+    
+    addRadioMessage('Leitstelle', `Neuer Einsatz erfasst: ${incident.keyword} - ${incident.description}`);
+    updateIncidentList();
+    updateMap();
+}
