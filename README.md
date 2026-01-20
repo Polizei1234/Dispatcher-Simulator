@@ -1,202 +1,207 @@
-# ILS Waiblingen - Leitstellensimulator
+# 🚑 ILS Waiblingen - Leitstellensimulator
 
-## 🚑 Über das Spiel
+**Dispatcher-Simulator für den Rems-Murr-Kreis**
 
-Ein realistischer Dispatcher-Simulator für die **Integrierte Leitstelle Waiblingen** im Rems-Murr-Kreis, Baden-Württemberg.
+![Version](https://img.shields.io/badge/version-2.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-### Features
+## 📍 Über das Projekt
 
-✅ **Realistische Einsatzgebiete**
-- Kompletter Rems-Murr-Kreis mit allen Städten und Gemeinden
-- OpenStreetMap Integration für echte Karten
-- Realistische Fahrzeiten mit Sondersignalberechnung
+Ein realistischer Leitstellensimulator mit **echten Daten** aus dem Rems-Murr-Kreis:
 
-✅ **Alle BOS-Organisationen**
-- Rettungsdienst (DRK, Malteser, ASB, JUH)
-- Feuerwehr (Berufsfeuerwehr & Freiwillige Feuerwehren)
-- Polizei (Polizeipräsidium Aalen - Reviere im Rems-Murr-Kreis)
-- Sonstige (THW, etc.)
+- ✅ **35 echte Wachen** (Rettungswachen, Notarztwachen, Ortsvereine)
+- ✅ **90+ echte Fahrzeuge** (RTW, NEF, KTW, Kdow, GW-San)
+- ✅ **Korrekte Funkrufnamen** nach Digitalfunkatlas BW 2023
+- ✅ **Pixel-Art Icons** für alle Wachen und Fahrzeuge auf der Karte
+- ✅ **KI-generierte Einsätze** mit Groq API (Llama 3.3)
+- ✅ **Draggable Telefonfenster** für realistische Notrufabfrage
 
-✅ **Realistische Fahrzeuge**
-- Alle echten Fahrzeuge der Wachen im Rems-Murr-Kreis
-- RTW, NEF, KTW, Feuerwehrfahrzeuge, Polizeifahrzeuge
-- Basierend auf Daten von [BOS-Fahrzeuge.info](https://bos-fahrzeuge.info)
+## 🗺️ Wachen im Rems-Murr-Kreis
 
-✅ **Baden-Württemberg Stichwort-System**
-- RD 1, RD 2 (Rettungsdienst)
-- B 1-6 (Brand)
-- THL 1-4 (Technische Hilfeleistung)
-- Weitere Einsatzstichwörter nach DV 100
+### Hauptamtliche Rettungswachen (7)
 
-✅ **KI-Integration (Perplexity AI)**
-- Realistische Einsatzgenerierung
-- Dynamische Telefongespräche mit Anrufern
-- Einsatzentwicklungen und Nachforderungen
-- Funkverkehr-Simulation
+| ID | Name | Ort | Fahrzeuge |
+|----|------|-----|----------|
+| RW1 | Rettungswache Waiblingen | Waiblingen | 8 (Kdow, NEF, 2x RTW, 4x KTW) |
+| RW2 | Rettungswache Backnang | Backnang | 7 (Kdow, NEF, 2x RTW, 3x KTW) |
+| RW3 | Rettungswache Fellbach | Fellbach | 1 (RTW) |
+| RW4 | Rettungswache Murrhardt | Murrhardt | 1 (RTW) |
+| RW5 | Rettungswache Schorndorf | Schorndorf | 7 (NEF, 2x RTW, 4x KTW) |
+| RW6 | Rettungswache Welzheim | Welzheim | 3 (NEF, 2x RTW) |
+| RW7 | Rettungswache Winnenden | Winnenden | 1 (RTW) |
 
-✅ **Spielmechanik**
-- Wirtschaftssystem: Fahrzeuge kaufen mit Credits
-- Einsätze bearbeiten und Credits verdienen
-- Start mit einer kleinen Wache (z.B. DRK Backnang)
-- Erweiterbar auf andere Leitstellen
+### Notarztwachen (2)
 
-✅ **Tutorial-System**
-- Interaktives Tutorial für Einsteiger
-- Vorgefertigte Textbausteine für Dispatcher
-- Funkverkehr mit Textbausteinen
+- **Klinikum Winnenden** - 2 NEF
+- **Murrhardt** - 2 NEF
 
-## 🎮 Installation & Spielen
+### Privatanbieter (10)
 
-### Lokal spielen
+- RW10: Saniteam Winkler Fellbach
+- RW11: ASB Waiblingen
+- RW13: Rems Murr Ambulanz
+- RW14+20: SAG/Brüder
+- RW15: Ambulanz Schütt
+- RW16: MHD Sulzbach
+- RW17: MHD Hertmannsweiler
+- RW19: JUH Aspach
+- RW20: JUH Schorndorf
+- RW21: DECEBA
 
-1. Repository klonen oder herunterladen:
-   ```bash
-   git clone https://github.com/Polizei1234/Dispatcher-Simulator.git
-   cd Dispatcher-Simulator
-   ```
+### Ortsvereine (17)
 
-2. `index.html` im Browser öffnen:
-   - Doppelklick auf `index.html`
-   - Oder mit lokalem Webserver (empfohlen):
-     ```bash
-     # Python 3
-     python -m http.server 8000
-     # Dann im Browser: http://localhost:8000
-     ```
+- Aspach, Backnang, Burgstetten, Kernen, Oppenweiler, Plüderhausen
+- Remshalden, Rudersberg, Schorndorf, Urbach, Waiblingen
+- Weinstadt, Wieslauftal, Winnenden, Winterbach, MHD Winnenden
 
-3. **Optional**: Perplexity API Key eintragen
-   - In den Einstellungen API Key eingeben
-   - Für KI-generierte Einsätze und Telefongespräche
+## 🚗 Fahrzeugtypen
 
-## ⚙️ Konfiguration
+| Typ | Anzahl | Funkkennung | Farbe (Pixel Art) |
+|-----|--------|-------------|-------------------|
+| **RTW** | ~25 | 83/X | Rot (#dc3545) |
+| **NEF** | ~10 | 82/X | Gelb (#ffc107) |
+| **KTW** | ~50 | 85/X oder 25/X | Grün (#28a745) |
+| **Kdow** | 3 | 10/X | Türkis (#17a2b8) |
+| **GW-San** | 1 | 28/X | Grau (#6c757d) |
 
-### Spielgeschwindigkeit
-- Echtzeit (1:1)
-- 2x, 5x, 10x, 30x beschleunigt
-- Einstellbar im Einstellungsmenü
+## 🎮 Spielmodi
 
-### API Integration
+### 🏆 Karrieremodus
 
-Für KI-Features (optional):
-1. Perplexity API Key bei [Perplexity.ai](https://www.perplexity.ai) erstellen
-2. Im Spiel unter Einstellungen eintragen
-3. Modell: `sonar`
+- **Startkapital**: 50.000 €
+- **Startfahrzeuge**: 6 Fahrzeuge in Waiblingen/OV Waiblingen
+  - 1x Kdow (RW1)
+  - 1x NEF (Klinikum Winnenden)
+  - 2x RTW (RW1)
+  - 1x KTW (OV Waiblingen)
+- **Ziel**: Geld verdienen durch Einsätze, neue Wachen und Fahrzeuge kaufen
 
-**Hinweis**: Ohne API Key funktioniert das Spiel mit vordefinierten Einsätzen.
+### ♾️ Freimodus
 
-## 📋 Spielanleitung
+- **Alle 90+ Fahrzeuge** sofort verfügbar
+- **Unbegrenztes Geld**
+- Perfekt zum Experimentieren!
 
-### Spielstart
-1. **Neues Spiel** starten oder **Tutorial** durchspielen
-2. Du startest mit einer kleinen Wache (z.B. DRK Backnang)
-3. Startkapital: 50.000 €
-4. Erste Fahrzeuge: 1 RTW, 1 NEF
+## 🤖 KI-Features
 
-### Einsätze bearbeiten
-1. **Notruf annehmen**: Telefongespräch führen
-2. **Stichwort vergeben**: Nach BW-System (z.B. RD 2, B 3)
-3. **Fahrzeuge alarmieren**: Passende Einsatzmittel auswählen
-4. **Einsatz überwachen**: Status verfolgen
-5. **Nachforderungen**: Bei Bedarf weitere Kräfte alarmieren
+### Groq API Integration
 
-### Fahrzeuge kaufen
-- Im Shop nur **reale Fahrzeuge** der Wachen kaufbar
-- Fahrzeuge kosten je nach Typ:
-  - RTW: ~195.000 €
-  - NEF: ~120.000 €
-  - KTW: ~80.000 €
-  - Feuerwehr: variabel
+- **Modell**: Llama 3.3 70B Versatile
+- **Einsatzgenerierung**: Jeder Einsatz wird dynamisch mit KI erstellt
+- **Notrufgespräche**: Realistische Dialoge mit aufgeregten Anrufern
+- **API-Key**: Kostenlos auf [console.groq.com](https://console.groq.com/keys)
 
-### Credits verdienen
-- Pro abgeschlossenem Einsatz
-- Bonus für schnelle Reaktion
-- Bonus für korrekte Disposition
+### Beispiel-Notruf
 
-## 🗺️ Einsatzgebiet
+```
+Disponent: "Notruf 112, wo genau ist der Notfall?"
+Anrufer: "Hilfe! Mein Vater liegt am Boden und atmet kaum noch!"
+Disponent: "Wo befinden Sie sich genau?"
+Anrufer: "Bahnhofstraße 15 in Waiblingen!"
+[...]
+```
 
-**Rems-Murr-Kreis** - Alle Städte und Gemeinden:
-- Waiblingen, Winnenden, Schorndorf, Backnang
-- Fellbach, Weinstadt, Kernen, Korb
-- Murrhardt, Welzheim, Rudersberg
-- Und alle weiteren 31 Gemeinden
+## 🗺️ Pixel-Art Icons
 
-## 🏥 Rettungswachen (DRK)
+### Wachen-Icons
 
-1. **RW Waiblingen** (Lehrrettungswache)
-   - 1 NEF 24/7
-   - 1 RTW 24/7 + 1 RTW 12h
-   - 4 KTW
+- **Rettungswache** (Rot): Gebäude mit weißem Kreuz
+- **Notarztwache** (Gelb): Gebäude mit Kreuz
+- **Ortsverein** (Rot): Kleineres Gebäude
 
-2. **RW Backnang** (Lehrrettungswache)
-   - 1 NEF 24/7
-   - 1 RTW 24/7 + 1 RTW 12h
+### Fahrzeug-Icons
 
-3. **RW Winnenden**
-   - 1 RTW 24/7
+- **RTW/NEF**: Rettungswagen mit Blaulicht (Rot/Gelb)
+- **KTW**: Kleinerer Transporter (Grün)
+- **Kdow**: PKW-Form (Türkis)
+- **GW-San**: Großes Fahrzeug (Grau)
 
-4. **RW Schorndorf**
-   - 1 RTW 24/7
-   - KTW
+Alle Icons sind **animiert** und haben **Hover-Effekte**!
 
-5. **RW Fellbach**
-   - 2 RTW 24/7
+## 🛠️ Installation
 
-6. **RW Murrhardt**
-   - 1 RTW 24/7
+```bash
+# Repository klonen
+git clone https://github.com/Polizei1234/Dispatcher-Simulator.git
+cd Dispatcher-Simulator
 
-7. **RW Rudersberg**
-   - 1 RTW
+# Mit Live Server öffnen (VSCode Extension)
+# ODER einfach index.html im Browser öffnen
+```
 
-8. Weitere Wachen in Weinstadt, Welzheim, etc.
+## ⚙️ Einstellungen
 
-## 🚒 Feuerwehren
+- **Spielgeschwindigkeit**: 1x - 30x (Klick auf "5x" im Header)
+- **Groq API-Key**: Für KI-Einsätze
+- **Sound**: Ein/Aus
 
-Alle Freiwilligen Feuerwehren im Rems-Murr-Kreis mit realistischen Fahrzeugen:
-- LF 10, LF 16, LF 20
-- DLK 23, TLF 16/25, TLF 20/40
-- RW, GW-L, KdoW
+## 🎯 Steuerung
 
-## 🚓 Polizei
+1. **Notruf annehmen**: Auf blinkenden Anruf klicken
+2. **Telefonieren**: Fragen stellen, Adresse ermitteln
+3. **Protokoll schreiben**: Während Telefonat möglich!
+4. **Fahrzeuge alarmieren**: Checkboxen auswählen → Alarmieren
+5. **Karte**: Wachen-Button zum Ein/Ausblenden der Standorte
 
-Polizeipräsidium Aalen - Dienststellen im Rems-Murr-Kreis:
-- Polizeirevier Backnang
-- Polizeirevier Waiblingen
-- Polizeirevier Winnenden
-- Polizeiposten
+## 📊 Technische Details
 
-## 🎯 Geplante Features
-
-- [ ] Multiplayer-Modus
-- [ ] Weitere Leitstellen (ILS Stuttgart, ILS Ludwigsburg)
-- [ ] Statistiken und Auswertungen
-- [ ] Ereignislog exportieren
-- [ ] Erweiterte KI-Funktionen (Voice)
-- [ ] MANV-Szenarien (Massenanfall von Verletzten)
-- [ ] Katastrophenschutz-Einsätze
-
-## 🛠️ Technologie
-
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+- **Framework**: Vanilla JavaScript (ES6+)
 - **Karte**: Leaflet.js + OpenStreetMap
-- **Routing**: OpenRouteService API
-- **KI**: Perplexity AI (sonar)
-- **Daten**: JSON-basiert
+- **KI**: Groq API (Llama 3.3)
+- **Icons**: Pixel-Art SVG (32x32 / 24x24)
+- **Daten**: `stations.json` + `vehicles.json`
 
-## 📝 Lizenz
+## 📝 Funkrufnamen (Digitalfunkatlas BW)
 
-Dieses Projekt ist für private, nicht-kommerzielle Nutzung bestimmt.
+### DRK Rettungswachen
+```
+Rotkreuz Rems Murr [Wache]/[Kennung]-[Nummer]
 
-## 🙏 Danksagungen
+Beispiele:
+- Rotkreuz Rems Murr 1/82-2    (NEF RW1)
+- Rotkreuz Rems Murr 1/83-2    (RTW RW1)
+- Rotkreuz Rems Murr 1/85-2    (KTW RW1)
+- Rotkreuz Rems Murr 1/10-1    (Kdow RW1)
+```
 
-- [BOS-Fahrzeuge.info](https://bos-fahrzeuge.info) für Fahrzeugdaten
-- DRK Rems-Murr e.V. für öffentliche Informationen
-- OpenStreetMap Contributors
-- Perplexity AI
+### Andere Organisationen
+```
+- Sama Rems Murr 11/83-1       (ASB RTW)
+- Johannes Rems Murr 16/83-1   (MHD RTW)
+- Akkon Rems Murr 19/83-1      (JUH RTW)
+- Sani Team 10/85-1            (Saniteam KTW)
+```
 
-## 📧 Kontakt
+### Ortsvereine (Ehrenamt)
+```
+- KTW [ORT]/25-[Nummer]
 
-Bei Fragen oder Problemen: GitHub Issues erstellen
+Beispiele:
+- KTW WN/25-1     (OV Waiblingen)
+- KTW PLÜ/25-1    (OV Plüderhausen)
+- KTW OPP/25-1    (OV Oppenweiler)
+```
+
+## 🚀 Roadmap
+
+- [ ] OpenStreetMap Routing für Fahrzeuge
+- [ ] Echtzeit-Uhr mit Schichtsystem
+- [ ] Statistiken & Highscores
+- [ ] Multiplayer-Modus
+- [ ] Feuerwehr & Polizei Integration
+- [ ] Mobile Version (PWA)
+
+## 📜 Lizenz
+
+MIT License - Siehe [LICENSE](LICENSE)
+
+## 🙏 Credits
+
+- **Daten**: Rems-Murr-Kreis, [BOS-Fahrzeuge.info](https://www.bos-fahrzeuge.info)
+- **Funkrufnamen**: Digitalfunkatlas Baden-Württemberg 2023
+- **KI**: Groq API (Llama 3.3)
+- **Karte**: OpenStreetMap, Leaflet.js
 
 ---
 
-**Viel Erfolg beim Disponieren! 🚑🚒🚓**
+**Entwickelt mit ❤️ für den Rems-Murr-Kreis**
