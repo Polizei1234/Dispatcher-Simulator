@@ -26,6 +26,9 @@ class Game {
         // Initialisiere Wachen basierend auf Startstation
         this.initializeStations();
         
+        // Update Game Speed Anzeige
+        document.getElementById('game-speed-indicator').textContent = this.gameSpeed + 'x';
+        
         // Starte Spielschleife
         this.start();
     }
@@ -34,30 +37,26 @@ class Game {
         // Kopiere alle Stationen
         this.stations = JSON.parse(JSON.stringify(STATIONS));
         
-        // Füge alle Fahrzeuge zur Fahrzeugliste hinzu
-        this.vehicles = [];
-        Object.values(this.stations).forEach(station => {
-            station.vehicles.forEach(vehicle => {
-                vehicle.station = station.id;
-                vehicle.position = [...station.position];
-                this.vehicles.push(vehicle);
-            });
-        });
-        
-        // Startfahrzeuge (nur von der Startstation)
+        // WICHTIG: Startfahrzeuge von der Startstation
         const startStation = this.stations[CONFIG.STARTING_STATION];
         if (startStation) {
+            // Markiere Startfahrzeuge als "owned"
             this.vehicles = startStation.vehicles.map(v => ({
                 ...v,
                 station: startStation.id,
                 position: [...startStation.position],
                 owned: true
             }));
+            
+            console.log('Startfahrzeuge geladen:', this.vehicles.length);
+        } else {
+            console.error('Startstation nicht gefunden:', CONFIG.STARTING_STATION);
         }
     }
     
     start() {
         this.running = true;
+        console.log('Spiel gestartet');
         this.gameLoop();
         this.incidentGenerationLoop();
     }
@@ -84,14 +83,14 @@ class Game {
         // Generiere neuen Einsatz wenn genug Zeit vergangen ist
         if (timeSinceLastIncident > CONFIG.MIN_INCIDENT_INTERVAL) {
             const randomChance = Math.random();
-            if (randomChance < 0.3) { // 30% Chance pro Intervall
+            if (randomChance < 0.4) { // 40% Chance pro Intervall
                 this.generateIncident();
                 this.lastIncidentTime = now;
             }
         }
         
         // Nächste Prüfung
-        setTimeout(() => this.incidentGenerationLoop(), 30000); // Alle 30 Sekunden prüfen
+        setTimeout(() => this.incidentGenerationLoop(), 20000); // Alle 20 Sekunden prüfen
     }
     
     generateIncident() {
@@ -113,6 +112,8 @@ class Game {
         
         this.incidents.push(incident);
         
+        console.log('Neuer Einsatz generiert:', incident.keyword);
+        
         // Zeige Notruf-Dialog
         if (this.apiKey) {
             showCallDialog(incident);
@@ -120,6 +121,7 @@ class Game {
             // Ohne KI: Zeige einfach den Einsatz
             addRadioMessage('Leitstelle', `Neuer Einsatz: ${incident.keyword} - ${incident.description}`);
             updateIncidentList();
+            updateMap();
         }
     }
     
@@ -254,19 +256,24 @@ class Game {
     updateUI() {
         // Update Zeit
         const timeStr = this.gameTime.toLocaleTimeString('de-DE');
-        document.getElementById('current-time').textContent = timeStr;
+        const timeEl = document.getElementById('current-time');
+        if (timeEl) timeEl.textContent = timeStr;
         
         // Update Credits
-        document.getElementById('credits').textContent = this.credits.toLocaleString();
+        const creditsEl = document.getElementById('credits');
+        if (creditsEl) creditsEl.textContent = this.credits.toLocaleString();
         
         // Update Fahrzeuge
         const activeVehicles = this.vehicles.filter(v => v.status !== 'available').length;
-        document.getElementById('active-vehicles').textContent = activeVehicles;
-        document.getElementById('total-vehicles').textContent = this.vehicles.length;
+        const activeEl = document.getElementById('active-vehicles');
+        const totalEl = document.getElementById('total-vehicles');
+        if (activeEl) activeEl.textContent = activeVehicles;
+        if (totalEl) totalEl.textContent = this.vehicles.length;
         
         // Update Einsatzzähler
         const activeIncidents = this.incidents.filter(i => i.status !== 'completed').length;
-        document.getElementById('incident-count').textContent = activeIncidents;
+        const incidentEl = document.getElementById('incident-count');
+        if (incidentEl) incidentEl.textContent = activeIncidents;
     }
     
     saveSettings() {
@@ -276,6 +283,7 @@ class Game {
             soundEnabled: this.soundEnabled
         };
         localStorage.setItem('dispatcher-settings', JSON.stringify(settings));
+        console.log('Einstellungen gespeichert:', settings);
     }
     
     loadSettings() {
@@ -285,6 +293,7 @@ class Game {
             this.gameSpeed = settings.gameSpeed || CONFIG.DEFAULT_GAME_SPEED;
             this.apiKey = settings.apiKey || '';
             this.soundEnabled = settings.soundEnabled !== undefined ? settings.soundEnabled : true;
+            console.log('Einstellungen geladen:', settings);
         }
     }
 }

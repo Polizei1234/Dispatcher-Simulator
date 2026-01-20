@@ -10,20 +10,42 @@ let mapMarkers = {
 };
 
 function initMap() {
-    // Erstelle Karte
-    map = L.map('map').setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
+    console.log('Initialisiere Karte...');
     
-    // Füge OpenStreetMap Tiles hinzu
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        minZoom: CONFIG.MAP_MIN_ZOOM,
-        maxZoom: CONFIG.MAP_MAX_ZOOM
-    }).addTo(map);
+    // Warte kurz, bis das Map-Element sichtbar ist
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('Map-Element nicht gefunden!');
+        return;
+    }
     
-    // Zeige Wachen
-    showStationsOnMap();
-    
-    console.log('Karte initialisiert');
+    try {
+        // Erstelle Karte
+        map = L.map('map', {
+            center: CONFIG.MAP_CENTER,
+            zoom: CONFIG.MAP_ZOOM,
+            zoomControl: true
+        });
+        
+        // Füge OpenStreetMap Tiles hinzu
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            minZoom: CONFIG.MAP_MIN_ZOOM,
+            maxZoom: CONFIG.MAP_MAX_ZOOM
+        }).addTo(map);
+        
+        // Wichtig: Karte neu rendern
+        setTimeout(() => {
+            map.invalidateSize();
+            console.log('Karte erfolgreich initialisiert');
+        }, 100);
+        
+        // Zeige Wachen
+        showStationsOnMap();
+        
+    } catch (error) {
+        console.error('Fehler beim Initialisieren der Karte:', error);
+    }
 }
 
 function showStationsOnMap() {
@@ -39,19 +61,21 @@ function showStationsOnMap() {
         const hasVehicles = game.vehicles.some(v => v.station === station.id && v.owned);
         if (!hasVehicles) return;
         
-        let iconUrl = 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png'; // Rettungswache
+        // Erstelle einfachen Marker (keine externen Icons wegen CORS)
+        let markerColor = '#c8102e'; // Rot für Rettungswache
         
         if (station.type === 'feuerwehr') {
-            iconUrl = 'https://cdn-icons-png.flaticon.com/512/2917/2917995.png';
+            markerColor = '#ff5722'; // Orange
         } else if (station.type === 'polizei') {
-            iconUrl = 'https://cdn-icons-png.flaticon.com/512/2965/2965142.png';
+            markerColor = '#2196f3'; // Blau
         }
         
-        const icon = L.icon({
-            iconUrl: iconUrl,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32]
+        const icon = L.divIcon({
+            className: 'custom-station-marker',
+            html: `<div style="background: ${markerColor}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12]
         });
         
         const marker = L.marker(station.position, { icon: icon }).addTo(map);
@@ -76,6 +100,8 @@ function updateMap() {
 }
 
 function updateVehiclesOnMap() {
+    if (!map) return;
+    
     // Lösche alte Marker
     mapMarkers.vehicles.forEach(marker => map.removeLayer(marker));
     mapMarkers.vehicles = [];
@@ -84,7 +110,7 @@ function updateVehiclesOnMap() {
     game.vehicles.filter(v => v.status !== 'available' && v.owned).forEach(vehicle => {
         const icon = L.divIcon({
             className: 'vehicle-marker',
-            html: `<div style="background: #ffc107; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${vehicle.callsign.split(' ').pop()}</div>`,
+            html: `<div style="background: #ffc107; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${vehicle.callsign.split(' ').pop()}</div>`,
             iconSize: [60, 20]
         });
         
@@ -100,6 +126,8 @@ function updateVehiclesOnMap() {
 }
 
 function updateIncidentsOnMap() {
+    if (!map) return;
+    
     // Lösche alte Marker
     mapMarkers.incidents.forEach(marker => map.removeLayer(marker));
     mapMarkers.incidents = [];
@@ -108,9 +136,9 @@ function updateIncidentsOnMap() {
     game.incidents.filter(i => i.status !== 'completed').forEach(incident => {
         const icon = L.divIcon({
             className: 'incident-marker',
-            html: `<div style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 50%; font-size: 12px; font-weight: bold; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-exclamation"></i></div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
+            html: `<div style="background: #dc3545; color: white; padding: 6px; border-radius: 50%; font-size: 14px; font-weight: bold; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">!</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
         });
         
         const marker = L.marker(incident.position, { icon: icon }).addTo(map);

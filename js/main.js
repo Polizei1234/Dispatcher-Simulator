@@ -31,8 +31,10 @@ function startNewGame() {
     game = new Game();
     game.init();
     
-    // Initialisiere Karte
-    initMap();
+    // Initialisiere Karte (WICHTIG: Nach dem Container sichtbar ist)
+    setTimeout(() => {
+        initMap();
+    }, 100);
     
     // Initialisiere UI
     updateUI();
@@ -41,6 +43,11 @@ function startNewGame() {
     
     // Begrüßungsnachricht
     addRadioMessage('System', 'Willkommen bei der ILS Waiblingen! Viel Erfolg beim Disponieren.');
+    
+    // Generiere ersten Einsatz nach 10 Sekunden
+    setTimeout(() => {
+        if (game) game.generateIncident();
+    }, 10000);
 }
 
 function startTutorial() {
@@ -72,6 +79,7 @@ function showSettings() {
 }
 
 function closeSettings() {
+    console.log('Schließe Einstellungen');
     document.getElementById('settings-overlay').classList.remove('active');
 }
 
@@ -79,6 +87,8 @@ function saveSettings() {
     const gameSpeed = parseInt(document.getElementById('game-speed').value);
     const apiKey = document.getElementById('api-key').value;
     const soundEnabled = document.getElementById('sound-enabled').checked;
+    
+    console.log('Speichere Einstellungen:', { gameSpeed, apiKey: apiKey ? 'gesetzt' : 'leer', soundEnabled });
     
     if (game) {
         game.gameSpeed = gameSpeed;
@@ -99,6 +109,8 @@ function saveSettings() {
     }
     
     alert('Einstellungen gespeichert!');
+    
+    // WICHTIG: Schließe das Fenster nach dem Speichern
     closeSettings();
 }
 
@@ -119,24 +131,27 @@ function updateVehicleList() {
     if (!game) return;
     
     const container = document.getElementById('vehicle-list');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     // Filtere Fahrzeuge nach aktuellem Tab
     const activeTab = document.querySelector('.tab-btn.active');
     let vehicleType = 'rtw';
     if (activeTab) {
-        vehicleType = activeTab.textContent.toLowerCase();
+        const tabText = activeTab.textContent.toLowerCase();
+        vehicleType = tabText;
     }
     
     let filteredVehicles = game.vehicles.filter(v => v.owned);
     
-    if (vehicleType === 'rtw/nef') {
+    if (vehicleType.includes('rtw')) {
         filteredVehicles = filteredVehicles.filter(v => v.type === 'RTW' || v.type === 'NEF');
-    } else if (vehicleType === 'ktw') {
+    } else if (vehicleType.includes('ktw')) {
         filteredVehicles = filteredVehicles.filter(v => v.type === 'KTW');
-    } else if (vehicleType === 'feuerwehr') {
+    } else if (vehicleType.includes('feuerwehr')) {
         filteredVehicles = filteredVehicles.filter(v => v.type.includes('LF') || v.type.includes('DLK') || v.type.includes('TLF'));
-    } else if (vehicleType === 'polizei') {
+    } else if (vehicleType.includes('polizei')) {
         filteredVehicles = filteredVehicles.filter(v => v.type.includes('FuStW') || v.type.includes('Streifenwagen'));
     }
     
@@ -180,6 +195,8 @@ function updateIncidentList() {
     if (!game) return;
     
     const container = document.getElementById('incident-list');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
@@ -230,6 +247,7 @@ function selectIncident(incidentId) {
 
 function showIncidentDetails(incident) {
     const container = document.getElementById('incident-details');
+    if (!container) return;
     
     const timeStr = incident.time.toLocaleTimeString('de-DE');
     const keywordInfo = KEYWORDS_BW[incident.keyword];
@@ -297,7 +315,14 @@ function showVehicleTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    
+    // Finde den geklickten Button
+    const clickedBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => 
+        btn.textContent.toLowerCase().includes(tabName.toLowerCase())
+    );
+    if (clickedBtn) {
+        clickedBtn.classList.add('active');
+    }
     
     // Update Fahrzeugliste
     updateVehicleList();
@@ -305,6 +330,8 @@ function showVehicleTab(tabName) {
 
 function addRadioMessage(callsign, message, type = 'incoming') {
     const container = document.getElementById('radio-log');
+    if (!container) return;
+    
     const time = game ? game.gameTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     
     const div = document.createElement('div');
