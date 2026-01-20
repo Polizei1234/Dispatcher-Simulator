@@ -16,52 +16,42 @@
             <h2>Leitstellensimulator Rems-Murr-Kreis</h2>
             <p>Willkommen beim Dispatcher-Simulator der Integrierten Leitstelle Waiblingen!</p>
             <div class="welcome-buttons">
-                <button class="btn btn-primary" onclick="startNewGame()"><i class="fas fa-play"></i> Neues Spiel</button>
-                <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial starten</button>
+                <button class="btn btn-primary" onclick="startNewGame('career')"><i class="fas fa-trophy"></i> Karrieremodus</button>
+                <button class="btn btn-success" onclick="startNewGame('free')"><i class="fas fa-infinity"></i> Freies Spiel</button>
+                <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial</button>
                 <button class="btn btn-secondary" onclick="showSettings()"><i class="fas fa-cog"></i> Einstellungen</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Tutorial Overlay -->
-    <div id="tutorial-overlay" class="overlay">
-        <div class="tutorial-container">
-            <h2><i class="fas fa-graduation-cap"></i> Tutorial</h2>
-            <div id="tutorial-content">
-                <!-- Wird dynamisch gefüllt -->
-            </div>
-            <div class="tutorial-buttons">
-                <button class="btn btn-secondary" onclick="previousTutorialStep()"><i class="fas fa-arrow-left"></i> Zurück</button>
-                <button class="btn btn-primary" onclick="nextTutorialStep()">Weiter <i class="fas fa-arrow-right"></i></button>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <p style="margin: 5px 0;"><strong>🏆 Karrieremodus:</strong> Starte mit 6 Fahrzeugen in Waiblingen. Verdiene Geld und erweitere deinen Fuhrpark!</p>
+                <p style="margin: 5px 0;"><strong>♾️ Freies Spiel:</strong> Alle 18 Fahrzeuge und 8 Wachen sofort verfügbar. Keine Limits!</p>
             </div>
         </div>
     </div>
 
-    <!-- Einstellungen Overlay -->
+    <!-- Einstellungen -->
     <div id="settings-overlay" class="overlay">
         <div class="settings-container">
             <h2><i class="fas fa-cog"></i> Einstellungen</h2>
             <div class="settings-content">
                 <div class="setting-item">
                     <label>Spielgeschwindigkeit:</label>
-                    <select id="game-speed" onchange="updateGameSpeed()">
-                        <option value="1">Echtzeit (1:1)</option>
-                        <option value="2">2x Geschwindigkeit</option>
-                        <option value="5" selected>5x Geschwindigkeit</option>
-                        <option value="10">10x Geschwindigkeit</option>
-                        <option value="30">30x Geschwindigkeit</option>
+                    <select id="game-speed">
+                        <option value="1">Echtzeit (1x)</option>
+                        <option value="2">2x</option>
+                        <option value="5" selected>5x</option>
+                        <option value="10">10x</option>
+                        <option value="30">30x</option>
                     </select>
                 </div>
                 <div class="setting-item">
                     <label><i class="fas fa-robot"></i> Groq API Key:</label>
-                    <input type="password" id="groq-api-key" placeholder="gsk_..." value="">
+                    <input type="password" id="groq-api-key" placeholder="gsk_...">
                     <button class="btn btn-small" onclick="toggleAPIKeyVisibility()" style="margin-left: 5px;">
                         <i class="fas fa-eye" id="api-key-toggle-icon"></i>
                     </button>
                     <small style="display: block; margin-top: 5px; color: #a0a0a0;">
-                        🤖 Für realistische KI-Telefonate mit Notrufer<br>
-                        🌐 Kostenlos: <a href="https://console.groq.com/keys" target="_blank" style="color: #4a9eff;">console.groq.com/keys</a><br>
-                        ⚡ Rate Limit: 15 Anfragen/Minute
+                        🤖 Für KI-generierte Einsätze & Telefonate<br>
+                        🌐 Kostenlos: <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>
                     </small>
                 </div>
                 <div class="setting-item">
@@ -76,32 +66,28 @@
 
     <!-- Hauptspiel -->
     <div id="game-container" class="hidden">
-        <!-- Header -->
         <header>
             <div class="header-left">
                 <h1><i class="fas fa-hospital-symbol"></i> ILS Waiblingen</h1>
                 <span id="current-time">00:00:00</span>
-                <span id="game-speed-indicator">5x</span>
+                <span id="game-speed-indicator" onclick="cycleGameSpeed()" style="cursor: pointer; background: #2d3748; padding: 5px 10px; border-radius: 5px;" title="Klicken zum Ändern">5x</span>
             </div>
             <div class="header-right">
                 <span><i class="fas fa-coins"></i> <span id="credits">50000</span> €</span>
                 <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
+                <button class="btn btn-small" onclick="openShop()"><i class="fas fa-shopping-cart"></i> Shop</button>
                 <button class="btn btn-small" onclick="showSettings()"><i class="fas fa-cog"></i></button>
             </div>
         </header>
 
-        <!-- Hauptbereich -->
         <div class="main-content">
-            <!-- Linke Sidebar: Einsatzliste -->
             <aside class="sidebar-left">
                 <div class="panel">
                     <div class="panel-header">
                         <h3><i class="fas fa-list"></i> Einsatzliste</h3>
                         <span class="badge" id="incident-count">0</span>
                     </div>
-                    <div class="panel-content" id="incident-list">
-                        <!-- Wird dynamisch gefüllt -->
-                    </div>
+                    <div class="panel-content" id="incident-list"></div>
                 </div>
 
                 <div class="panel">
@@ -114,29 +100,19 @@
                 </div>
             </aside>
 
-            <!-- Mittlerer Bereich: Karte -->
             <main class="map-container">
                 <div id="map"></div>
                 <div class="map-controls">
-                    <button class="btn btn-small" onclick="centerMap()"><i class="fas fa-crosshairs"></i> Zentrieren</button>
+                    <button class="btn btn-small" onclick="centerMap()"><i class="fas fa-crosshairs"></i></button>
                 </div>
             </main>
 
-            <!-- Rechte Sidebar: Fahrzeuge & Details -->
             <aside class="sidebar-right">
                 <div class="panel">
                     <div class="panel-header">
-                        <h3><i class="fas fa-car"></i> Verfügbare Fahrzeuge</h3>
+                        <h3><i class="fas fa-car"></i> Fahrzeuge</h3>
                     </div>
-                    <div class="panel-tabs">
-                        <button class="tab-btn active" onclick="showVehicleTab('rtw')">RTW/NEF</button>
-                        <button class="tab-btn" onclick="showVehicleTab('ktw')">KTW</button>
-                        <button class="tab-btn" onclick="showVehicleTab('feuerwehr')">Feuerwehr</button>
-                        <button class="tab-btn" onclick="showVehicleTab('polizei')">Polizei</button>
-                    </div>
-                    <div class="panel-content" id="vehicle-list">
-                        <!-- Wird dynamisch gefüllt -->
-                    </div>
+                    <div class="panel-content" id="vehicle-list"></div>
                 </div>
 
                 <div class="panel">
@@ -150,38 +126,47 @@
             </aside>
         </div>
 
-        <!-- Unterer Bereich: Funkverkehr & Log -->
         <footer>
             <div class="panel">
                 <div class="panel-header">
                     <h3><i class="fas fa-walkie-talkie"></i> Funkverkehr</h3>
                 </div>
-                <div class="panel-content radio-log" id="radio-feed">
-                    <!-- Wird dynamisch gefüllt -->
-                </div>
+                <div class="panel-content radio-log" id="radio-feed"></div>
             </div>
         </footer>
     </div>
 
-    <!-- Anruf-Dialog -->
-    <div id="call-dialog" class="modal">
-        <div class="modal-content">
+    <!-- Draggable Anruf-Fenster -->
+    <div id="call-dialog" class="draggable-window" style="display: none;">
+        <div class="window-header" id="call-dialog-header">
+            <span><i class="fas fa-phone-volume"></i> Notruf 112</span>
+            <button onclick="minimizeCallDialog()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2em;">&times;</button>
+        </div>
+        <div class="window-body">
+            <div id="call-conversation" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;"></div>
+            <div class="call-responses"></div>
+        </div>
+    </div>
+
+    <!-- Shop Dialog -->
+    <div id="shop-dialog" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h3><i class="fas fa-phone-volume"></i> Eingehender Notruf 112</h3>
+                <h3><i class="fas fa-shopping-cart"></i> Shop</h3>
+                <button class="close-btn" onclick="closeShop()">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="call-conversation">
-                    <!-- Gesprächsverlauf -->
+                <div class="shop-tabs">
+                    <button class="tab-btn active" onclick="showShopTab('vehicles')">Fahrzeuge</button>
+                    <button class="tab-btn" onclick="showShopTab('stations')">Wachen</button>
                 </div>
-                <div class="call-responses">
-                    <!-- Antwortmöglichkeiten -->
-                </div>
+                <div id="shop-content"></div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src="js/config.js"></script>
     <script src="js/data.js"></script>
     <script src="js/game.js"></script>
@@ -191,5 +176,6 @@
     <script src="js/tutorial.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/draggable.js"></script>
 </body>
 </html>

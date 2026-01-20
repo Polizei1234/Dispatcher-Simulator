@@ -2,39 +2,46 @@
 // UI-FUNKTIONEN
 // =========================
 
-function startNewGame() {
+function startNewGame(mode) {
+    CONFIG.GAME_MODE = mode;
+    localStorage.setItem('game_mode', mode);
+    
     document.getElementById('welcome-screen').classList.remove('active');
     document.getElementById('game-container').classList.remove('hidden');
     
-    // Lade gespeicherten API-Key falls vorhanden
     const savedKey = localStorage.getItem('groq_api_key');
     if (savedKey && game) {
         game.apiKey = savedKey;
-        console.log('✅ Groq API-Key geladen');
     }
     
-    addRadioMessage('System', 'ILS Waiblingen einsatzbereit. Dienst beginnt.');
+    // Initialisiere Fahrzeuge basierend auf Modus
+    initializeVehicles();
+    if (game) {
+        game.vehicles = VEHICLES;
+        if (mode === 'free') {
+            game.money = 999999999;
+        }
+    }
+    
+    updateVehicleList();
+    addRadioMessage('System', `ILS Waiblingen einsatzbereit. Modus: ${mode === 'career' ? 'Karriere' : 'Frei'}`);
 }
 
 function startTutorial() {
-    document.getElementById('welcome-screen').classList.remove('active');
-    document.getElementById('tutorial-overlay').classList.add('active');
-    loadTutorialStep(0);
+    alert('Tutorial folgt in der nächsten Version!');
 }
 
 function showSettings() {
     const overlay = document.getElementById('settings-overlay');
     overlay.classList.add('active');
     
-    // Lade aktuelle Einstellungen
     const savedKey = localStorage.getItem('groq_api_key') || '';
     document.getElementById('groq-api-key').value = savedKey;
     
-    const savedSpeed = localStorage.getItem('game_speed') || '5';
+    const savedSpeed = CONFIG.SIMULATION_SPEED;
     document.getElementById('game-speed').value = savedSpeed;
     
-    const soundEnabled = localStorage.getItem('sound_enabled') !== 'false';
-    document.getElementById('sound-enabled').checked = soundEnabled;
+    document.getElementById('sound-enabled').checked = CONFIG.SOUND_ENABLED;
 }
 
 function closeSettings() {
@@ -42,32 +49,18 @@ function closeSettings() {
 }
 
 function saveSettings() {
-    // Speichere Groq API-Key
     const apiKey = document.getElementById('groq-api-key').value.trim();
     if (apiKey) {
         localStorage.setItem('groq_api_key', apiKey);
-        if (game) {
-            game.apiKey = apiKey;
-        }
-        console.log('✅ Groq API-Key gespeichert');
-    } else {
-        localStorage.removeItem('groq_api_key');
-        if (game) {
-            game.apiKey = null;
-        }
+        if (game) game.apiKey = apiKey;
     }
     
-    // Speichere Spielgeschwindigkeit
     const speed = document.getElementById('game-speed').value;
+    CONFIG.SIMULATION_SPEED = parseInt(speed);
     localStorage.setItem('game_speed', speed);
-    if (game) {
-        CONFIG.SIMULATION_SPEED = parseInt(speed);
-    }
+    document.getElementById('game-speed-indicator').textContent = `${speed}x`;
     
-    // Speichere Sound-Einstellung
-    const soundEnabled = document.getElementById('sound-enabled').checked;
-    localStorage.setItem('sound_enabled', soundEnabled);
-    CONFIG.SOUND_ENABLED = soundEnabled;
+    CONFIG.SOUND_ENABLED = document.getElementById('sound-enabled').checked;
     
     alert('✅ Einstellungen gespeichert!');
     closeSettings();
@@ -86,20 +79,15 @@ function toggleAPIKeyVisibility() {
     }
 }
 
-function updateGameSpeed() {
-    const speed = document.getElementById('game-speed').value;
-    document.getElementById('game-speed-indicator').textContent = `${speed}x`;
-}
-
-function showVehicleTab(type) {
-    // Tab-Buttons aktualisieren
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
+function cycleGameSpeed() {
+    const speeds = [1, 2, 5, 10, 30];
+    const currentIndex = speeds.indexOf(CONFIG.SIMULATION_SPEED);
+    const nextIndex = (currentIndex + 1) % speeds.length;
     
-    // Fahrzeuge filtern
-    updateVehicleList();
+    CONFIG.SIMULATION_SPEED = speeds[nextIndex];
+    document.getElementById('game-speed-indicator').textContent = `${speeds[nextIndex]}x`;
+    
+    addRadioMessage('System', `Geschwindigkeit geändert: ${speeds[nextIndex]}x`);
 }
 
 function centerMap() {
@@ -108,10 +96,93 @@ function centerMap() {
     }
 }
 
-function closeDispatchDialog() {
-    document.getElementById('dispatch-dialog').classList.remove('active');
+function openShop() {
+    document.getElementById('shop-dialog').classList.add('active');
+    showShopTab('vehicles');
 }
 
-function closeShopDialog() {
+function closeShop() {
     document.getElementById('shop-dialog').classList.remove('active');
+}
+
+function showShopTab(tab) {
+    document.querySelectorAll('.shop-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const content = document.getElementById('shop-content');
+    
+    if (tab === 'vehicles') {
+        content.innerHTML = '<h4>Fahrzeuge kaufen</h4>';
+        VEHICLES.forEach((v, idx) => {
+            if (!v.owned && v.cost > 0) {
+                const station = STATIONS[v.station];
+                content.innerHTML += `
+                    <div style="padding: 10px; margin: 10px 0; background: #1e2a38; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${v.icon} ${v.type}</strong><br>
+                            <small>${station.name}</small><br>
+                            <small style="color: #4a9eff;">${v.callsign}</small>
+                        </div>
+                        <button class="btn btn-success" onclick="buyVehicle(${idx})">
+                            <i class="fas fa-shopping-cart"></i> ${v.cost.toLocaleString()} €
+                        </button>
+                    </div>
+                `;
+            }
+        });
+    } else {
+        content.innerHTML = '<h4>Wachen kaufen</h4>';
+        Object.values(STATIONS).forEach(station => {
+            if (station.cost > 0) {
+                const owned = VEHICLES.some(v => v.station === station.id && v.owned);
+                if (!owned) {
+                    content.innerHTML += `
+                        <div style="padding: 10px; margin: 10px 0; background: #1e2a38; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${station.icon} ${station.name}</strong><br>
+                                <small>${station.address}</small>
+                            </div>
+                            <button class="btn btn-success" onclick="buyStation('${station.id}')">
+                                <i class="fas fa-building"></i> ${station.cost.toLocaleString()} €
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+}
+
+function buyVehicle(index) {
+    if (!game) return;
+    const vehicle = VEHICLES[index];
+    
+    if (game.money >= vehicle.cost) {
+        game.money -= vehicle.cost;
+        vehicle.owned = true;
+        document.getElementById('credits').textContent = game.money.toLocaleString();
+        addRadioMessage('System', `✅ ${vehicle.callsign} gekauft!`);
+        updateVehicleList();
+        showShopTab('vehicles');
+    } else {
+        alert(`❌ Nicht genug Geld! Benötigt: €${vehicle.cost.toLocaleString()}`);
+    }
+}
+
+function buyStation(stationId) {
+    if (!game) return;
+    const station = STATIONS[stationId];
+    
+    if (game.money >= station.cost) {
+        game.money -= station.cost;
+        document.getElementById('credits').textContent = game.money.toLocaleString();
+        addRadioMessage('System', `✅ ${station.name} gekauft!`);
+        showShopTab('stations');
+    } else {
+        alert(`❌ Nicht genug Geld! Benötigt: €${station.cost.toLocaleString()}`);
+    }
+}
+
+function minimizeCallDialog() {
+    document.getElementById('call-dialog').style.display = 'none';
 }
