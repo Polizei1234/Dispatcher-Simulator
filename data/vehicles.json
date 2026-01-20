@@ -1,0 +1,190 @@
+{
+  "rescue": [
+    {
+      "type": "RTW",
+      "name": "Rettungswagen",
+      "description": "Standard-Rettungswagen mit Notfallausstattung",
+      "crew": 2,
+      "equipment": ["Trage", "Notfallkoffer", "AED", "Sauerstoff"],
+      "speed": 80,
+      "cost": 150000
+    },
+    {
+      "type": "NEF",
+      "name": "Notarzteinsatzfahrzeug",
+      "description": "Schnelles Fahrzeug mit Notarzt",
+      "crew": 2,
+      "equipment": ["Erweiterte Notfallausrüstung", "Medikamente", "Beatmungsgerät"],
+      "speed": 100,
+      "cost": 120000
+    },
+    {
+      "type": "KTW",
+      "name": "Krankentransportwagen",
+      "description": "Fahrzeug für nicht-notfallmäßige Transporte",
+      "crew": 2,
+      "equipment": ["Trage", "Basisausstattung"],
+      "speed": 70,
+      "cost": 80000
+    },
+    {
+      "type": "NAW",
+      "name": "Notarztwagen",
+      "description": "RTW mit integriertem Notarzt",
+      "crew": 3,
+      "equipment": ["Trage", "Notfallkoffer", "Erweiterte Medikamente", "Monitor"],
+      "speed": 80,
+      "cost": 200000
+    },
+    {
+      "type": "ITW",
+      "name": "Intensivtransportwagen",
+      "description": "Spezialisiert für Intensivpatienten",
+      "crew": 3,
+      "equipment": ["Intensivausstattung", "Beatmungsgerät", "Perfusor"],
+      "speed": 70,
+      "cost": 250000
+    }
+  ],
+  "fire": [
+    {
+      "type": "LF 20",
+      "name": "Löschgruppenfahrzeug 20",
+      "description": "Standardlöschfahrzeug",
+      "crew": 9,
+      "equipment": ["Löschwasser 2000L", "Pumpe", "Schläuche", "Atemschutzgeräte"],
+      "speed": 70,
+      "cost": 350000
+    },
+    {
+      "type": "LF 16",
+      "name": "Löschgruppenfahrzeug 16",
+      "description": "Kompaktes Löschfahrzeug",
+      "crew": 9,
+      "equipment": ["Löschwasser 1600L", "Pumpe", "Schläuche"],
+      "speed": 70,
+      "cost": 300000
+    },
+    {
+      "type": "DLK 23",
+      "name": "Drehleiter 23m",
+      "description": "Drehleiterfahrzeug",
+      "crew": 3,
+      "equipment": ["Drehleiter 23m", "Rettungskorb"],
+      "speed": 60,
+      "cost": 600000
+    },
+    {
+      "type": "RW",
+      "name": "Rüstwagen",
+      "description": "Technisches Hilfeleistungsfahrzeug",
+      "crew": 6,
+      "equipment": ["Hydraulisches Rettungsgerät", "Stromerzeuger", "Werkzeug"],
+      "speed": 70,
+      "cost": 400000
+    },
+    {
+      "type": "SW",
+      "name": "Schlauchwagen",
+      "description": "Fahrzeug mit Schlauchreserve",
+      "crew": 3,
+      "equipment": ["Schläuche", "Verteiler"],
+      "speed": 70,
+      "cost": 200000
+    },
+    {
+      "type": "GW-L",
+      "name": "Gerätewagen Logistik",
+      "description": "Logistikfahrzeug",
+      "crew": 3,
+      "equipment": ["Material", "Werkzeug", "Versorgung"],
+      "speed": 70,
+      "cost": 250000
+    },
+    {
+      "type": "GW-A/S",
+      "name": "Gerätewagen Atemschutz/Strahlenschutz",
+      "description": "Spezialfahrzeug",
+      "crew": 3,
+      "equipment": ["Atemschutzgeräte", "Messgeräte"],
+      "speed": 70,
+      "cost": 280000
+    },
+    {
+      "type": "TLF",
+      "name": "Tankenlöschfahrzeug",
+      "description": "Löschfahrzeug mit großem Wassertank",
+      "crew": 6,
+      "equipment": ["Löschwasser 4000L", "Pumpe", "Schaum"],
+      "speed": 65,
+      "cost": 450000
+    }
+  ],
+  "police": [
+    {
+      "type": "FuStW",
+      "name": "Funkstreifenwagen",
+      "description": "Standardstreifenwagen",
+      "crew": 2,
+      "equipment": ["Funk", "Erste Hilfe", "Einsatzmittel"],
+      "speed": 100,
+      "cost": 50000
+    },
+    {
+      "type": "Streife",
+      "name": "Streifenwagen",
+      "description": "Normaler Streifenwagen",
+      "crew": 2,
+      "equipment": ["Funk", "Basis"],
+      "speed": 90,
+      "cost": 40000
+    },
+    {
+      "type": "VKW",
+      "name": "Verkehrsunfallwagen",
+      "description": "Spezialisiert auf Verkehrsunfälle",
+      "crew": 2,
+      "equipment": ["Messgeräte", "Dokumentation"],
+      "speed": 90,
+      "cost": 60000
+    },
+    {
+      "type": "GruKW",
+      "name": "Gruppenkraftwagen",
+      "description": "Transportfahrzeug",
+      "crew": 10,
+      "equipment": ["Einsatzmittel"],
+      "speed": 80,
+      "cost": 80000
+    }
+  ],
+  "other": [
+    {
+      "type": "GKW",
+      "name": "Gerätekraftwagen THW",
+      "description": "THW Basisfahrzeug",
+      "crew": 8,
+      "equipment": ["Bergungsgerät", "Werkzeug"],
+      "speed": 70,
+      "cost": 200000
+    },
+    {
+      "type": "MzKW",
+      "name": "Mehrzweckkraftwagen",
+      "description": "Vielseitiges THW Fahrzeug",
+      "crew": 6,
+      "equipment": ["Werkzeug", "Material"],
+      "speed": 70,
+      "cost": 150000
+    },
+    {
+      "type": "MLW",
+      "name": "Mannschaftslastwagen",
+      "description": "Transportfahrzeug",
+      "crew": 20,
+      "equipment": ["Transport"],
+      "speed": 60,
+      "cost": 100000
+    }
+  ]
+}

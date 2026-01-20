@@ -1,0 +1,182 @@
+[
+  {
+    "id": "rd_backnang_1",
+    "name": "DRK Rettungswache Backnang",
+    "organization": "Rettungsdienst",
+    "operator": "DRK Kreisverband Rems-Murr",
+    "address": "Heinkelstraße 25, 71522 Backnang",
+    "position": [48.9389, 9.4201],
+    "vehicles": ["RTW", "NEF", "KTW"],
+    "coverage": ["Backnang", "Maubach", "Waldrems"]
+  },
+  {
+    "id": "rd_waiblingen_1",
+    "name": "DRK Rettungswache Waiblingen",
+    "organization": "Rettungsdienst",
+    "operator": "DRK Kreisverband Rems-Murr",
+    "address": "Mayenner Straße 90, 71332 Waiblingen",
+    "position": [48.8290, 9.3158],
+    "vehicles": ["RTW", "RTW", "NEF", "KTW"],
+    "coverage": ["Waiblingen", "Beinstein", "Hohenacker"]
+  },
+  {
+    "id": "rd_winnenden_1",
+    "name": "DRK Rettungswache Winnenden",
+    "organization": "Rettungsdienst",
+    "operator": "DRK Kreisverband Rems-Murr",
+    "address": "Ringstraße 5, 71364 Winnenden",
+    "position": [48.8754, 9.4001],
+    "vehicles": ["RTW", "NEF", "KTW"],
+    "coverage": ["Winnenden", "Hertmannsweiler", "Breuningsweiler"]
+  },
+  {
+    "id": "rd_schorndorf_1",
+    "name": "DRK Rettungswache Schorndorf",
+    "organization": "Rettungsdienst",
+    "operator": "DRK Kreisverband Rems-Murr",
+    "address": "Schlichtener Straße 100, 73614 Schorndorf",
+    "position": [48.8067, 9.5289],
+    "vehicles": ["RTW", "RTW", "NEF", "KTW"],
+    "coverage": ["Schorndorf", "Haubersbronn", "Miedelsbach"]
+  },
+  {
+    "id": "rd_fellbach_1",
+    "name": "DRK Rettungswache Fellbach",
+    "organization": "Rettungsdienst",
+    "operator": "DRK Kreisverband Rems-Murr",
+    "address": "Cannstatter Straße 96, 70734 Fellbach",
+    "position": [48.8089, 9.2756],
+    "vehicles": ["RTW", "KTW"],
+    "coverage": ["Fellbach", "Schmiden", "Oeffingen"]
+  },
+  {
+    "id": "rd_welzheim_1",
+    "name": "DRK Rettungswache Welzheim",
+    "organization": "Rettungsdienst",
+    "operator": "DRK Kreisverband Rems-Murr",
+    "address": "Rupertshofer Straße 9, 73642 Welzheim",
+    "position": [48.8745, 9.6345],
+    "vehicles": ["RTW", "KTW"],
+    "coverage": ["Welzheim", "Breitenfirst", "Kaisersbach"]
+  },
+  {
+    "id": "fw_backnang_1",
+    "name": "Feuerwehr Backnang",
+    "organization": "Feuerwehr",
+    "operator": "Stadt Backnang",
+    "address": "Erbstetter Straße 1, 71522 Backnang",
+    "position": [48.9456, 9.4336],
+    "vehicles": ["LF 20", "DLK 23", "RW", "SW"],
+    "coverage": ["Backnang", "Maubach", "Waldrems"]
+  },
+  {
+    "id": "fw_waiblingen_1",
+    "name": "Feuerwehr Waiblingen",
+    "organization": "Feuerwehr",
+    "operator": "Stadt Waiblingen",
+    "address": "Fronackerstraße 5, 71332 Waiblingen",
+    "position": [48.8334, 9.3189],
+    "vehicles": ["LF 20", "LF 16", "DLK 23", "RW", "GW-L"],
+    "coverage": ["Waiblingen", "Bittenfeld", "Neustadt"]
+  },
+  {
+    "id": "fw_winnenden_1",
+    "name": "Feuerwehr Winnenden",
+    "organization": "Feuerwehr",
+    "operator": "Stadt Winnenden",
+    "address": "Schorndorfer Straße 59, 71364 Winnenden",
+    "position": [48.8723, 9.3989],
+    "vehicles": ["LF 20", "DLK 23", "RW", "GW-A/S"],
+    "coverage": ["Winnenden", "Birkmannsweiler", "Hertmannsweiler"]
+  },
+  {
+    "id": "fw_schorndorf_1",
+    "name": "Feuerwehr Schorndorf",
+    "organization": "Feuerwehr",
+    "operator": "Stadt Schorndorf",
+    "address": "Johann-Philipp-Palm-Straße 19, 73614 Schorndorf",
+    "position": [48.8045, 9.5267],
+    "vehicles": ["LF 20", "LF 16", "DLK 23", "RW", "GW-L"],
+    "coverage": ["Schorndorf", "Oberberken", "Schornbach"]
+  },
+  {
+    "id": "fw_fellbach_1",
+    "name": "Feuerwehr Fellbach",
+    "organization": "Feuerwehr",
+    "operator": "Stadt Fellbach",
+    "address": "Tainer Straße 7, 70734 Fellbach",
+    "position": [48.8123, 9.2801],
+    "vehicles": ["LF 20", "DLK 23", "RW"],
+    "coverage": ["Fellbach", "Schmiden", "Oeffingen"]
+  },
+  {
+    "id": "pol_waiblingen_1",
+    "name": "Polizeirevier Waiblingen",
+    "organization": "Polizei",
+    "operator": "Polizeipräsidium Aalen",
+    "address": "Fronackerstraße 14, 71332 Waiblingen",
+    "position": [48.8312, 9.3201],
+    "vehicles": ["FuStW", "FuStW", "Streife"],
+    "coverage": ["Waiblingen", "Korb", "Kernen"]
+  },
+  {
+    "id": "pol_backnang_1",
+    "name": "Polizeirevier Backnang",
+    "organization": "Polizei",
+    "operator": "Polizeipräsidium Aalen",
+    "address": "Weiherwiesen 2, 71522 Backnang",
+    "position": [48.9501, 9.4289],
+    "vehicles": ["FuStW", "FuStW", "Streife"],
+    "coverage": ["Backnang", "Burgstetten", "Oppenweiler"]
+  },
+  {
+    "id": "pol_winnenden_1",
+    "name": "Polizeirevier Winnenden",
+    "organization": "Polizei",
+    "operator": "Polizeipräsidium Aalen",
+    "address": "Ringstraße 25, 71364 Winnenden",
+    "position": [48.8767, 9.3978],
+    "vehicles": ["FuStW", "Streife"],
+    "coverage": ["Winnenden", "Berglen", "Leutenbach"]
+  },
+  {
+    "id": "pol_schorndorf_1",
+    "name": "Polizeirevier Schorndorf",
+    "organization": "Polizei",
+    "operator": "Polizeipräsidium Aalen",
+    "address": "Karlstraße 5, 73614 Schorndorf",
+    "position": [48.8078, 9.5312],
+    "vehicles": ["FuStW", "FuStW", "Streife"],
+    "coverage": ["Schorndorf", "Urbach", "Winterbach"]
+  },
+  {
+    "id": "pol_fellbach_1",
+    "name": "Polizeirevier Fellbach",
+    "organization": "Polizei",
+    "operator": "Polizeipräsidium Aalen",
+    "address": "Max-Planck-Straße 23, 70736 Fellbach",
+    "position": [48.8134, 9.2823],
+    "vehicles": ["FuStW", "Streife"],
+    "coverage": ["Fellbach"]
+  },
+  {
+    "id": "thw_waiblingen_1",
+    "name": "THW Ortsverband Waiblingen",
+    "organization": "THW",
+    "operator": "THW",
+    "address": "Mayenner Straße 92, 71332 Waiblingen",
+    "position": [48.8289, 9.3145],
+    "vehicles": ["GKW", "MzKW", "MLW"],
+    "coverage": ["Rems-Murr-Kreis"]
+  },
+  {
+    "id": "thw_backnang_1",
+    "name": "THW Ortsverband Backnang",
+    "organization": "THW",
+    "operator": "THW",
+    "address": "Erbstetter Straße 3, 71522 Backnang",
+    "position": [48.9445, 9.4323],
+    "vehicles": ["GKW", "MzKW"],
+    "coverage": ["Rems-Murr-Kreis"]
+  }
+]

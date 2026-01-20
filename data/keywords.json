@@ -1,0 +1,162 @@
+[
+  {
+    "keyword": "RD 1",
+    "category": "Rettungsdienst",
+    "description": "Lebensbedrohliche Notfälle",
+    "priority": 1,
+    "suggestedVehicles": ["RTW", "NEF"],
+    "examples": ["Reanimation", "Schwerer Verkehrsunfall", "Schwerverletzte Person", "Bewusstlose Person"]
+  },
+  {
+    "keyword": "RD 2",
+    "category": "Rettungsdienst",
+    "description": "Dringende Notfälle",
+    "priority": 2,
+    "suggestedVehicles": ["RTW"],
+    "examples": ["Sturz mit Verletzung", "Starke Schmerzen", "Atembeschwerden", "Brustschmerzen"]
+  },
+  {
+    "keyword": "RD 3",
+    "category": "Rettungsdienst",
+    "description": "Nicht dringende Fälle",
+    "priority": 3,
+    "suggestedVehicles": ["KTW"],
+    "examples": ["Leichte Verletzung", "Krankentransport", "Allgemeines Unwohlsein"]
+  },
+  {
+    "keyword": "NEF",
+    "category": "Rettungsdienst",
+    "description": "Notarzteinsatz",
+    "priority": 1,
+    "suggestedVehicles": ["NEF", "RTW"],
+    "examples": ["Notarztindikation", "Schwere Erkrankung", "Polytrauma"]
+  },
+  {
+    "keyword": "B 1",
+    "category": "Brand",
+    "description": "Kleinbrand",
+    "priority": 2,
+    "suggestedVehicles": ["LF 20"],
+    "examples": ["Mülltonnenbrand", "PKW-Brand", "Kleinbrand im Freien"]
+  },
+  {
+    "keyword": "B 2",
+    "category": "Brand",
+    "description": "Mittelbrand",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "LF 20", "DLK 23", "RTW"],
+    "examples": ["Zimmerbrand", "Garagenbrand", "Kleinere Gebäudebrände"]
+  },
+  {
+    "keyword": "B 3",
+    "category": "Brand",
+    "description": "Großbrand",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "LF 20", "LF 16", "DLK 23", "RW", "RTW", "NEF"],
+    "examples": ["Wohnhausbrand", "Gewerbebrand", "Dachstuhlbrand"]
+  },
+  {
+    "keyword": "B 4",
+    "category": "Brand",
+    "description": "Großfeuer",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "LF 20", "LF 20", "DLK 23", "DLK 23", "RW", "SW", "RTW", "RTW", "NEF"],
+    "examples": ["Industriebrand", "Mehrere Gebäude", "Große Lagerhalle"]
+  },
+  {
+    "keyword": "THL 1",
+    "category": "Technische Hilfeleistung",
+    "description": "Kleine technische Hilfeleistung",
+    "priority": 2,
+    "suggestedVehicles": ["LF 20"],
+    "examples": ["Türöffnung", "Tier in Notlage", "Baum auf Straße"]
+  },
+  {
+    "keyword": "THL 2",
+    "category": "Technische Hilfeleistung",
+    "description": "Mittlere technische Hilfeleistung",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "RW", "RTW"],
+    "examples": ["Verkehrsunfall", "Person eingeklemmt", "Gebäudeeinstürzung"]
+  },
+  {
+    "keyword": "THL 3",
+    "category": "Technische Hilfeleistung",
+    "description": "Große technische Hilfeleistung",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "LF 20", "RW", "DLK 23", "RTW", "NEF"],
+    "examples": ["Schwerer VU mit mehreren Fahrzeugen", "Schwere Bergung"]
+  },
+  {
+    "keyword": "VU 1",
+    "category": "Verkehrsunfall",
+    "description": "Leichter Verkehrsunfall",
+    "priority": 3,
+    "suggestedVehicles": ["FuStW"],
+    "examples": ["Blechschaden", "Unfall ohne Verletzte"]
+  },
+  {
+    "keyword": "VU 2",
+    "category": "Verkehrsunfall",
+    "description": "Verkehrsunfall mit Verletzten",
+    "priority": 1,
+    "suggestedVehicles": ["RTW", "FuStW", "LF 20"],
+    "examples": ["Unfall mit verletzter Person", "Auffahrunfall"]
+  },
+  {
+    "keyword": "VU 3",
+    "category": "Verkehrsunfall",
+    "description": "Schwerer Verkehrsunfall",
+    "priority": 1,
+    "suggestedVehicles": ["RTW", "RTW", "NEF", "LF 20", "RW", "FuStW", "FuStW"],
+    "examples": ["Unfall mit eingeklemmten Personen", "Mehrere Verletzte"]
+  },
+  {
+    "keyword": "MANV",
+    "category": "Massenanfall von Verletzten",
+    "description": "Massenanfall von Verletzten",
+    "priority": 1,
+    "suggestedVehicles": ["RTW", "RTW", "RTW", "NEF", "NEF", "KTW", "KTW", "LF 20"],
+    "examples": ["Busunfall", "Zugunglück", "Explosion mit vielen Verletzten"]
+  },
+  {
+    "keyword": "CBRN",
+    "category": "Gefahrgut",
+    "description": "Chemie, Biologie, Radioaktivität, nuklear",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "RW", "GW-A/S", "RTW", "FuStW"],
+    "examples": ["Gefahrgutaustritt", "Chemieunfall", "Radioaktive Strahlung"]
+  },
+  {
+    "keyword": "WASSER",
+    "category": "Wasserrettung",
+    "description": "Wasserrettungseinsatz",
+    "priority": 1,
+    "suggestedVehicles": ["LF 20", "RTW", "NEF"],
+    "examples": ["Person im Wasser", "Ertrinkungsunfall", "Eiseinbruch"]
+  },
+  {
+    "keyword": "POL 1",
+    "category": "Polizei",
+    "description": "Standard Polizeieinsatz",
+    "priority": 2,
+    "suggestedVehicles": ["FuStW"],
+    "examples": ["Ruhestörung", "Streitigkeit", "Verkehrskontrolle"]
+  },
+  {
+    "keyword": "POL 2",
+    "category": "Polizei",
+    "description": "Dringender Polizeieinsatz",
+    "priority": 1,
+    "suggestedVehicles": ["FuStW", "FuStW"],
+    "examples": ["Einbruch", "Körperverletzung", "Bedrohung"]
+  },
+  {
+    "keyword": "POL 3",
+    "category": "Polizei",
+    "description": "Großeinsatz Polizei",
+    "priority": 1,
+    "suggestedVehicles": ["FuStW", "FuStW", "FuStW", "GruKW"],
+    "examples": ["Große Demonstration", "Amokdrohung", "Schusswaffengebrauch"]
+  }
+]
