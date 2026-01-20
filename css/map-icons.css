@@ -1,0 +1,62 @@
+/* =========================
+   PIXEL ART MAP ICONS
+   ========================= */
+
+.station-marker,
+.vehicle-marker {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.station-marker svg,
+.vehicle-marker svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+.station-marker {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.vehicle-marker {
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.vehicle-marker:hover {
+    transform: scale(1.2);
+    z-index: 1001;
+}
+
+/* Leaflet Popup Styling */
+.leaflet-popup-content-wrapper {
+    background: #1e2a38;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.leaflet-popup-content {
+    margin: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.leaflet-popup-tip {
+    background: #1e2a38;
+}
+
+.leaflet-popup-close-button {
+    color: white !important;
+}
+
+.leaflet-popup-close-button:hover {
+    color: #4a9eff !important;
+}

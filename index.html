@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ILS Waiblingen - Leitstellensimulator</title>
+    <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/draggable.css">
+    <link rel="stylesheet" href="css/map-icons.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
@@ -16,15 +17,23 @@
             <h1><i class="fas fa-hospital-symbol"></i> ILS Waiblingen</h1>
             <h2>Leitstellensimulator Rems-Murr-Kreis</h2>
             <p>Willkommen beim Dispatcher-Simulator der Integrierten Leitstelle Waiblingen!</p>
-            <div class="welcome-buttons">
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                <h3 style="margin-top: 0;"><i class="fas fa-database"></i> Echte Daten aus dem Rems-Murr-Kreis</h3>
+                <ul style="text-align: left; display: inline-block; margin: 0 auto;">
+                    <li><strong>35 Wachen</strong> (7 Hauptamtliche RW, 2 Notarztwachen, 17 Ortsvereine)</li>
+                    <li><strong>90+ Fahrzeuge</strong> (RTW, NEF, KTW, Kdow, GW-San)</li>
+                    <li><strong>Pixel-Art Icons</strong> auf der Karte</li>
+                    <li><strong>Realistische Funkrufnamen</strong> nach Digitalfunkatlas BW</li>
+                </ul>
+            </div>
+            <div class="welcome-buttons" style="margin-top: 20px;">
                 <button class="btn btn-primary" onclick="startNewGame('career')"><i class="fas fa-trophy"></i> Karrieremodus</button>
                 <button class="btn btn-success" onclick="startNewGame('free')"><i class="fas fa-infinity"></i> Freies Spiel</button>
-                <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial</button>
                 <button class="btn btn-secondary" onclick="showSettings()"><i class="fas fa-cog"></i> Einstellungen</button>
             </div>
             <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <p style="margin: 5px 0;"><strong>🏆 Karrieremodus:</strong> Starte mit 6 Fahrzeugen in Waiblingen. Verdiene Geld und erweitere deinen Fuhrpark!</p>
-                <p style="margin: 5px 0;"><strong>♾️ Freies Spiel:</strong> Alle 18 Fahrzeuge und 8 Wachen sofort verfügbar. Keine Limits!</p>
+                <p style="margin: 5px 0;"><strong>🏆 Karrieremodus:</strong> Starte mit 6 Fahrzeugen in Waiblingen. Verdiene Geld und kaufe neue Fahrzeuge!</p>
+                <p style="margin: 5px 0;"><strong>♾️ Freies Spiel:</strong> Alle 90+ Fahrzeuge sofort verfügbar!</p>
             </div>
         </div>
     </div>
@@ -104,7 +113,8 @@
             <main class="map-container">
                 <div id="map"></div>
                 <div class="map-controls">
-                    <button class="btn btn-small" onclick="centerMap()"><i class="fas fa-crosshairs"></i></button>
+                    <button class="btn btn-small" onclick="centerMap()" title="Karte zentrieren"><i class="fas fa-crosshairs"></i></button>
+                    <button class="btn btn-small" onclick="toggleStations()" title="Wachen ein/ausblenden"><i class="fas fa-hospital"></i></button>
                 </div>
             </main>
 
@@ -167,14 +177,12 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src="js/config.js"></script>
     <script src="js/data.js"></script>
     <script src="js/game.js"></script>
     <script src="js/map.js"></script>
     <script src="js/incidents.js"></script>
     <script src="js/ai.js"></script>
-    <script src="js/tutorial.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
     <script src="js/draggable.js"></script>
