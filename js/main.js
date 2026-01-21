@@ -1,5 +1,5 @@
 // =========================
-// HAUPTSTEUERUNG v3.6.2
+// HAUPTSTEUERUNG v3.7.0 - BUGFIXES
 // =========================
 
 let gamePaused = false;
@@ -9,7 +9,8 @@ let gameTickCounter = 0;
 window.GameTime = {
     simulated: new Date(),    // Uhrzeit für Anzeige (z.B. "16:42:35")
     elapsed: 0,               // Verstrichene Spielzeit in ms (für Einsatz-Timing)
-    speed: CONFIG.GAME_SPEED, // Aktuelle Geschwindigkeit
+    speed: 5, // Default 5x
+    lastTick: Date.now(),
     
     // Hilfsfunktionen
     tick: function(deltaMs) {
@@ -20,14 +21,27 @@ window.GameTime = {
     
     reset: function() {
         this.simulated = new Date();
+        this.simulated.setHours(8, 0, 0, 0); // Start um 08:00
         this.elapsed = 0;
-        this.speed = CONFIG.GAME_SPEED;
+        this.speed = CONFIG?.GAME_SPEED || 5;
+        this.lastTick = Date.now();
+        console.log('⏰ Zeit zurückgesetzt auf 08:00:00');
     },
     
     updateSpeed: function(newSpeed) {
         this.speed = newSpeed;
-        CONFIG.GAME_SPEED = newSpeed;
+        if (typeof CONFIG !== 'undefined') {
+            CONFIG.GAME_SPEED = newSpeed;
+        }
+        console.log(`⏱️ Geschwindigkeit: ${newSpeed}x`);
     }
+};
+
+// 🎮 GAME_DATA Global (für CallSystem & VehicleMovement)
+window.GAME_DATA = {
+    vehicles: [],
+    incidents: [],
+    stations: {}
 };
 
 function showCareerComingSoon() {
@@ -48,6 +62,12 @@ function startNewGame(mode) {
     
     // Erstelle Spiel
     game = new Game();
+    
+    // Initialisiere GAME_DATA global
+    window.GAME_DATA.vehicles = game.vehicles;
+    window.GAME_DATA.incidents = game.incidents;
+    window.GAME_DATA.stations = game.stations;
+    console.log('✅ GAME_DATA initialisiert');
     
     // Lade gespeicherte Einstellungen
     loadSettings();
@@ -124,8 +144,10 @@ function startGameLoop() {
         
         if (game) {
             game.update();
-            updateUI();
         }
+        
+        updateUI();
+        
     }, 1000);
     
     console.log('✅ Game Loop gestartet!');
@@ -147,20 +169,27 @@ function updateUI() {
     
     // Update Zeit aus ZENTRALEM System
     const timeEl = document.getElementById('current-time');
-    if (timeEl) {
-        timeEl.textContent = GameTime.simulated.toLocaleTimeString('de-DE');
+    if (timeEl && GameTime.simulated) {
+        const hours = String(GameTime.simulated.getHours()).padStart(2, '0');
+        const minutes = String(GameTime.simulated.getMinutes()).padStart(2, '0');
+        const seconds = String(GameTime.simulated.getSeconds()).padStart(2, '0');
+        timeEl.textContent = `${hours}:${minutes}:${seconds}`;
     }
     
-    // Update Einsatzliste
-    updateIncidentList();
+    // Update Einsatzliste (nur wenn UI.updateIncidentList existiert)
+    if (typeof UI !== 'undefined' && UI.updateIncidentList) {
+        UI.updateIncidentList();
+    } else {
+        updateIncidentListFallback();
+    }
     
     // Update Karte
-    if (map) {
+    if (typeof map !== 'undefined' && map && typeof updateVehicleMarkers === 'function') {
         updateVehicleMarkers();
     }
 }
 
-function updateIncidentList() {
+function updateIncidentListFallback() {
     if (!game) return;
     
     const container = document.getElementById('incident-list');
@@ -168,7 +197,7 @@ function updateIncidentList() {
     
     if (!container || !countBadge) return;
     
-    const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
+    const activeIncidents = GAME_DATA.incidents.filter(i => !i.completed);
     countBadge.textContent = activeIncidents.length;
     
     if (activeIncidents.length === 0) {
@@ -177,14 +206,14 @@ function updateIncidentList() {
     }
     
     container.innerHTML = activeIncidents.map(incident => `
-        <div class="incident-item ${game.selectedIncident?.id === incident.id ? 'selected' : ''}" 
-             onclick="selectIncident('${incident.id}')">
+        <div class="incident-item" onclick="selectIncident('${incident.id}')">
             <div class="incident-header">
-                <span class="incident-keyword">${incident.keyword}</span>
-                <span class="incident-time">${new Date(incident.timestamp).toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</span>
+                <span class="incident-badge">🚨</span>
+                <span class="incident-number">${incident.id}</span>
             </div>
-            <div class="incident-title">${incident.title}</div>
-            <div class="incident-location">📍 ${incident.location}</div>
+            <div class="incident-keyword">${incident.stichwort || incident.keyword || 'Einsatz'}</div>
+            <div class="incident-location">📍 ${incident.ort || incident.location || 'Unbekannt'}</div>
+            <div class="incident-time">🕒 ${incident.zeitstempel || 'Keine Zeit'}</div>
         </div>
     `).join('');
 }
@@ -192,91 +221,46 @@ function updateIncidentList() {
 function selectIncident(incidentId) {
     if (!game) return;
     
-    const incident = game.incidents.find(i => i.id === incidentId);
+    const incident = GAME_DATA.incidents.find(i => i.id === incidentId);
     if (!incident) return;
     
     game.selectedIncident = incident;
-    updateIncidentList();
-    showIncidentDetails(incident);
     
     // Zentriere Karte auf Einsatz
-    if (map && incident.position) {
-        map.setView(incident.position, 15);
-    }
-}
-
-function showIncidentDetails(incident) {
-    const container = document.getElementById('incident-details');
-    if (!container) return;
-    
-    const keywordData = KEYWORDS_BW[incident.keyword];
-    
-    container.innerHTML = `
-        <h3>${incident.keyword}: ${incident.title}</h3>
-        <p><strong>📍 Ort:</strong> ${incident.location}</p>
-        <p><strong>⏰ Zeit:</strong> ${new Date(incident.timestamp).toLocaleTimeString('de-DE')}</p>
-        <p><strong>🚨 Priorität:</strong> ${incident.priority}</p>
-        
-        ${keywordData ? `
-            <h4>Benötigte Fahrzeuge:</h4>
-            <ul>
-                ${keywordData.required.map(type => `<li>${type}</li>`).join('')}
-            </ul>
-        ` : ''}
-        
-        ${incident.assignedVehicles && incident.assignedVehicles.length > 0 ? `
-            <h4>Alarmierte Fahrzeuge:</h4>
-            <ul>
-                ${incident.assignedVehicles.map(vid => {
-                    const v = game.vehicles.find(vehicle => vehicle.id === vid);
-                    return v ? `<li>${v.callsign}</li>` : '';
-                }).join('')}
-            </ul>
-        ` : ''}
-        
-        <div style="margin-top: 15px;">
-            <button class="btn btn-primary" onclick="showVehicleSelection('${incident.id}')">
-                <i class="fas fa-ambulance"></i> Fahrzeuge alarmieren
-            </button>
-        </div>
-    `;
-}
-
-function showVehicleSelection(incidentId) {
-    alert('🚑 Fahrzeugauswahl - In Entwicklung!\n\nKlicke auf der Karte auf Fahrzeuge oder nutze den Fahrzeuge-Tab.');
-}
-
-function selectVehicleForIncident(vehicleId) {
-    if (!game || !game.selectedIncident) {
-        alert('⚠️ Bitte wähle zuerst einen Einsatz aus!');
-        return;
+    if (typeof map !== 'undefined' && map && incident.koordinaten) {
+        map.setView([incident.koordinaten.lat, incident.koordinaten.lon], 15);
     }
     
-    game.dispatchVehicle(vehicleId, game.selectedIncident.id);
-    updateUI();
+    console.log(`📍 Einsatz ausgewählt: ${incidentId}`);
 }
 
 function showSettings() {
-    document.getElementById('settings-overlay').classList.add('active');
+    const overlay = document.getElementById('settings-overlay');
+    if (overlay) overlay.classList.add('active');
     
     // Lade aktuelle Einstellungen
     const speed = localStorage.getItem('gameSpeed') || '5';
     const apiKey = localStorage.getItem('groqApiKey') || '';
     const sound = localStorage.getItem('soundEnabled') !== 'false';
     
-    document.getElementById('game-speed').value = speed;
-    document.getElementById('groq-api-key').value = apiKey;
-    document.getElementById('sound-enabled').checked = sound;
+    const speedEl = document.getElementById('game-speed');
+    const apiKeyEl = document.getElementById('groq-api-key');
+    const soundEl = document.getElementById('sound-enabled');
+    
+    if (speedEl) speedEl.value = speed;
+    if (apiKeyEl) apiKeyEl.value = apiKey;
+    if (soundEl) soundEl.checked = sound;
 }
 
 function closeSettings() {
-    document.getElementById('settings-overlay').classList.remove('active');
+    const overlay = document.getElementById('settings-overlay');
+    if (overlay) overlay.classList.remove('active');
 }
 
 function saveSettings() {
-    const speed = document.getElementById('game-speed').value;
-    const apiKey = document.getElementById('groq-api-key').value;
-    const sound = document.getElementById('sound-enabled').checked;
+    const speed = document.getElementById('game-speed')?.value || '5';
+    const apiKey = document.getElementById('groq-api-key')?.value || '';
+    const sound = document.getElementById('sound-enabled')?.checked || true;
     
     localStorage.setItem('gameSpeed', speed);
     localStorage.setItem('groqApiKey', apiKey);
@@ -286,7 +270,8 @@ function saveSettings() {
     GameTime.updateSpeed(parseInt(speed));
     if (game) game.apiKey = apiKey;
     
-    document.getElementById('game-speed-indicator').textContent = speed + 'x';
+    const indicator = document.getElementById('game-speed-indicator');
+    if (indicator) indicator.textContent = speed + 'x';
     
     closeSettings();
     alert('✅ Einstellungen gespeichert!');
@@ -308,12 +293,15 @@ function loadSettings() {
     
     if (apiKey && game) {
         game.apiKey = apiKey;
+        console.log('✅ API Key geladen');
     }
 }
 
 function toggleAPIKeyVisibility() {
     const input = document.getElementById('groq-api-key');
     const icon = document.getElementById('api-key-toggle-icon');
+    
+    if (!input || !icon) return;
     
     if (input.type === 'password') {
         input.type = 'text';
@@ -330,50 +318,70 @@ function cycleGameSpeed() {
     const speeds = [1, 2, 5, 10, 30];
     const currentIndex = speeds.indexOf(GameTime.speed);
     const nextIndex = (currentIndex + 1) % speeds.length;
+    const nextSpeed = speeds[nextIndex];
     
     // Update ZENTRALES Zeitsystem
-    GameTime.updateSpeed(speeds[nextIndex]);
-    document.getElementById('game-speed-indicator').textContent = speeds[nextIndex] + 'x';
-    localStorage.setItem('gameSpeed', speeds[nextIndex]);
+    GameTime.updateSpeed(nextSpeed);
     
-    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${speeds[nextIndex]}x`);
-    console.log(`⏱️ Neue Geschwindigkeit: ${speeds[nextIndex]}x`);
+    const indicator = document.getElementById('game-speed-indicator');
+    if (indicator) indicator.textContent = nextSpeed + 'x';
+    
+    localStorage.setItem('gameSpeed', nextSpeed);
+    
+    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${nextSpeed}x`);
+    console.log(`⏱️ Neue Geschwindigkeit: ${nextSpeed}x`);
 }
 
 function openShop() {
-    alert('🛍️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
+    alert('🛒️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
 }
 
 function startTutorial() {
     alert('🎓 Tutorial - In Entwicklung!\n\nStarte das Freie Spiel und probiere es einfach aus!');
 }
 
-// RADIO FEED
+// RADIO FEED - KORRIGIERT!
 function addRadioMessage(sender, message) {
-    const feed = document.getElementById('radio-feed');
-    if (!feed) return;
+    // Suche beide möglichen IDs
+    let feed = document.getElementById('radio-feed-full');
+    if (!feed) feed = document.getElementById('radio-feed');
+    if (!feed) {
+        console.warn('⚠️ Radio Feed Element nicht gefunden');
+        return;
+    }
     
-    const time = GameTime.simulated.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const time = GameTime.simulated ? 
+        GameTime.simulated.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'}) :
+        new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
     
     const entry = document.createElement('div');
-    entry.className = 'radio-entry';
+    entry.className = 'radio-message';
     entry.innerHTML = `
-        <span class="radio-time">${time}</span>
-        <strong>${sender}:</strong> ${message}
+        <span style="color: #666; font-size: 0.85em;">[${time}]</span>
+        <strong style="margin: 0 5px;">${sender}:</strong>
+        <span>${message}</span>
     `;
     
-    feed.insertBefore(entry, feed.firstChild);
+    feed.appendChild(entry);
+    feed.scrollTop = feed.scrollHeight;
     
-    // Limitiere auf 50 Einträge
-    while (feed.children.length > 50) {
-        feed.removeChild(feed.lastChild);
+    // Limitiere auf 100 Einträge
+    while (feed.children.length > 100) {
+        feed.removeChild(feed.firstChild);
     }
 }
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v3.6.2 geladen');
-    console.log(`📍 ${Object.keys(STATIONS).length} Wachen verfügbar`);
-    console.log(`🚑 ${VEHICLES_CATALOG.length} Fahrzeuge im Katalog`);
-    console.log(`⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
+    console.log('🚀 ILS Waiblingen Simulator v3.7.0 geladen');
+    
+    if (typeof STATIONS !== 'undefined') {
+        console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
+    }
+    
+    if (typeof VEHICLES !== 'undefined') {
+        console.log(`🚑 ${VEHICLES.length} Fahrzeuge im System`);
+    }
+    
+    console.log(`⏱️ Spielgeschwindigkeit: ${GameTime.speed}x`);
 });
