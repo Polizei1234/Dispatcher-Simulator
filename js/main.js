@@ -47,12 +47,9 @@ function startNewGame(mode) {
     console.log('🔄 Starte Game Loop...');
     startGameLoop();
     
-    // Starte Einsatz-Generator
-    console.log('🚨 Starte Einsatz-Generator...');
-    startIncidentGenerator();
-    
     addRadioMessage('System', `🚑 ILS Waiblingen - ${mode === 'free' ? 'Freies Spiel' : 'Karrieremodus'} gestartet`);
     addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
+    addRadioMessage('System', '🤖 Einsätze werden jetzt mit KI generiert');
 }
 
 function togglePause() {
@@ -76,92 +73,6 @@ function togglePause() {
         addRadioMessage('System', '▶️ Spiel fortgesetzt');
         console.log('▶️ Spiel fortgesetzt');
     }
-}
-
-function startIncidentGenerator() {
-    console.log('🚨 Einsatz-Generator gestartet');
-    console.log(`⏱️ Erster Einsatz in ${10 / CONFIG.GAME_SPEED} Sekunden Echtzeit`);
-    
-    // Generiere ersten Einsatz nach 10 Sekunden (Spielzeit)
-    setTimeout(() => {
-        console.log('🚨 Timer für ersten Einsatz ausgelöst!');
-        if (!gamePaused) {
-            generateRandomIncident();
-        } else {
-            console.log('⚠️ Spiel ist pausiert, überspringe Einsatz');
-        }
-    }, (10000 / CONFIG.GAME_SPEED));
-    
-    // Dann alle 2-5 Minuten (Spielzeit)
-    setInterval(() => {
-        if (gamePaused) return;
-        
-        const random = Math.random();
-        if (random < 0.5) { // 50% Chance (erhöht für Tests)
-            console.log('🚨 Zufälliger Einsatz wird generiert...');
-            generateRandomIncident();
-        }
-    }, (120000 / CONFIG.GAME_SPEED));
-}
-
-function generateRandomIncident() {
-    if (!game) {
-        console.error('❌ Kein Game-Objekt vorhanden!');
-        return;
-    }
-    if (gamePaused) {
-        console.log('⏸️ Spiel pausiert, kein Einsatz');
-        return;
-    }
-    
-    console.log('🚨 Generiere neuen Einsatz...');
-    
-    // Wähle zufälliges Stichwort
-    const keywords = Object.keys(KEYWORDS_BW);
-    const keyword = keywords[Math.floor(Math.random() * keywords.length)];
-    const keywordData = KEYWORDS_BW[keyword];
-    
-    // Zufällige Position im Rems-Murr-Kreis
-    const center = [48.8309, 9.3256]; // Waiblingen
-    const randomLat = center[0] + (Math.random() - 0.5) * 0.3;
-    const randomLng = center[1] + (Math.random() - 0.5) * 0.3;
-    
-    // Zufällige Straße
-    const streets = [
-        'Hauptstraße', 'Bahnhofstraße', 'Schulstraße', 'Mühlweg',
-        'Gartenstraße', 'Waldweg', 'Kirchplatz', 'Marktplatz',
-        'Industriestraße', 'Friedhofstraße', 'Römerstraße'
-    ];
-    const street = streets[Math.floor(Math.random() * streets.length)];
-    const number = Math.floor(Math.random() * 100) + 1;
-    
-    const incident = {
-        id: `INC_${Date.now()}`,
-        keyword: keyword,
-        title: keywordData.name,
-        type: keyword.includes('B ') ? 'fire' : (keyword.includes('THL') ? 'technical' : 'medical'),
-        location: `${street} ${number}, Waiblingen`,
-        position: [randomLat, randomLng],
-        timestamp: Date.now(),
-        status: 'pending',
-        priority: keywordData.priority || 'normal',
-        assignedVehicles: [],
-        description: `Einsatzstichwort: ${keyword} - ${keywordData.name}`
-    };
-    
-    game.incidents.push(incident);
-    
-    // Zeige Notification
-    addRadioMessage('System', `🚨 Neuer Einsatz: ${keyword} - ${incident.location}`);
-    console.log(`✅ Einsatz erstellt: ${keyword} an ${incident.location}`);
-    
-    // Zeige auf Karte
-    if (map) {
-        addIncidentMarker(incident);
-    }
-    
-    // Update UI
-    updateIncidentList();
 }
 
 let gameLoopInterval = null;
@@ -399,7 +310,7 @@ function cycleGameSpeed() {
 }
 
 function openShop() {
-    alert('🛍️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
+    alert('🛒 Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
 }
 
 function startTutorial() {
