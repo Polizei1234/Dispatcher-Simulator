@@ -19,7 +19,8 @@ function initMap() {
         center: CONFIG.MAP_CENTER,
         zoom: CONFIG.MAP_ZOOM,
         minZoom: CONFIG.MAP_MIN_ZOOM,
-        maxZoom: CONFIG.MAP_MAX_ZOOM
+        maxZoom: CONFIG.MAP_MAX_ZOOM,
+        closePopupOnClick: true  // Popups bleiben offen bis woanders geklickt wird
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -39,10 +40,10 @@ function getFMSStatus(vehicle) {
         'available': 2,      // Status 2: Einsatzbereit auf Wache
         'dispatched': 3,     // Status 3: Einsatzauftrag übernommen
         'on-scene': 4,       // Status 4: Ankunft am Einsatzort
-        'transporting': 5,   // Status 5: Patient aufgenommen
-        'at-hospital': 7,    // Status 7: Ankunft Krankenhaus
-        'returning': 6,      // Status 6: Verlässt Einsatzort
-        'unavailable': 0     // Status 0: Nicht einsatzbereit
+        'transporting': 7,   // Status 7: Patient aufgenommen
+        'at-hospital': 8,    // Status 8: Krankenhausdesinfektion
+        'returning': 1,      // Status 1: Einsatzbereit über Funk (auf Rückweg)
+        'unavailable': 6     // Status 6: Nicht einsatzbereit
     };
     
     const fmsCode = statusMap[vehicle.status] || 2;
@@ -144,7 +145,9 @@ function createStationMarkers() {
                 </div>
             `, {
                 maxWidth: 350,
-                className: 'station-popup'
+                className: 'station-popup',
+                autoClose: false,        // Popup bleibt offen
+                closeOnClick: false      // Schließt nicht beim Klicken auf Karte
             });
             
             marker.addTo(map);
@@ -304,7 +307,10 @@ function updateMap() {
                     </div>
                     <small style="color: #a0a0a0; display: block; margin-top: 5px;">${vehicle.type}</small>
                 </div>
-            `);
+            `, {
+                autoClose: false,
+                closeOnClick: false
+            });
             
             marker.addTo(map);
             vehicleMarkers.push(marker);
