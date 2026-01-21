@@ -1,10 +1,11 @@
 // =========================
-// HAUPTSTEUERUNG v3.6
+// HAUPTSTEUERUNG v3.6.2
 // =========================
 
 let gamePaused = false;
 let gameTime = Date.now();
 let gameTickCounter = 0;
+let simulatedTime = new Date(); // Simulierte Spielzeit
 
 function showCareerComingSoon() {
     alert('🔒 Karrieremodus kommt bald!\n\nDiese Funktion ist noch in Entwicklung.\nStarte vorerst das Freie Spiel mit allen Fahrzeugen!');
@@ -37,6 +38,7 @@ function startNewGame(mode) {
     
     // Setze Startzeit
     gameTime = Date.now();
+    simulatedTime = new Date(); // Starte bei aktueller Zeit
     gamePaused = false;
     gameTickCounter = 0;
     
@@ -90,10 +92,13 @@ function startGameLoop() {
         
         // Debug-Log alle 5 Sekunden
         if (gameTickCounter % 5 === 0) {
-            console.log(`⏱️ Game Loop Tick #${gameTickCounter} | Pausiert: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0}`);
+            console.log(`⏱️ Game Loop Tick #${gameTickCounter} | Pausiert: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0} | Speed: ${CONFIG.GAME_SPEED}x`);
         }
         
         if (gamePaused) return;
+        
+        // Aktualisiere simulierte Zeit basierend auf Spielgeschwindigkeit
+        simulatedTime = new Date(simulatedTime.getTime() + (1000 * CONFIG.GAME_SPEED));
         
         if (game) {
             game.update();
@@ -118,11 +123,10 @@ function updateUI() {
     if (totalEl) totalEl.textContent = ownedVehicles.length;
     if (activeEl) activeEl.textContent = availableVehicles.length;
     
-    // Update Zeit (immer, auch wenn pausiert, damit man sieht dass es läuft)
+    // Update Zeit MIT Spielgeschwindigkeit!
     const timeEl = document.getElementById('current-time');
     if (timeEl) {
-        const now = new Date();
-        timeEl.textContent = now.toLocaleTimeString('de-DE');
+        timeEl.textContent = simulatedTime.toLocaleTimeString('de-DE');
     }
     
     // Update Einsatzliste
@@ -263,6 +267,9 @@ function saveSettings() {
     
     closeSettings();
     alert('✅ Einstellungen gespeichert!');
+    
+    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${speed}x`);
+    console.log(`⏱️ Neue Geschwindigkeit: ${speed}x`);
 }
 
 function loadSettings() {
@@ -310,7 +317,7 @@ function cycleGameSpeed() {
 }
 
 function openShop() {
-    alert('🛒 Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
+    alert('🛍️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
 }
 
 function startTutorial() {
@@ -322,7 +329,7 @@ function addRadioMessage(sender, message) {
     const feed = document.getElementById('radio-feed');
     if (!feed) return;
     
-    const time = new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const time = simulatedTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
     
     const entry = document.createElement('div');
     entry.className = 'radio-entry';
@@ -341,7 +348,7 @@ function addRadioMessage(sender, message) {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v3.6 geladen');
+    console.log('🚀 ILS Waiblingen Simulator v3.6.2 geladen');
     console.log(`📍 ${Object.keys(STATIONS).length} Wachen verfügbar`);
     console.log(`🚑 ${VEHICLES_CATALOG.length} Fahrzeuge im Katalog`);
     console.log(`⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
