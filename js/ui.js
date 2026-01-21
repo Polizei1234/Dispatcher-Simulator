@@ -119,6 +119,25 @@ function cycleGameSpeed() {
     localStorage.setItem('game_speed', speeds[nextIndex]);
 }
 
+function playSound(soundId) {
+    // Optionale Sound-Funktion - verhindert Fehler wenn Sound nicht implementiert ist
+    if (!CONFIG.SOUND_ENABLED) return;
+    
+    try {
+        const audio = document.getElementById(`sound-${soundId}`);
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(err => {
+                console.warn('🔇 Sound konnte nicht abgespielt werden:', err.message);
+            });
+        } else {
+            console.log(`🔊 Sound '${soundId}' nicht gefunden (optional)`);
+        }
+    } catch (error) {
+        console.warn('🔇 Sound-Fehler:', error.message);
+    }
+}
+
 function showIncomingCallNotification(incident) {
     const callList = document.getElementById('call-list');
     if (!callList) return;
