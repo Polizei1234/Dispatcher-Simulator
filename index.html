@@ -102,9 +102,6 @@
             </div>
             <div class="header-right">
                 <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
-                <button class="btn btn-small btn-success" onclick="ManualIncident.openModal()" title="Neuen Einsatz manuell erstellen">
-                    <i class="fas fa-plus-circle"></i> Einsatz erstellen
-                </button>
                 <button class="btn btn-small" onclick="openShop()"><i class="fas fa-shopping-cart"></i> Shop</button>
                 <button class="btn btn-small" onclick="showSettings()"><i class="fas fa-cog"></i></button>
             </div>
@@ -180,7 +177,7 @@
             </div>
         </div>
 
-        <!-- TAB: NOTRUF - FIXED LAYOUT -->
+        <!-- TAB: NOTRUF - SPLIT VIEW: CHAT + MANUAL INCIDENT -->
         <div id="tab-call" class="tab-content">
             <div class="call-tab-container">
                 <div class="call-no-active" id="call-no-active">
@@ -192,17 +189,16 @@
                 </div>
                 <div class="call-active" id="call-active" style="display: none;">
                     <div style="display: flex; height: calc(100vh - 200px);">
-                        <!-- Linke Seite: Dialog -->
+                        <!-- Linke Seite: Anruf-Dialog -->
                         <div style="flex: 1; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--panel-bg);">
                             <h3><i class="fas fa-phone-volume"></i> Notruf 112 - Gespräch läuft</h3>
                             <div id="caller-messages" style="min-height: 400px; margin-top: 20px;"></div>
                             <div id="question-buttons" style="margin-top: 20px;"></div>
                         </div>
-                        <!-- Rechte Seite: Protokoll -->
+                        <!-- Rechte Seite: Manual Incident Formular -->
                         <div style="flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-secondary);">
-                            <h3><i class="fas fa-clipboard"></i> Einsatzprotokoll</h3>
-                            <div id="protocol-form">
-                                <div id="protocol-form-content"></div>
+                            <div id="manual-incident-inline-container">
+                                <!-- Wird von ManualIncident.showInline() gefüllt -->
                             </div>
                         </div>
                     </div>
