@@ -12,36 +12,29 @@ class Game {
         this.reputation = 100;
         this.apiKey = null;
         
-        // WICHTIG: Speichere Spielzeit statt Echtzeit!
-        this.gameTimeElapsed = 0; // Verstrichene Spielzeit in ms
-        this.lastUpdateTime = Date.now();
-        this.nextIncidentGameTime = this.getRandomIncidentGameTime();
+        // Nutze ZENTRALES Zeitsystem!
+        this.nextIncidentGameTime = this.getRandomIncidentInterval();
         
         console.log(`🎮 Game initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
     }
     
-    getRandomIncidentGameTime() {
+    getRandomIncidentInterval() {
         // Neuer Einsatz alle 60-180 Sekunden SPIELZEIT
         const minTime = 60000; // 60 Sekunden
         const maxTime = 180000; // 180 Sekunden (3 Minuten)
-        const gameTime = minTime + Math.random() * (maxTime - minTime);
+        const interval = minTime + Math.random() * (maxTime - minTime);
         
-        console.log(`⏱️ Nächster Einsatz in ${Math.round(gameTime/1000)}s Spielzeit (unabhängig von Speed)`);
-        return gameTime;
+        console.log(`⏱️ Nächster Einsatz in ${Math.round(interval/1000)}s Spielzeit`);
+        return interval;
     }
     
     async update() {
-        const now = Date.now();
-        const deltaRealTime = now - this.lastUpdateTime;
-        this.lastUpdateTime = now;
-        
-        // Berechne verstrichene Spielzeit basierend auf aktueller Geschwindigkeit
-        const deltaGameTime = deltaRealTime * CONFIG.GAME_SPEED;
-        this.gameTimeElapsed += deltaGameTime;
+        // Nutze ZENTRALES Zeitsystem (window.GameTime)
+        const currentGameTime = window.GameTime.elapsed;
         
         // Spawne neue Einsätze wenn Spielzeit erreicht ist
-        if (this.gameTimeElapsed >= this.nextIncidentGameTime) {
-            console.log(`🚨 Generiere neuen KI-Einsatz... (Spielzeit: ${Math.round(this.gameTimeElapsed/1000)}s)`);
+        if (currentGameTime >= this.nextIncidentGameTime) {
+            console.log(`🚨 Generiere neuen KI-Einsatz... (Spielzeit: ${Math.round(currentGameTime/1000)}s)`);
             
             const ownedVehicles = this.vehicles.filter(v => v.owned);
             const incident = await generateIncidentWithAI(ownedVehicles, this.apiKey);
@@ -52,15 +45,15 @@ class Game {
                 addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
                 
                 // Setze nächsten Einsatz als absolute Spielzeit
-                const nextInterval = this.getRandomIncidentGameTime();
-                this.nextIncidentGameTime = this.gameTimeElapsed + nextInterval;
+                const nextInterval = this.getRandomIncidentInterval();
+                this.nextIncidentGameTime = currentGameTime + nextInterval;
                 
-                const realTimeUntilNext = nextInterval / CONFIG.GAME_SPEED;
-                console.log(`✅ Einsatz erstellt: ${incident.keyword} | Nächster in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${CONFIG.GAME_SPEED}x)`);
+                const realTimeUntilNext = nextInterval / window.GameTime.speed;
+                console.log(`✅ Einsatz erstellt: ${incident.keyword} | Nächster in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${window.GameTime.speed}x)`);
             } else {
                 console.warn('⚠️ KI-Einsatzgenerierung fehlgeschlagen, versuche später erneut');
                 // Bei Fehler: Retry in 30 Sekunden SPIELZEIT
-                this.nextIncidentGameTime = this.gameTimeElapsed + 30000;
+                this.nextIncidentGameTime = currentGameTime + 30000;
             }
         }
         
@@ -165,12 +158,15 @@ class Game {
             if (incident) {
                 addRadioMessage(vehicle.callsign, `Vor Ort am Einsatzort`);
                 
-                // Nach 2 Minuten: Einsatz abgeschlossen
+                // Nach 2 Minuten SPIELZEIT: Einsatz abgeschlossen
+                const completionTime = 120000; // 2 Minuten Spielzeit
+                const realTimeDelay = completionTime / window.GameTime.speed;
+                
                 setTimeout(() => {
                     vehicle.status = 'available';
                     incident.status = 'completed';
                     addRadioMessage(vehicle.callsign, 'Einsatz beendet, Status 4');
-                }, 120000 / CONFIG.GAME_SPEED);
+                }, realTimeDelay);
             }
             vehicle.route = null;
             return;
@@ -181,5 +177,4 @@ class Game {
     }
 }
 
-// KEIN let map = null; hier! Wird in map.js definiert
 let game = null;
