@@ -1,8 +1,10 @@
 // =========================
-// EMERGENCY CALL SYSTEM v4.8
+// EMERGENCY CALL SYSTEM v5.0 - BUGS FIXED
 // + Random Telefonnummern
 // + Hotspot-System
 // + Entfernungsanzeige
+// + VehicleMovement Check
+// + Geocoding Cache
 // =========================
 
 const CallSystem = {
@@ -13,6 +15,8 @@ const CallSystem = {
     callHistory: [],
     selectedVehicles: [],
     askedQuestions: [],
+    geocodeCache: {}, // 🚀 FIX #6: Cache für Geocoding
+    lastGeocodeRequest: 0, // 🚀 FIX #6: Rate Limiting
 
     HOTSPOT_ZONES: [
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
@@ -30,7 +34,8 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v4.8 initialisiert');
+        console.log('📞 Call System v5.0 initialisiert');
+        console.log('✅ Fixes: VehicleMovement Check + Geocoding Cache');
         this.setupRingtone();
     },
 
@@ -115,12 +120,45 @@ const CallSystem = {
         }
     },
 
-    async reverseGeocode(lat, lon) {
+    // 🚀 FIX #6: Geocoding mit Cache & Rate Limiting
+    async reverseGeocode(lat, lon, retries = 0) {
+        // Cache-Key
+        const cacheKey = `${lat.toFixed(4)}_${lon.toFixed(4)}`;
+        
+        // ✅ Prüfe Cache
+        if (this.geocodeCache[cacheKey]) {
+            console.log(`📦 Geocoding Cache-Hit: ${cacheKey}`);
+            return this.geocodeCache[cacheKey];
+        }
+        
+        // ✅ Rate Limiting: Min 1 Sekunde zwischen Requests
+        const now = Date.now();
+        const timeSinceLastRequest = now - this.lastGeocodeRequest;
+        if (timeSinceLastRequest < 1000) {
+            const waitTime = 1000 - timeSinceLastRequest;
+            console.log(`⏳ Warte ${waitTime}ms (Rate Limiting)`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+        this.lastGeocodeRequest = Date.now();
+        
         try {
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
             const response = await fetch(url, {
                 headers: { 'User-Agent': 'ILS-Waiblingen-Simulator/1.0' }
             });
+
+            // ✅ Handle 429 (Too Many Requests) mit Retry
+            if (response.status === 429) {
+                if (retries < 3) {
+                    const backoff = Math.pow(2, retries) * 1000; // Exponential backoff
+                    console.warn(`⚠️ Nominatim 429 - Retry in ${backoff}ms (Versuch ${retries + 1}/3)`);
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                    return this.reverseGeocode(lat, lon, retries + 1);
+                } else {
+                    console.error('❌ Nominatim Rate Limit erreicht nach 3 Versuchen');
+                    return null;
+                }
+            }
 
             if (!response.ok) {
                 console.error('❌ Nominatim Error:', response.status);
@@ -138,7 +176,12 @@ const CallSystem = {
             const houseNumber = addr.house_number || '';
             const city = addr.city || addr.town || addr.village || 'Waiblingen';
             
-            return `${street} ${houseNumber}, ${city}`.trim();
+            const address = `${street} ${houseNumber}, ${city}`.trim();
+            
+            // ✅ Cache speichern
+            this.geocodeCache[cacheKey] = address;
+            
+            return address;
         } catch (error) {
             console.error('❌ Geocoding Fehler:', error);
             return null;
@@ -598,7 +641,7 @@ ANTWORTE NUR als JSON:
         });
     },
 
-    // 🚀 NEU: Mit Entfernungsberechnung & Sortierung
+    // 🚀 FIX #3: VehicleMovement undefined Check
     addVehicleTypeToGrid(grid, type, count) {
         const vehicles = GAME_DATA.vehicles.filter(v => {
             const vType = v.type.toUpperCase();
@@ -610,8 +653,9 @@ ANTWORTE NUR als JSON:
 
         if (vehicles.length === 0) return;
 
-        // ✅ Sortiere nach Entfernung
-        if (this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
+        // ✅ FIX #3: Prüfe ob VehicleMovement existiert
+        if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
+            this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
             vehicles.sort((a, b) => {
                 const distA = VehicleMovement.getDistanceToIncident(a.station, this.activeCall.einsatz.koordinaten);
                 const distB = VehicleMovement.getDistanceToIncident(b.station, this.activeCall.einsatz.koordinaten);
@@ -626,9 +670,10 @@ ANTWORTE NUR als JSON:
             <h6 style="margin: 10px 0; color: #a0a0a0;">${type} (${count > 0 ? count + 'x empfohlen' : 'optional'}) - ${vehicles.length} verfügbar</h6>
             <div class="vehicle-cards-improved">
                 ${vehicles.map(v => {
-                    // ✅ Berechne Entfernung
                     let distanceInfo = '';
-                    if (this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
+                    // ✅ FIX #3: VehicleMovement Check auch hier
+                    if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
+                        this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
                         const dist = VehicleMovement.getDistanceToIncident(v.station, this.activeCall.einsatz.koordinaten);
                         if (dist) {
                             distanceInfo = `<div class="vehicle-card-distance" style="font-size: 0.75em; color: #17a2b8; margin-top: 4px;">📍 ${dist.km} km | ⏱️ ${dist.eta} min</div>`;
