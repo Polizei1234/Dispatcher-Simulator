@@ -134,6 +134,53 @@ function showIncomingCallNotification(incident) {
     playSound('incoming-call');
 }
 
+function updateVehicleList() {
+    if (!game) return;
+    
+    const vehicleList = document.getElementById('vehicle-list');
+    if (!vehicleList) return;
+    
+    const ownedVehicles = game.vehicles.filter(v => v.owned);
+    
+    // Update Header-Counter
+    const totalVehicles = document.getElementById('total-vehicles');
+    const activeVehicles = document.getElementById('active-vehicles');
+    if (totalVehicles) totalVehicles.textContent = ownedVehicles.length;
+    if (activeVehicles) activeVehicles.textContent = ownedVehicles.filter(v => v.status !== 'available').length;
+    
+    if (ownedVehicles.length === 0) {
+        vehicleList.innerHTML = '<p class="no-data">Keine Fahrzeuge verfügbar</p>';
+        return;
+    }
+    
+    vehicleList.innerHTML = ownedVehicles.map(v => {
+        const fms = getFMSStatus(v);
+        const station = STATIONS[v.station];
+        
+        return `
+            <div class="vehicle-item" style="margin-bottom: 10px; padding: 10px; background: #2d3748; border-radius: 8px; border-left: 4px solid ${fms.color};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <strong style="font-size: 0.95em;">${getVehicleIcon(v.type)} ${v.callsign}</strong>
+                        <div style="font-size: 0.75em; color: #a0a0a0; margin-top: 2px;">
+                            ${station ? station.name : 'Unbekannt'}
+                        </div>
+                        <div style="margin-top: 5px; display: flex; align-items: center; gap: 5px;">
+                            <span style="font-size: 0.9em;">${fms.icon}</span>
+                            <span style="font-size: 0.8em; color: ${fms.color};">${fms.name}</span>
+                        </div>
+                    </div>
+                    ${v.status === 'available' ? `
+                        <button class="btn btn-small btn-primary" onclick="selectVehicleForIncident('${v.id}')" style="font-size: 0.8em;">
+                            Alarmieren
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 function openShop() {
     const modal = document.getElementById('shop-dialog');
     modal.classList.add('active');
