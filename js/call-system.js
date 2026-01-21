@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v2.3
-// Mit Sidebar + Tab statt Popup
+// EMERGENCY CALL SYSTEM v2.4
+// Bugfixes: Incidents, Movement, UI
 // =========================
 
 const CallSystem = {
@@ -12,7 +12,7 @@ const CallSystem = {
     selectedVehicles: [],
 
     initialize() {
-        console.log('📞 Call System v2.3 initialisiert');
+        console.log('📞 Call System v2.4 initialisiert');
         this.setupRingtone();
     },
 
@@ -171,7 +171,6 @@ ANTWORTE NUR als JSON:
     showIncomingCallInSidebar(callData) {
         this.activeCall = callData;
         
-        // Zeige in Sidebar "Eingehende Anrufe"
         const callList = document.getElementById('call-list');
         if (!callList) {
             console.error('❌ call-list nicht gefunden');
@@ -193,14 +192,12 @@ ANTWORTE NUR als JSON:
             </div>
         `;
 
-        // Blinkender Tab-Button
         const callTabBtn = document.getElementById('call-tab-btn');
         if (callTabBtn) {
             callTabBtn.classList.add('blinking');
         }
 
         this.playRingtone();
-        
         console.log('🚨 Incoming Call in Sidebar angezeigt');
     },
 
@@ -224,24 +221,20 @@ ANTWORTE NUR als JSON:
         this.stopRingtone();
         this.selectedVehicles = [];
 
-        // Entferne aus Sidebar
         const callList = document.getElementById('call-list');
         if (callList) {
             callList.innerHTML = '<p class="no-data">Gespräch läuft...</p>';
         }
 
-        // Entferne Blinken
         const callTabBtn = document.getElementById('call-tab-btn');
         if (callTabBtn) {
             callTabBtn.classList.remove('blinking');
         }
 
-        // Wechsle zu Notruf-Tab
         if (typeof switchTab === 'function') {
             switchTab('call');
         }
 
-        // Zeige Gespräch
         this.showCallInTab();
     },
 
@@ -252,7 +245,6 @@ ANTWORTE NUR als JSON:
         if (noActive) noActive.style.display = 'none';
         if (active) active.style.display = 'block';
 
-        // Fülle Dialog mit Content
         this.populateCallDialog();
     },
 
@@ -263,14 +255,12 @@ ANTWORTE NUR als JSON:
 
         if (!messagesContainer || !questionsContainer || !protocolContainer) return;
 
-        // Initial Begrüßung
         messagesContainer.innerHTML = `
             <div class="msg-dispatcher">
                 <strong>👨‍💻 Sie:</strong> Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?
             </div>
         `;
 
-        // Antwort nach 1 Sekunde
         setTimeout(() => {
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg-caller';
@@ -280,10 +270,7 @@ ANTWORTE NUR als JSON:
             this.typeText(msgDiv.querySelector('.typing'), this.activeCall.antworten.ort);
         }, 1000);
 
-        // Frage-Buttons
         this.initQuestionButtons(questionsContainer);
-
-        // Protokoll-Formular
         this.initProtocolForm(protocolContainer);
     },
 
@@ -413,11 +400,11 @@ ANTWORTE NUR als JSON:
                 <textarea id="protocol-meldebild" rows="3" readonly>${this.activeCall.einsatz.meldebild}</textarea>
             </div>
             
-            <div id="inline-vehicle-selection">
-                <h5>🚑 Fahrzeuge disponieren</h5>
-                <div id="vehicle-grid"></div>
-                <button class="btn btn-success" onclick="CallSystem.alarmSelectedVehicles()" id="alarm-btn" disabled>
-                    <i class="fas fa-bell"></i> ALARMIEREN
+            <div id="inline-vehicle-selection" style="margin-top: 20px;">
+                <h5 style="margin-bottom: 15px;">🚑 Fahrzeuge disponieren</h5>
+                <div id="vehicle-grid" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;"></div>
+                <button class="btn btn-success" onclick="CallSystem.alarmSelectedVehicles()" id="alarm-btn" disabled style="width: 100%; padding: 15px; font-size: 1.1em;">
+                    <i class="fas fa-bell"></i> ALARMIEREN (<span id="selected-count">0</span> Fahrzeuge)
                 </button>
             </div>
         `;
@@ -475,24 +462,18 @@ ANTWORTE NUR als JSON:
         const grid = document.getElementById('vehicle-grid');
         if (!grid) return;
 
-        const empfehlung = this.activeCall.empfehlung;
-        
-        // ZEIGE ALLE FAHRZEUGTYPEN!
         const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
         
         vehicleTypes.forEach(type => {
-            const count = empfehlung[type.toLowerCase()] || 0;
+            const count = this.activeCall.empfehlung[type.toLowerCase()] || 0;
             this.addVehicleTypeToGrid(grid, type, count);
         });
     },
 
     addVehicleTypeToGrid(grid, type, count) {
-        // Hole ALLE verfügbaren Fahrzeuge dieses Typs
         const vehicles = GAME_DATA.vehicles.filter(v => {
-            // Prüfe verschiedene Schreibweisen
             const vType = v.type.toUpperCase();
             const searchType = type.toUpperCase();
-            
             return (vType === searchType || vType.includes(searchType)) && 
                    v.status === 'available' && 
                    v.owned;
@@ -503,13 +484,14 @@ ANTWORTE NUR als JSON:
         const typeDiv = document.createElement('div');
         typeDiv.className = 'vehicle-type-section';
         typeDiv.innerHTML = `
-            <h6>${type} (${count > 0 ? count + 'x empfohlen' : 'optional'})</h6>
-            <div class="vehicle-cards">
+            <h6 style="margin: 10px 0; color: #a0a0a0;">${type} (${count > 0 ? count + 'x empfohlen' : 'optional'}) - ${vehicles.length} verfügbar</h6>
+            <div class="vehicle-cards-improved">
                 ${vehicles.map(v => `
-                    <div class="vehicle-card" data-id="${v.id}" onclick="CallSystem.toggleVehicle('${v.id}')">
-                        <div class="vehicle-icon">🚑</div>
-                        <div class="vehicle-name">${v.name || v.callsign}</div>
-                        <div class="vehicle-station">${v.station || 'Wache'}</div>
+                    <div class="vehicle-card-large" data-id="${v.id}" onclick="CallSystem.toggleVehicle('${v.id}')">
+                        <div class="vehicle-card-icon">🚑</div>
+                        <div class="vehicle-card-name">${v.callsign || v.name}</div>
+                        <div class="vehicle-card-station">${v.station || 'Wache'}</div>
+                        <div class="vehicle-card-type">${v.type}</div>
                     </div>
                 `).join('')}
             </div>
@@ -518,7 +500,7 @@ ANTWORTE NUR als JSON:
     },
 
     toggleVehicle(id) {
-        const card = document.querySelector(`.vehicle-card[data-id="${id}"]`);
+        const card = document.querySelector(`.vehicle-card-large[data-id="${id}"]`);
         if (!card) return;
 
         if (this.selectedVehicles.includes(id)) {
@@ -530,7 +512,9 @@ ANTWORTE NUR als JSON:
         }
 
         const btn = document.getElementById('alarm-btn');
+        const countSpan = document.getElementById('selected-count');
         if (btn) btn.disabled = this.selectedVehicles.length === 0;
+        if (countSpan) countSpan.textContent = this.selectedVehicles.length;
     },
 
     alarmSelectedVehicles() {
@@ -544,53 +528,52 @@ ANTWORTE NUR als JSON:
             ort: document.getElementById('protocol-ort').value,
             meldebild: document.getElementById('protocol-meldebild').value,
             koordinaten: this.activeCall.einsatz.koordinaten,
-            vehicles: this.selectedVehicles,
-            zeitstempel: IncidentNumbering.getCurrentTimestamp()
+            vehicles: [...this.selectedVehicles],
+            zeitstempel: IncidentNumbering.getCurrentTimestamp(),
+            status: 'active',
+            completed: false
         };
 
-        // Add to GAME_DATA
-        if (!GAME_DATA.incidents) {
-            GAME_DATA.incidents = [];
-        }
+        // Zu GAME_DATA hinzufügen
         GAME_DATA.incidents.push(incident);
+        console.log('✅ Einsatz hinzugefügt:', incident.id);
 
-        // Add to map
-        if (typeof addIncidentToMap === 'function') {
-            addIncidentToMap(incident);
+        // Auch zu game.incidents wenn game existiert
+        if (typeof game !== 'undefined' && game.incidents) {
+            game.incidents.push(incident);
         }
 
-        // Dispatch vehicles
+        // Fahrzeuge disponieren
         this.selectedVehicles.forEach(vId => {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (vehicle) {
+                console.log(`🚑 Disponiere ${vehicle.callsign || vehicle.name}`);
                 vehicle.status = 'dispatched';
                 vehicle.incident = incident.id;
                 vehicle.targetLocation = incident.koordinaten;
 
-                // Start movement
-                if (typeof VehicleMovement !== 'undefined') {
+                // VehicleMovement starten
+                if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
+                    console.log(`🛣️ Starte Bewegung für ${vehicle.callsign}`);
                     VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
+                } else {
+                    console.warn('⚠️ VehicleMovement nicht verfügbar');
                 }
             }
         });
 
-        // Update UI
-        if (typeof UI !== 'undefined' && UI.updateIncidentList) {
-            UI.updateIncidentList();
+        // Funkspruch OHNE Speed-Meldungen
+        const msg = `${incident.stichwort}, ${incident.ort}. ${incident.vehicles.length} Fahrzeug(e) alarmiert.`;
+        if (typeof addRadioMessage === 'function') {
+            addRadioMessage('Einsatz ' + incident.id, msg);
         }
 
-        // Radio message
-        this.sendRadioMessage(incident);
+        // UI aktualisieren
+        if (typeof updateUI === 'function') {
+            updateUI();
+        }
 
         this.hangUp();
-    },
-
-    sendRadioMessage(incident) {
-        const msg = `Florian Leitstelle an ${incident.vehicles.length} Fahrzeug(e): ${incident.stichwort}, ${incident.ort}. Kommen!`;
-        
-        if (typeof addRadioMessage === 'function') {
-            addRadioMessage('Leitstelle', msg);
-        }
     },
 
     hangUp() {
@@ -604,20 +587,17 @@ ANTWORTE NUR als JSON:
         this.activeCall = null;
         this.selectedVehicles = [];
         
-        // Zurück zur leeren Ansicht
         const noActive = document.getElementById('call-no-active');
         const active = document.getElementById('call-active');
         
         if (noActive) noActive.style.display = 'block';
         if (active) active.style.display = 'none';
 
-        // Sidebar zurücksetzen
         const callList = document.getElementById('call-list');
         if (callList) {
             callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
         }
 
-        // Wechsle zurück zur Karte
         if (typeof switchTab === 'function') {
             switchTab('map');
         }
