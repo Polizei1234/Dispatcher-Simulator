@@ -134,6 +134,19 @@ function showIncomingCallNotification(incident) {
     playSound('incoming-call');
 }
 
+function getFMSStatusNumber(vehicle) {
+    const statusMap = {
+        'available': 2,
+        'dispatched': 3,
+        'on-scene': 4,
+        'transporting': 7,
+        'at-hospital': 8,
+        'returning': 1,
+        'unavailable': 6
+    };
+    return statusMap[vehicle.status] || 2;
+}
+
 function updateVehicleList() {
     if (!game) return;
     
@@ -155,6 +168,7 @@ function updateVehicleList() {
     
     vehicleList.innerHTML = ownedVehicles.map(v => {
         const fms = getFMSStatus(v);
+        const fmsNumber = getFMSStatusNumber(v);
         const station = STATIONS[v.station];
         
         return `
@@ -167,7 +181,8 @@ function updateVehicleList() {
                         </div>
                         <div style="margin-top: 5px; display: flex; align-items: center; gap: 5px;">
                             <span style="font-size: 0.9em;">${fms.icon}</span>
-                            <span style="font-size: 0.8em; color: ${fms.color};">${fms.name}</span>
+                            <span style="font-size: 0.8em; color: ${fms.color}; font-weight: 600;">Status ${fmsNumber}</span>
+                            <span style="font-size: 0.8em; color: ${fms.color};">| ${fms.name}</span>
                         </div>
                     </div>
                     ${v.status === 'available' ? `
