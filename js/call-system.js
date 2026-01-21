@@ -1,10 +1,9 @@
 // =========================
-// EMERGENCY CALL SYSTEM v5.2
-// + Verwendet jetzt ProtocolForm.showForm() für Keywords-Dropdown!
+// EMERGENCY CALL SYSTEM v5.3
+// + Integriert ManualIncident.showInline() im Notruf-Tab!
+// + Anruf-Chat links, Manual Incident Formular rechts
 // + Random Telefonnummern
 // + Hotspot-System
-// + Entfernungsanzeige
-// + VehicleMovement Check
 // + Geocoding Cache
 // =========================
 
@@ -34,8 +33,8 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v5.2 initialisiert');
-        console.log('✅ Nutzt jetzt ProtocolForm mit Keywords-Dropdown!');
+        console.log('📞 Call System v5.3 initialisiert');
+        console.log('✅ Nutzt ManualIncident.showInline() im Notruf-Tab!');
         this.setupRingtone();
     },
 
@@ -409,11 +408,11 @@ ANTWORTE NUR als JSON:
 
         this.initQuestionButtons(questionsContainer);
         
-        // 🚀 NEU: Nutze ProtocolForm statt eigenem Formular!
-        if (typeof ProtocolForm !== 'undefined') {
-            ProtocolForm.showForm(this.activeCall);
+        // 🚀 NEU: Zeige ManualIncident inline rechts
+        if (typeof ManualIncident !== 'undefined' && ManualIncident.showInline) {
+            ManualIncident.showInline(this.activeCall);
         } else {
-            console.error('❌ ProtocolForm nicht gefunden!');
+            console.error('❌ ManualIncident.showInline() nicht gefunden!');
         }
     },
 
@@ -524,9 +523,9 @@ ANTWORTE NUR als JSON:
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
 
-            // 🚀 NEU: Aktualisiere ProtocolForm statt eigenes Formular
-            if (typeof ProtocolForm !== 'undefined') {
-                ProtocolForm.updateFromCallAnswer(key, answer, this.activeCall);
+            // 🚀 NEU: Update ManualIncident-Formular
+            if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
+                ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
             }
         }, 1000);
     },
@@ -551,6 +550,11 @@ ANTWORTE NUR als JSON:
         const callList = document.getElementById('call-list');
         if (callList) {
             callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
+        }
+
+        // 🚀 NEU: Clear ManualIncident inline
+        if (typeof ManualIncident !== 'undefined' && ManualIncident.clearInline) {
+            ManualIncident.clearInline();
         }
 
         if (typeof switchTab === 'function') {
