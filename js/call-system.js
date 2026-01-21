@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v2.4
-// Bugfixes: Incidents, Movement, UI
+// EMERGENCY CALL SYSTEM v2.5
+// Realistic Caller Responses
 // =========================
 
 const CallSystem = {
@@ -12,7 +12,7 @@ const CallSystem = {
     selectedVehicles: [],
 
     initialize() {
-        console.log('📞 Call System v2.4 initialisiert');
+        console.log('📞 Call System v2.5 initialisiert');
         this.setupRingtone();
     },
 
@@ -67,6 +67,24 @@ Uhrzeit: ${currentTime} (${timeOfDay})
 VORSCHLÄGE: ${scenarios.join(', ')}
 ORTE: ${locations.join(', ')}
 
+WICHTIG FÜR ANTWORTEN:
+- Kurz und bündig (2-8 Wörter)
+- Umgangssprache verwenden
+- Emotionen zeigen (Panik, Sorge, Verwirrung)
+- Realistische Formulierungen wie "Ich weiß nicht genau", "Glaub schon", "Kann ich nicht sagen"
+- Bei Unsicherheit: vage Antworten
+- Keine medizinischen Fachbegriffe vom Anrufer
+
+BEISPIELE FÜR GUTE ANTWORTEN:
+❌ SCHLECHT: "Der Patient hat eine Tachykardie"
+✅ GUT: "Sein Herz rast total!"
+
+❌ SCHLECHT: "Ja, die Atmung ist regelrecht"
+✅ GUT: "Ja, er atmet noch"
+
+❌ SCHLECHT: "Keine Vorerkrankungen bekannt"
+✅ GUT: "Weiß ich nicht" oder "Glaub nicht"
+
 ANTWORTE NUR als JSON:
 {
   "anrufer": {
@@ -75,34 +93,34 @@ ANTWORTE NUR als JSON:
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "antworten": {
-    "ort": "Genaue Adresse",
-    "was_passiert": "Was ist passiert",
-    "wie_viele": "Anzahl Betroffene",
-    "bewusstsein": "Bewusstseinslage",
-    "atmung": "Atmung",
-    "blutung": "Blutungen",
-    "schmerzen": "Schmerzen wo",
-    "vorerkrankungen": "Bekannte Erkrankungen",
-    "medikamente": "Medikamente",
-    "allergien": "Allergien",
-    "schwangerschaft": "Schwanger",
-    "diabetes": "Diabetes",
-    "epilepsie": "Epilepsie",
-    "herzerkrankung": "Herzerkrankung",
-    "sturz_hoehe": "Sturzhöhe",
-    "aufprall": "Wo aufgeprallt",
-    "eingeklemmt": "Eingeklemmt",
-    "airbag": "Airbag ausgelöst",
-    "feuer": "Feuer/Rauch",
-    "gefahrstoffe": "Gefahrstoffe",
-    "waffe": "Waffe",
-    "gewalt": "Gewalt",
-    "erreichbarkeit": "Anfahrt",
-    "stockwerk": "Stockwerk/Aufzug"
+    "ort": "Genaue Adresse in Waiblingen/Winnenden/Schorndorf/Backnang/Fellbach",
+    "was_passiert": "Kurze emotionale Beschreibung (max 10 Wörter)",
+    "wie_viele": "Eine Person" oder "Zwei Personen" etc.,
+    "bewusstsein": "Ja" / "Nein" / "Reagiert nicht mehr",
+    "atmung": "Ja" / "Weiß nicht" / "Ganz schwach",
+    "blutung": "Ja, stark" / "Ein bisschen" / "Nein",
+    "schmerzen": "In der Brust" / "Überall" / "Weiß nicht",
+    "vorerkrankungen": "Weiß ich nicht" / "Herz, glaub ich" / "Keine Ahnung",
+    "medikamente": "Keine Ahnung" / "Irgendwelche Pillen" / "Weiß nicht",
+    "allergien": "Weiß nicht" / "Glaub nicht" / "Keine",
+    "schwangerschaft": "Nein" / "Weiß nicht",
+    "diabetes": "Weiß nicht" / "Ja, hat er" / "Glaub nicht",
+    "epilepsie": "Nein" / "Weiß nicht",
+    "herzerkrankung": "Weiß nicht" / "Ja" / "Glaub schon",
+    "sturz_hoehe": "Von der Treppe" / "Vielleicht 2 Meter" / "Weiß nicht",
+    "aufprall": "Auf dem Boden" / "Mit dem Kopf" / "Weiß nicht",
+    "eingeklemmt": "Ja!" / "Nein",
+    "airbag": "Ja" / "Nein" / "Weiß nicht",
+    "feuer": "Nein" / "Ja, es raucht!" / "Nein",
+    "gefahrstoffe": "Nein" / "Weiß nicht",
+    "waffe": "Nein",
+    "gewalt": "Nein" / "Weiß nicht",
+    "erreichbarkeit": "Ganz normal" / "Hinterhof" / "2. Stock",
+    "stockwerk": "Erdgeschoss" / "3. Stock" / "Weiß nicht"
   },
   "einsatz": {
     "stichwort": "Passendes Stichwort",
-    "ort": "Straße, Stadt",
+    "ort": "Straße Nummer, Stadt (MUSS eine der genannten Städte sein!)",
     "koordinaten": {"lat": 48.xxx, "lon": 9.xxx},
     "meldebild": "Zusammenfassung"
   },
@@ -534,13 +552,10 @@ ANTWORTE NUR als JSON:
             completed: false
         };
 
-        // Zu GAME_DATA hinzufügen
-        GAME_DATA.incidents.push(incident);
-        console.log('✅ Einsatz hinzugefügt:', incident.id);
-
-        // Auch zu game.incidents wenn game existiert
-        if (typeof game !== 'undefined' && game.incidents) {
-            game.incidents.push(incident);
+        // NUR zu GAME_DATA hinzufügen (nicht doppelt!)
+        if (!GAME_DATA.incidents.find(i => i.id === incident.id)) {
+            GAME_DATA.incidents.push(incident);
+            console.log('✅ Einsatz hinzugefügt:', incident.id);
         }
 
         // Fahrzeuge disponieren
@@ -554,7 +569,7 @@ ANTWORTE NUR als JSON:
 
                 // VehicleMovement starten
                 if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
-                    console.log(`🛣️ Starte Bewegung für ${vehicle.callsign}`);
+                    console.log(`🛫 Starte Bewegung für ${vehicle.callsign}`);
                     VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
                 } else {
                     console.warn('⚠️ VehicleMovement nicht verfügbar');
@@ -562,7 +577,7 @@ ANTWORTE NUR als JSON:
             }
         });
 
-        // Funkspruch OHNE Speed-Meldungen
+        // Funkspruch
         const msg = `${incident.stichwort}, ${incident.ort}. ${incident.vehicles.length} Fahrzeug(e) alarmiert.`;
         if (typeof addRadioMessage === 'function') {
             addRadioMessage('Einsatz ' + incident.id, msg);
