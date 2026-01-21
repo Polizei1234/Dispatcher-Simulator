@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v2.2
-// Mit Overlay-Popup statt Sidebar
+// EMERGENCY CALL SYSTEM v2.3
+// Mit Sidebar + Tab statt Popup
 // =========================
 
 const CallSystem = {
@@ -12,7 +12,7 @@ const CallSystem = {
     selectedVehicles: [],
 
     initialize() {
-        console.log('📞 Call System v2.2 initialisiert');
+        console.log('📞 Call System v2.3 initialisiert');
         this.setupRingtone();
     },
 
@@ -38,7 +38,7 @@ const CallSystem = {
                 return;
             }
 
-            this.showIncomingCallOverlay(callData);
+            this.showIncomingCallInSidebar(callData);
             console.groupEnd();
         } catch (error) {
             console.error('❌ Fehler:', error);
@@ -168,27 +168,40 @@ ANTWORTE NUR als JSON:
         return JSON.parse(data.choices[0].message.content);
     },
 
-    showIncomingCallOverlay(callData) {
+    showIncomingCallInSidebar(callData) {
         this.activeCall = callData;
         
-        // Zeige OVERLAY POPUP (nicht Sidebar!)
-        const popup = document.getElementById('incoming-call-popup');
-        if (!popup) {
-            console.error('❌ incoming-call-popup nicht gefunden');
+        // Zeige in Sidebar "Eingehende Anrufe"
+        const callList = document.getElementById('call-list');
+        if (!callList) {
+            console.error('❌ call-list nicht gefunden');
             return;
         }
 
-        popup.style.display = 'block';
-        
-        // Setze Answer Button Event
-        const answerBtn = document.getElementById('answer-call-btn');
-        if (answerBtn) {
-            answerBtn.onclick = () => this.answerCall();
+        callList.innerHTML = `
+            <div class="incoming-call-card" style="padding: 15px; background: rgba(220, 53, 69, 0.2); border: 2px solid #dc3545; border-radius: 8px; cursor: pointer; animation: pulse 1.5s infinite;" onclick="CallSystem.answerCall()">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <i class="fas fa-phone-volume" style="font-size: 24px; color: #dc3545; margin-right: 10px;"></i>
+                    <div>
+                        <strong style="color: #dc3545; font-size: 1.1em;">EINGEHENDER NOTRUF 112</strong><br>
+                        <span style="font-size: 0.9em; color: #999;">${callData.anrufer.telefon}</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" style="width: 100%; margin-top: 10px;" onclick="event.stopPropagation(); CallSystem.answerCall();">
+                    <i class="fas fa-phone"></i> ANNEHMEN
+                </button>
+            </div>
+        `;
+
+        // Blinkender Tab-Button
+        const callTabBtn = document.getElementById('call-tab-btn');
+        if (callTabBtn) {
+            callTabBtn.classList.add('blinking');
         }
 
         this.playRingtone();
         
-        console.log('🚨 Incoming Call Popup angezeigt');
+        console.log('🚨 Incoming Call in Sidebar angezeigt');
     },
 
     playRingtone() {
@@ -207,32 +220,37 @@ ANTWORTE NUR als JSON:
     answerCall() {
         if (!this.activeCall) return;
 
-        console.log('📞 Anruf angenommen - Öffne Dialog');
+        console.log('📞 Anruf angenommen - Wechsle zu Tab "Notruf"');
         this.stopRingtone();
         this.selectedVehicles = [];
 
-        // Verstecke Popup
-        const popup = document.getElementById('incoming-call-popup');
-        if (popup) popup.style.display = 'none';
+        // Entferne aus Sidebar
+        const callList = document.getElementById('call-list');
+        if (callList) {
+            callList.innerHTML = '<p class="no-data">Gespräch läuft...</p>';
+        }
 
-        // Öffne Dialog Fenster
-        this.showCallDialog();
+        // Entferne Blinken
+        const callTabBtn = document.getElementById('call-tab-btn');
+        if (callTabBtn) {
+            callTabBtn.classList.remove('blinking');
+        }
+
+        // Wechsle zu Notruf-Tab
+        if (typeof switchTab === 'function') {
+            switchTab('call');
+        }
+
+        // Zeige Gespräch
+        this.showCallInTab();
     },
 
-    showCallDialog() {
-        const dialog = document.getElementById('call-dialog');
-        if (!dialog) {
-            console.error('❌ call-dialog nicht gefunden');
-            return;
-        }
-
-        dialog.style.display = 'block';
-
-        // Setup Hangup Button
-        const hangupBtn = document.getElementById('hangup-call-btn');
-        if (hangupBtn) {
-            hangupBtn.onclick = () => this.hangUp();
-        }
+    showCallInTab() {
+        const noActive = document.getElementById('call-no-active');
+        const active = document.getElementById('call-active');
+        
+        if (noActive) noActive.style.display = 'none';
+        if (active) active.style.display = 'block';
 
         // Fülle Dialog mit Content
         this.populateCallDialog();
@@ -459,32 +477,39 @@ ANTWORTE NUR als JSON:
 
         const empfehlung = this.activeCall.empfehlung;
         
-        if (empfehlung.rtw > 0) {
-            this.addVehicleTypeToGrid(grid, 'RTW', empfehlung.rtw);
-        }
-        if (empfehlung.nef > 0) {
-            this.addVehicleTypeToGrid(grid, 'NEF', empfehlung.nef);
-        }
-        if (empfehlung.ktw > 0) {
-            this.addVehicleTypeToGrid(grid, 'KTW', empfehlung.ktw);
-        }
+        // ZEIGE ALLE FAHRZEUGTYPEN!
+        const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
+        
+        vehicleTypes.forEach(type => {
+            const count = empfehlung[type.toLowerCase()] || 0;
+            this.addVehicleTypeToGrid(grid, type, count);
+        });
     },
 
     addVehicleTypeToGrid(grid, type, count) {
-        const vehicles = GAME_DATA.vehicles.filter(v => 
-            v.type === type && v.status === 'available'
-        ).slice(0, 5);
+        // Hole ALLE verfügbaren Fahrzeuge dieses Typs
+        const vehicles = GAME_DATA.vehicles.filter(v => {
+            // Prüfe verschiedene Schreibweisen
+            const vType = v.type.toUpperCase();
+            const searchType = type.toUpperCase();
+            
+            return (vType === searchType || vType.includes(searchType)) && 
+                   v.status === 'available' && 
+                   v.owned;
+        });
+
+        if (vehicles.length === 0) return;
 
         const typeDiv = document.createElement('div');
         typeDiv.className = 'vehicle-type-section';
         typeDiv.innerHTML = `
-            <h6>${type} (${count}x empfohlen)</h6>
+            <h6>${type} (${count > 0 ? count + 'x empfohlen' : 'optional'})</h6>
             <div class="vehicle-cards">
                 ${vehicles.map(v => `
                     <div class="vehicle-card" data-id="${v.id}" onclick="CallSystem.toggleVehicle('${v.id}')">
                         <div class="vehicle-icon">🚑</div>
-                        <div class="vehicle-name">${v.name}</div>
-                        <div class="vehicle-eta">ETA: ${this.calculateETA(v)}min</div>
+                        <div class="vehicle-name">${v.name || v.callsign}</div>
+                        <div class="vehicle-station">${v.station || 'Wache'}</div>
                     </div>
                 `).join('')}
             </div>
@@ -506,10 +531,6 @@ ANTWORTE NUR als JSON:
 
         const btn = document.getElementById('alarm-btn');
         if (btn) btn.disabled = this.selectedVehicles.length === 0;
-    },
-
-    calculateETA(vehicle) {
-        return Math.floor(Math.random() * 10) + 2;
     },
 
     alarmSelectedVehicles() {
@@ -583,9 +604,23 @@ ANTWORTE NUR als JSON:
         this.activeCall = null;
         this.selectedVehicles = [];
         
-        // Schließe Dialog
-        const dialog = document.getElementById('call-dialog');
-        if (dialog) dialog.style.display = 'none';
+        // Zurück zur leeren Ansicht
+        const noActive = document.getElementById('call-no-active');
+        const active = document.getElementById('call-active');
+        
+        if (noActive) noActive.style.display = 'block';
+        if (active) active.style.display = 'none';
+
+        // Sidebar zurücksetzen
+        const callList = document.getElementById('call-list');
+        if (callList) {
+            callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
+        }
+
+        // Wechsle zurück zur Karte
+        if (typeof switchTab === 'function') {
+            switchTab('map');
+        }
     }
 };
 
