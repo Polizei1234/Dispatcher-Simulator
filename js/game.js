@@ -144,7 +144,7 @@ class Game {
                     vehicle.status = 'available';
                     incident.status = 'completed';
                     addRadioMessage(vehicle.callsign, 'Einsatz beendet, Status 4');
-                }, 120000 / CONFIG.SIMULATION_SPEED);
+                }, 120000 / CONFIG.GAME_SPEED);
             }
             vehicle.route = null;
             return;

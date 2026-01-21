@@ -55,106 +55,106 @@ const VEHICLES_CATALOG = [
     { id: 'NEF_RW1_1_82_2', name: 'NEF Rotkreuz Rems Murr 1/82-2', type: 'NEF', station: 'rw1', cost: 0, owned: true },
     { id: 'RTW_RW1_1_83_2', name: 'RTW Rotkreuz Rems Murr 1/83-2', type: 'RTW', station: 'rw1', cost: 0, owned: true },
     { id: 'RTW_RW1_1_83_3', name: 'RTW Rotkreuz Rems Murr 1/83-3', type: 'RTW', station: 'rw1', cost: 0, owned: true },
-    { id: 'KTW_RW1_1_85_2', name: 'KTW Rotkreuz Rems Murr 1/85-2', type: 'KTW', station: 'rw1', cost: 60000, owned: false },
-    { id: 'KTW_RW1_1_85_3', name: 'KTW Rotkreuz Rems Murr 1/85-3', type: 'KTW', station: 'rw1', cost: 60000, owned: false },
-    { id: 'KTW_RW1_1_85_4', name: 'KTW Rotkreuz Rems Murr 1/85-4', type: 'KTW', station: 'rw1', cost: 60000, owned: false },
-    { id: 'KTW_RW1_1_85_5', name: 'KTW Rotkreuz Rems Murr 1/85-5', type: 'KTW', station: 'rw1', cost: 60000, owned: false },
+    { id: 'KTW_RW1_1_85_2', name: 'KTW Rotkreuz Rems Murr 1/85-2', type: 'KTW', station: 'rw1', cost: 60000, owned: true },
+    { id: 'KTW_RW1_1_85_3', name: 'KTW Rotkreuz Rems Murr 1/85-3', type: 'KTW', station: 'rw1', cost: 60000, owned: true },
+    { id: 'KTW_RW1_1_85_4', name: 'KTW Rotkreuz Rems Murr 1/85-4', type: 'KTW', station: 'rw1', cost: 60000, owned: true },
+    { id: 'KTW_RW1_1_85_5', name: 'KTW Rotkreuz Rems Murr 1/85-5', type: 'KTW', station: 'rw1', cost: 60000, owned: true },
     
     // RW2 Backnang (7)
-    { id: 'KDOW_RW2_1_10_2', name: 'Kdow Rotkreuz Rems Murr 1/10-2', type: 'Kdow', station: 'rw2', cost: 80000, owned: false },
-    { id: 'NEF_RW2_2_82_1', name: 'NEF Rotkreuz Rems Murr 2/82-1', type: 'NEF', station: 'rw2', cost: 150000, owned: false },
-    { id: 'RTW_RW2_2_83_1', name: 'RTW Rotkreuz Rems Murr 2/83-1', type: 'RTW', station: 'rw2', cost: 120000, owned: false },
-    { id: 'RTW_RW2_2_83_3', name: 'RTW Rotkreuz Rems Murr 2/83-3', type: 'RTW', station: 'rw2', cost: 120000, owned: false },
-    { id: 'KTW_RW2_2_85_1', name: 'KTW Rotkreuz Rems Murr 2/85-1', type: 'KTW', station: 'rw2', cost: 60000, owned: false },
-    { id: 'KTW_RW2_2_85_2', name: 'KTW Rotkreuz Rems Murr 2/85-2', type: 'KTW', station: 'rw2', cost: 60000, owned: false },
-    { id: 'KTW_RW2_2_85_3', name: 'KTW Rotkreuz Rems Murr 2/85-3', type: 'KTW', station: 'rw2', cost: 60000, owned: false },
+    { id: 'KDOW_RW2_1_10_2', name: 'Kdow Rotkreuz Rems Murr 1/10-2', type: 'Kdow', station: 'rw2', cost: 80000, owned: true },
+    { id: 'NEF_RW2_2_82_1', name: 'NEF Rotkreuz Rems Murr 2/82-1', type: 'NEF', station: 'rw2', cost: 150000, owned: true },
+    { id: 'RTW_RW2_2_83_1', name: 'RTW Rotkreuz Rems Murr 2/83-1', type: 'RTW', station: 'rw2', cost: 120000, owned: true },
+    { id: 'RTW_RW2_2_83_3', name: 'RTW Rotkreuz Rems Murr 2/83-3', type: 'RTW', station: 'rw2', cost: 120000, owned: true },
+    { id: 'KTW_RW2_2_85_1', name: 'KTW Rotkreuz Rems Murr 2/85-1', type: 'KTW', station: 'rw2', cost: 60000, owned: true },
+    { id: 'KTW_RW2_2_85_2', name: 'KTW Rotkreuz Rems Murr 2/85-2', type: 'KTW', station: 'rw2', cost: 60000, owned: true },
+    { id: 'KTW_RW2_2_85_3', name: 'KTW Rotkreuz Rems Murr 2/85-3', type: 'KTW', station: 'rw2', cost: 60000, owned: true },
     
     // RW3 Fellbach (1)
-    { id: 'RTW_RW3_3_83_3', name: 'RTW Rotkreuz Rems Murr 3/83-3', type: 'RTW', station: 'rw3', cost: 120000, owned: false },
+    { id: 'RTW_RW3_3_83_3', name: 'RTW Rotkreuz Rems Murr 3/83-3', type: 'RTW', station: 'rw3', cost: 120000, owned: true },
     
     // RW4 Murrhardt (1)
-    { id: 'RTW_RW4_4_83_2', name: 'RTW Rotkreuz Rems Murr 4/83-2', type: 'RTW', station: 'rw4', cost: 120000, owned: false },
+    { id: 'RTW_RW4_4_83_2', name: 'RTW Rotkreuz Rems Murr 4/83-2', type: 'RTW', station: 'rw4', cost: 120000, owned: true },
     
     // RW5 Schorndorf (7)
-    { id: 'NEF_RW5_5_82_1', name: 'NEF Rotkreuz Rems Murr 5/82-1', type: 'NEF', station: 'rw5', cost: 150000, owned: false },
-    { id: 'RTW_RW5_5_83_1', name: 'RTW Rotkreuz Rems Murr 5/83-1', type: 'RTW', station: 'rw5', cost: 120000, owned: false },
-    { id: 'RTW_RW5_5_83_2', name: 'RTW Rotkreuz Rems Murr 5/83-2', type: 'RTW', station: 'rw5', cost: 120000, owned: false },
-    { id: 'KTW_RW5_5_85_1', name: 'KTW Rotkreuz Rems Murr 5/85-1', type: 'KTW', station: 'rw5', cost: 60000, owned: false },
-    { id: 'KTW_RW5_5_85_2', name: 'KTW Rotkreuz Rems Murr 5/85-2', type: 'KTW', station: 'rw5', cost: 60000, owned: false },
-    { id: 'KTW_RW5_5_85_3', name: 'KTW Rotkreuz Rems Murr 5/85-3', type: 'KTW', station: 'rw5', cost: 60000, owned: false },
-    { id: 'KTW_RW5_5_85_4', name: 'KTW Rotkreuz Rems Murr 5/85-4', type: 'KTW', station: 'rw5', cost: 60000, owned: false },
+    { id: 'NEF_RW5_5_82_1', name: 'NEF Rotkreuz Rems Murr 5/82-1', type: 'NEF', station: 'rw5', cost: 150000, owned: true },
+    { id: 'RTW_RW5_5_83_1', name: 'RTW Rotkreuz Rems Murr 5/83-1', type: 'RTW', station: 'rw5', cost: 120000, owned: true },
+    { id: 'RTW_RW5_5_83_2', name: 'RTW Rotkreuz Rems Murr 5/83-2', type: 'RTW', station: 'rw5', cost: 120000, owned: true },
+    { id: 'KTW_RW5_5_85_1', name: 'KTW Rotkreuz Rems Murr 5/85-1', type: 'KTW', station: 'rw5', cost: 60000, owned: true },
+    { id: 'KTW_RW5_5_85_2', name: 'KTW Rotkreuz Rems Murr 5/85-2', type: 'KTW', station: 'rw5', cost: 60000, owned: true },
+    { id: 'KTW_RW5_5_85_3', name: 'KTW Rotkreuz Rems Murr 5/85-3', type: 'KTW', station: 'rw5', cost: 60000, owned: true },
+    { id: 'KTW_RW5_5_85_4', name: 'KTW Rotkreuz Rems Murr 5/85-4', type: 'KTW', station: 'rw5', cost: 60000, owned: true },
     
     // RW6 Welzheim (3)
-    { id: 'NEF_RW6_6_82_1', name: 'NEF Rotkreuz Rems Murr 6/82-1', type: 'NEF', station: 'rw6', cost: 150000, owned: false },
-    { id: 'RTW_RW6_6_83_1', name: 'RTW Rotkreuz Rems Murr 6/83-1', type: 'RTW', station: 'rw6', cost: 120000, owned: false },
-    { id: 'RTW_RW6_6_83_3', name: 'RTW Rotkreuz Rems Murr 6/83-3', type: 'RTW', station: 'rw6', cost: 120000, owned: false },
+    { id: 'NEF_RW6_6_82_1', name: 'NEF Rotkreuz Rems Murr 6/82-1', type: 'NEF', station: 'rw6', cost: 150000, owned: true },
+    { id: 'RTW_RW6_6_83_1', name: 'RTW Rotkreuz Rems Murr 6/83-1', type: 'RTW', station: 'rw6', cost: 120000, owned: true },
+    { id: 'RTW_RW6_6_83_3', name: 'RTW Rotkreuz Rems Murr 6/83-3', type: 'RTW', station: 'rw6', cost: 120000, owned: true },
     
     // RW7 Winnenden (1)
-    { id: 'RTW_RW7_7_83_2', name: 'RTW Rotkreuz Rems Murr 7/83-2', type: 'RTW', station: 'rw7', cost: 120000, owned: false },
+    { id: 'RTW_RW7_7_83_2', name: 'RTW Rotkreuz Rems Murr 7/83-2', type: 'RTW', station: 'rw7', cost: 120000, owned: true },
     
     // RW10 Saniteam (4)
-    { id: 'KTW_SANI_10_85_1', name: 'KTW Sani Team 10/85-1', type: 'KTW', station: 'rw10', cost: 60000, owned: false },
-    { id: 'KTW_SANI_10_85_2', name: 'KTW Sani Team 10/85-2', type: 'KTW', station: 'rw10', cost: 60000, owned: false },
-    { id: 'KTW_SANI_10_85_4', name: 'KTW Sani Team 10/85-4', type: 'KTW', station: 'rw10', cost: 60000, owned: false },
-    { id: 'KTW_SANI_10_85_5', name: 'KTW Sani Team 10/85-5', type: 'KTW', station: 'rw10', cost: 60000, owned: false },
+    { id: 'KTW_SANI_10_85_1', name: 'KTW Sani Team 10/85-1', type: 'KTW', station: 'rw10', cost: 60000, owned: true },
+    { id: 'KTW_SANI_10_85_2', name: 'KTW Sani Team 10/85-2', type: 'KTW', station: 'rw10', cost: 60000, owned: true },
+    { id: 'KTW_SANI_10_85_4', name: 'KTW Sani Team 10/85-4', type: 'KTW', station: 'rw10', cost: 60000, owned: true },
+    { id: 'KTW_SANI_10_85_5', name: 'KTW Sani Team 10/85-5', type: 'KTW', station: 'rw10', cost: 60000, owned: true },
     
     // RW11 ASB (3)
-    { id: 'RTW_ASB_11_83_1', name: 'RTW Sama Rems Murr 11/83-1', type: 'RTW', station: 'rw11', cost: 120000, owned: false },
-    { id: 'KTW_ASB_11_85_1', name: 'KTW Sama Rems Murr 11/85-1', type: 'KTW', station: 'rw11', cost: 60000, owned: false },
-    { id: 'KTW_ASB_11_85_3', name: 'KTW Sama Rems Murr 11/85-3', type: 'KTW', station: 'rw11', cost: 60000, owned: false },
+    { id: 'RTW_ASB_11_83_1', name: 'RTW Sama Rems Murr 11/83-1', type: 'RTW', station: 'rw11', cost: 120000, owned: true },
+    { id: 'KTW_ASB_11_85_1', name: 'KTW Sama Rems Murr 11/85-1', type: 'KTW', station: 'rw11', cost: 60000, owned: true },
+    { id: 'KTW_ASB_11_85_3', name: 'KTW Sama Rems Murr 11/85-3', type: 'KTW', station: 'rw11', cost: 60000, owned: true },
     
     // Weitere Fahrzeuge...
-    { id: 'KTW_RMA_13_85_1', name: 'KTW Rems Murr Ambulanz 13/85-1', type: 'KTW', station: 'rw13', cost: 60000, owned: false },
+    { id: 'KTW_RMA_13_85_1', name: 'KTW Rems Murr Ambulanz 13/85-1', type: 'KTW', station: 'rw13', cost: 60000, owned: true },
     
     // RW14 SAG (9)
-    { id: 'KTW_SAG_14_85_1', name: 'KTW SAG Rems Murr 14/85-1', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_14_85_2', name: 'KTW SAG Rems Murr 14/85-2', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_14_85_3', name: 'KTW SAG Rems Murr 14/85-3', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_14_85_4', name: 'KTW SAG Rems Murr 14/85-4', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_14_85_5', name: 'KTW SAG Rems Murr 14/85-5', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_22_85_1', name: 'KTW SAG Brüder Rems Murr 22/85-1', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_22_85_2', name: 'KTW SAG Brüder Rems Murr 22/85-2', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_22_85_3', name: 'KTW SAG Brüder Rems Murr 22/85-3', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
-    { id: 'KTW_SAG_22_85_4', name: 'KTW SAG Brüder Rems Murr 22/85-4', type: 'KTW', station: 'rw14', cost: 60000, owned: false },
+    { id: 'KTW_SAG_14_85_1', name: 'KTW SAG Rems Murr 14/85-1', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_14_85_2', name: 'KTW SAG Rems Murr 14/85-2', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_14_85_3', name: 'KTW SAG Rems Murr 14/85-3', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_14_85_4', name: 'KTW SAG Rems Murr 14/85-4', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_14_85_5', name: 'KTW SAG Rems Murr 14/85-5', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_22_85_1', name: 'KTW SAG Brüder Rems Murr 22/85-1', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_22_85_2', name: 'KTW SAG Brüder Rems Murr 22/85-2', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_22_85_3', name: 'KTW SAG Brüder Rems Murr 22/85-3', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
+    { id: 'KTW_SAG_22_85_4', name: 'KTW SAG Brüder Rems Murr 22/85-4', type: 'KTW', station: 'rw14', cost: 60000, owned: true },
     
-    { id: 'KTW_AS_15_85_1', name: 'KTW AS Rems Murr 15/85-1', type: 'KTW', station: 'rw15', cost: 60000, owned: false },
-    { id: 'RTW_MHD16_83_1', name: 'RTW Johannes Rems Murr 16/83-1', type: 'RTW', station: 'rw16', cost: 120000, owned: false },
-    { id: 'RTW_MHD17_83_1', name: 'RTW Johannes Rems Murr 17/83-1', type: 'RTW', station: 'rw17', cost: 120000, owned: false },
-    { id: 'RTW_JUH19_83_1', name: 'RTW Akkon Rems Murr 19/83-1', type: 'RTW', station: 'rw19', cost: 120000, owned: false },
-    { id: 'RTW_JUH20_83_1', name: 'RTW Akkon Rems Murr 20/83-1', type: 'RTW', station: 'rw20', cost: 120000, owned: false },
+    { id: 'KTW_AS_15_85_1', name: 'KTW AS Rems Murr 15/85-1', type: 'KTW', station: 'rw15', cost: 60000, owned: true },
+    { id: 'RTW_MHD16_83_1', name: 'RTW Johannes Rems Murr 16/83-1', type: 'RTW', station: 'rw16', cost: 120000, owned: true },
+    { id: 'RTW_MHD17_83_1', name: 'RTW Johannes Rems Murr 17/83-1', type: 'RTW', station: 'rw17', cost: 120000, owned: true },
+    { id: 'RTW_JUH19_83_1', name: 'RTW Akkon Rems Murr 19/83-1', type: 'RTW', station: 'rw19', cost: 120000, owned: true },
+    { id: 'RTW_JUH20_83_1', name: 'RTW Akkon Rems Murr 20/83-1', type: 'RTW', station: 'rw20', cost: 120000, owned: true },
     
-    { id: 'KTW_DECEBA_21_85_1', name: 'KTW Rettung DECEBA Rems Murr 21/85-1', type: 'KTW', station: 'rw21', cost: 60000, owned: false },
-    { id: 'KTW_DECEBA_21_85_2', name: 'KTW Rettung DECEBA Rems Murr 21/85-2', type: 'KTW', station: 'rw21', cost: 60000, owned: false },
+    { id: 'KTW_DECEBA_21_85_1', name: 'KTW Rettung DECEBA Rems Murr 21/85-1', type: 'KTW', station: 'rw21', cost: 60000, owned: true },
+    { id: 'KTW_DECEBA_21_85_2', name: 'KTW Rettung DECEBA Rems Murr 21/85-2', type: 'KTW', station: 'rw21', cost: 60000, owned: true },
     
     // Notarztwachen
     { id: 'NEF_WN_JOH18_1', name: 'NEF Johannes Rems Murr 18/82-1', type: 'NEF', station: 'naw_winnenden', cost: 0, owned: true },
-    { id: 'NEF_WN_RK7_1', name: 'NEF Rotkreuz Rems Murr 7/82-1', type: 'NEF', station: 'naw_winnenden', cost: 150000, owned: false },
-    { id: 'NEF_MH_4_1', name: 'NEF Rotkreuz Rems Murr 4/82-1', type: 'NEF', station: 'naw_murrhardt', cost: 150000, owned: false },
-    { id: 'NEF_MH_4_2', name: 'NEF Rotkreuz Rems Murr 4/82-2', type: 'NEF', station: 'naw_murrhardt', cost: 150000, owned: false },
+    { id: 'NEF_WN_RK7_1', name: 'NEF Rotkreuz Rems Murr 7/82-1', type: 'NEF', station: 'naw_winnenden', cost: 150000, owned: true },
+    { id: 'NEF_MH_4_1', name: 'NEF Rotkreuz Rems Murr 4/82-1', type: 'NEF', station: 'naw_murrhardt', cost: 150000, owned: true },
+    { id: 'NEF_MH_4_2', name: 'NEF Rotkreuz Rems Murr 4/82-2', type: 'NEF', station: 'naw_murrhardt', cost: 150000, owned: true },
     
     // Ortsvereine (Ehrenamt)
-    { id: 'KTW_ASP_54_25_1', name: 'KTW Rotkreuz Rems Murr 54/25-1', type: 'KTW', station: 'ov_aspach', cost: 60000, owned: false },
-    { id: 'KTW_KER_25_1', name: 'KTW KER/25-1', type: 'KTW', station: 'ov_kernen', cost: 60000, owned: false },
-    { id: 'KTW_JOH12_85_1', name: 'KTW Johannes Rems-Murr 12/85-1', type: 'KTW', station: 'ov_mhd_winnenden', cost: 60000, owned: false },
-    { id: 'KTW_PLÜ_25_1', name: 'KTW PLÜ/25-1', type: 'KTW', station: 'ov_pluederhausen', cost: 60000, owned: false },
-    { id: 'KTW_PLÜ_25_2', name: 'KTW PLÜ/25-2', type: 'KTW', station: 'ov_pluederhausen', cost: 60000, owned: false },
-    { id: 'KTW_REM_25_1', name: 'KTW REM/25-1', type: 'KTW', station: 'ov_remshalden', cost: 60000, owned: false },
-    { id: 'KTW_SDF_25_1', name: 'KTW SDF/25-1', type: 'KTW', station: 'ov_schorndorf', cost: 60000, owned: false },
-    { id: 'KTW_SDF_25_2', name: 'KTW SDF/25-2', type: 'KTW', station: 'ov_schorndorf', cost: 60000, owned: false },
-    { id: 'KTW_URB_25_1', name: 'KTW URB/25-1', type: 'KTW', station: 'ov_urbach', cost: 60000, owned: false },
-    { id: 'KTW_URB_25_2', name: 'KTW URB/25-2', type: 'KTW', station: 'ov_urbach', cost: 60000, owned: false },
+    { id: 'KTW_ASP_54_25_1', name: 'KTW Rotkreuz Rems Murr 54/25-1', type: 'KTW', station: 'ov_aspach', cost: 60000, owned: true },
+    { id: 'KTW_KER_25_1', name: 'KTW KER/25-1', type: 'KTW', station: 'ov_kernen', cost: 60000, owned: true },
+    { id: 'KTW_JOH12_85_1', name: 'KTW Johannes Rems-Murr 12/85-1', type: 'KTW', station: 'ov_mhd_winnenden', cost: 60000, owned: true },
+    { id: 'KTW_PLÜ_25_1', name: 'KTW PLÜ/25-1', type: 'KTW', station: 'ov_pluederhausen', cost: 60000, owned: true },
+    { id: 'KTW_PLÜ_25_2', name: 'KTW PLÜ/25-2', type: 'KTW', station: 'ov_pluederhausen', cost: 60000, owned: true },
+    { id: 'KTW_REM_25_1', name: 'KTW REM/25-1', type: 'KTW', station: 'ov_remshalden', cost: 60000, owned: true },
+    { id: 'KTW_SDF_25_1', name: 'KTW SDF/25-1', type: 'KTW', station: 'ov_schorndorf', cost: 60000, owned: true },
+    { id: 'KTW_SDF_25_2', name: 'KTW SDF/25-2', type: 'KTW', station: 'ov_schorndorf', cost: 60000, owned: true },
+    { id: 'KTW_URB_25_1', name: 'KTW URB/25-1', type: 'KTW', station: 'ov_urbach', cost: 60000, owned: true },
+    { id: 'KTW_URB_25_2', name: 'KTW URB/25-2', type: 'KTW', station: 'ov_urbach', cost: 60000, owned: true },
     { id: 'KTW_WN_25_1', name: 'KTW WN/25-1', type: 'KTW', station: 'ov_waiblingen', cost: 0, owned: true },
-    { id: 'KTW_WEI_25_1', name: 'KTW WEI/25-1', type: 'KTW', station: 'ov_weinstadt', cost: 60000, owned: false },
-    { id: 'KTW_WLT_25_1', name: 'KTW WLT/25-1', type: 'KTW', station: 'ov_wieslauftal', cost: 60000, owned: false },
-    { id: 'KTW_WIN_25_1', name: 'KTW WIN/25-1', type: 'KTW', station: 'ov_winnenden', cost: 60000, owned: false },
-    { id: 'KTW_WIN_25_2', name: 'KTW WIN/25-2', type: 'KTW', station: 'ov_winnenden', cost: 60000, owned: false },
-    { id: 'KTW_WTB_25_1', name: 'KTW WTB/25-1', type: 'KTW', station: 'ov_winterbach', cost: 60000, owned: false },
-    { id: 'KTW_BAC_25_2', name: 'KTW BAC/25-2', type: 'KTW', station: 'ov_backnang', cost: 60000, owned: false },
-    { id: 'KTW_RUD_25_1', name: 'KTW RUD/25-1', type: 'KTW', station: 'ov_rudersberg', cost: 60000, owned: false },
-    { id: 'KTW_OPP_25_1', name: 'KTW OPP/25-1', type: 'KTW', station: 'ov_oppenweiler', cost: 60000, owned: false },
-    { id: 'KDOW_OPP_10_1', name: 'KDOW OPP/10-1', type: 'Kdow', station: 'ov_oppenweiler', cost: 80000, owned: false },
-    { id: 'GW_SAN_OPP_28_1', name: 'GW-San OPP/28-1', type: 'GW-San', station: 'ov_oppenweiler', cost: 100000, owned: false },
-    { id: 'KTW_BUR_25_1', name: 'KTW BUR/25-1', type: 'KTW', station: 'ov_burgstetten', cost: 60000, owned: false }
+    { id: 'KTW_WEI_25_1', name: 'KTW WEI/25-1', type: 'KTW', station: 'ov_weinstadt', cost: 60000, owned: true },
+    { id: 'KTW_WLT_25_1', name: 'KTW WLT/25-1', type: 'KTW', station: 'ov_wieslauftal', cost: 60000, owned: true },
+    { id: 'KTW_WIN_25_1', name: 'KTW WIN/25-1', type: 'KTW', station: 'ov_winnenden', cost: 60000, owned: true },
+    { id: 'KTW_WIN_25_2', name: 'KTW WIN/25-2', type: 'KTW', station: 'ov_winnenden', cost: 60000, owned: true },
+    { id: 'KTW_WTB_25_1', name: 'KTW WTB/25-1', type: 'KTW', station: 'ov_winterbach', cost: 60000, owned: true },
+    { id: 'KTW_BAC_25_2', name: 'KTW BAC/25-2', type: 'KTW', station: 'ov_backnang', cost: 60000, owned: true },
+    { id: 'KTW_RUD_25_1', name: 'KTW RUD/25-1', type: 'KTW', station: 'ov_rudersberg', cost: 60000, owned: true },
+    { id: 'KTW_OPP_25_1', name: 'KTW OPP/25-1', type: 'KTW', station: 'ov_oppenweiler', cost: 60000, owned: true },
+    { id: 'KDOW_OPP_10_1', name: 'KDOW OPP/10-1', type: 'Kdow', station: 'ov_oppenweiler', cost: 80000, owned: true },
+    { id: 'GW_SAN_OPP_28_1', name: 'GW-San OPP/28-1', type: 'GW-San', station: 'ov_oppenweiler', cost: 100000, owned: true },
+    { id: 'KTW_BUR_25_1', name: 'KTW BUR/25-1', type: 'KTW', station: 'ov_burgstetten', cost: 60000, owned: true }
 ];
 
 let VEHICLES = [];
@@ -172,6 +172,7 @@ function initializeVehicles() {
             type: template.type,
             station: template.station,
             cost: template.cost,
+            // IM FREIEN SPIEL: ALLE Fahrzeuge owned: true!
             owned: CONFIG.GAME_MODE === 'free' ? true : template.owned,
             callsign: template.name,
             status: 'available',
@@ -181,6 +182,8 @@ function initializeVehicles() {
         
         VEHICLES.push(vehicle);
     });
+    
+    console.log(`✅ ${VEHICLES.filter(v => v.owned).length}/${VEHICLES.length} Fahrzeuge im ${CONFIG.GAME_MODE}-Modus verfügbar`);
 }
 
 function getVehicleIcon(type) {
