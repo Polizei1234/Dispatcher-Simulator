@@ -1,0 +1,181 @@
+/* =========================
+   KEYWORDS DROPDOWN STYLES
+   Autocomplete Dropdown für Einsatzstichwörter
+   ========================= */
+
+.keyword-dropdown-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.keyword-dropdown-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--bg-secondary, #1e1e1e);
+    border: 2px solid var(--border-color, #333);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    margin-top: -2px;
+}
+
+/* Scrollbar Styling */
+.keyword-dropdown-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.keyword-dropdown-list::-webkit-scrollbar-track {
+    background: var(--bg-primary, #121212);
+}
+
+.keyword-dropdown-list::-webkit-scrollbar-thumb {
+    background: var(--accent-color, #00a8ff);
+    border-radius: 4px;
+}
+
+.keyword-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover, #0088cc);
+}
+
+/* Dropdown Items */
+.dropdown-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color, #333);
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-hover, #2a2a2a);
+}
+
+.dropdown-item.no-results {
+    cursor: default;
+    color: var(--text-secondary, #888);
+    font-style: italic;
+    text-align: center;
+}
+
+.dropdown-item.no-results:hover {
+    background: transparent;
+}
+
+/* Item Content */
+.dropdown-item-title {
+    font-weight: bold;
+    color: var(--text-primary, #ffffff);
+    font-size: 1em;
+    margin-bottom: 4px;
+}
+
+.dropdown-item-category {
+    color: var(--accent-color, #00a8ff);
+    font-size: 0.85em;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-item-description {
+    color: var(--text-secondary, #aaa);
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+/* Highlighted Search Terms (optional) */
+.dropdown-item-title mark,
+.dropdown-item-description mark {
+    background: var(--accent-color-transparent, rgba(0, 168, 255, 0.2));
+    color: var(--accent-color, #00a8ff);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Input Focus State */
+.keyword-dropdown-wrapper input:focus {
+    border-color: var(--accent-color, #00a8ff);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.1);
+}
+
+/* Animation */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.keyword-dropdown-list {
+    animation: slideDown 0.2s ease;
+}
+
+/* Dark Mode Adjustments */
+@media (prefers-color-scheme: dark) {
+    .keyword-dropdown-list {
+        background: #1a1a1a;
+        border-color: #2a2a2a;
+    }
+    
+    .dropdown-item:hover {
+        background: #252525;
+    }
+    
+    .dropdown-item-title {
+        color: #f0f0f0;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .keyword-dropdown-list {
+        max-height: 200px;
+        font-size: 0.95em;
+    }
+    
+    .dropdown-item {
+        padding: 10px 12px;
+    }
+}
+
+/* Priority Keywords - Color Coding */
+.dropdown-item[data-keyword^="RD 0"] .dropdown-item-category {
+    color: #4caf50; /* Grün */
+}
+
+.dropdown-item[data-keyword^="RD 1"] .dropdown-item-category {
+    color: #8bc34a; /* Hellgrün */
+}
+
+.dropdown-item[data-keyword^="RD 2"] .dropdown-item-category {
+    color: #ffc107; /* Gelb */
+}
+
+.dropdown-item[data-keyword^="RD 3"] .dropdown-item-category {
+    color: #ff9800; /* Orange */
+}
+
+.dropdown-item[data-keyword^="MANV"] .dropdown-item-category {
+    color: #f44336; /* Rot */
+}
+
+/* Loading State */
+.keyword-dropdown-wrapper.loading input {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="%2300a8ff" stroke-width="2" stroke-dasharray="12.56 37.68"><animateTransform attributeName="transform" type="rotate" from="0 10 10" to="360 10 10" dur="1s" repeatCount="indefinite"/></circle></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px 20px;
+}
