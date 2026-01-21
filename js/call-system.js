@@ -7,6 +7,7 @@ const CallSystem = {
     activeCall: null,
     callQueue: [],
     isRinging: false,
+    isGenerating: false, // NEU: Verhindert doppelte Generierung
     ringtoneInterval: null,
     callHistory: [],
 
@@ -39,11 +40,13 @@ const CallSystem = {
      * Generiert neuen eingehenden Anruf
      */
     async generateIncomingCall() {
-        if (this.activeCall || this.isRinging) {
-            console.log('⚠️ Anruf wird übersprungen - Leitung besetzt');
+        // WICHTIG: Verhindere gleichzeitige/doppelte Generierung!
+        if (this.activeCall || this.isRinging || this.isGenerating) {
+            console.log('⚠️ Anruf wird übersprungen - Leitung besetzt oder Generierung läuft');
             return;
         }
 
+        this.isGenerating = true; // Setze Flag
         console.group('📞 GENERATING INCOMING CALL');
 
         try {
@@ -52,6 +55,7 @@ const CallSystem = {
             
             if (!callData) {
                 console.error('❌ Groq konnte keinen Anruf erstellen');
+                this.isGenerating = false;
                 console.groupEnd();
                 return;
             }
@@ -66,6 +70,8 @@ const CallSystem = {
         } catch (error) {
             console.error('❌ Fehler bei Anruf-Generierung:', error);
             console.groupEnd();
+        } finally {
+            this.isGenerating = false; // Zurücksetzen
         }
     },
 
@@ -103,6 +109,7 @@ ANFORDERUNGEN:
 4. Erstelle realistische Antworten auf Standard-Fragen
 5. Wähle einen Ort im Rems-Murr-Kreis (Stadt, Straße, Landmarke)
 6. Koordinaten müssen in diesem Bereich liegen: Lat 48.7-49.1, Lon 9.2-9.7
+7. WICHTIG: Erstelle VERSCHIEDENE Einsätze - keine Wiederholungen!
 
 ANTWORTE als JSON:
 {
@@ -110,7 +117,7 @@ ANTWORTE als JSON:
     "typ": "augenzeuge|betroffener|angehoeriger",
     "name": "Vorname Nachname",
     "telefon": "0151-12345678",
-    "emotion": "ruhig|aufgeregt|panisch|verw irrt"
+    "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "initial_meldung": "Kurze, aufgeregte erste Meldung (1-2 Sätze)",
   "antworten": {
@@ -179,7 +186,7 @@ ANTWORTE als JSON:
                         content: prompt
                     }
                 ],
-                temperature: 0.8,
+                temperature: 0.9, // HÖHER für mehr Variation!
                 max_tokens: 2000,
                 response_format: { type: 'json_object' }
             })
