@@ -6,7 +6,7 @@ let map = null;
 let stationMarkers = [];
 let vehicleMarkers = [];
 let stationsVisible = true;
-let stationsInitialized = false; // NEU: Flag zum Verhindern doppelter Initialisierung
+let stationsInitialized = false;
 
 function initMap() {
     if (map) {
@@ -16,12 +16,18 @@ function initMap() {
     
     console.log('🗺️ Initialisiere Karte...');
     
+    // WICHTIG: Nutze CONFIG.MAP statt CONFIG.MAP_CENTER
+    const mapCenter = CONFIG.MAP?.center || [48.8309415, 9.3256194];
+    const mapZoom = CONFIG.MAP?.zoom || 11;
+    
+    console.log('📍 Map Center:', mapCenter, 'Zoom:', mapZoom);
+    
     map = L.map('map', {
-        center: CONFIG.MAP_CENTER,
-        zoom: CONFIG.MAP_ZOOM,
-        minZoom: CONFIG.MAP_MIN_ZOOM,
-        maxZoom: CONFIG.MAP_MAX_ZOOM,
-        closePopupOnClick: true  // Popups bleiben offen bis woanders geklickt wird
+        center: mapCenter,
+        zoom: mapZoom,
+        minZoom: 9,
+        maxZoom: 18,
+        closePopupOnClick: true
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -31,7 +37,7 @@ function initMap() {
     
     console.log('✅ Karte erstellt, erstelle Wachen-Marker...');
     createStationMarkers();
-    stationsInitialized = true; // WICHTIG: Marker sind jetzt erstellt
+    stationsInitialized = true;
     
     console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
 }
@@ -44,13 +50,13 @@ function getFMSStatus(vehicle) {
     
     // Fallback: Mappe Fahrzeugstatus auf FMS-Status
     const statusMap = {
-        'available': 2,      // Status 2: Einsatzbereit auf Wache
-        'dispatched': 3,     // Status 3: Einsatzauftrag übernommen
-        'on-scene': 4,       // Status 4: Ankunft am Einsatzort
-        'transporting': 7,   // Status 7: Patient aufgenommen
-        'at-hospital': 8,    // Status 8: Krankenhausdesinfektion
-        'returning': 1,      // Status 1: Einsatzbereit über Funk (auf Rückweg)
-        'unavailable': 6     // Status 6: Nicht einsatzbereit
+        'available': 2,
+        'dispatched': 3,
+        'on-scene': 4,
+        'transporting': 7,
+        'at-hospital': 8,
+        'returning': 1,
+        'unavailable': 6
     };
     
     const fmsCode = statusMap[vehicle.status] || 2;
@@ -69,12 +75,10 @@ function getFMSStatus(vehicle) {
 }
 
 function getFMSStatusNumber(vehicle) {
-    // Prüfe zuerst currentStatus
     if (vehicle.currentStatus) {
         return vehicle.currentStatus;
     }
     
-    // Fallback
     const statusMap = {
         'available': 2,
         'dispatched': 3,
@@ -88,13 +92,11 @@ function getFMSStatusNumber(vehicle) {
 }
 
 function createStationMarkers() {
-    // PERFORMANCE-FIX: Erstelle Marker nur einmal!
     if (stationsInitialized) {
         console.log('⚡ Wachen-Marker bereits erstellt, überspringe');
         return;
     }
     
-    // Lösche alte Marker (nur beim ersten Mal)
     stationMarkers.forEach(m => {
         if (map.hasLayer(m)) {
             map.removeLayer(m);
@@ -106,7 +108,6 @@ function createStationMarkers() {
     Object.values(STATIONS).forEach(station => {
         const pos = station.position;
         
-        // Validierung der Koordinaten
         if (!pos || pos.length !== 2 || isNaN(pos[0]) || isNaN(pos[1])) {
             console.error(`❌ Ungültige Position für ${station.name}:`, pos);
             return;
@@ -126,7 +127,6 @@ function createStationMarkers() {
                 })
             });
             
-            // Popup-Content wird dynamisch beim Öffnen generiert
             marker.on('click', function() {
                 const popupContent = generateStationPopupContent(station);
                 marker.bindPopup(popupContent, {
@@ -149,23 +149,19 @@ function createStationMarkers() {
 }
 
 function generateStationPopupContent(station) {
-    // Finde alle Fahrzeuge dieser Wache (Live-Daten!)
     const stationVehicles = VEHICLES.filter(v => v.station === station.id && v.owned);
     
-    // Formatiere Kategorie
     const categoryText = {
         'rettungswache': 'Rettungswache',
         'notarztwache': 'Notarztwache',
         'ortsverein': 'Ortsverein'
     }[station.category] || station.category;
     
-    // Formatiere Typ
     const typeText = {
         'hauptamt': 'Hauptamt',
         'ehrenamt': 'Ehrenamt'
     }[station.type] || station.type;
     
-    // Erstelle Fahrzeugliste mit FMS-Status
     let vehicleListHtml = '';
     if (stationVehicles.length > 0) {
         vehicleListHtml = `
@@ -244,23 +240,12 @@ function createStationPixelIcon(category) {
     
     return `
         <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <!-- Schatten -->
             <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
-            
-            <!-- Gebäude -->
             <rect x="10" y="18" width="20" height="20" fill="${color.primary}" stroke="#000" stroke-width="1.5"/>
-            
-            <!-- Dach -->
             <path d="M 8 18 L 20 10 L 32 18 Z" fill="${color.secondary}" stroke="#000" stroke-width="1.5"/>
-            
-            <!-- DRK Kreuz -->
             <rect x="17" y="24" width="6" height="10" fill="${color.cross}" stroke="#000" stroke-width="1"/>
             <rect x="14" y="27" width="12" height="4" fill="${color.cross}" stroke="#000" stroke-width="1"/>
-            
-            <!-- Tür -->
             <rect x="16" y="32" width="8" height="6" fill="#654321" stroke="#000" stroke-width="1"/>
-            
-            <!-- Fenster -->
             <rect x="12" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
             <rect x="25" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
         </svg>
@@ -280,33 +265,18 @@ function createVehiclePixelIcon(type) {
     
     return `
         <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-            <!-- Schatten -->
             <ellipse cx="14" cy="26" rx="10" ry="2" fill="rgba(0,0,0,0.3)"/>
-            
-            <!-- Fahrzeugkörper -->
             <rect x="6" y="12" width="16" height="10" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
-            
-            <!-- Fahrerhaus -->
             <rect x="16" y="8" width="6" height="6" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
-            
-            <!-- Windschutzscheibe -->
             <rect x="17" y="9" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
-            
-            <!-- Seitenfenster -->
             <rect x="8" y="14" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
-            
-            <!-- Räder -->
             <circle cx="10" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
             <circle cx="18" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
             <circle cx="10" cy="22" r="1" fill="#666"/>
             <circle cx="18" cy="22" r="1" fill="#666"/>
-            
-            <!-- Blaulicht -->
             <rect x="11" y="6" width="3" height="2" fill="#0000ff" stroke="#000" stroke-width="0.5" rx="0.5">
                 <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
             </rect>
-            
-            <!-- DRK Logo -->
             <rect x="13" y="15" width="2" height="4" fill="#fff"/>
             <rect x="12" y="16" width="4" height="2" fill="#fff"/>
         </svg>
@@ -316,7 +286,6 @@ function createVehiclePixelIcon(type) {
 function updateMap() {
     if (!map || !game) return;
     
-    // Lösche alte Fahrzeugmarker
     vehicleMarkers.forEach(m => {
         if (map.hasLayer(m)) {
             map.removeLayer(m);
@@ -324,7 +293,6 @@ function updateMap() {
     });
     vehicleMarkers = [];
     
-    // Erstelle neue Fahrzeugmarker NUR für unterwegs/im Einsatz
     const activeVehicles = game.vehicles.filter(v => 
         v.owned && (v.status === 'dispatched' || v.status === 'on-scene')
     );
@@ -374,23 +342,21 @@ function updateMap() {
             console.error(`❌ Fehler beim Erstellen von Fahrzeugmarker ${vehicle.name}:`, error);
         }
     });
-    
-    // ENTFERNT: createStationMarkers() - Wachen werden nur einmal bei initMap() erstellt!
 }
 
-// Alias für Kompatibilität mit main.js
 function updateVehicleMarkers() {
     updateMap();
 }
 
 function centerMap() {
     if (map) {
-        map.setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
+        const mapCenter = CONFIG.MAP?.center || [48.8309415, 9.3256194];
+        const mapZoom = CONFIG.MAP?.zoom || 11;
+        map.setView(mapCenter, mapZoom);
         console.log('📍 Karte zentriert auf Waiblingen');
     }
 }
 
-// Funktion zum Hinzufügen von Einsatz-Markern
 function addIncidentMarker(incident) {
     if (!map || !incident || !incident.position) return;
     
