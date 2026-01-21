@@ -1,12 +1,13 @@
 // =========================
-// PROTOCOL FORM SYSTEM
-// Einsatzprotokoll-Formular mit Auto-Fill
+// PROTOCOL FORM SYSTEM v2.0
+// Einsatzprotokoll-Formular mit Keywords-Dropdown Integration
 // =========================
 
 const ProtocolForm = {
     currentCall: null,
     formData: {},
-    keywordsData: null,
+    selectedPriorityKeyword: null,
+    selectedDetailKeyword: null,
 
     /**
      * Initialisiert Protocol Form
@@ -14,24 +15,8 @@ const ProtocolForm = {
     async initialize() {
         console.log('📋 Protocol Form initialisiert');
         
-        // Lade Keywords
-        await this.loadKeywords();
-        
         // Setup Event Listeners
         this.setupEventListeners();
-    },
-
-    /**
-     * Lädt Keywords aus JSON
-     */
-    async loadKeywords() {
-        try {
-            const response = await fetch('js/keywords.json');
-            this.keywordsData = await response.json();
-            console.log('✅ Keywords geladen:', Object.keys(this.keywordsData).length + ' Kategorien');
-        } catch (error) {
-            console.error('❌ Fehler beim Laden der Keywords:', error);
-        }
     },
 
     /**
@@ -43,14 +28,6 @@ const ProtocolForm = {
         if (submitBtn) {
             submitBtn.addEventListener('click', () => this.submitProtocol());
         }
-
-        // Keyword Dropdown Change
-        const keywordSelect = document.getElementById('keyword-select');
-        if (keywordSelect) {
-            keywordSelect.addEventListener('change', (e) => {
-                this.onKeywordChange(e.target.value);
-            });
-        }
     },
 
     /**
@@ -59,6 +36,8 @@ const ProtocolForm = {
     showForm(callData) {
         this.currentCall = callData;
         this.formData = {};
+        this.selectedPriorityKeyword = null;
+        this.selectedDetailKeyword = null;
 
         console.group('📋 SHOWING PROTOCOL FORM');
         console.log('📞 Für Anruf:', callData.anrufer.name);
@@ -73,9 +52,38 @@ const ProtocolForm = {
         if (form) {
             form.style.display = 'block';
             this.renderForm();
+            
+            // Initialisiere Keywords-Dropdowns nach Render
+            setTimeout(() => {
+                this.initializeKeywordsDropdowns();
+            }, 100);
         }
 
         console.groupEnd();
+    },
+
+    /**
+     * Initialisiert Keywords-Dropdowns
+     */
+    initializeKeywordsDropdowns() {
+        if (typeof KeywordsDropdown === 'undefined') {
+            console.error('❌ KeywordsDropdown nicht geladen!');
+            return;
+        }
+
+        // Prioritäts-Dropdown
+        KeywordsDropdown.initializePriorityDropdown('protocol-priority-input', (keywordData) => {
+            this.selectedPriorityKeyword = keywordData;
+            this.formData.priorityKeyword = keywordData.keyword;
+            console.log('✅ Priorität gewählt:', keywordData.keyword);
+        });
+
+        // Detail-Dropdown
+        KeywordsDropdown.initializeDetailDropdown('protocol-detail-input', (keywordData) => {
+            this.selectedDetailKeyword = keywordData;
+            this.formData.detailKeyword = keywordData.keyword;
+            console.log('✅ Detail-Stichwort gewählt:', keywordData.keyword);
+        });
     },
 
     /**
@@ -91,9 +99,27 @@ const ProtocolForm = {
                 <div class="protocol-time">🕐 Uhrzeit: <strong>${this.formData.zeitstempel}</strong></div>
             </div>
 
-            <div class="form-group">
-                <label for="keyword-select">Stichwort *</label>
-                ${this.renderKeywordDropdown()}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="protocol-priority-input">🚨 Prioritätsstufe (RD/MANV) *</label>
+                    <input type="text" 
+                           id="protocol-priority-input" 
+                           class="form-control" 
+                           placeholder="z.B. RD 2, MANV 1"
+                           autocomplete="off"
+                           value="${this.formData.priorityKeyword || ''}">
+                    <small style="color: #888; font-size: 0.85em;">Grobes Einsatzstichwort mit Durchsuchung</small>
+                </div>
+                <div class="form-group">
+                    <label for="protocol-detail-input">💔 Detail-Stichwort *</label>
+                    <input type="text" 
+                           id="protocol-detail-input" 
+                           class="form-control" 
+                           placeholder="z.B. VU, Herzinfarkt, Geburt"
+                           autocomplete="off"
+                           value="${this.formData.detailKeyword || ''}">
+                    <small style="color: #888; font-size: 0.85em;">Detailliertes medizinisches Stichwort</small>
+                </div>
             </div>
 
             <div class="form-group">
@@ -179,60 +205,6 @@ const ProtocolForm = {
     },
 
     /**
-     * Rendert Keyword Dropdown (hierarchisch)
-     */
-    renderKeywordDropdown() {
-        if (!this.keywordsData) {
-            return '<select id="keyword-select" class="form-control"><option>Lade Keywords...</option></select>';
-        }
-
-        const categoryNames = {
-            'abdomen': '🫃 Abdomen',
-            'atmung': '💨 Atmung',
-            'gynaekologie': '👶 Gynäkologie',
-            'herz_kreislauf': '❤️ Herz-Kreislauf',
-            'hno': '👃 HNO',
-            'intoxikationen': '☠️ Intoxikationen',
-            'krankentransport': '🚐 Krankentransport',
-            'neurologie': '🧠 Neurologie',
-            'psychiatrie': '🧘 Psychiatrie',
-            'sonderlagen': '🚨 Sonderlagen',
-            'sonstige': '📋 Sonstige',
-            'stoffwechsel': '🔬 Stoffwechsel',
-            'thermische_schaeden': '🌡️ Thermische Schäden',
-            'trauma': '🩹 Trauma/Verletzungen',
-            'unfaelle': '🚗 Unfälle',
-            'urologie': '🏥 Urologie'
-        };
-
-        let html = '<select id="keyword-select" class="form-control" required>';
-        html += '<option value="">Bitte wählen...</option>';
-
-        Object.entries(this.keywordsData).forEach(([category, keywords]) => {
-            const categoryName = categoryNames[category] || category;
-            html += `<optgroup label="${categoryName}">`;
-            
-            keywords.forEach(kw => {
-                const selected = this.formData.stichwort === kw.stichwort ? 'selected' : '';
-                html += `<option value="${kw.stichwort}" ${selected}>${kw.stichwort}</option>`;
-            });
-            
-            html += '</optgroup>';
-        });
-
-        html += '</select>';
-        return html;
-    },
-
-    /**
-     * Keyword wurde geändert
-     */
-    onKeywordChange(stichwort) {
-        this.formData.stichwort = stichwort;
-        console.log('🏷️ Stichwort gewählt:', stichwort);
-    },
-
-    /**
      * Update Formular aus Anruf-Antwort
      */
     updateFromCallAnswer(key, answer, callData) {
@@ -292,11 +264,17 @@ const ProtocolForm = {
         if (nameInput) nameInput.value = this.formData.melder_name;
         if (phoneInput) phoneInput.value = this.formData.melder_telefon;
 
-        // Stichwort-Vorschlag (nur einmal)
-        if (!this.formData.stichwort && callData.einsatz.stichwort_vorschlag) {
-            this.formData.stichwort = callData.einsatz.stichwort_vorschlag;
-            const keywordSelect = document.getElementById('keyword-select');
-            if (keywordSelect) keywordSelect.value = this.formData.stichwort;
+        // Stichwort-Vorschlag (versuche zu mappen)
+        if (!this.formData.priorityKeyword && callData.einsatz.stichwort_vorschlag) {
+            // Versuche Stichwort auf Priority/Detail zu mappen
+            const vorschlag = callData.einsatz.stichwort_vorschlag;
+            
+            // Einfache Heuristik: Wenn es ein bekanntes Detail-Keyword ist
+            const detailInput = document.getElementById('protocol-detail-input');
+            if (detailInput) {
+                detailInput.value = vorschlag;
+                this.formData.detailKeyword = vorschlag;
+            }
         }
 
         console.log('✅ Protokoll aktualisiert');
@@ -342,7 +320,8 @@ const ProtocolForm = {
      * Sammelt aktuelle Formular-Daten
      */
     collectFormData() {
-        this.formData.stichwort = document.getElementById('keyword-select')?.value || '';
+        this.formData.priorityKeyword = document.getElementById('protocol-priority-input')?.value || '';
+        this.formData.detailKeyword = document.getElementById('protocol-detail-input')?.value || '';
         this.formData.ort = document.getElementById('location-input')?.value || '';
         this.formData.meldebild = document.getElementById('meldebild-input')?.value || '';
         this.formData.verletzte_gesamt = parseInt(document.getElementById('casualties-total')?.value || 0);
@@ -351,6 +330,12 @@ const ProtocolForm = {
         this.formData.besonderheiten = document.getElementById('special-notes-input')?.value || '';
         this.formData.melder_name = document.getElementById('caller-name-input')?.value || '';
         this.formData.melder_telefon = document.getElementById('caller-phone-input')?.value || '';
+        
+        // Kombiniere Stichwörter
+        const stichwortParts = [];
+        if (this.formData.priorityKeyword) stichwortParts.push(this.formData.priorityKeyword);
+        if (this.formData.detailKeyword) stichwortParts.push(this.formData.detailKeyword);
+        this.formData.stichwort = stichwortParts.join(' - ');
     },
 
     /**
@@ -359,7 +344,9 @@ const ProtocolForm = {
     validateForm() {
         const errors = [];
 
-        if (!this.formData.stichwort) errors.push('- Stichwort fehlt');
+        if (!this.formData.priorityKeyword && !this.formData.detailKeyword) {
+            errors.push('- Mindestens ein Stichwort (Priorität oder Detail) benötigt');
+        }
         if (!this.formData.ort) errors.push('- Ort fehlt');
         if (!this.formData.meldebild) errors.push('- Meldebild fehlt');
         if (!this.formData.melder_name) errors.push('- Melder-Name fehlt');
@@ -379,6 +366,8 @@ const ProtocolForm = {
             nummer: this.formData.nummer,
             zeitstempel: this.formData.zeitstempel,
             stichwort: this.formData.stichwort,
+            priorityKeyword: this.formData.priorityKeyword,
+            detailKeyword: this.formData.detailKeyword,
             ort: this.formData.ort,
             koordinaten: this.currentCall?.einsatz?.koordinaten || { lat: 48.83, lon: 9.32 },
             meldebild: this.formData.meldebild,
