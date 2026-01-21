@@ -1,6 +1,7 @@
 // =========================
-// KARTENLOGIK MIT PIXEL ART ICONS v2.0
-// + Einsatz-Marker + Fahrzeug-Routen
+// KARTENLOGIK v3.0
+// + Fahrzeuge in Wache unsichtbar
+// + Popups schließbar
 // =========================
 
 let map = null;
@@ -22,16 +23,13 @@ function initMap() {
     const mapCenter = CONFIG.MAP?.center || [48.8309415, 9.3256194];
     const mapZoom = CONFIG.MAP?.zoom || 11;
     
-    console.log('📍 Map Center:', mapCenter, 'Zoom:', mapZoom);
-    console.log('🌍 Leaflet Version:', L.version);
-    
     try {
         map = L.map('map', {
             center: mapCenter,
             zoom: mapZoom,
             minZoom: 9,
             maxZoom: 18,
-            closePopupOnClick: true,
+            closePopupOnClick: true, // WICHTIG: Schließt Popups bei Klick
             preferCanvas: false,
             zoomControl: true
         });
@@ -46,16 +44,13 @@ function initMap() {
             crossOrigin: true
         });
         
-        tileLayer.on('tileerror', function(error, tile) {
-            console.warn('⚠️ Tile Ladefehler:', error);
-        });
-        
-        tileLayer.on('tileload', function() {
-            console.log('✅ Tile geladen');
-        });
-        
         tileLayer.addTo(map);
         console.log('✅ TileLayer hinzugefügt');
+        
+        // Event: Schließe Popups bei Klick auf Karte
+        map.on('click', function() {
+            map.closePopup();
+        });
         
         setTimeout(() => {
             createStationMarkers();
@@ -72,49 +67,17 @@ function initMap() {
 }
 
 function getFMSStatus(vehicle) {
-    if (vehicle.currentStatus && CONFIG.FMS_STATUS && CONFIG.FMS_STATUS[vehicle.currentStatus]) {
-        return CONFIG.FMS_STATUS[vehicle.currentStatus];
-    }
-    
-    const statusMap = {
-        'available': 2,
-        'dispatched': 3,
-        'on-scene': 4,
-        'transporting': 7,
-        'at-hospital': 8,
-        'returning': 1,
-        'unavailable': 6
-    };
-    
-    const fmsCode = statusMap[vehicle.status] || 2;
+    const fmsCode = vehicle.currentStatus || 2;
     
     if (!CONFIG.FMS_STATUS || !CONFIG.FMS_STATUS[fmsCode]) {
-        console.warn(`⚠️ FMS_STATUS nicht gefunden für Code ${fmsCode}, verwende Fallback`);
         return {
-            name: vehicle.status || 'Unbekannt',
+            name: 'Unbekannt',
             color: '#6c757d',
             icon: '🚑'
         };
     }
     
     return CONFIG.FMS_STATUS[fmsCode];
-}
-
-function getFMSStatusNumber(vehicle) {
-    if (vehicle.currentStatus) {
-        return vehicle.currentStatus;
-    }
-    
-    const statusMap = {
-        'available': 2,
-        'dispatched': 3,
-        'on-scene': 4,
-        'transporting': 7,
-        'at-hospital': 8,
-        'returning': 1,
-        'unavailable': 6
-    };
-    return statusMap[vehicle.status] || 2;
 }
 
 function createStationMarkers() {
@@ -151,13 +114,16 @@ function createStationMarkers() {
                 })
             });
             
-            marker.on('click', function() {
+            marker.on('click', function(e) {
+                // Stoppe Propagation damit map.on('click') nicht triggert
+                L.DomEvent.stopPropagation(e);
+                
                 const popupContent = generateStationPopupContent(station);
                 marker.bindPopup(popupContent, {
                     maxWidth: 350,
                     className: 'station-popup',
-                    autoClose: false,
-                    closeOnClick: false
+                    autoClose: true, // Schließt wenn anderes Popup geöffnet wird
+                    closeOnClick: false // Bleibt offen bei Klick im Popup
                 }).openPopup();
             });
             
@@ -194,14 +160,13 @@ function generateStationPopupContent(station) {
                 <div style="margin-top: 5px;">
                     ${stationVehicles.map(v => {
                         const fms = getFMSStatus(v);
-                        const fmsNumber = getFMSStatusNumber(v);
                         return `
                             <div style="display: flex; align-items: center; margin: 3px 0; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid ${fms.color};">
                                 <span style="font-size: 0.9em; margin-right: 5px;">${fms.icon}</span>
                                 <div style="flex: 1;">
                                     <div style="font-size: 0.85em; font-weight: bold;">${v.callsign}</div>
                                     <div style="font-size: 0.75em; color: ${fms.color};">
-                                        <strong>Status ${fmsNumber}</strong> | ${fms.name}
+                                        <strong>Status ${v.currentStatus || 2}</strong> | ${fms.name}
                                     </div>
                                 </div>
                             </div>
@@ -308,7 +273,7 @@ function createVehiclePixelIcon(type) {
 }
 
 // ========================================
-// NEU: EINSATZ-MARKER AUF KARTE
+// EINSATZ-MARKER
 // ========================================
 
 function addIncidentToMap(incident) {
@@ -319,7 +284,6 @@ function addIncidentToMap(incident) {
 
     console.log(`🚨 Füge Einsatz hinzu: ${incident.id} an [${incident.koordinaten.lat}, ${incident.koordinaten.lon}]`);
 
-    // Remove old marker if exists
     if (incidentMarkers[incident.id]) {
         map.removeLayer(incidentMarkers[incident.id]);
     }
@@ -339,6 +303,10 @@ function addIncidentToMap(incident) {
             iconAnchor: [20, 40]
         }),
         zIndexOffset: 2000
+    });
+
+    marker.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
     });
 
     marker.bindPopup(`
@@ -361,14 +329,13 @@ function addIncidentToMap(incident) {
         </div>
     `, {
         maxWidth: 300,
-        autoClose: false,
+        autoClose: true,
         closeOnClick: false
     });
 
     marker.addTo(map);
     incidentMarkers[incident.id] = marker;
 
-    // Auto-open popup
     setTimeout(() => marker.openPopup(), 300);
 }
 
@@ -381,11 +348,20 @@ function removeIncidentFromMap(incidentId) {
 }
 
 // ========================================
-// NEU: FAHRZEUG-BEWEGUNG MIT ROUTEN
+// FAHRZEUG-BEWEGUNG
 // ========================================
 
 function updateVehicleOnMap(vehicle) {
     if (!map || !vehicle.position) return;
+
+    // WICHTIG: Verstecke Fahrzeug wenn auf Wache (Status 2)
+    if (vehicle.currentStatus === 2 || vehicle.status === 'available') {
+        if (vehicleMarkers[vehicle.id]) {
+            map.removeLayer(vehicleMarkers[vehicle.id]);
+            delete vehicleMarkers[vehicle.id];
+        }
+        return;
+    }
 
     // Remove old marker
     if (vehicleMarkers[vehicle.id]) {
@@ -394,7 +370,6 @@ function updateVehicleOnMap(vehicle) {
 
     const iconHtml = createVehiclePixelIcon(vehicle.type);
     const fms = getFMSStatus(vehicle);
-    const fmsNumber = getFMSStatusNumber(vehicle);
 
     const marker = L.marker([vehicle.position[0], vehicle.position[1]], {
         icon: L.divIcon({
@@ -406,18 +381,22 @@ function updateVehicleOnMap(vehicle) {
         zIndexOffset: 1000
     });
 
+    marker.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+    });
+
     marker.bindPopup(`
         <div style="min-width: 200px;">
             <strong>${vehicle.name}</strong><br>
             <small>${vehicle.callsign}</small><br>
             <div style="margin-top: 8px; padding: 6px; background: rgba(0,0,0,0.2); border-left: 3px solid ${fms.color}; border-radius: 4px;">
                 <span style="font-size: 1.2em;">${fms.icon}</span>
-                <strong style="color: ${fms.color}; margin-left: 5px;">Status ${fmsNumber}</strong><br>
+                <strong style="color: ${fms.color}; margin-left: 5px;">Status ${vehicle.currentStatus || 2}</strong><br>
                 <span style="color: ${fms.color}; font-size: 0.9em;">${fms.name}</span>
             </div>
         </div>
     `, {
-        autoClose: false,
+        autoClose: true,
         closeOnClick: false
     });
 
@@ -428,12 +407,10 @@ function updateVehicleOnMap(vehicle) {
 function drawVehicleRoute(vehicleId, startPos, endPos) {
     if (!map) return;
 
-    // Remove old route
     if (vehicleRoutes[vehicleId]) {
         map.removeLayer(vehicleRoutes[vehicleId]);
     }
 
-    // Simple straight line route (later: use routing API)
     const route = L.polyline([startPos, endPos], {
         color: '#17a2b8',
         weight: 3,
@@ -455,21 +432,15 @@ function clearVehicleRoute(vehicleId) {
     }
 }
 
-// ========================================
-// UPDATE FUNCTIONS
-// ========================================
-
 function updateMap() {
     if (!map || !game) return;
     
-    // Update vehicle markers
     game.vehicles.forEach(vehicle => {
-        if (vehicle.owned && vehicle.position) {
+        if (vehicle.owned) {
             updateVehicleOnMap(vehicle);
         }
     });
 
-    // Update incidents on map
     if (GAME_DATA && GAME_DATA.incidents) {
         GAME_DATA.incidents.forEach(incident => {
             if (!incidentMarkers[incident.id]) {
@@ -492,7 +463,6 @@ function centerMap() {
     }
 }
 
-// Legacy function for compatibility
 function addIncidentMarker(incident) {
     addIncidentToMap(incident);
 }
