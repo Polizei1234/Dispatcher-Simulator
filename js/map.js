@@ -66,11 +66,64 @@ function createStationMarkers() {
                 })
             });
             
+            // Finde alle Fahrzeuge dieser Wache
+            const stationVehicles = VEHICLES.filter(v => v.station === station.id && v.owned);
+            
+            // Formatiere Kategorie
+            const categoryText = {
+                'rettungswache': 'Rettungswache',
+                'notarztwache': 'Notarztwache',
+                'ortsverein': 'Ortsverein'
+            }[station.category] || station.category;
+            
+            // Formatiere Typ
+            const typeText = {
+                'hauptamt': 'Hauptamt',
+                'ehrenamt': 'Ehrenamt'
+            }[station.type] || station.type;
+            
+            // Erstelle Fahrzeugliste
+            let vehicleListHtml = '';
+            if (stationVehicles.length > 0) {
+                vehicleListHtml = `
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
+                        <strong>🚑 Fahrzeuge (${stationVehicles.length}):</strong><br>
+                        ${stationVehicles.map(v => {
+                            const statusIcon = {
+                                'available': '✅',
+                                'dispatched': '🚨',
+                                'on-scene': '📍'
+                            }[v.status] || '⚪';
+                            return `<small>${statusIcon} ${v.callsign}</small>`;
+                        }).join('<br>')}
+                    </div>
+                `;
+            } else {
+                vehicleListHtml = `
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
+                        <small style="color: #888;">Keine Fahrzeuge stationiert</small>
+                    </div>
+                `;
+            }
+            
             marker.bindPopup(`
-                <strong>${station.name}</strong><br>
-                ${station.address}<br>
-                <small>${station.category} (${station.type})</small>
-            `);
+                <div style="min-width: 200px;">
+                    <strong style="font-size: 1.1em;">${station.name}</strong><br>
+                    <small style="color: #a0a0a0;">${station.address}</small><br>
+                    <div style="margin-top: 5px;">
+                        <span style="background: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">
+                            ${categoryText}
+                        </span>
+                        <span style="background: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-left: 5px;">
+                            ${typeText}
+                        </span>
+                    </div>
+                    ${vehicleListHtml}
+                </div>
+            `, {
+                maxWidth: 300,
+                className: 'station-popup'
+            });
             
             marker.addTo(map);
             stationMarkers.push(marker);
@@ -236,6 +289,11 @@ function updateMap() {
             console.error(`❌ Fehler beim Erstellen von Fahrzeugmarker ${vehicle.name}:`, error);
         }
     });
+    
+    // Aktualisiere auch die Wachen-Popups (für Live-Status)
+    if (stationsVisible) {
+        createStationMarkers();
+    }
 }
 
 function centerMap() {
