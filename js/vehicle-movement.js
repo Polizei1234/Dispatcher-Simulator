@@ -1,6 +1,6 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v3.0
-// No Radio Spam + Proper Clickability
+// VEHICLE MOVEMENT SYSTEM v4.7
+// + Funkverkehr-Spam Fix
 // =========================
 
 const VehicleMovement = {
@@ -8,10 +8,11 @@ const VehicleMovement = {
     updateInterval: null,
     SPEED_KMH: 60,
     UPDATE_INTERVAL_MS: 100,
-    lastStatusReports: {}, // Track last status per vehicle
+    lastStatusReports: {}, // ✅ Track last status per vehicle
+    arrivalReported: {},   // ✅ Track arrival reports to prevent spam
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v3.0 initialisiert');
+        console.log('🚑 Vehicle Movement System v4.7 initialisiert');
         this.startUpdateLoop();
     },
 
@@ -41,7 +42,7 @@ const VehicleMovement = {
         const startPos = station.position;
         console.log(`🚑 ${vehicle.callsign} fährt von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}]`);
 
-        // FMS 3 - Einsatzfahrt (NUR EINMAL beim Start!)
+        // ✅ FMS 3 - Einsatzfahrt (NUR EINMAL beim Start!)
         this.setVehicleStatus(vehicle, 3, true); // true = force report
         vehicle.status = 'dispatched';
         vehicle.incident = incidentId;
@@ -126,6 +127,15 @@ const VehicleMovement = {
         if (!movement) return;
 
         const { vehicle, phase } = movement;
+        
+        // ✅ ANTI-SPAM: Verhindere mehrfache Arrival-Reports
+        const arrivalKey = `${vehicleId}_${phase}`;
+        if (this.arrivalReported[arrivalKey]) {
+            // Already reported, skip
+            return;
+        }
+        this.arrivalReported[arrivalKey] = true;
+
         console.log(`✅ ${vehicle.callsign} angekommen (Phase: ${phase})`);
 
         switch (phase) {
@@ -133,6 +143,10 @@ const VehicleMovement = {
                 this.setVehicleStatus(vehicle, 4, true); // FMS 4 - Am Einsatzort
                 vehicle.status = 'on-scene';
 
+                // ✅ WICHTIG: Stoppe Bewegung komplett
+                delete this.movingVehicles[vehicleId];
+
+                // Start scene time
                 setTimeout(() => {
                     this.startTransport(vehicleId);
                 }, 2 * 60 * 1000);
@@ -141,6 +155,8 @@ const VehicleMovement = {
             case 'to_hospital':
                 this.setVehicleStatus(vehicle, 8, true); // FMS 8 - Im Krankenhaus
                 vehicle.status = 'at-hospital';
+
+                delete this.movingVehicles[vehicleId];
 
                 setTimeout(() => {
                     this.returnToStation(vehicleId);
@@ -154,6 +170,12 @@ const VehicleMovement = {
                 vehicle.incident = null;
 
                 delete this.movingVehicles[vehicleId];
+                
+                // ✅ Reset arrival tracker
+                delete this.arrivalReported[`${vehicleId}_to_scene`];
+                delete this.arrivalReported[`${vehicleId}_to_hospital`];
+                delete this.arrivalReported[`${vehicleId}_returning`];
+
                 if (typeof clearVehicleRoute === 'function') {
                     clearVehicleRoute(vehicleId);
                 }
@@ -162,22 +184,24 @@ const VehicleMovement = {
     },
 
     startTransport(vehicleId) {
-        const movement = this.movingVehicles[vehicleId];
-        if (!movement) return;
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return;
 
-        const { vehicle } = movement;
         this.setVehicleStatus(vehicle, 7, true); // FMS 7 - Patient an Bord
         vehicle.status = 'transporting';
 
         const hospitalCoords = this.findNearestHospital(vehicle.position);
         console.log(`🏥 ${vehicle.callsign} fährt ins Krankenhaus`);
 
-        movement.phase = 'to_hospital';
-        movement.start = { lat: vehicle.position[0], lon: vehicle.position[1] };
-        movement.target = { lat: hospitalCoords[0], lon: hospitalCoords[1] };
-        movement.current = { lat: vehicle.position[0], lon: vehicle.position[1] };
-        movement.progress = 0;
-        movement.startTime = Date.now();
+        this.movingVehicles[vehicleId] = {
+            vehicle: vehicle,
+            phase: 'to_hospital',
+            start: { lat: vehicle.position[0], lon: vehicle.position[1] },
+            target: { lat: hospitalCoords[0], lon: hospitalCoords[1] },
+            current: { lat: vehicle.position[0], lon: vehicle.position[1] },
+            progress: 0,
+            startTime: Date.now()
+        };
 
         if (typeof drawVehicleRoute === 'function') {
             drawVehicleRoute(vehicleId, vehicle.position, hospitalCoords);
@@ -185,10 +209,9 @@ const VehicleMovement = {
     },
 
     returnToStation(vehicleId) {
-        const movement = this.movingVehicles[vehicleId];
-        if (!movement) return;
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return;
 
-        const { vehicle } = movement;
         this.setVehicleStatus(vehicle, 1, true); // FMS 1 - Einsatz erledigt
         vehicle.status = 'returning';
 
@@ -197,12 +220,15 @@ const VehicleMovement = {
 
         console.log(`🏠 ${vehicle.callsign} kehrt zur Wache zurück`);
 
-        movement.phase = 'returning';
-        movement.start = { lat: vehicle.position[0], lon: vehicle.position[1] };
-        movement.target = { lat: station.position[0], lon: station.position[1] };
-        movement.current = { lat: vehicle.position[0], lon: vehicle.position[1] };
-        movement.progress = 0;
-        movement.startTime = Date.now();
+        this.movingVehicles[vehicleId] = {
+            vehicle: vehicle,
+            phase: 'returning',
+            start: { lat: vehicle.position[0], lon: vehicle.position[1] },
+            target: { lat: station.position[0], lon: station.position[1] },
+            current: { lat: vehicle.position[0], lon: vehicle.position[1] },
+            progress: 0,
+            startTime: Date.now()
+        };
 
         if (typeof drawVehicleRoute === 'function') {
             drawVehicleRoute(vehicleId, vehicle.position, station.position);
@@ -213,10 +239,11 @@ const VehicleMovement = {
         return [48.8309, 9.3256]; // Klinikum Waiblingen
     },
 
+    // ✅ ANTI-SPAM: Verhindere doppelte Status-Meldungen
     setVehicleStatus(vehicle, fmsCode, forceReport = false) {
         vehicle.currentStatus = fmsCode;
 
-        // Verhindere doppelte Meldungen
+        // ✅ Verhindere doppelte Meldungen
         const lastStatus = this.lastStatusReports[vehicle.id];
         if (!forceReport && lastStatus === fmsCode) {
             return; // Skip duplicate
@@ -229,7 +256,7 @@ const VehicleMovement = {
 
         console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
 
-        // Funkspruch NUR EINMAL pro Status-Wechsel!
+        // ✅ Funkspruch NUR EINMAL pro Status-Wechsel!
         const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
         if (typeof addRadioMessage === 'function') {
             addRadioMessage(message, 'vehicle', fmsInfo.color);
