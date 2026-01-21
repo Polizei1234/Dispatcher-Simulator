@@ -1,6 +1,6 @@
 // =========================
-// UI SYSTEM - Updated v2.0
-// Mit Einsatzliste und Integration
+// UI SYSTEM - Updated v3.0
+// Fixed Radio Messages with Colors
 // =========================
 
 const UI = {
@@ -105,7 +105,6 @@ const UI = {
             </div>
         `;
 
-        // Zoom auf Einsatzort
         if (typeof map !== 'undefined' && incident.koordinaten) {
             map.setView([incident.koordinaten.lat, incident.koordinaten.lon], 15);
         }
@@ -117,15 +116,12 @@ const UI = {
 
         const incident = GAME_DATA.incidents[index];
         
-        // Entferne von Karte
         if (typeof removeIncidentFromMap === 'function') {
             removeIncidentFromMap(incidentId);
         }
 
-        // Entferne aus Liste
         GAME_DATA.incidents.splice(index, 1);
 
-        // Fahrzeuge freigeben
         incident.vehicles.forEach(vId => {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (vehicle) {
@@ -135,7 +131,6 @@ const UI = {
             }
         });
 
-        // Update UI
         this.updateIncidentList();
         document.getElementById('incident-details').innerHTML = '<p class="no-data">Wählen Sie einen Einsatz aus</p>';
 
@@ -152,23 +147,26 @@ const UI = {
     },
 
     updateVehicleList() {
-        // Update vehicle markers on map
         if (typeof updateVehicleMarkers === 'function') {
             updateVehicleMarkers();
         }
     }
 };
 
-// Legacy compatibility
+// IMPROVED: Radio Messages mit Farben
 function addRadioMessage(message, sender = 'system', color = null) {
     const container = document.getElementById('radio-feed-full');
     if (!container) return;
 
+    // KEINE System-Meldungen!
+    if (sender === 'system') {
+        return; // Skip system messages
+    }
+
     const timestamp = IncidentNumbering.getCurrentTimestamp();
     const senderIcons = {
-        'dispatcher': '👨‍💻',
-        'vehicle': '🚑',
-        'system': '⚙️'
+        'dispatcher': '👨‍💻 Leitstelle',
+        'vehicle': '🚑'
     };
 
     const icon = senderIcons[sender] || '📻';
@@ -176,28 +174,29 @@ function addRadioMessage(message, sender = 'system', color = null) {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'radio-message';
     
+    // Farbe für Status-Meldungen
     let style = '';
     if (color) {
-        style = `border-left: 3px solid ${color}; background: ${color}10;`;
+        style = `border-left: 4px solid ${color}; background: ${color}15; padding-left: 12px;`;
+    } else {
+        style = 'border-left: 4px solid #17a2b8; padding-left: 12px;';
     }
     
-    msgDiv.style.cssText = style;
+    msgDiv.style.cssText = style + ' margin-bottom: 8px; padding: 10px; border-radius: 4px;';
     msgDiv.innerHTML = `
-        <span style="color: #666; font-size: 0.85em;">[${timestamp}]</span>
-        <span style="margin: 0 5px;">${icon}</span>
+        <span style="color: #666; font-size: 0.85em; margin-right: 8px;">[${timestamp}]</span>
+        <span style="margin-right: 8px; font-weight: 600;">${icon}</span>
         <span>${message}</span>
     `;
 
     container.appendChild(msgDiv);
     container.scrollTop = container.scrollHeight;
 
-    // Limit to 100 messages
     while (container.children.length > 100) {
         container.removeChild(container.firstChild);
     }
 }
 
-// Export
 if (typeof window !== 'undefined') {
     window.UI = UI;
     window.addRadioMessage = addRadioMessage;
