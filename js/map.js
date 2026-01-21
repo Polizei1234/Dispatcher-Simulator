@@ -1,5 +1,6 @@
 // =========================
-// KARTENLOGIK v3.0
+// KARTENLOGIK v4.7
+// + Fahrzeuge anklickbar mit Details
 // + Fahrzeuge in Wache unsichtbar
 // + Popups schließbar
 // =========================
@@ -29,7 +30,7 @@ function initMap() {
             zoom: mapZoom,
             minZoom: 9,
             maxZoom: 18,
-            closePopupOnClick: true, // WICHTIG: Schließt Popups bei Klick
+            closePopupOnClick: true,
             preferCanvas: false,
             zoomControl: true
         });
@@ -47,7 +48,6 @@ function initMap() {
         tileLayer.addTo(map);
         console.log('✅ TileLayer hinzugefügt');
         
-        // Event: Schließe Popups bei Klick auf Karte
         map.on('click', function() {
             map.closePopup();
         });
@@ -115,15 +115,14 @@ function createStationMarkers() {
             });
             
             marker.on('click', function(e) {
-                // Stoppe Propagation damit map.on('click') nicht triggert
                 L.DomEvent.stopPropagation(e);
                 
                 const popupContent = generateStationPopupContent(station);
                 marker.bindPopup(popupContent, {
                     maxWidth: 350,
                     className: 'station-popup',
-                    autoClose: true, // Schließt wenn anderes Popup geöffnet wird
-                    closeOnClick: false // Bleibt offen bei Klick im Popup
+                    autoClose: true,
+                    closeOnClick: false
                 }).openPopup();
             });
             
@@ -273,6 +272,40 @@ function createVehiclePixelIcon(type) {
 }
 
 // ========================================
+// ✅ BUGFIX #2: Verbesserte Fahrzeug-Popups
+// ========================================
+
+function createVehiclePopupContent(vehicle) {
+    const fms = getFMSStatus(vehicle);
+    const station = STATIONS[vehicle.station];
+    const stationName = station ? station.name : 'Unbekannt';
+    
+    return `
+        <div style="min-width: 220px;">
+            <div style="background: ${fms.color}; color: white; padding: 8px; margin: -10px -10px 10px -10px; border-radius: 3px 3px 0 0;">
+                <strong style="font-size: 1.1em;">${fms.icon} ${vehicle.callsign || vehicle.name}</strong>
+            </div>
+            <div style="font-size: 0.9em; margin: 8px 0;">
+                <strong>Typ:</strong> ${vehicle.type}
+            </div>
+            <div style="font-size: 0.9em; margin: 8px 0;">
+                <strong>Wache:</strong> ${stationName}
+            </div>
+            <div style="margin: 10px 0; padding: 8px; background: rgba(0,0,0,0.2); border-left: 3px solid ${fms.color}; border-radius: 4px;">
+                <strong style="color: ${fms.color};">Status ${vehicle.currentStatus || 2}</strong><br>
+                <span style="color: ${fms.color}; font-size: 0.9em;">${fms.name}</span>
+            </div>
+            ${vehicle.incident ? `
+                <div style="font-size: 0.85em; margin-top: 8px; padding: 6px; background: rgba(220, 53, 69, 0.2); border-left: 3px solid #dc3545; border-radius: 4px;">
+                    <strong style="color: #dc3545;">🚨 Einsatz:</strong><br>
+                    <span style="color: #ccc;">${vehicle.incident}</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+// ========================================
 // EINSATZ-MARKER
 // ========================================
 
@@ -354,7 +387,7 @@ function removeIncidentFromMap(incidentId) {
 function updateVehicleOnMap(vehicle) {
     if (!map || !vehicle.position) return;
 
-    // WICHTIG: Verstecke Fahrzeug wenn auf Wache (Status 2)
+    // Verstecke Fahrzeug wenn auf Wache (Status 2)
     if (vehicle.currentStatus === 2 || vehicle.status === 'available') {
         if (vehicleMarkers[vehicle.id]) {
             map.removeLayer(vehicleMarkers[vehicle.id]);
@@ -369,7 +402,6 @@ function updateVehicleOnMap(vehicle) {
     }
 
     const iconHtml = createVehiclePixelIcon(vehicle.type);
-    const fms = getFMSStatus(vehicle);
 
     const marker = L.marker([vehicle.position[0], vehicle.position[1]], {
         icon: L.divIcon({
@@ -381,23 +413,16 @@ function updateVehicleOnMap(vehicle) {
         zIndexOffset: 1000
     });
 
+    // ✅ Click Handler mit verbessertem Popup
     marker.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
-    });
-
-    marker.bindPopup(`
-        <div style="min-width: 200px;">
-            <strong>${vehicle.name}</strong><br>
-            <small>${vehicle.callsign}</small><br>
-            <div style="margin-top: 8px; padding: 6px; background: rgba(0,0,0,0.2); border-left: 3px solid ${fms.color}; border-radius: 4px;">
-                <span style="font-size: 1.2em;">${fms.icon}</span>
-                <strong style="color: ${fms.color}; margin-left: 5px;">Status ${vehicle.currentStatus || 2}</strong><br>
-                <span style="color: ${fms.color}; font-size: 0.9em;">${fms.name}</span>
-            </div>
-        </div>
-    `, {
-        autoClose: true,
-        closeOnClick: false
+        
+        const popupContent = createVehiclePopupContent(vehicle);
+        marker.bindPopup(popupContent, {
+            maxWidth: 250,
+            autoClose: true,
+            closeOnClick: false
+        }).openPopup();
     });
 
     marker.addTo(map);
