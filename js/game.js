@@ -17,8 +17,10 @@ class Game {
     }
     
     getRandomIncidentTime() {
-        return CONFIG.INCIDENT_SPAWN_MIN + 
-               Math.random() * (CONFIG.INCIDENT_SPAWN_MAX - CONFIG.INCIDENT_SPAWN_MIN);
+        // Neuer Einsatz alle 60-180 Sekunden (Spielzeit mit Geschwindigkeit)
+        const minTime = 60000; // 60 Sekunden
+        const maxTime = 180000; // 180 Sekunden (3 Minuten)
+        return minTime + Math.random() * (maxTime - minTime);
     }
     
     async update() {
@@ -33,6 +35,7 @@ class Game {
                 this.incidents.push(incident);
                 showIncomingCallNotification(incident);
                 addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
+                console.log(`✅ Einsatz erstellt: ${incident.keyword} - Nächster in ${Math.round(this.nextIncidentTime/1000)}s`);
             }
             
             this.lastIncidentSpawn = now;
@@ -62,12 +65,13 @@ class Game {
         const rewards = {
             'RD 1': 500,
             'RD 2': 800,
+            'RD 3': 1000,
             'B 1': 300,
             'B 2': 600,
             'B 3': 1200,
             'THL 1': 400,
             'THL 2': 700,
-            'THL VU': 1000,
+            'VU P': 1000,
             'VU': 600
         };
         return rewards[keyword] || 500;
