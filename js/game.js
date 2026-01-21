@@ -1,5 +1,6 @@
 // =========================
-// SPIEL-LOGIK - FIXED TIME SYSTEM
+// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM
+// Nutzt window.GameTime aus main.js!
 // =========================
 
 class Game {
@@ -11,113 +12,65 @@ class Game {
         this.money = CONFIG.GAME_MODE === 'free' ? 999999999 : 50000;
         this.reputation = 100;
         this.apiKey = null;
-        this.paused = false;
-        this.speed = 5; // Default 5x
-        
-        // ZEIT-SYSTEM (simpel)
-        this.gameTime = new Date();
-        this.gameTime.setHours(8, 0, 0, 0); // Start 08:00
-        this.lastUpdate = Date.now();
         
         // Initialisiere Fahrzeuge
         this.vehicles.forEach(v => {
             if (!v.currentStatus) {
                 v.currentStatus = 2; // Status 2: Auf Wache
             }
-            if (!v.position) {
-                const station = STATIONS[v.station];
-                if (station) {
-                    v.position = station.position;
-                }
+            if (!v.position && STATIONS[v.station]) {
+                v.position = STATIONS[v.station].position;
             }
         });
         
-        // Nächster Anruf
-        this.nextCallIn = this.getRandomCallInterval();
+        // Nächster Anruf (nutzt GameTime.elapsed)
+        this.nextIncidentGameTime = this.getRandomIncidentInterval();
         
-        console.log(`🎮 Game initialisiert | Nächster Anruf in ${this.nextCallIn}ms`);
-        
-        // Start Game Loop
-        this.startGameLoop();
+        console.log(`🎮 Game initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
     }
     
-    getRandomCallInterval() {
-        // Alle 2-5 Minuten ein Anruf (in Echtzeit geteilt durch Speed)
-        const minTime = 120000; // 2 Min
-        const maxTime = 300000; // 5 Min
+    getRandomIncidentInterval() {
+        // Neuer Einsatz alle 60-180 Sekunden SPIELZEIT
+        const minTime = 60000; // 60 Sekunden
+        const maxTime = 180000; // 180 Sekunden (3 Minuten)
         const interval = minTime + Math.random() * (maxTime - minTime);
-        return interval / this.speed; // Anpassen an Speed
-    }
-    
-    startGameLoop() {
-        this.gameInterval = setInterval(() => {
-            if (!this.paused) {
-                this.update();
-            }
-        }, 1000); // Update jede Sekunde
         
-        console.log('⏱️ Game Loop gestartet');
+        console.log(`⏱️ Nächster Einsatz in ${Math.round(interval/1000)}s Spielzeit`);
+        return interval;
     }
     
     async update() {
-        const now = Date.now();
-        const deltaMs = now - this.lastUpdate;
-        this.lastUpdate = now;
+        // Nutze ZENTRALES Zeitsystem (window.GameTime aus main.js)
+        const currentGameTime = window.GameTime.elapsed;
         
-        // Update Spielzeit
-        const gameTimeDelta = deltaMs * this.speed;
-        this.gameTime = new Date(this.gameTime.getTime() + gameTimeDelta);
-        
-        // Update UI Zeit
-        this.updateTimeDisplay();
-        
-        // Check für neuen Anruf
-        this.nextCallIn -= deltaMs;
-        if (this.nextCallIn <= 0) {
-            console.log('📞 Generiere neuen Anruf...');
-            await this.generateCall();
-            this.nextCallIn = this.getRandomCallInterval();
+        // Spawne neue Einsätze wenn Spielzeit erreicht ist
+        if (currentGameTime >= this.nextIncidentGameTime) {
+            console.log(`🚨 Generiere neuen Anruf... (Spielzeit: ${Math.round(currentGameTime/1000)}s)`);
+            
+            // NEUE METHODE: Nutze CallSystem
+            if (typeof CallSystem !== 'undefined') {
+                await CallSystem.generateIncomingCall();
+            } else {
+                console.warn('⚠️ CallSystem nicht gefunden');
+            }
+            
+            // Setze nächsten Einsatz als absolute Spielzeit
+            const nextInterval = this.getRandomIncidentInterval();
+            this.nextIncidentGameTime = currentGameTime + nextInterval;
+            
+            const realTimeUntilNext = nextInterval / window.GameTime.speed;
+            console.log(`✅ Nächster Anruf in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${window.GameTime.speed}x)`);
         }
         
-        // Update Fahrzeuge (wird von VehicleMovement gehandelt)
-        // Keine zusätzliche Logik nötig
-    }
-    
-    updateTimeDisplay() {
-        const timeEl = document.getElementById('current-time');
-        if (timeEl) {
-            const hours = String(this.gameTime.getHours()).padStart(2, '0');
-            const minutes = String(this.gameTime.getMinutes()).padStart(2, '0');
-            const seconds = String(this.gameTime.getSeconds()).padStart(2, '0');
-            timeEl.textContent = `${hours}:${minutes}:${seconds}`;
-        }
-    }
-    
-    async generateCall() {
-        if (typeof CallSystem !== 'undefined') {
-            await CallSystem.generateIncomingCall();
-        } else {
-            console.warn('⚠️ CallSystem nicht gefunden');
-        }
-    }
-    
-    setSpeed(newSpeed) {
-        this.speed = newSpeed;
-        console.log(`⏱️ Spielgeschwindigkeit: ${newSpeed}x`);
-        
-        const indicator = document.getElementById('game-speed-indicator');
-        if (indicator) {
-            indicator.textContent = `${newSpeed}x`;
-        }
-    }
-    
-    togglePause() {
-        this.paused = !this.paused;
-        console.log(this.paused ? '⏸️ Pausiert' : '▶️ Fortgesetzt');
-        
-        const icon = document.getElementById('pause-icon');
-        if (icon) {
-            icon.className = this.paused ? 'fas fa-play' : 'fas fa-pause';
+        // Verdiene Geld für abgeschlossene Einsätze (Karrieremodus)
+        if (CONFIG.GAME_MODE === 'career') {
+            this.incidents.filter(i => i.status === 'completed' && !i.rewarded).forEach(incident => {
+                const reward = this.calculateReward(incident.keyword || incident.stichwort);
+                this.money += reward;
+                incident.rewarded = true;
+                addRadioMessage('System', `€ ${reward} für ${incident.keyword || incident.stichwort} erhalten`);
+                document.getElementById('credits').textContent = this.money.toLocaleString();
+            });
         }
     }
     
@@ -151,19 +104,3 @@ class Game {
 }
 
 let game = null;
-
-// Global Functions
-function togglePause() {
-    if (game) {
-        game.togglePause();
-    }
-}
-
-function cycleGameSpeed() {
-    if (!game) return;
-    
-    const speeds = [1, 2, 5, 10, 30];
-    const currentIndex = speeds.indexOf(game.speed);
-    const nextIndex = (currentIndex + 1) % speeds.length;
-    game.setSpeed(speeds[nextIndex]);
-}
