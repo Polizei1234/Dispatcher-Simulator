@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v2.1
-// Integriert mit VehicleMovement und Map
+// EMERGENCY CALL SYSTEM v2.2
+// Mit Overlay-Popup statt Sidebar
 // =========================
 
 const CallSystem = {
@@ -9,11 +9,10 @@ const CallSystem = {
     isGenerating: false,
     ringtoneAudio: null,
     callHistory: [],
-    hasAskedLocation: false,
-    currentProtocolSeparator: null,
+    selectedVehicles: [],
 
     initialize() {
-        console.log('📞 Call System v2.1 initialisiert');
+        console.log('📞 Call System v2.2 initialisiert');
         this.setupRingtone();
     },
 
@@ -39,7 +38,7 @@ const CallSystem = {
                 return;
             }
 
-            this.showIncomingCallInSidebar(callData);
+            this.showIncomingCallOverlay(callData);
             console.groupEnd();
         } catch (error) {
             console.error('❌ Fehler:', error);
@@ -141,8 +140,11 @@ ANTWORTE NUR als JSON:
     },
 
     async callGroqAPI(prompt) {
-        const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key');
-        if (!apiKey) return null;
+        const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
+        if (!apiKey) {
+            console.error('❌ Kein Groq API Key gefunden');
+            return null;
+        }
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -166,32 +168,27 @@ ANTWORTE NUR als JSON:
         return JSON.parse(data.choices[0].message.content);
     },
 
-    showIncomingCallInSidebar(callData) {
+    showIncomingCallOverlay(callData) {
         this.activeCall = callData;
         
-        const container = document.getElementById('call-list');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (this.currentProtocolSeparator) {
-            this.currentProtocolSeparator.remove();
+        // Zeige OVERLAY POPUP (nicht Sidebar!)
+        const popup = document.getElementById('incoming-call-popup');
+        if (!popup) {
+            console.error('❌ incoming-call-popup nicht gefunden');
+            return;
         }
 
-        const callDiv = document.createElement('div');
-        callDiv.className = 'incoming-call-card';
-        callDiv.innerHTML = `
-            <div class="call-card-header">
-                <span class="call-badge blinking">📞 NOTRUF 112</span>
-                <button class="btn-answer" onclick="CallSystem.answerCall()">
-                    <i class="fas fa-phone"></i> ANNEHMEN
-                </button>
-            </div>
-            <div class="call-card-time">${IncidentNumbering.getCurrentTimestamp()}</div>
-        `;
+        popup.style.display = 'block';
+        
+        // Setze Answer Button Event
+        const answerBtn = document.getElementById('answer-call-btn');
+        if (answerBtn) {
+            answerBtn.onclick = () => this.answerCall();
+        }
 
-        container.appendChild(callDiv);
         this.playRingtone();
+        
+        console.log('🚨 Incoming Call Popup angezeigt');
     },
 
     playRingtone() {
@@ -210,105 +207,66 @@ ANTWORTE NUR als JSON:
     answerCall() {
         if (!this.activeCall) return;
 
-        console.log('📞 Anruf angenommen');
+        console.log('📞 Anruf angenommen - Öffne Dialog');
         this.stopRingtone();
-        this.hasAskedLocation = false;
+        this.selectedVehicles = [];
 
-        const container = document.getElementById('call-list');
-        container.innerHTML = '';
+        // Verstecke Popup
+        const popup = document.getElementById('incoming-call-popup');
+        if (popup) popup.style.display = 'none';
 
-        if (this.currentProtocolSeparator) {
-            const separator = document.createElement('div');
-            separator.className = 'protocol-separator';
-            separator.innerHTML = '<hr><span>VORHERIGER EINSATZ</span><hr>';
-            container.insertBefore(separator, container.firstChild);
+        // Öffne Dialog Fenster
+        this.showCallDialog();
+    },
+
+    showCallDialog() {
+        const dialog = document.getElementById('call-dialog');
+        if (!dialog) {
+            console.error('❌ call-dialog nicht gefunden');
+            return;
         }
 
-        this.currentProtocolSeparator = this.showCallInterface();
+        dialog.style.display = 'block';
+
+        // Setup Hangup Button
+        const hangupBtn = document.getElementById('hangup-call-btn');
+        if (hangupBtn) {
+            hangupBtn.onclick = () => this.hangUp();
+        }
+
+        // Fülle Dialog mit Content
+        this.populateCallDialog();
     },
 
-    showCallInterface() {
-        const container = document.getElementById('call-list');
-        
-        const interfaceDiv = document.createElement('div');
-        interfaceDiv.className = 'call-interface';
-        interfaceDiv.innerHTML = `
-            <div class="call-messages" id="call-messages">
-                <div class="msg-dispatcher">
-                    <strong>👨‍💻 Sie:</strong> Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?
-                </div>
+    populateCallDialog() {
+        const messagesContainer = document.getElementById('caller-messages');
+        const questionsContainer = document.getElementById('question-buttons');
+        const protocolContainer = document.getElementById('protocol-form-content');
+
+        if (!messagesContainer || !questionsContainer || !protocolContainer) return;
+
+        // Initial Begrüßung
+        messagesContainer.innerHTML = `
+            <div class="msg-dispatcher">
+                <strong>👨‍💻 Sie:</strong> Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?
             </div>
-
-            <div class="question-panel">
-                <h4>📝 Fragen stellen</h4>
-                <div id="question-categories"></div>
-            </div>
-
-            <div class="protocol-panel">
-                <h4>📋 Einsatzprotokoll</h4>
-                <div id="protocol-fields">
-                    <div class="form-group">
-                        <label>Einsatznummer:</label>
-                        <input type="text" id="protocol-nummer" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Stichwort: <small>(Tippen zum Filtern)</small></label>
-                        <input type="text" id="stichwort-search" placeholder="Stichwort suchen...">
-                        <div id="stichwort-results" class="stichwort-dropdown"></div>
-                        <input type="hidden" id="protocol-stichwort">
-                    </div>
-                    <div class="form-group">
-                        <label>Ort:</label>
-                        <input type="text" id="protocol-ort" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Meldebild:</label>
-                        <textarea id="protocol-meldebild" rows="3" readonly></textarea>
-                    </div>
-                </div>
-
-                <div id="inline-vehicle-selection">
-                    <h5>🚑 Fahrzeuge disponieren</h5>
-                    <div id="vehicle-grid"></div>
-                    <button class="btn btn-success" onclick="CallSystem.alarmSelectedVehicles()" id="alarm-btn" disabled>
-                        <i class="fas fa-bell"></i> ALARMIEREN
-                    </button>
-                </div>
-            </div>
-
-            <button class="btn btn-danger" onclick="CallSystem.hangUp()">
-                <i class="fas fa-phone-slash"></i> GESPRÄCH BEENDEN
-            </button>
         `;
 
-        container.appendChild(interfaceDiv);
-
+        // Antwort nach 1 Sekunde
         setTimeout(() => {
-            this.displayCallerLocation();
-            this.initQuestionCategories();
-            this.initProtocolFields();
-            this.initStichwortSearch();
-            this.initVehicleSelection();
-        }, 500);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg-caller';
+            msgDiv.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
+            messagesContainer.appendChild(msgDiv);
 
-        return interfaceDiv;
-    },
+            this.typeText(msgDiv.querySelector('.typing'), this.activeCall.antworten.ort);
+        }, 1000);
 
-    displayCallerLocation() {
-        if (!this.activeCall) return;
-        
-        const container = document.getElementById('call-messages');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'msg-caller';
-        msgDiv.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
-        container.appendChild(msgDiv);
+        // Frage-Buttons
+        this.initQuestionButtons(questionsContainer);
 
-        const textSpan = msgDiv.querySelector('.typing');
-        this.typeText(textSpan, this.activeCall.antworten.ort);
-
-        document.getElementById('protocol-ort').value = this.activeCall.einsatz.ort;
-        document.getElementById('protocol-meldebild').value = this.activeCall.einsatz.meldebild;
-        document.getElementById('protocol-nummer').value = IncidentNumbering.generateNumber();
+        // Protokoll-Formular
+        this.initProtocolForm(protocolContainer);
     },
 
     typeText(element, text, speed = 30) {
@@ -328,10 +286,7 @@ ANTWORTE NUR als JSON:
         return icons[this.activeCall?.anrufer.emotion] || '🗣️';
     },
 
-    initQuestionCategories() {
-        const container = document.getElementById('question-categories');
-        if (!container) return;
-
+    initQuestionButtons(container) {
         const categories = [
             {
                 name: '🚨 Situation',
@@ -383,10 +338,8 @@ ANTWORTE NUR als JSON:
             }
         ];
 
-        categories.forEach(cat => {
-            const catDiv = document.createElement('div');
-            catDiv.className = 'question-cat';
-            catDiv.innerHTML = `
+        container.innerHTML = categories.map(cat => `
+            <div class="question-cat">
                 <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">
                     ${cat.name} <span class="arrow">▼</span>
                 </div>
@@ -397,13 +350,12 @@ ANTWORTE NUR als JSON:
                         </button>
                     `).join('')}
                 </div>
-            `;
-            container.appendChild(catDiv);
-        });
+            </div>
+        `).join('');
     },
 
     askQuestion(key, text) {
-        const container = document.getElementById('call-messages');
+        const container = document.getElementById('caller-messages');
         
         const qDiv = document.createElement('div');
         qDiv.className = 'msg-dispatcher';
@@ -422,12 +374,46 @@ ANTWORTE NUR als JSON:
         }, 1000);
     },
 
-    initProtocolFields() {},
+    initProtocolForm(container) {
+        container.innerHTML = `
+            <div class="form-group">
+                <label>Einsatznummer:</label>
+                <input type="text" id="protocol-nummer" value="${IncidentNumbering.generateNumber()}" readonly>
+            </div>
+            <div class="form-group">
+                <label>Stichwort:</label>
+                <input type="text" id="stichwort-search" placeholder="Stichwort suchen...">
+                <div id="stichwort-results" class="stichwort-dropdown"></div>
+                <input type="hidden" id="protocol-stichwort">
+            </div>
+            <div class="form-group">
+                <label>Ort:</label>
+                <input type="text" id="protocol-ort" value="${this.activeCall.einsatz.ort}" readonly>
+            </div>
+            <div class="form-group">
+                <label>Meldebild:</label>
+                <textarea id="protocol-meldebild" rows="3" readonly>${this.activeCall.einsatz.meldebild}</textarea>
+            </div>
+            
+            <div id="inline-vehicle-selection">
+                <h5>🚑 Fahrzeuge disponieren</h5>
+                <div id="vehicle-grid"></div>
+                <button class="btn btn-success" onclick="CallSystem.alarmSelectedVehicles()" id="alarm-btn" disabled>
+                    <i class="fas fa-bell"></i> ALARMIEREN
+                </button>
+            </div>
+        `;
+
+        this.initStichwortSearch();
+        this.initVehicleSelection();
+    },
 
     initStichwortSearch() {
         const input = document.getElementById('stichwort-search');
         const results = document.getElementById('stichwort-results');
         const hidden = document.getElementById('protocol-stichwort');
+
+        if (!input || !results || !hidden) return;
 
         const stichworte = [
             'Herzinfarkt', 'Schlaganfall', 'Atemnot', 'Bewusstlosigkeit',
@@ -506,8 +492,6 @@ ANTWORTE NUR als JSON:
         grid.appendChild(typeDiv);
     },
 
-    selectedVehicles: [],
-
     toggleVehicle(id) {
         const card = document.querySelector(`.vehicle-card[data-id="${id}"]`);
         if (!card) return;
@@ -520,7 +504,8 @@ ANTWORTE NUR als JSON:
             card.classList.add('selected');
         }
 
-        document.getElementById('alarm-btn').disabled = this.selectedVehicles.length === 0;
+        const btn = document.getElementById('alarm-btn');
+        if (btn) btn.disabled = this.selectedVehicles.length === 0;
     },
 
     calculateETA(vehicle) {
@@ -530,13 +515,11 @@ ANTWORTE NUR als JSON:
     alarmSelectedVehicles() {
         if (this.selectedVehicles.length === 0) return;
 
-        console.group('🚨 ALARMIERUNG');
-        console.log('Fahrzeuge:', this.selectedVehicles);
+        console.log('🚨 Alarmiere Fahrzeuge:', this.selectedVehicles);
         
-        // Erstelle Einsatz
         const incident = {
             id: document.getElementById('protocol-nummer').value,
-            stichwort: document.getElementById('protocol-stichwort').value,
+            stichwort: document.getElementById('protocol-stichwort').value || 'Notfall',
             ort: document.getElementById('protocol-ort').value,
             meldebild: document.getElementById('protocol-meldebild').value,
             koordinaten: this.activeCall.einsatz.koordinaten,
@@ -544,47 +527,49 @@ ANTWORTE NUR als JSON:
             zeitstempel: IncidentNumbering.getCurrentTimestamp()
         };
 
-        // Füge zu GAME_DATA.incidents hinzu
-        if (typeof GAME_DATA !== 'undefined') {
-            GAME_DATA.incidents.push(incident);
-            console.log('✅ Einsatz erstellt:', incident.id);
+        // Add to GAME_DATA
+        if (!GAME_DATA.incidents) {
+            GAME_DATA.incidents = [];
+        }
+        GAME_DATA.incidents.push(incident);
 
-            // Fahrzeuge disponieren mit VehicleMovement
-            this.selectedVehicles.forEach(vId => {
-                if (typeof VehicleMovement !== 'undefined') {
-                    VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
-                    console.log(`✅ ${vId} alarmiert`);
-                }
-            });
-
-            // Einsatz auf Karte anzeigen
-            if (typeof addIncidentToMap === 'function') {
-                addIncidentToMap(incident);
-                console.log('✅ Einsatz auf Karte angezeigt');
-            }
-
-            // Update UI
-            if (typeof UI !== 'undefined' && UI.updateIncidentList) {
-                UI.updateIncidentList();
-                console.log('✅ UI aktualisiert');
-            }
-
-            // Funkspruch
-            const vehicleNames = this.selectedVehicles.map(vId => {
-                const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
-                return v ? v.callsign : vId;
-            }).join(', ');
-
-            const msg = `Florian Leitstelle an ${vehicleNames}: ${incident.stichwort}, ${incident.ort}. Kommen!`;
-            
-            if (typeof addRadioMessage === 'function') {
-                addRadioMessage(msg, 'dispatcher');
-                console.log('✅ Funkspruch gesendet');
-            }
+        // Add to map
+        if (typeof addIncidentToMap === 'function') {
+            addIncidentToMap(incident);
         }
 
-        console.groupEnd();
+        // Dispatch vehicles
+        this.selectedVehicles.forEach(vId => {
+            const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
+            if (vehicle) {
+                vehicle.status = 'dispatched';
+                vehicle.incident = incident.id;
+                vehicle.targetLocation = incident.koordinaten;
+
+                // Start movement
+                if (typeof VehicleMovement !== 'undefined') {
+                    VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
+                }
+            }
+        });
+
+        // Update UI
+        if (typeof UI !== 'undefined' && UI.updateIncidentList) {
+            UI.updateIncidentList();
+        }
+
+        // Radio message
+        this.sendRadioMessage(incident);
+
         this.hangUp();
+    },
+
+    sendRadioMessage(incident) {
+        const msg = `Florian Leitstelle an ${incident.vehicles.length} Fahrzeug(e): ${incident.stichwort}, ${incident.ort}. Kommen!`;
+        
+        if (typeof addRadioMessage === 'function') {
+            addRadioMessage('Leitstelle', msg);
+        }
     },
 
     hangUp() {
@@ -598,22 +583,12 @@ ANTWORTE NUR als JSON:
         this.activeCall = null;
         this.selectedVehicles = [];
         
-        const container = document.getElementById('call-list');
-        if (container.querySelector('.call-interface')) {
-            const endDiv = document.createElement('div');
-            endDiv.className = 'call-ended';
-            endDiv.innerHTML = '<i class="fas fa-check"></i> Einsatz disponiert';
-            container.appendChild(endDiv);
-
-            setTimeout(() => {
-                container.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
-                this.currentProtocolSeparator = null;
-            }, 3000);
-        }
+        // Schließe Dialog
+        const dialog = document.getElementById('call-dialog');
+        if (dialog) dialog.style.display = 'none';
     }
 };
 
-// Auto-Initialize
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
         CallSystem.initialize();
