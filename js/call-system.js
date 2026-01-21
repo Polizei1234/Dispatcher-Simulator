@@ -10,6 +10,7 @@ const CallSystem = {
     isGenerating: false,
     ringtoneInterval: null,
     callHistory: [],
+    hasAskedLocation: false, // Track ob Ort schon gefragt wurde
 
     /**
      * Initialisiert Call System
@@ -76,26 +77,20 @@ const CallSystem = {
      * Erstellt Anruf mit Groq API
      */
     async createCallWithGroq() {
-        // Hole aktuelle Spielzeit
         const currentTime = IncidentNumbering.getCurrentTimestamp();
         const hour = parseInt(currentTime.split(':')[0]);
         
-        // Bestimme Tageszeit für Kontext
         let timeOfDay = 'Tag';
         if (hour >= 22 || hour < 6) timeOfDay = 'Nacht';
         else if (hour >= 18) timeOfDay = 'Abend';
         else if (hour >= 6 && hour < 10) timeOfDay = 'Morgen';
 
-        // Verfügbare Fahrzeugtypen
         const availableVehicles = VehicleAnalyzer.getAvailableTypes();
-
-        // WICHTIG: Füge Zufälligkeit hinzu!
         const randomSeed = Math.random().toString(36).substring(2, 15);
         const randomScenarios = this.getRandomScenarios();
         const randomLocations = this.getRandomLocations();
         const randomNames = this.getRandomNames();
 
-        // Erstelle Prompt mit Variationen
         const prompt = `Du bist ein Notrufsimulator für die Integrierte Leitstelle Rems-Murr-Kreis.
 
 === WICHTIG: VARIIERE DIE EINSÄTZE! ===
@@ -115,7 +110,7 @@ KONTEXT:
 ANFORDERUNGEN:
 1. Wähle EIN realistisches Szenario aus der Liste oben (oder erfinde ein ähnliches)
 2. Nutze VERSCHIEDENE Namen, Orte und Situationen bei jedem Aufruf
-3. Der Anrufer gibt zu Beginn nur MINIMALE Information
+3. Der Anrufer gibt Information schrittweise auf Nachfrage
 4. Emotion und Anrufer-Typ müssen zum Szenario passen
 5. Koordinaten: Lat 48.7-49.1, Lon 9.2-9.7
 6. Wähle einen Ort aus der Liste oben oder einen anderen im Kreis
@@ -128,13 +123,20 @@ ANTWORTE als JSON:
     "telefon": "0151-XXXXXXXX",
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
-  "initial_meldung": "Kurze, aufgeregte erste Meldung (1-2 Sätze)",
   "antworten": {
-    "wo": "Antwort auf 'Wo befinden Sie sich?'",
-    "was_passiert": "Antwort auf 'Was ist passiert?'",
-    "verletzte": "Antwort auf 'Wie viele Personen?'",
-    "zustand": "Antwort auf 'Ist jemand bewusstlos?'",
-    "gefahren": "Antwort auf 'Gibt es Gefahren?'"
+    "wo_genau": "Präzise Ortsangabe mit Straße/Hausnummer",
+    "was_passiert": "Was ist genau passiert?",
+    "wie_viele": "Wie viele Personen sind betroffen?",
+    "hauptbeschwerde": "Was hat der Patient genau?",
+    "bewusstsein": "Ist die Person bei Bewusstsein?",
+    "atmung": "Atmet die Person normal?",
+    "blutung": "Gibt es sichtbare Verletzungen oder Blutungen?",
+    "vorerkrankungen": "Sind Vorerkrankungen bekannt?",
+    "medikamente": "Nimmt die Person regelmäßig Medikamente?",
+    "allergien": "Sind Allergien bekannt?",
+    "gefahren": "Gibt es Gefahren an der Einsatzstelle?",
+    "erreichbarkeit": "Wie erreichen wir die Einsatzstelle? (Stockwerk, Hintereingang, etc.)",
+    "ansprechpartner": "Wer ist vor Ort ansprechbar?"
   },
   "einsatz": {
     "kategorie": "herz_kreislauf|trauma|unfaelle|atmung|etc",
@@ -164,9 +166,6 @@ ANTWORTE als JSON:
         }
     },
 
-    /**
-     * Generiert zufällige Szenario-Vorschläge
-     */
     getRandomScenarios() {
         const scenarios = [
             'Verkehrsunfall mit eingeklemmter Person',
@@ -186,14 +185,10 @@ ANTWORTE als JSON:
             'Schwangerschaftskomplikation'
         ];
         
-        // Wähle 3 zufällige Szenarien
         const shuffled = scenarios.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, 3);
     },
 
-    /**
-     * Generiert zufällige Orts-Vorschläge
-     */
     getRandomLocations() {
         const locations = [
             'Hauptstraße, Waiblingen',
@@ -216,9 +211,6 @@ ANTWORTE als JSON:
         return shuffled.slice(0, 4);
     },
 
-    /**
-     * Generiert zufällige Namen
-     */
     getRandomNames() {
         const firstNames = ['Anna', 'Klaus', 'Maria', 'Stefan', 'Julia', 'Thomas', 'Sarah', 'Michael', 'Laura', 'Peter', 'Sophie', 'Martin'];
         const lastNames = ['Schmidt', 'Müller', 'Weber', 'Fischer', 'Bauer', 'Wagner', 'Hoffmann', 'Klein', 'Koch', 'Richter'];
@@ -232,9 +224,6 @@ ANTWORTE als JSON:
         return names;
     },
 
-    /**
-     * Ruft Groq API auf
-     */
     async callGroqAPI(prompt) {
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key');
         
@@ -263,7 +252,7 @@ ANTWORTE als JSON:
                         content: prompt
                     }
                 ],
-                temperature: 1.0, // MAXIMAL für maximale Variation!
+                temperature: 1.0,
                 max_tokens: 2000,
                 response_format: { type: 'json_object' }
             })
@@ -282,11 +271,9 @@ ANTWORTE als JSON:
         return JSON.parse(content);
     },
 
-    /**
-     * Zeigt eingehenden Anruf an
-     */
     showIncomingCall(callData) {
         this.activeCall = callData;
+        this.hasAskedLocation = false; // Reset
         
         const popup = document.getElementById('incoming-call-popup');
         if (popup) {
@@ -297,9 +284,6 @@ ANTWORTE als JSON:
         console.log('📞 Anruf wird angezeigt:', callData.anrufer.name);
     },
 
-    /**
-     * Startet Klingelton
-     */
     startRinging() {
         this.isRinging = true;
         
@@ -317,9 +301,6 @@ ANTWORTE als JSON:
         console.log('🔔 Klingelton gestartet');
     },
 
-    /**
-     * Stoppt Klingelton
-     */
     stopRinging() {
         this.isRinging = false;
         
@@ -337,9 +318,6 @@ ANTWORTE als JSON:
         console.log('🔕 Klingelton gestoppt');
     },
 
-    /**
-     * Anruf annehmen
-     */
     answerCall() {
         if (!this.activeCall) return;
 
@@ -359,23 +337,56 @@ ANTWORTE als JSON:
         this.showCallDialog();
     },
 
-    /**
-     * Zeigt Call Dialog mit Fragen
-     */
     showCallDialog() {
         const dialog = document.getElementById('call-dialog');
         if (!dialog) return;
 
         dialog.style.display = 'block';
 
-        this.displayCallerMessage(this.activeCall.initial_meldung);
-        this.showQuestionButtons();
-        this.showProtocolForm();
+        // Starte mit Standard-Leitstellenbegrüßung
+        this.displayDispatcherGreeting();
+        
+        // Nach kurzer Pause kommt Anrufer-Antwort
+        setTimeout(() => {
+            this.displayCallerLocationResponse();
+            this.showQuestionCategories();
+            this.showProtocolForm();
+        }, 1500);
     },
 
     /**
-     * Zeigt Anrufer-Nachricht mit Typing-Effekt
+     * Zeigt Standard-Leitstellenbegrüßung
      */
+    displayDispatcherGreeting() {
+        const container = document.getElementById('caller-messages');
+        if (!container) return;
+
+        // Clear vorherige Nachrichten
+        container.innerHTML = '';
+
+        const greetingDiv = document.createElement('div');
+        greetingDiv.className = 'dispatcher-question';
+        greetingDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?`;
+        container.appendChild(greetingDiv);
+
+        container.scrollTop = container.scrollHeight;
+    },
+
+    /**
+     * Anrufer antwortet mit Ort
+     */
+    displayCallerLocationResponse() {
+        if (!this.activeCall || !this.activeCall.antworten.wo_genau) return;
+        
+        this.displayCallerMessage(this.activeCall.antworten.wo_genau);
+        this.hasAskedLocation = true;
+        
+        // Update Protokoll
+        if (typeof ProtocolForm !== 'undefined') {
+            ProtocolForm.updateFromCallAnswer('wo', this.activeCall.antworten.wo_genau, this.activeCall);
+        }
+    },
+
     displayCallerMessage(message) {
         const container = document.getElementById('caller-messages');
         if (!container) return;
@@ -394,9 +405,6 @@ ANTWORTE als JSON:
         container.scrollTop = container.scrollHeight;
     },
 
-    /**
-     * Typing Effekt
-     */
     typeText(element, text, speed = 30) {
         let i = 0;
         const interval = setInterval(() => {
@@ -409,9 +417,6 @@ ANTWORTE als JSON:
         }, speed);
     },
 
-    /**
-     * Emotion Icon
-     */
     getEmotionIcon(emotion) {
         const icons = {
             'ruhig': '🗣️',
@@ -423,34 +428,106 @@ ANTWORTE als JSON:
     },
 
     /**
-     * Zeigt Fragen-Buttons
+     * Zeigt Fragen-Kategorien (zusammenklappbar)
      */
-    showQuestionButtons() {
+    showQuestionCategories() {
         const container = document.getElementById('question-buttons');
         if (!container) return;
 
-        container.innerHTML = '';
+        container.innerHTML = `
+            <div class="question-categories">
+                <div class="question-category">
+                    <button class="category-btn" onclick="CallSystem.toggleCategory('situationsfragen')">
+                        🚨 Situationsfragen <span class="arrow">▼</span>
+                    </button>
+                    <div id="category-situationsfragen" class="category-questions" style="display: none;">
+                        <button class="question-btn" onclick="CallSystem.askQuestion('was_passiert', 'Was ist genau passiert?')">
+                            Was ist passiert?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('wie_viele', 'Wie viele Personen sind betroffen?')">
+                            Wie viele Personen?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('gefahren', 'Gibt es Gefahren an der Einsatzstelle?')">
+                            Gefahren vorhanden?
+                        </button>
+                    </div>
+                </div>
 
-        const questions = [
-            { id: 'wo', text: '📍 Wo befinden Sie sich genau?', key: 'wo' },
-            { id: 'was', text: '🚗 Was ist passiert?', key: 'was_passiert' },
-            { id: 'verletzte', text: '👥 Wie viele Personen sind betroffen?', key: 'verletzte' },
-            { id: 'zustand', text: '🩺 Ist jemand bewusstlos?', key: 'zustand' },
-            { id: 'gefahren', text: '⚠️ Gibt es Gefahren?', key: 'gefahren' }
-        ];
+                <div class="question-category">
+                    <button class="category-btn" onclick="CallSystem.toggleCategory('patientenzustand')">
+                        🩺 Patientenzustand <span class="arrow">▼</span>
+                    </button>
+                    <div id="category-patientenzustand" class="category-questions" style="display: none;">
+                        <button class="question-btn" onclick="CallSystem.askQuestion('hauptbeschwerde', 'Was hat der Patient genau?')">
+                            Was hat der Patient?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('bewusstsein', 'Ist die Person bei Bewusstsein?')">
+                            Bei Bewusstsein?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('atmung', 'Atmet die Person normal?')">
+                            Normale Atmung?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('blutung', 'Gibt es sichtbare Verletzungen oder Blutungen?')">
+                            Verletzungen/Blutungen?
+                        </button>
+                    </div>
+                </div>
 
-        questions.forEach(q => {
-            const btn = document.createElement('button');
-            btn.className = 'question-btn';
-            btn.innerHTML = q.text;
-            btn.onclick = () => this.askQuestion(q.key, q.text);
-            container.appendChild(btn);
-        });
+                <div class="question-category">
+                    <button class="category-btn" onclick="CallSystem.toggleCategory('medizinische-info')">
+                        💊 Medizinische Infos <span class="arrow">▼</span>
+                    </button>
+                    <div id="category-medizinische-info" class="category-questions" style="display: none;">
+                        <button class="question-btn" onclick="CallSystem.askQuestion('vorerkrankungen', 'Sind Vorerkrankungen bekannt?')">
+                            Vorerkrankungen?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('medikamente', 'Nimmt die Person regelmäßig Medikamente?')">
+                            Medikamente?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('allergien', 'Sind Allergien bekannt?')">
+                            Allergien?
+                        </button>
+                    </div>
+                </div>
+
+                <div class="question-category">
+                    <button class="category-btn" onclick="CallSystem.toggleCategory('einsatzstelle')">
+                        📍 Einsatzstelle <span class="arrow">▼</span>
+                    </button>
+                    <div id="category-einsatzstelle" class="category-questions" style="display: none;">
+                        <button class="question-btn" onclick="CallSystem.askQuestion('wo_genau', 'Wo genau befinden Sie sich?')">
+                            Genauer Ort?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('erreichbarkeit', 'Wie erreichen wir die Einsatzstelle?')">
+                            Wie erreichen wir Sie?
+                        </button>
+                        <button class="question-btn" onclick="CallSystem.askQuestion('ansprechpartner', 'Wer ist vor Ort ansprechbar?')">
+                            Ansprechpartner vor Ort?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     },
 
     /**
-     * Stellt Frage an Anrufer
+     * Toggle Kategorie auf/zu
      */
+    toggleCategory(categoryId) {
+        const category = document.getElementById(`category-${categoryId}`);
+        if (!category) return;
+
+        const isVisible = category.style.display !== 'none';
+        category.style.display = isVisible ? 'none' : 'block';
+
+        // Arrow drehen
+        const btn = category.previousElementSibling;
+        const arrow = btn.querySelector('.arrow');
+        if (arrow) {
+            arrow.textContent = isVisible ? '▼' : '▲';
+        }
+    },
+
     askQuestion(key, questionText) {
         console.log(`❓ Frage gestellt: ${questionText}`);
 
@@ -465,24 +542,18 @@ ANTWORTE als JSON:
         }
     },
 
-    /**
-     * Zeigt Dispatcher-Frage
-     */
     displayDispatcherQuestion(question) {
         const container = document.getElementById('caller-messages');
         if (!container) return;
 
         const questionDiv = document.createElement('div');
         questionDiv.className = 'dispatcher-question';
-        questionDiv.innerHTML = `<strong>Sie:</strong> ${question}`;
+        questionDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${question}`;
         container.appendChild(questionDiv);
 
         container.scrollTop = container.scrollHeight;
     },
 
-    /**
-     * Auflegen
-     */
     hangUp() {
         console.log('📞 Anruf beendet');
 
@@ -494,6 +565,7 @@ ANTWORTE als JSON:
         }
 
         this.activeCall = null;
+        this.hasAskedLocation = false;
         this.stopRinging();
 
         const dialog = document.getElementById('call-dialog');
@@ -502,18 +574,12 @@ ANTWORTE als JSON:
         }
     },
 
-    /**
-     * Update Protokoll aus Antwort
-     */
     updateProtocolFromAnswer(key, answer) {
         if (typeof ProtocolForm !== 'undefined') {
             ProtocolForm.updateFromCallAnswer(key, answer, this.activeCall);
         }
     },
 
-    /**
-     * Zeigt Protokoll-Formular
-     */
     showProtocolForm() {
         if (typeof ProtocolForm !== 'undefined') {
             ProtocolForm.showForm(this.activeCall);
