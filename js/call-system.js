@@ -1,7 +1,8 @@
 // =========================
-// EMERGENCY CALL SYSTEM v4.7
+// EMERGENCY CALL SYSTEM v4.8
 // + Random Telefonnummern
 // + Hotspot-System
+// + Entfernungsanzeige
 // =========================
 
 const CallSystem = {
@@ -13,45 +14,23 @@ const CallSystem = {
     selectedVehicles: [],
     askedQuestions: [],
 
-    // ✅ NEU: Hotspot-System für realistische Einsatzverteilung
     HOTSPOT_ZONES: [
-        // Waiblingen Zentrum (Häufig)
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
         { lat: 48.8250, lon: 9.3200, radius: 0.008, weight: 2, name: "Waiblingen Süd" },
-        
-        // Fellbach (Mittel)
         { lat: 48.8109, lon: 9.2765, radius: 0.01, weight: 2, name: "Fellbach" },
-        
-        // Winnenden (Häufig)
         { lat: 48.8756, lon: 9.4003, radius: 0.012, weight: 3, name: "Winnenden" },
-        
-        // Backnang (Mittel)
         { lat: 48.9467, lon: 9.4333, radius: 0.015, weight: 2, name: "Backnang" },
-        
-        // Schorndorf (Häufig)
         { lat: 48.8070, lon: 9.5290, radius: 0.012, weight: 3, name: "Schorndorf" },
-        
-        // Korb (Selten)
         { lat: 48.8483, lon: 9.3617, radius: 0.006, weight: 1, name: "Korb" },
-        
-        // Weinstadt (Mittel)
         { lat: 48.8108, lon: 9.3826, radius: 0.01, weight: 2, name: "Weinstadt" },
-        
-        // Remshalden (Selten)
         { lat: 48.8183, lon: 9.4000, radius: 0.008, weight: 1, name: "Remshalden" },
-        
-        // Kernen (Selten)
         { lat: 48.7950, lon: 9.3383, radius: 0.007, weight: 1, name: "Kernen" },
-        
-        // Leutenbach (Selten)
         { lat: 48.8983, lon: 9.3967, radius: 0.006, weight: 1, name: "Leutenbach" },
-        
-        // Schwaikheim (Selten)
         { lat: 48.8767, lon: 9.3500, radius: 0.005, weight: 1, name: "Schwaikheim" }
     ],
 
     initialize() {
-        console.log('📞 Call System v4.7 initialisiert');
+        console.log('📞 Call System v4.8 initialisiert');
         this.setupRingtone();
     },
 
@@ -60,7 +39,6 @@ const CallSystem = {
         this.ringtoneAudio.loop = true;
     },
 
-    // ✅ NEU: Weighted Random Hotspot Selector
     getRandomHotspot() {
         const totalWeight = this.HOTSPOT_ZONES.reduce((sum, zone) => sum + zone.weight, 0);
         let random = Math.random() * totalWeight;
@@ -72,34 +50,25 @@ const CallSystem = {
             }
         }
         
-        return this.HOTSPOT_ZONES[0]; // Fallback
+        return this.HOTSPOT_ZONES[0];
     },
 
-    // ✅ NEU: Generate Random Location within Hotspot
     generateRandomLocation() {
         const hotspot = this.getRandomHotspot();
-        
-        // Random point within hotspot radius
         const angle = Math.random() * Math.PI * 2;
         const distance = Math.random() * hotspot.radius;
-        
         const lat = hotspot.lat + (distance * Math.cos(angle));
         const lon = hotspot.lon + (distance * Math.sin(angle));
         
         console.log(`📍 Einsatz generiert in Hotspot: ${hotspot.name}`);
         
-        return {
-            lat: lat,
-            lon: lon,
-            hotspot: hotspot.name
-        };
+        return { lat: lat, lon: lon, hotspot: hotspot.name };
     },
 
-    // ✅ NEU: Random Phone Number Generator
     generatePhoneNumber() {
-        const prefixes = ['0711', '07151', '07144', '07181', '07195']; // BW Vorwahlen
+        const prefixes = ['0711', '07151', '07144', '07181', '07195'];
         const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-        const number = Math.floor(Math.random() * 9000000) + 1000000; // 7-stellig
+        const number = Math.floor(Math.random() * 9000000) + 1000000;
         const formatted = String(number).slice(0, 3) + ' ' + String(number).slice(3);
         return `${prefix} ${formatted}`;
     },
@@ -114,10 +83,7 @@ const CallSystem = {
         console.group('📞 GENERATING CALL WITH GEOCODING');
 
         try {
-            // ✅ NEU: Generate location from hotspot
             const location = this.generateRandomLocation();
-            
-            // Reverse Geocode
             console.log('🗺️ Hole echte Adresse für Koordinaten:', location);
             const realAddress = await this.reverseGeocode(location.lat, location.lon);
             
@@ -127,7 +93,6 @@ const CallSystem = {
                 console.warn('⚠️ Geocoding fehlgeschlagen, nutze Hotspot-Name');
             }
 
-            // Generate call data with Groq
             const callData = await this.createCallWithGroq(location, realAddress);
             if (!callData) {
                 this.isGenerating = false;
@@ -135,10 +100,7 @@ const CallSystem = {
                 return;
             }
 
-            // ✅ NEU: Setze Random Telefonnummer
             callData.anrufer.telefon = this.generatePhoneNumber();
-            
-            // Set location data
             callData.einsatz.koordinaten = { lat: location.lat, lon: location.lon };
             callData.einsatz.ort = realAddress || location.hotspot;
             callData.antworten.ort = realAddress || location.hotspot;
@@ -157,9 +119,7 @@ const CallSystem = {
         try {
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
             const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'ILS-Waiblingen-Simulator/1.0'
-                }
+                headers: { 'User-Agent': 'ILS-Waiblingen-Simulator/1.0' }
             });
 
             if (!response.ok) {
@@ -168,7 +128,6 @@ const CallSystem = {
             }
 
             const data = await response.json();
-            
             if (!data || !data.address) {
                 console.error('❌ Keine Adresse gefunden');
                 return null;
@@ -639,6 +598,7 @@ ANTWORTE NUR als JSON:
         });
     },
 
+    // 🚀 NEU: Mit Entfernungsberechnung & Sortierung
     addVehicleTypeToGrid(grid, type, count) {
         const vehicles = GAME_DATA.vehicles.filter(v => {
             const vType = v.type.toUpperCase();
@@ -650,19 +610,41 @@ ANTWORTE NUR als JSON:
 
         if (vehicles.length === 0) return;
 
+        // ✅ Sortiere nach Entfernung
+        if (this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
+            vehicles.sort((a, b) => {
+                const distA = VehicleMovement.getDistanceToIncident(a.station, this.activeCall.einsatz.koordinaten);
+                const distB = VehicleMovement.getDistanceToIncident(b.station, this.activeCall.einsatz.koordinaten);
+                if (!distA || !distB) return 0;
+                return parseFloat(distA.km) - parseFloat(distB.km);
+            });
+        }
+
         const typeDiv = document.createElement('div');
         typeDiv.className = 'vehicle-type-section';
         typeDiv.innerHTML = `
             <h6 style="margin: 10px 0; color: #a0a0a0;">${type} (${count > 0 ? count + 'x empfohlen' : 'optional'}) - ${vehicles.length} verfügbar</h6>
             <div class="vehicle-cards-improved">
-                ${vehicles.map(v => `
-                    <div class="vehicle-card-large" data-id="${v.id}" onclick="CallSystem.toggleVehicle('${v.id}')">
-                        <div class="vehicle-card-icon">🚑</div>
-                        <div class="vehicle-card-name">${v.callsign || v.name}</div>
-                        <div class="vehicle-card-station">${v.station || 'Wache'}</div>
-                        <div class="vehicle-card-type">${v.type}</div>
-                    </div>
-                `).join('')}
+                ${vehicles.map(v => {
+                    // ✅ Berechne Entfernung
+                    let distanceInfo = '';
+                    if (this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
+                        const dist = VehicleMovement.getDistanceToIncident(v.station, this.activeCall.einsatz.koordinaten);
+                        if (dist) {
+                            distanceInfo = `<div class="vehicle-card-distance" style="font-size: 0.75em; color: #17a2b8; margin-top: 4px;">📍 ${dist.km} km | ⏱️ ${dist.eta} min</div>`;
+                        }
+                    }
+                    
+                    return `
+                        <div class="vehicle-card-large" data-id="${v.id}" onclick="CallSystem.toggleVehicle('${v.id}')">
+                            <div class="vehicle-card-icon">🚑</div>
+                            <div class="vehicle-card-name">${v.callsign || v.name}</div>
+                            <div class="vehicle-card-station">${v.station || 'Wache'}</div>
+                            <div class="vehicle-card-type">${v.type}</div>
+                            ${distanceInfo}
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
         grid.appendChild(typeDiv);
