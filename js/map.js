@@ -33,6 +33,22 @@ function initMap() {
     console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
 }
 
+function getFMSStatus(vehicle) {
+    // Mappe Fahrzeugstatus auf FMS-Status
+    const statusMap = {
+        'available': 2,      // Status 2: Einsatzbereit auf Wache
+        'dispatched': 3,     // Status 3: Einsatzauftrag übernommen
+        'on-scene': 4,       // Status 4: Ankunft am Einsatzort
+        'transporting': 5,   // Status 5: Patient aufgenommen
+        'at-hospital': 7,    // Status 7: Ankunft Krankenhaus
+        'returning': 6,      // Status 6: Verlässt Einsatzort
+        'unavailable': 0     // Status 0: Nicht einsatzbereit
+    };
+    
+    const fmsCode = statusMap[vehicle.status] || 2;
+    return CONFIG.FMS_STATUS[fmsCode];
+}
+
 function createStationMarkers() {
     // Lösche alte Marker
     stationMarkers.forEach(m => {
@@ -82,20 +98,26 @@ function createStationMarkers() {
                 'ehrenamt': 'Ehrenamt'
             }[station.type] || station.type;
             
-            // Erstelle Fahrzeugliste
+            // Erstelle Fahrzeugliste mit FMS-Status
             let vehicleListHtml = '';
             if (stationVehicles.length > 0) {
                 vehicleListHtml = `
                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
                         <strong>🚑 Fahrzeuge (${stationVehicles.length}):</strong><br>
-                        ${stationVehicles.map(v => {
-                            const statusIcon = {
-                                'available': '✅',
-                                'dispatched': '🚨',
-                                'on-scene': '📍'
-                            }[v.status] || '⚪';
-                            return `<small>${statusIcon} ${v.callsign}</small>`;
-                        }).join('<br>')}
+                        <div style="margin-top: 5px;">
+                            ${stationVehicles.map(v => {
+                                const fms = getFMSStatus(v);
+                                return `
+                                    <div style="display: flex; align-items: center; margin: 3px 0; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid ${fms.color};">
+                                        <span style="font-size: 0.9em; margin-right: 5px;">${fms.icon}</span>
+                                        <div style="flex: 1;">
+                                            <div style="font-size: 0.85em; font-weight: bold;">${v.callsign}</div>
+                                            <div style="font-size: 0.75em; color: ${fms.color};">${fms.name}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
                 `;
             } else {
@@ -107,7 +129,7 @@ function createStationMarkers() {
             }
             
             marker.bindPopup(`
-                <div style="min-width: 200px;">
+                <div style="min-width: 250px;">
                     <strong style="font-size: 1.1em;">${station.name}</strong><br>
                     <small style="color: #a0a0a0;">${station.address}</small><br>
                     <div style="margin-top: 5px;">
@@ -121,7 +143,7 @@ function createStationMarkers() {
                     ${vehicleListHtml}
                 </div>
             `, {
-                maxWidth: 300,
+                maxWidth: 350,
                 className: 'station-popup'
             });
             
@@ -271,16 +293,17 @@ function updateMap() {
                 zIndexOffset: 1000
             });
             
-            const statusText = {
-                'available': 'Verfügbar',
-                'dispatched': 'Unterwegs',
-                'on-scene': 'Vor Ort'
-            };
+            const fms = getFMSStatus(vehicle);
             
             marker.bindPopup(`
-                <strong>${vehicle.name}</strong><br>
-                Status: ${statusText[vehicle.status] || vehicle.status}<br>
-                <small>${vehicle.type}</small>
+                <div style="min-width: 200px;">
+                    <strong>${vehicle.name}</strong><br>
+                    <div style="margin-top: 5px; padding: 5px; background: rgba(0,0,0,0.2); border-left: 3px solid ${fms.color}; border-radius: 4px;">
+                        <span style="font-size: 1.2em;">${fms.icon}</span>
+                        <strong style="color: ${fms.color}; margin-left: 5px;">${fms.name}</strong>
+                    </div>
+                    <small style="color: #a0a0a0; display: block; margin-top: 5px;">${vehicle.type}</small>
+                </div>
             `);
             
             marker.addTo(map);
