@@ -1,47 +1,29 @@
 /* =========================
-   PIXEL ART MAP ICONS
+   MAP ICONS CSS
+   Pixel Art Vehicle & Station Icons
    ========================= */
 
+/* Leaflet Marker Container - KEIN position override! */
 .station-marker,
 .vehicle-marker {
+    /* Leaflet braucht position: absolute - nicht überschreiben! */
     background: transparent !important;
     border: none !important;
-    box-shadow: none !important;
 }
 
+/* SVG Icons in Markern */
 .station-marker svg,
 .vehicle-marker svg {
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
+    display: block;
+    pointer-events: none;
 }
 
-.station-marker {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-.vehicle-marker {
-    z-index: 1000;
-    transition: transform 0.3s ease;
-}
-
-.vehicle-marker:hover {
-    transform: scale(1.2);
-    z-index: 1001;
-}
-
-/* Leaflet Popup Styling */
+/* Popup Styling */
 .leaflet-popup-content-wrapper {
     background: #1e2a38;
-    color: white;
+    color: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 3px 14px rgba(0,0,0,0.4);
 }
 
 .leaflet-popup-content {
@@ -53,10 +35,21 @@
     background: #1e2a38;
 }
 
-.leaflet-popup-close-button {
-    color: white !important;
+/* Marker Hover Effect */
+.station-marker:hover,
+.vehicle-marker:hover {
+    cursor: pointer;
+    transform: scale(1.1);
+    transition: transform 0.2s;
+    z-index: 1000 !important;
 }
 
-.leaflet-popup-close-button:hover {
-    color: #4a9eff !important;
+/* Blinkendes Blaulicht Animation */
+@keyframes bluelight {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.vehicle-marker svg rect[fill="#0000ff"] {
+    animation: bluelight 0.8s infinite;
 }
