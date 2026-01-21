@@ -1,5 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v5.0 - BUGS FIXED
+// EMERGENCY CALL SYSTEM v5.1
+// + Improved Stichwort Dropdown
 // + Random Telefonnummern
 // + Hotspot-System
 // + Entfernungsanzeige
@@ -15,8 +16,8 @@ const CallSystem = {
     callHistory: [],
     selectedVehicles: [],
     askedQuestions: [],
-    geocodeCache: {}, // 🚀 FIX #6: Cache für Geocoding
-    lastGeocodeRequest: 0, // 🚀 FIX #6: Rate Limiting
+    geocodeCache: {},
+    lastGeocodeRequest: 0,
 
     HOTSPOT_ZONES: [
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
@@ -34,8 +35,8 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v5.0 initialisiert');
-        console.log('✅ Fixes: VehicleMovement Check + Geocoding Cache');
+        console.log('📞 Call System v5.1 initialisiert');
+        console.log('✅ Verbessertes Stichwort-Dropdown');
         this.setupRingtone();
     },
 
@@ -120,18 +121,14 @@ const CallSystem = {
         }
     },
 
-    // 🚀 FIX #6: Geocoding mit Cache & Rate Limiting
     async reverseGeocode(lat, lon, retries = 0) {
-        // Cache-Key
         const cacheKey = `${lat.toFixed(4)}_${lon.toFixed(4)}`;
         
-        // ✅ Prüfe Cache
         if (this.geocodeCache[cacheKey]) {
             console.log(`📦 Geocoding Cache-Hit: ${cacheKey}`);
             return this.geocodeCache[cacheKey];
         }
         
-        // ✅ Rate Limiting: Min 1 Sekunde zwischen Requests
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastGeocodeRequest;
         if (timeSinceLastRequest < 1000) {
@@ -147,10 +144,9 @@ const CallSystem = {
                 headers: { 'User-Agent': 'ILS-Waiblingen-Simulator/1.0' }
             });
 
-            // ✅ Handle 429 (Too Many Requests) mit Retry
             if (response.status === 429) {
                 if (retries < 3) {
-                    const backoff = Math.pow(2, retries) * 1000; // Exponential backoff
+                    const backoff = Math.pow(2, retries) * 1000;
                     console.warn(`⚠️ Nominatim 429 - Retry in ${backoff}ms (Versuch ${retries + 1}/3)`);
                     await new Promise(resolve => setTimeout(resolve, backoff));
                     return this.reverseGeocode(lat, lon, retries + 1);
@@ -177,8 +173,6 @@ const CallSystem = {
             const city = addr.city || addr.town || addr.village || 'Waiblingen';
             
             const address = `${street} ${houseNumber}, ${city}`.trim();
-            
-            // ✅ Cache speichern
             this.geocodeCache[cacheKey] = address;
             
             return address;
@@ -558,7 +552,7 @@ ANTWORTE NUR als JSON:
             </div>
             <div class="form-group">
                 <label>Stichwort:</label>
-                <input type="text" id="stichwort-search" placeholder="Stichwort suchen...">
+                <input type="text" id="stichwort-search" placeholder="Stichwort suchen oder auswählen...">
                 <div id="stichwort-results" class="stichwort-dropdown"></div>
                 <input type="hidden" id="protocol-stichwort">
             </div>
@@ -584,6 +578,7 @@ ANTWORTE NUR als JSON:
         this.initVehicleSelection();
     },
 
+    // 🚀 VERBESSERT: Stichwort-Dropdown zeigt alle Optionen beim Fokus
     initStichwortSearch() {
         const input = document.getElementById('stichwort-search');
         const results = document.getElementById('stichwort-results');
@@ -597,16 +592,12 @@ ANTWORTE NUR als JSON:
             'Allergie', 'Krampfanfall', 'Unterzuckerung', 'Badeunfall'
         ];
 
-        input.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
+        // 🚀 NEU: Funktion zum Anzeigen der Stichworte
+        const showStichworte = (query = '') => {
             results.innerHTML = '';
-
-            if (query.length < 2) {
-                results.style.display = 'none';
-                return;
-            }
-
-            const filtered = stichworte.filter(s => s.toLowerCase().includes(query));
+            const filtered = query ? 
+                stichworte.filter(s => s.toLowerCase().includes(query.toLowerCase())) : 
+                stichworte;
             
             if (filtered.length === 0) {
                 results.style.display = 'none';
@@ -626,6 +617,23 @@ ANTWORTE NUR als JSON:
             });
 
             results.style.display = 'block';
+        };
+
+        // 🚀 NEU: Zeige alle Stichworte beim Fokus
+        input.addEventListener('focus', () => {
+            showStichworte(input.value);
+        });
+
+        // 🚀 GEÄNDERT: Filter ohne Mindestlänge
+        input.addEventListener('input', (e) => {
+            showStichworte(e.target.value);
+        });
+
+        // 🚀 NEU: Verstecke Dropdown beim Klick außerhalb
+        document.addEventListener('click', (e) => {
+            if (e.target !== input && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
         });
     },
 
@@ -641,7 +649,6 @@ ANTWORTE NUR als JSON:
         });
     },
 
-    // 🚀 FIX #3: VehicleMovement undefined Check
     addVehicleTypeToGrid(grid, type, count) {
         const vehicles = GAME_DATA.vehicles.filter(v => {
             const vType = v.type.toUpperCase();
@@ -653,7 +660,6 @@ ANTWORTE NUR als JSON:
 
         if (vehicles.length === 0) return;
 
-        // ✅ FIX #3: Prüfe ob VehicleMovement existiert
         if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
             this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
             vehicles.sort((a, b) => {
@@ -671,7 +677,6 @@ ANTWORTE NUR als JSON:
             <div class="vehicle-cards-improved">
                 ${vehicles.map(v => {
                     let distanceInfo = '';
-                    // ✅ FIX #3: VehicleMovement Check auch hier
                     if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
                         this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
                         const dist = VehicleMovement.getDistanceToIncident(v.station, this.activeCall.einsatz.koordinaten);
