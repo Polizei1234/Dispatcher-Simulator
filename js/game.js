@@ -12,6 +12,13 @@ class Game {
         this.reputation = 100;
         this.apiKey = null;
         
+        // WICHTIG: Initialisiere currentStatus für alle Fahrzeuge
+        this.vehicles.forEach(v => {
+            if (!v.currentStatus) {
+                v.currentStatus = '2'; // Status 2: Auf Wache
+            }
+        });
+        
         // Nutze ZENTRALES Zeitsystem!
         this.nextIncidentGameTime = this.getRandomIncidentInterval();
         
@@ -134,7 +141,7 @@ class Game {
         if (!vehicle || !incident || vehicle.status !== 'available') return;
         
         vehicle.status = 'dispatched';
-        vehicle.currentStatus = '3'; // FMS-Status
+        vehicle.currentStatus = '3'; // FMS-Status: Einsatzauftrag übernommen
         vehicle.targetIncident = incidentId;
         
         if (!incident.assignedVehicles) incident.assignedVehicles = [];
