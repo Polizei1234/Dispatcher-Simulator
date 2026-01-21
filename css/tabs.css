@@ -1,0 +1,247 @@
+/* =========================
+   TAB NAVIGATION SYSTEM
+   ========================= */
+
+.tab-navigation {
+    display: flex;
+    background: #1a202c;
+    border-bottom: 2px solid #2d3748;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.tab-navigation .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 15px 20px;
+    color: #a0aec0;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-navigation .tab-btn:hover {
+    background: rgba(45, 55, 72, 0.5);
+    color: #fff;
+}
+
+.tab-navigation .tab-btn.active {
+    background: #2d3748;
+    color: #fff;
+    border-bottom-color: #3182ce;
+}
+
+.tab-navigation .tab-btn i {
+    font-size: 1.2em;
+}
+
+/* TAB CONTENT */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* VEHICLES OVERVIEW */
+.vehicles-overview {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow-y: auto;
+    height: calc(100vh - 180px);
+}
+
+.vehicle-category {
+    margin-bottom: 30px;
+    background: #1a202c;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.category-header {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    border-bottom: 2px solid #2d3748;
+    transition: background 0.3s ease;
+}
+
+.category-header:hover {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+}
+
+.category-header h2 {
+    margin: 0;
+    font-size: 1.3em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.category-badge {
+    background: #3182ce;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.station-group {
+    border-left: 4px solid #3182ce;
+    margin: 15px;
+    background: #2d3748;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.station-header {
+    background: #374151;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.station-header:hover {
+    background: #4b5563;
+}
+
+.station-header h3 {
+    margin: 0;
+    font-size: 1.05em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.station-badge {
+    background: rgba(49, 130, 206, 0.2);
+    color: #63b3ed;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.station-vehicles {
+    padding: 10px;
+    display: none;
+}
+
+.station-vehicles.open {
+    display: block;
+}
+
+.vehicle-card {
+    background: #1a202c;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid #4a5568;
+    transition: all 0.2s ease;
+}
+
+.vehicle-card:hover {
+    background: #252d3d;
+    transform: translateX(5px);
+}
+
+.vehicle-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.status-badge {
+    min-width: 70px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9em;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.vehicle-details {
+    flex: 1;
+}
+
+.vehicle-name {
+    font-weight: 600;
+    font-size: 1em;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.vehicle-type {
+    font-size: 0.85em;
+    color: #a0aec0;
+}
+
+.vehicle-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.collapse-icon {
+    transition: transform 0.3s ease;
+}
+
+.collapse-icon.open {
+    transform: rotate(180deg);
+}
+
+/* INCIDENTS OVERVIEW */
+.incidents-overview {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-y: auto;
+    height: calc(100vh - 180px);
+}
+
+/* RADIO OVERVIEW */
+.radio-overview {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
