@@ -14,20 +14,30 @@ class Game {
         
         this.lastIncidentSpawn = Date.now();
         this.nextIncidentTime = this.getRandomIncidentTime();
+        
+        console.log(`🎮 Game initialisiert | Nächster Einsatz in ${Math.round(this.nextIncidentTime/1000/CONFIG.GAME_SPEED)}s Echtzeit`);
     }
     
     getRandomIncidentTime() {
-        // Neuer Einsatz alle 60-180 Sekunden (Spielzeit mit Geschwindigkeit)
-        const minTime = 60000; // 60 Sekunden
-        const maxTime = 180000; // 180 Sekunden (3 Minuten)
-        return minTime + Math.random() * (maxTime - minTime);
+        // Neuer Einsatz alle 60-180 Sekunden (Spielzeit)
+        const minTime = 60000; // 60 Sekunden Spielzeit
+        const maxTime = 180000; // 180 Sekunden Spielzeit (3 Minuten)
+        const gameTime = minTime + Math.random() * (maxTime - minTime);
+        
+        // Konvertiere zu Echtzeit basierend auf Spielgeschwindigkeit
+        const realTime = gameTime / CONFIG.GAME_SPEED;
+        
+        console.log(`⏱️ Nächster Einsatz: ${Math.round(gameTime/1000)}s Spielzeit = ${Math.round(realTime/1000)}s Echtzeit (${CONFIG.GAME_SPEED}x Speed)`);
+        return realTime;
     }
     
     async update() {
         const now = Date.now();
         
         // Spawne neue Einsätze mit Groq AI
-        if (now - this.lastIncidentSpawn > this.nextIncidentTime) {
+        if (now - this.lastIncidentSpawn >= this.nextIncidentTime) {
+            console.log('🚨 Generiere neuen KI-Einsatz...');
+            
             const ownedVehicles = this.vehicles.filter(v => v.owned);
             const incident = await generateIncidentWithAI(ownedVehicles, this.apiKey);
             
@@ -35,11 +45,18 @@ class Game {
                 this.incidents.push(incident);
                 showIncomingCallNotification(incident);
                 addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
-                console.log(`✅ Einsatz erstellt: ${incident.keyword} - Nächster in ${Math.round(this.nextIncidentTime/1000)}s`);
+                
+                // Setze Timer für nächsten Einsatz
+                this.lastIncidentSpawn = now;
+                this.nextIncidentTime = this.getRandomIncidentTime();
+                
+                console.log(`✅ Einsatz erstellt: ${incident.keyword} | Nächster in ${Math.round(this.nextIncidentTime/1000)}s Echtzeit`);
+            } else {
+                console.warn('⚠️ KI-Einsatzgenerierung fehlgeschlagen, versuche später erneut');
+                // Bei Fehler: Retry in 30 Sekunden
+                this.lastIncidentSpawn = now;
+                this.nextIncidentTime = 30000 / CONFIG.GAME_SPEED;
             }
-            
-            this.lastIncidentSpawn = now;
-            this.nextIncidentTime = this.getRandomIncidentTime();
         }
         
         // Update Fahrzeuge
