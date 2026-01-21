@@ -2,8 +2,6 @@
 // HAUPTMODUL
 // =========================
 
-let clockInterval = null;
-
 function selectIncident(incidentId) {
     const incident = game.incidents.find(i => i.id === incidentId);
     if (!incident) return;
@@ -212,36 +210,7 @@ function playSound(type) {
     console.log(`Sound: ${type}`);
 }
 
-// Init
+// Init - NUR DOMContentLoaded, Spielstart via UI
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing ILS Waiblingen v2.1...');
-    initializeVehicles();
-    game = new Game();
-    
-    // Initialisiere Karte
-    if (typeof initMap === 'function') {
-        initMap();
-        console.log('✅ Karte initialisiert');
-    } else {
-        console.error('❌ initMap function not found!');
-    }
-    
-    // Starte Uhr
-    updateClock();
-    clockInterval = setInterval(updateClock, 1000);
-    console.log('✅ Uhr gestartet');
-    
-    // Update-Loop
-    setInterval(() => {
-        if (game) {
-            game.update();
-            updateIncidentList();
-            updateVehicleList();
-            if (typeof updateMap === 'function') {
-                updateMap();
-            }
-        }
-    }, 2000);
-    
-    console.log('✅ Alle Systeme bereit!');
+    console.log('🚑 ILS Waiblingen v2.2 - Bereit zum Start!');
 });

@@ -4,44 +4,70 @@
 
 function startNewGame(mode) {
     CONFIG.GAME_MODE = mode;
-    localStorage.setItem('game_mode', mode);
     
+    // Verstecke Welcome Screen
     document.getElementById('welcome-screen').classList.remove('active');
     document.getElementById('game-container').classList.remove('hidden');
     
-    const savedKey = localStorage.getItem('groq_api_key');
-    if (savedKey && game) {
-        game.apiKey = savedKey;
-    }
-    
-    // Initialisiere Fahrzeuge basierend auf Modus
+    // Initialisiere Spiel
     initializeVehicles();
-    if (game) {
-        game.vehicles = VEHICLES;
-        if (mode === 'free') {
-            game.money = 999999999;
-        }
-    }
+    game = new Game();
     
+    // Initialisiere Karte NACH dem Container sichtbar ist
+    setTimeout(() => {
+        if (typeof initMap === 'function') {
+            initMap();
+            console.log('✅ Karte initialisiert');
+            
+            // Erzwinge Leaflet Neuzeichnung
+            setTimeout(() => {
+                if (map) {
+                    map.invalidateSize();
+                    console.log('✅ Karte neu gezeichnet');
+                }
+            }, 100);
+        }
+    }, 50);
+    
+    // Starte Uhr
+    updateClock();
+    if (window.clockInterval) clearInterval(window.clockInterval);
+    window.clockInterval = setInterval(updateClock, 1000);
+    
+    // Update-Loop
+    if (window.gameLoop) clearInterval(window.gameLoop);
+    window.gameLoop = setInterval(() => {
+        if (game) {
+            game.update();
+            updateIncidentList();
+            updateVehicleList();
+            if (typeof updateMap === 'function') {
+                updateMap();
+            }
+        }
+    }, 2000);
+    
+    // Initiales UI-Update
+    document.getElementById('credits').textContent = game.money.toLocaleString();
     updateVehicleList();
-    addRadioMessage('System', `ILS Waiblingen einsatzbereit. Modus: ${mode === 'career' ? 'Karriere' : 'Frei'}`);
-}
-
-function startTutorial() {
-    alert('Tutorial folgt in der nächsten Version!');
+    
+    console.log(`🎮 Spiel gestartet im ${mode}-Modus`);
 }
 
 function showSettings() {
-    const overlay = document.getElementById('settings-overlay');
-    overlay.classList.add('active');
+    document.getElementById('settings-overlay').classList.add('active');
     
-    const savedKey = localStorage.getItem('groq_api_key') || '';
-    document.getElementById('groq-api-key').value = savedKey;
+    // Lade gespeicherte Einstellungen
+    const apiKey = localStorage.getItem('groq_api_key');
+    if (apiKey) {
+        document.getElementById('groq-api-key').value = apiKey;
+    }
     
-    const savedSpeed = CONFIG.SIMULATION_SPEED;
-    document.getElementById('game-speed').value = savedSpeed;
+    const speed = localStorage.getItem('game_speed') || '5';
+    document.getElementById('game-speed').value = speed;
     
-    document.getElementById('sound-enabled').checked = CONFIG.SOUND_ENABLED;
+    const sound = localStorage.getItem('sound_enabled') !== 'false';
+    document.getElementById('sound-enabled').checked = sound;
 }
 
 function closeSettings() {
@@ -49,18 +75,22 @@ function closeSettings() {
 }
 
 function saveSettings() {
-    const apiKey = document.getElementById('groq-api-key').value.trim();
-    if (apiKey) {
-        localStorage.setItem('groq_api_key', apiKey);
-        if (game) game.apiKey = apiKey;
+    const apiKey = document.getElementById('groq-api-key').value;
+    const speed = document.getElementById('game-speed').value;
+    const sound = document.getElementById('sound-enabled').checked;
+    
+    localStorage.setItem('groq_api_key', apiKey);
+    localStorage.setItem('game_speed', speed);
+    localStorage.setItem('sound_enabled', sound);
+    
+    CONFIG.SIMULATION_SPEED = parseInt(speed);
+    CONFIG.SOUND_ENABLED = sound;
+    
+    if (game) {
+        game.apiKey = apiKey;
     }
     
-    const speed = document.getElementById('game-speed').value;
-    CONFIG.SIMULATION_SPEED = parseInt(speed);
-    localStorage.setItem('game_speed', speed);
     document.getElementById('game-speed-indicator').textContent = `${speed}x`;
-    
-    CONFIG.SOUND_ENABLED = document.getElementById('sound-enabled').checked;
     
     alert('✅ Einstellungen gespeichert!');
     closeSettings();
@@ -83,21 +113,30 @@ function cycleGameSpeed() {
     const speeds = [1, 2, 5, 10, 30];
     const currentIndex = speeds.indexOf(CONFIG.SIMULATION_SPEED);
     const nextIndex = (currentIndex + 1) % speeds.length;
-    
     CONFIG.SIMULATION_SPEED = speeds[nextIndex];
-    document.getElementById('game-speed-indicator').textContent = `${speeds[nextIndex]}x`;
     
-    addRadioMessage('System', `Geschwindigkeit geändert: ${speeds[nextIndex]}x`);
+    document.getElementById('game-speed-indicator').textContent = `${speeds[nextIndex]}x`;
+    localStorage.setItem('game_speed', speeds[nextIndex]);
 }
 
-function centerMap() {
-    if (map) {
-        map.setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
-    }
+function showIncomingCallNotification(incident) {
+    const callList = document.getElementById('call-list');
+    if (!callList) return;
+    
+    callList.innerHTML = `
+        <div class="incoming-call blinking" onclick="game.acceptCall('${incident.id}')" style="cursor: pointer; padding: 15px; background: rgba(220, 53, 69, 0.2); border: 2px solid #dc3545; border-radius: 8px; text-align: center;">
+            <h3 style="margin: 0; color: #dc3545;">📡 NOTRUF 112</h3>
+            <p style="margin: 10px 0 0 0; font-size: 0.9em;">Eingehender Anruf...</p>
+            <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #a0a0a0;">Klicken zum Annehmen</p>
+        </div>
+    `;
+    
+    playSound('incoming-call');
 }
 
 function openShop() {
-    document.getElementById('shop-dialog').classList.add('active');
+    const modal = document.getElementById('shop-dialog');
+    modal.classList.add('active');
     showShopTab('vehicles');
 }
 
@@ -106,83 +145,81 @@ function closeShop() {
 }
 
 function showShopTab(tab) {
-    document.querySelectorAll('.shop-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
     const content = document.getElementById('shop-content');
     
+    // Update Tab-Buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
     if (tab === 'vehicles') {
-        content.innerHTML = '<h4>Fahrzeuge kaufen</h4>';
-        VEHICLES.forEach((v, idx) => {
-            if (!v.owned && v.cost > 0) {
-                const station = STATIONS[v.station];
-                content.innerHTML += `
-                    <div style="padding: 10px; margin: 10px 0; background: #1e2a38; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${v.icon} ${v.type}</strong><br>
-                            <small>${station.name}</small><br>
-                            <small style="color: #4a9eff;">${v.callsign}</small>
-                        </div>
-                        <button class="btn btn-success" onclick="buyVehicle(${idx})">
-                            <i class="fas fa-shopping-cart"></i> ${v.cost.toLocaleString()} €
-                        </button>
-                    </div>
-                `;
-            }
-        });
-    } else {
-        content.innerHTML = '<h4>Wachen kaufen</h4>';
-        Object.values(STATIONS).forEach(station => {
-            if (station.cost > 0) {
-                const owned = VEHICLES.some(v => v.station === station.id && v.owned);
-                if (!owned) {
-                    content.innerHTML += `
-                        <div style="padding: 10px; margin: 10px 0; background: #1e2a38; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong>${station.icon} ${station.name}</strong><br>
-                                <small>${station.address}</small>
+        const availableVehicles = VEHICLES_CATALOG.filter(v => !game.vehicles.find(gv => gv.id === v.id && gv.owned));
+        
+        content.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding: 20px;">
+                ${availableVehicles.map(v => {
+                    const station = STATIONS[v.station];
+                    return `
+                        <div class="shop-item" style="background: #1e2a38; padding: 15px; border-radius: 8px; border: 2px solid #2d3748;">
+                            <h4>${getVehicleIcon(v.type)} ${v.name}</h4>
+                            <p style="color: #a0a0a0; font-size: 0.9em; margin: 10px 0;">
+                                <strong>Typ:</strong> ${v.type}<br>
+                                <strong>Wache:</strong> ${station ? station.name : 'Unbekannt'}
+                            </p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                                <span style="font-size: 1.2em; font-weight: 700; color: #ffc107;">${v.cost.toLocaleString()} €</span>
+                                <button class="btn btn-success btn-small" onclick="buyVehicle('${v.id}')" ${game.money < v.cost ? 'disabled' : ''}>
+                                    <i class="fas fa-shopping-cart"></i> Kaufen
+                                </button>
                             </div>
-                            <button class="btn btn-success" onclick="buyStation('${station.id}')">
-                                <i class="fas fa-building"></i> ${station.cost.toLocaleString()} €
-                            </button>
                         </div>
                     `;
-                }
-            }
-        });
+                }).join('')}
+            </div>
+        `;
+    } else if (tab === 'stations') {
+        const availableStations = Object.values(STATIONS).filter(s => s.cost > 0);
+        
+        content.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding: 20px;">
+                ${availableStations.map(s => `
+                    <div class="shop-item" style="background: #1e2a38; padding: 15px; border-radius: 8px; border: 2px solid #2d3748;">
+                        <h4>${getStationIcon(s.category)} ${s.name}</h4>
+                        <p style="color: #a0a0a0; font-size: 0.9em; margin: 10px 0;">
+                            <strong>Typ:</strong> ${s.category}<br>
+                            <strong>Ort:</strong> ${s.address}
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <span style="font-size: 1.2em; font-weight: 700; color: #ffc107;">${s.cost.toLocaleString()} €</span>
+                            <button class="btn btn-success btn-small" disabled>
+                                <i class="fas fa-lock"></i> Bald verfügbar
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     }
 }
 
-function buyVehicle(index) {
-    if (!game) return;
-    const vehicle = VEHICLES[index];
+function buyVehicle(vehicleId) {
+    const template = VEHICLES_CATALOG.find(v => v.id === vehicleId);
+    if (!template) return;
     
-    if (game.money >= vehicle.cost) {
-        game.money -= vehicle.cost;
+    if (game.money < template.cost) {
+        alert('❌ Nicht genug Geld!');
+        return;
+    }
+    
+    game.money -= template.cost;
+    document.getElementById('credits').textContent = game.money.toLocaleString();
+    
+    const vehicle = game.vehicles.find(v => v.id === vehicleId);
+    if (vehicle) {
         vehicle.owned = true;
-        document.getElementById('credits').textContent = game.money.toLocaleString();
-        addRadioMessage('System', `✅ ${vehicle.callsign} gekauft!`);
+        alert(`✅ ${vehicle.name} gekauft!`);
         updateVehicleList();
-        showShopTab('vehicles');
-    } else {
-        alert(`❌ Nicht genug Geld! Benötigt: €${vehicle.cost.toLocaleString()}`);
+        closeShop();
     }
-}
-
-function buyStation(stationId) {
-    if (!game) return;
-    const station = STATIONS[stationId];
-    
-    if (game.money >= station.cost) {
-        game.money -= station.cost;
-        document.getElementById('credits').textContent = game.money.toLocaleString();
-        addRadioMessage('System', `✅ ${station.name} gekauft!`);
-        showShopTab('stations');
-    } else {
-        alert(`❌ Nicht genug Geld! Benötigt: €${station.cost.toLocaleString()}`);
-    }
-}
-
-function minimizeCallDialog() {
-    document.getElementById('call-dialog').style.display = 'none';
 }
