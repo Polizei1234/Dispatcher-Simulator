@@ -1,5 +1,5 @@
 // =========================
-// SPIEL-LOGIK MIT GROQ AI
+// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM
 // =========================
 
 class Game {
@@ -34,27 +34,29 @@ class Game {
         
         // Spawne neue Einsätze wenn Spielzeit erreicht ist
         if (currentGameTime >= this.nextIncidentGameTime) {
-            console.log(`🚨 Generiere neuen KI-Einsatz... (Spielzeit: ${Math.round(currentGameTime/1000)}s)`);
+            console.log(`🚨 Generiere neuen Anruf... (Spielzeit: ${Math.round(currentGameTime/1000)}s)`);
             
-            const ownedVehicles = this.vehicles.filter(v => v.owned);
-            const incident = await generateIncidentWithAI(ownedVehicles, this.apiKey);
-            
-            if (incident) {
-                this.incidents.push(incident);
-                showIncomingCallNotification(incident);
-                addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
-                
-                // Setze nächsten Einsatz als absolute Spielzeit
-                const nextInterval = this.getRandomIncidentInterval();
-                this.nextIncidentGameTime = currentGameTime + nextInterval;
-                
-                const realTimeUntilNext = nextInterval / window.GameTime.speed;
-                console.log(`✅ Einsatz erstellt: ${incident.keyword} | Nächster in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${window.GameTime.speed}x)`);
+            // NEUE METHODE: Nutze CallSystem statt altes generateIncidentWithAI
+            if (typeof CallSystem !== 'undefined') {
+                await CallSystem.generateIncomingCall();
             } else {
-                console.warn('⚠️ KI-Einsatzgenerierung fehlgeschlagen, versuche später erneut');
-                // Bei Fehler: Retry in 30 Sekunden SPIELZEIT
-                this.nextIncidentGameTime = currentGameTime + 30000;
+                // Fallback: Alte Methode
+                const ownedVehicles = this.vehicles.filter(v => v.owned);
+                const incident = await generateIncidentWithAI(ownedVehicles, this.apiKey);
+                
+                if (incident) {
+                    this.incidents.push(incident);
+                    showIncomingCallNotification(incident);
+                    addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
+                }
             }
+            
+            // Setze nächsten Einsatz als absolute Spielzeit
+            const nextInterval = this.getRandomIncidentInterval();
+            this.nextIncidentGameTime = currentGameTime + nextInterval;
+            
+            const realTimeUntilNext = nextInterval / window.GameTime.speed;
+            console.log(`✅ Nächster Anruf in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${window.GameTime.speed}x)`);
         }
         
         // Update Fahrzeuge
@@ -67,10 +69,10 @@ class Game {
         // Verdiene Geld für abgeschlossene Einsätze (Karrieremodus)
         if (CONFIG.GAME_MODE === 'career') {
             this.incidents.filter(i => i.status === 'completed' && !i.rewarded).forEach(incident => {
-                const reward = this.calculateReward(incident.keyword);
+                const reward = this.calculateReward(incident.keyword || incident.stichwort);
                 this.money += reward;
                 incident.rewarded = true;
-                addRadioMessage('System', `€ ${reward} für ${incident.keyword} erhalten`);
+                addRadioMessage('System', `€ ${reward} für ${incident.keyword || incident.stichwort} erhalten`);
                 document.getElementById('credits').textContent = this.money.toLocaleString();
             });
         }
@@ -97,7 +99,14 @@ class Game {
         if (!incident) return;
         
         incident.status = 'in-call';
-        showCallDialog(incident);
+        
+        // Nutze neues CallSystem falls verfügbar
+        if (typeof CallSystem !== 'undefined' && CallSystem.activeCall) {
+            CallSystem.answerCall();
+        } else {
+            // Fallback: Alte Methode
+            showCallDialog(incident);
+        }
     }
     
     checkRequiredVehicles(keyword) {
@@ -125,27 +134,37 @@ class Game {
         if (!vehicle || !incident || vehicle.status !== 'available') return;
         
         vehicle.status = 'dispatched';
+        vehicle.currentStatus = '3'; // FMS-Status
         vehicle.targetIncident = incidentId;
         
         if (!incident.assignedVehicles) incident.assignedVehicles = [];
         incident.assignedVehicles.push(vehicleId);
         
         const station = this.stations[vehicle.station];
-        vehicle.route = this.calculateRoute(station.position, incident.position);
+        vehicle.route = this.calculateRoute(station.position, incident.position || incident.koordinaten);
         vehicle.routeIndex = 0;
         
-        addRadioMessage('Leitstelle', `${vehicle.callsign} zu ${incident.keyword}`);
+        addRadioMessage('Leitstelle', `${vehicle.callsign} zu ${incident.keyword || incident.stichwort}`);
         addRadioMessage(vehicle.callsign, 'Einsatz übernommen, rücke aus!');
+        
+        // Benachrichtigung
+        if (typeof NotificationSystem !== 'undefined') {
+            NotificationSystem.vehicleDispatched(vehicle.name, incident.nummer || incident.id);
+        }
     }
     
     calculateRoute(start, end) {
+        // start/end können arrays oder objects sein
+        const startPos = Array.isArray(start) ? start : [start.lat, start.lon];
+        const endPos = Array.isArray(end) ? end : [end.lat, end.lon];
+        
         const steps = 30;
         const route = [];
         for (let i = 0; i <= steps; i++) {
             const t = i / steps;
             route.push([
-                start[0] + (end[0] - start[0]) * t,
-                start[1] + (end[1] - start[1]) * t
+                startPos[0] + (endPos[0] - startPos[0]) * t,
+                startPos[1] + (endPos[1] - startPos[1]) * t
             ]);
         }
         return route;
@@ -154,6 +173,8 @@ class Game {
     updateVehiclePosition(vehicle) {
         if (!vehicle.route || vehicle.routeIndex >= vehicle.route.length) {
             vehicle.status = 'on-scene';
+            vehicle.currentStatus = '4'; // FMS-Status: Am Einsatzort
+            
             const incident = this.incidents.find(i => i.id === vehicle.targetIncident);
             if (incident) {
                 addRadioMessage(vehicle.callsign, `Vor Ort am Einsatzort`);
@@ -164,8 +185,19 @@ class Game {
                 
                 setTimeout(() => {
                     vehicle.status = 'available';
+                    vehicle.currentStatus = '2'; // FMS-Status: Auf Wache
                     incident.status = 'completed';
                     addRadioMessage(vehicle.callsign, 'Einsatz beendet, Status 4');
+                    
+                    // Benachrichtigung
+                    if (typeof NotificationSystem !== 'undefined') {
+                        NotificationSystem.incidentCompleted(incident.nummer || incident.id);
+                    }
+                    
+                    // Scoring
+                    if (typeof ScoringSystem !== 'undefined' && incident.validation) {
+                        ScoringSystem.scoreIncident(incident, incident.assignedVehicles, incident.validation);
+                    }
                 }, realTimeDelay);
             }
             vehicle.route = null;
