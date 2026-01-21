@@ -16,6 +16,60 @@ const INCIDENT_LOCATIONS_WAIBLINGEN = [
     { name: 'Industriestraße 8, Waiblingen', pos: [48.8305, 9.3250] }
 ];
 
+// Einsatz-Keywords für Baden-Württemberg
+const KEYWORDS_BW = {
+    'RD 1': {
+        name: 'Rettungsdienst 1',
+        description: 'Internistischer Notfall',
+        required: ['RTW']
+    },
+    'RD 2': {
+        name: 'Rettungsdienst 2',
+        description: 'Schwerer internistischer Notfall',
+        required: ['RTW', 'NEF']
+    },
+    'RD 3': {
+        name: 'Rettungsdienst 3',
+        description: 'Lebensbedrohlicher Notfall',
+        required: ['RTW', 'NEF']
+    },
+    'VU': {
+        name: 'Verkehrsunfall',
+        description: 'Verkehrsunfall mit Verletzten',
+        required: ['RTW']
+    },
+    'VU P': {
+        name: 'Verkehrsunfall Person eingeklemmt',
+        description: 'Verkehrsunfall mit eingeklemmter Person',
+        required: ['RTW', 'NEF']
+    },
+    'THL 1': {
+        name: 'Technische Hilfeleistung klein',
+        description: 'Kleinere technische Hilfeleistung',
+        required: []
+    },
+    'THL 2': {
+        name: 'Technische Hilfeleistung groß',
+        description: 'Größere technische Hilfeleistung',
+        required: []
+    },
+    'B 1': {
+        name: 'Brand klein',
+        description: 'Kleinbrand',
+        required: []
+    },
+    'B 2': {
+        name: 'Brand mittel',
+        description: 'Mittlerer Brand',
+        required: []
+    },
+    'B 3': {
+        name: 'Brand groß',
+        description: 'Großbrand',
+        required: []
+    }
+};
+
 async function generateIncidentWithAI(ownedVehicles, apiKey) {
     // Prüfe welche Keywords machbar sind
     const feasibleKeywords = Object.keys(KEYWORDS_BW).filter(keyword => {
@@ -28,7 +82,7 @@ async function generateIncidentWithAI(ownedVehicles, apiKey) {
     });
     
     if (feasibleKeywords.length === 0) {
-        console.warn('Keine machbaren Einsätze!');
+        console.warn('⚠️ Keine machbaren Einsätze!');
         return null;
     }
     
@@ -77,7 +131,7 @@ async function generateIncidentWithAI(ownedVehicles, apiKey) {
         return createIncidentFromAI(keyword, keywordInfo, location, aiData);
         
     } catch (error) {
-        console.error('Groq API Fehler:', error);
+        console.error('❌ Groq API Fehler:', error);
         return createFallbackIncident(keyword, keywordInfo, location);
     }
 }
@@ -119,12 +173,13 @@ function createFallbackIncident(keyword, keywordInfo, location) {
     const fallbackMessages = {
         'RD 1': 'Hilfe, hier ist jemand gestürzt!',
         'RD 2': 'Schnell, mein Mann atmet nicht richtig!',
+        'RD 3': 'Bewusstlose Person, bitte schnell!',
         'B 1': 'Es brennt hier, ein Mülleimer!',
         'B 2': 'Ein Auto brennt!',
         'B 3': 'Feuer! Das ganze Gebäude steht in Flammen!',
         'THL 1': 'Hilfe, meine Katze sitzt auf dem Baum!',
         'THL 2': 'Ein Baum ist auf die Straße gestürzt!',
-        'THL VU': 'Schwerer Unfall, Person eingeklemmt!',
+        'VU P': 'Schwerer Unfall, Person eingeklemmt!',
         'VU': 'Unfall, es gibt Verletzte!'
     };
     
