@@ -35,17 +35,34 @@ const CONFIG = {
         'patient_transport': 300
     },
     
-    // FMS Status (Funkmeldesystem - angepasst)
+    // FMS Status (Funkmeldesystem) - OFFIZIELL für Feuerwehr & Rettungsdienst
+    // Quelle: http://www.rettungsdienst.net/technik/bos/bo-fms
+    
+    // STATUS FAHRZEUG -> LEITSTELLE (0-9)
     FMS_STATUS: {
-        0: { name: 'Priorisierter Sprechwunsch', color: '#8b4513', icon: '🟤' },  // Braun
-        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },   // Grün
-        2: { name: 'Einsatzbereit auf Wache', color: '#1e7e34', icon: '🟢' },    // Dunkelgrün
-        3: { name: 'Einsatzauftrag übernommen', color: '#ffc107', icon: '🟡' }, // Gelb
-        4: { name: 'Ankunft am Einsatzort', color: '#fd7e14', icon: '🟠' },      // Orange
-        5: { name: 'Sprechwunsch', color: '#17a2b8', icon: '🔵' },               // Cyan
-        6: { name: 'Nicht einsatzbereit', color: '#000000', icon: '⚫' },            // Schwarz
-        7: { name: 'Patient aufgenommen', color: '#e83e8c', icon: '🟣' },        // Pink
-        8: { name: 'Krankenhausdesinfektion', color: '#6f42c1', icon: '🟣' }    // Lila
+        0: { name: 'Fahrzeugstatus 0', color: '#6c757d', icon: '⚪', description: 'Nicht fest definiert' },
+        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢', description: 'Sprechwunsch oder Einsatzbereit über Funk' },
+        2: { name: 'Einsatzbereit auf Wache', color: '#1e7e34', icon: '🟢', description: 'Ankunft auf Wache / Einsatzbereit' },
+        3: { name: 'Einsatzauftrag übernommen', color: '#ffc107', icon: '🟡', description: 'Einsatz übernommen' },
+        4: { name: 'Am Einsatzort', color: '#fd7e14', icon: '🟠', description: 'Ankunft Einsatzort' },
+        5: { name: 'Sprechwunsch', color: '#17a2b8', icon: '🔵', description: 'Sprechwunsch (Fahrzeug möchte kommunizieren)' },
+        6: { name: 'Nicht einsatzbereit', color: '#000000', icon: '⚫', description: 'Nicht Einsatzbereit' },
+        7: { name: 'Patient aufgenommen', color: '#e83e8c', icon: '🟣', description: 'Patient aufgenommen / Transport' },
+        8: { name: 'Am Zielort', color: '#6f42c1', icon: '🟣', description: 'Ankunft Ziel (Krankenhaus)' },
+        9: { name: 'Sondersignal', color: '#dc3545', icon: '🔴', description: 'Sondersignal (Blaulicht + Martinshorn)' }
+    },
+    
+    // STATUS LEITSTELLE -> FAHRZEUG (A-I)
+    FMS_LEITSTELLE_STATUS: {
+        'A': { name: 'Außer Dienst', color: '#6c757d', icon: '⚪', description: 'Fahrzeug außer Dienst stellen' },
+        'B': { name: 'Bereitstellung', color: '#17a2b8', icon: '🔵', description: 'Bereitstellung an einem Ort' },
+        'C': { name: 'Nicht vergeben', color: '#6c757d', icon: '⚪', description: 'Reserviert' },
+        'D': { name: 'Dringende Sprechwunsch', color: '#dc3545', icon: '🔴', description: 'Sofort Sprechverbindung aufbauen' },
+        'E': { name: 'Einsatzauftrag', color: '#ffc107', icon: '🟡', description: 'Einsatzauftrag folgt/liegt vor' },
+        'F': { name: 'Fernmeldeverbindung', color: '#28a745', icon: '🟢', description: 'Über Telefon/Fax melden' },
+        'G': { name: 'Geruf wird wiederholt', color: '#fd7e14', icon: '🟠', description: 'Funkruf wird wiederholt' },
+        'H': { name: 'Heimkehr', color: '#1e7e34', icon: '🟢', description: 'Wache/Standort anfahren' },
+        'I': { name: 'Individuell', color: '#6f42c1', icon: '🟣', description: 'Individuell definierbar' }
     },
     
     // Groq AI
