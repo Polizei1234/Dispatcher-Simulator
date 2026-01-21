@@ -1,8 +1,8 @@
 // =========================
-// MANUAL INCIDENT CREATION v3.1
-// + Entfernungsanzeige bei Fahrzeugen!
+// MANUAL INCIDENT CREATION v3.2
+// + Entfernungsanzeige auch im Modal!
+// + Live-Update beim Ort-Eingabe
 // + showInline() für Notruf-Tab Integration
-// + Modal für manuelle Einsatzerstellung mit Keywords-Dropdown
 // =========================
 
 const ManualIncident = {
@@ -12,9 +12,10 @@ const ManualIncident = {
     selectedPriorityKeyword: null,
     selectedDetailKeyword: null,
     currentCallData: null,
+    modalCoordinates: null,
 
     initialize() {
-        console.log('📝 Manual Incident System v3.1 initialisiert');
+        console.log('📝 Manual Incident System v3.2 initialisiert');
         this.createModalHTML();
         this.attachEventListeners();
     },
@@ -50,10 +51,14 @@ const ManualIncident = {
                             <div class="form-group">
                                 <label>Ort:</label>
                                 <input type="text" id="manual-ort" placeholder="Straße Nummer, Stadt">
+                                <small style="color: #888; font-size: 0.85em;">Adresse für Entfernungsberechnung</small>
                             </div>
                             <div class="form-group">
                                 <label>Koordinaten (optional):</label>
                                 <input type="text" id="manual-coords" placeholder="48.123, 9.456">
+                                <button type="button" class="btn btn-small" onclick="ManualIncident.geocodeManualAddress()" style="margin-top: 5px;">
+                                    <i class="fas fa-map-marker-alt"></i> Aus Ort ermitteln
+                                </button>
                             </div>
                         </div>
                         <div class="form-group" style="margin-top: 10px;">
@@ -64,7 +69,7 @@ const ManualIncident = {
 
                     <!-- Fahrzeugauswahl -->
                     <div style="flex: 1; padding: 20px; overflow-y: auto;">
-                        <h4 style="margin-bottom: 15px;">🚑 Fahrzeuge auswählen</h4>
+                        <h4 style="margin-bottom: 15px;">🚑 Fahrzeuge auswählen <small style="color: #888; font-weight: normal;">(sortiert nach Entfernung)</small></h4>
                         <div id="manual-vehicle-grid" class="vehicle-cards-improved"></div>
                     </div>
                 </div>
@@ -110,6 +115,7 @@ const ManualIncident = {
         this.selectedVehicles = [];
         this.selectedPriorityKeyword = null;
         this.selectedDetailKeyword = null;
+        this.modalCoordinates = null;
         this.inlineMode = false;
         this.modalOpen = true;
 
@@ -139,6 +145,34 @@ const ManualIncident = {
         }, 100);
 
         console.log('📝 Manual Incident Modal geöffnet');
+    },
+
+    // 🚀 NEU: Geocode aus Modal Adress-Feld
+    async geocodeManualAddress() {
+        const ortInput = document.getElementById('manual-ort');
+        const coordsInput = document.getElementById('manual-coords');
+
+        if (!ortInput || !coordsInput) return;
+
+        const address = ortInput.value.trim();
+        if (!address) {
+            alert('⚠️ Bitte zuerst eine Adresse eingeben!');
+            return;
+        }
+
+        console.log('🗺️ Geocoding:', address);
+        const coords = await this.geocodeAddress(address);
+
+        if (coords) {
+            coordsInput.value = `${coords.lat}, ${coords.lon}`;
+            this.modalCoordinates = coords;
+            console.log('✅ Koordinaten ermittelt:', coords);
+            
+            // Fahrzeuge neu laden mit Entfernung
+            this.loadVehicles();
+        } else {
+            alert('❌ Adresse konnte nicht gefunden werden!');
+        }
     },
 
     // 🚀 Inline-Modus für Notruf-Tab
@@ -350,6 +384,7 @@ const ManualIncident = {
         this.selectedVehicles = [];
         this.selectedPriorityKeyword = null;
         this.selectedDetailKeyword = null;
+        this.modalCoordinates = null;
 
         const modal = document.getElementById('manual-incident-modal');
         if (modal) {
@@ -359,6 +394,7 @@ const ManualIncident = {
         console.log('📝 Manual Incident Modal geschlossen');
     },
 
+    // 🚀 Load Vehicles mit Entfernungsanzeige (MODAL)
     loadVehicles() {
         const grid = document.getElementById('manual-vehicle-grid');
         if (!grid) return;
@@ -366,8 +402,22 @@ const ManualIncident = {
         const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
         grid.innerHTML = '';
 
+        // Koordinaten aus Eingabefeld holen
+        const coordsInput = document.getElementById('manual-coords');
+        let targetCoords = this.modalCoordinates;
+        
+        if (!targetCoords && coordsInput && coordsInput.value.trim()) {
+            const parts = coordsInput.value.split(',');
+            if (parts.length === 2) {
+                targetCoords = {
+                    lat: parseFloat(parts[0].trim()),
+                    lon: parseFloat(parts[1].trim())
+                };
+            }
+        }
+
         vehicleTypes.forEach(type => {
-            const vehicles = GAME_DATA.vehicles.filter(v => {
+            let vehicles = GAME_DATA.vehicles.filter(v => {
                 const vType = v.type.toUpperCase();
                 return (vType === type || vType.includes(type)) && 
                        v.status === 'available' && 
@@ -375,6 +425,18 @@ const ManualIncident = {
             });
 
             if (vehicles.length === 0) return;
+
+            // 🚀 SORTIERE nach Entfernung (wenn Koordinaten vorhanden)
+            if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && targetCoords) {
+                vehicles = vehicles.map(v => {
+                    const distInfo = VehicleMovement.getDistanceToIncident(v.station, targetCoords);
+                    return {
+                        ...v,
+                        distance: distInfo ? parseFloat(distInfo.km) : 999,
+                        distanceText: distInfo ? distInfo.text : null
+                    };
+                }).sort((a, b) => a.distance - b.distance);
+            }
 
             const section = document.createElement('div');
             section.className = 'vehicle-type-section';
@@ -387,12 +449,20 @@ const ManualIncident = {
                             <div class="vehicle-card-name">${v.callsign || v.name}</div>
                             <div class="vehicle-card-station">${v.station || 'Wache'}</div>
                             <div class="vehicle-card-type">${v.type}</div>
+                            ${v.distanceText ? `<div class="vehicle-card-distance" style="font-size: 0.75em; color: #4CAF50; margin-top: 3px;">📍 ${v.distanceText}</div>` : ''}
                         </div>
                     `).join('')}
                 </div>
             `;
             grid.appendChild(section);
         });
+
+        if (!targetCoords) {
+            const hint = document.createElement('p');
+            hint.style.cssText = 'color: #888; text-align: center; margin: 20px; font-size: 0.9em;';
+            hint.innerHTML = '<i class="fas fa-info-circle"></i> Koordinaten eingeben oder "Aus Ort ermitteln" klicken, um Entfernungen zu sehen';
+            grid.prepend(hint);
+        }
     },
 
     // 🚀 Load Vehicles für Inline mit Entfernungsanzeige
@@ -527,16 +597,16 @@ const ManualIncident = {
             return;
         }
 
-        // Kombiniere Stichwrter
+        // Kombiniere Stichwörter
         const stichwortParts = [];
         if (priorityInput) stichwortParts.push(priorityInput);
         if (detailInput) stichwortParts.push(detailInput);
         const stichwort = stichwortParts.join(' - ');
 
         // Koordinaten parsen oder aus Ort ermitteln
-        let koordinaten = null;
+        let koordinaten = this.modalCoordinates;
 
-        if (coordsInput) {
+        if (!koordinaten && coordsInput) {
             // Manuell eingegebene Koordinaten
             const parts = coordsInput.split(',');
             if (parts.length === 2) {
@@ -611,7 +681,7 @@ const ManualIncident = {
             return;
         }
 
-        // Kombiniere Stichwrter
+        // Kombiniere Stichwörter
         const stichwortParts = [];
         if (priorityInput) stichwortParts.push(priorityInput);
         if (detailInput) stichwortParts.push(detailInput);
