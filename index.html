@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
-    <link rel="stylesheet" href="css/style.css?v=4.0.1">
+    <link rel="stylesheet" href="css/style.css?v=4.1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/map-icons.css?v=4.0.1">
-    <link rel="stylesheet" href="css/draggable.css?v=4.0.1">
-    <link rel="stylesheet" href="css/tabs.css?v=4.0.1">
-    <link rel="stylesheet" href="css/call-system.css?v=4.0.1">
+    <link rel="stylesheet" href="css/map-icons.css?v=4.1.0">
+    <link rel="stylesheet" href="css/draggable.css?v=4.1.0">
+    <link rel="stylesheet" href="css/tabs.css?v=4.1.0">
+    <link rel="stylesheet" href="css/call-system.css?v=4.1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -109,9 +109,9 @@
                 <i class="fas fa-ambulance"></i>
                 <span>Fahrzeuge</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('incidents')">
-                <i class="fas fa-list"></i>
-                <span>Einsätze</span>
+            <button class="tab-btn" onclick="switchTab('call')" id="call-tab-btn">
+                <i class="fas fa-phone"></i>
+                <span>Notruf</span>
             </button>
             <button class="tab-btn" onclick="switchTab('radio')">
                 <i class="fas fa-walkie-talkie"></i>
@@ -169,10 +169,38 @@
             </div>
         </div>
 
-        <!-- TAB: EINSÄTZE -->
-        <div id="tab-incidents" class="tab-content">
-            <div class="incidents-overview" id="incidents-overview">
-                <!-- Wird dynamisch gefüllt -->
+        <!-- TAB: NOTRUF (NEU!) -->
+        <div id="tab-call" class="tab-content">
+            <div class="call-tab-container">
+                <div class="call-no-active" id="call-no-active">
+                    <div style="text-align: center; padding: 50px; color: #666;">
+                        <i class="fas fa-phone" style="font-size: 64px; margin-bottom: 20px;"></i>
+                        <h3>Kein aktiver Notruf</h3>
+                        <p>Eingehende Anrufe werden unten links in der Sidebar angezeigt.</p>
+                    </div>
+                </div>
+                <div class="call-active" id="call-active" style="display: none;">
+                    <div style="display: flex; height: calc(100vh - 150px);">
+                        <!-- Linke Seite: Dialog -->
+                        <div style="flex: 1; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--panel-bg);">
+                            <h3><i class="fas fa-phone-volume"></i> Notruf 112 - Gespräch läuft</h3>
+                            <div id="caller-messages" style="min-height: 400px; margin-top: 20px;"></div>
+                            <div id="question-buttons" style="margin-top: 20px;"></div>
+                        </div>
+                        <!-- Rechte Seite: Protokoll -->
+                        <div style="flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-secondary);">
+                            <h3><i class="fas fa-clipboard"></i> Einsatzprotokoll</h3>
+                            <div id="protocol-form">
+                                <div id="protocol-form-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 15px; background: var(--panel-bg); border-top: 1px solid var(--border-color); text-align: right;">
+                        <button class="btn btn-danger" onclick="CallSystem.hangUp()">
+                            <i class="fas fa-phone-slash"></i> GESPRÄCH BEENDEN
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -189,71 +217,42 @@
         </div>
     </div>
 
-    <!-- NEU: Incoming Call Popup -->
-    <div id="incoming-call-popup" style="display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); z-index: 10000; background: #dc3545; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); min-width: 400px; text-align: center;">
-        <h2 style="margin: 0 0 20px 0; color: white;"><i class="fas fa-phone-volume"></i> EINGEHENDER NOTRUF 112</h2>
-        <button id="answer-call-btn" class="btn btn-success btn-large" style="font-size: 1.2em; padding: 15px 30px;">
-            <i class="fas fa-phone"></i> ANNEHMEN
-        </button>
-    </div>
-
-    <!-- NEU: Call Dialog (ersetzt altes Draggable) -->
-    <div id="call-dialog" style="display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); z-index: 9999; background: #1a1a2e; border: 2px solid #16213e; border-radius: 15px; width: 90%; max-width: 900px; box-shadow: 0 10px 50px rgba(0,0,0,0.7);">
-        <div style="background: #16213e; padding: 15px; border-radius: 13px 13px 0 0; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; color: white;"><i class="fas fa-phone-volume"></i> Notruf 112 - Gespräch läuft</h3>
-            <button id="hangup-call-btn" class="btn btn-danger btn-small"><i class="fas fa-phone-slash"></i> Auflegen</button>
-        </div>
-        <div style="display: flex; height: 600px;">
-            <!-- Linke Seite: Dialog -->
-            <div style="flex: 1; padding: 20px; overflow-y: auto; border-right: 1px solid #16213e;">
-                <div id="caller-messages" style="min-height: 400px;"></div>
-                <div id="question-buttons" style="margin-top: 20px;"></div>
-            </div>
-            <!-- Rechte Seite: Protokoll -->
-            <div style="flex: 1; padding: 20px; overflow-y: auto; background: #0f0f1e;">
-                <div id="protocol-form">
-                    <div id="protocol-form-content"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Skripte mit Cache-Busting v4.0.1 -->
+    <!-- Skripte mit Cache-Busting v4.1.0 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- NEUE MODULE: Kern-Systeme (ZUERST) -->
-    <script src="js/config.js?v=4.0.1"></script>
-    <script src="js/incident-numbering.js?v=4.0.1"></script>
-    <script src="js/vehicle-analyzer.js?v=4.0.1"></script>
-    <script src="js/address-service.js?v=4.0.1"></script>
+    <script src="js/config.js?v=4.1.0"></script>
+    <script src="js/incident-numbering.js?v=4.1.0"></script>
+    <script src="js/vehicle-analyzer.js?v=4.1.0"></script>
+    <script src="js/address-service.js?v=4.1.0"></script>
     
     <!-- NEUE MODULE: UI-Systeme -->
-    <script src="js/ui-helpers.js?v=4.0.1"></script>
-    <script src="js/notification-system.js?v=4.0.1"></script>
-    <script src="js/scoring-system.js?v=4.0.1"></script>
+    <script src="js/ui-helpers.js?v=4.1.0"></script>
+    <script src="js/notification-system.js?v=4.1.0"></script>
+    <script src="js/scoring-system.js?v=4.1.0"></script>
     
     <!-- NEUE MODULE: Haupt-Logik -->
-    <script src="js/call-system.js?v=4.0.1"></script>
-    <script src="js/protocol-form.js?v=4.0.1"></script>
-    <script src="js/assignment-ui.js?v=4.0.1"></script>
-    <script src="js/groq-validator.js?v=4.0.1"></script>
+    <script src="js/call-system.js?v=4.1.0"></script>
+    <script src="js/protocol-form.js?v=4.1.0"></script>
+    <script src="js/assignment-ui.js?v=4.1.0"></script>
+    <script src="js/groq-validator.js?v=4.1.0"></script>
     
     <!-- VEHICLE MOVEMENT SYSTEM -->
-    <script src="js/vehicle-movement.js?v=4.0.1"></script>
+    <script src="js/vehicle-movement.js?v=4.1.0"></script>
     
     <!-- BESTEHENDE MODULE (nach neuen Modulen) -->
-    <script src="js/data.js?v=4.0.1"></script>
-    <script src="js/map.js?v=4.0.1"></script>
-    <script src="js/game.js?v=4.0.1"></script>
-    <script src="js/incidents.js?v=4.0.1"></script>
-    <script src="js/ai.js?v=4.0.1"></script>
-    <script src="js/tutorial.js?v=4.0.1"></script>
-    <script src="js/ui.js?v=4.0.1"></script>
-    <script src="js/tabs.js?v=4.0.1"></script>
-    <script src="js/draggable.js?v=4.0.1"></script>
-    <script src="js/main.js?v=4.0.1"></script>
+    <script src="js/data.js?v=4.1.0"></script>
+    <script src="js/map.js?v=4.1.0"></script>
+    <script src="js/game.js?v=4.1.0"></script>
+    <script src="js/incidents.js?v=4.1.0"></script>
+    <script src="js/ai.js?v=4.1.0"></script>
+    <script src="js/tutorial.js?v=4.1.0"></script>
+    <script src="js/ui.js?v=4.1.0"></script>
+    <script src="js/tabs.js?v=4.1.0"></script>
+    <script src="js/draggable.js?v=4.1.0"></script>
+    <script src="js/main.js?v=4.1.0"></script>
     
     <!-- INTEGRATION BRIDGE (ZULETZT) -->
-    <script src="js/bridge.js?v=4.0.1"></script>
+    <script src="js/bridge.js?v=4.1.0"></script>
 </body>
 </html>
