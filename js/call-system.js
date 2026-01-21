@@ -1,6 +1,7 @@
 // =========================
-// EMERGENCY CALL SYSTEM v3.1
-// Meldebild erst nach Fragen generieren
+// EMERGENCY CALL SYSTEM v4.7
+// + Random Telefonnummern
+// + Hotspot-System
 // =========================
 
 const CallSystem = {
@@ -12,14 +13,95 @@ const CallSystem = {
     selectedVehicles: [],
     askedQuestions: [],
 
+    // ✅ NEU: Hotspot-System für realistische Einsatzverteilung
+    HOTSPOT_ZONES: [
+        // Waiblingen Zentrum (Häufig)
+        { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
+        { lat: 48.8250, lon: 9.3200, radius: 0.008, weight: 2, name: "Waiblingen Süd" },
+        
+        // Fellbach (Mittel)
+        { lat: 48.8109, lon: 9.2765, radius: 0.01, weight: 2, name: "Fellbach" },
+        
+        // Winnenden (Häufig)
+        { lat: 48.8756, lon: 9.4003, radius: 0.012, weight: 3, name: "Winnenden" },
+        
+        // Backnang (Mittel)
+        { lat: 48.9467, lon: 9.4333, radius: 0.015, weight: 2, name: "Backnang" },
+        
+        // Schorndorf (Häufig)
+        { lat: 48.8070, lon: 9.5290, radius: 0.012, weight: 3, name: "Schorndorf" },
+        
+        // Korb (Selten)
+        { lat: 48.8483, lon: 9.3617, radius: 0.006, weight: 1, name: "Korb" },
+        
+        // Weinstadt (Mittel)
+        { lat: 48.8108, lon: 9.3826, radius: 0.01, weight: 2, name: "Weinstadt" },
+        
+        // Remshalden (Selten)
+        { lat: 48.8183, lon: 9.4000, radius: 0.008, weight: 1, name: "Remshalden" },
+        
+        // Kernen (Selten)
+        { lat: 48.7950, lon: 9.3383, radius: 0.007, weight: 1, name: "Kernen" },
+        
+        // Leutenbach (Selten)
+        { lat: 48.8983, lon: 9.3967, radius: 0.006, weight: 1, name: "Leutenbach" },
+        
+        // Schwaikheim (Selten)
+        { lat: 48.8767, lon: 9.3500, radius: 0.005, weight: 1, name: "Schwaikheim" }
+    ],
+
     initialize() {
-        console.log('📞 Call System v3.1 initialisiert');
+        console.log('📞 Call System v4.7 initialisiert');
         this.setupRingtone();
     },
 
     setupRingtone() {
         this.ringtoneAudio = new Audio('sounds/ringtone.mp3');
         this.ringtoneAudio.loop = true;
+    },
+
+    // ✅ NEU: Weighted Random Hotspot Selector
+    getRandomHotspot() {
+        const totalWeight = this.HOTSPOT_ZONES.reduce((sum, zone) => sum + zone.weight, 0);
+        let random = Math.random() * totalWeight;
+        
+        for (const zone of this.HOTSPOT_ZONES) {
+            random -= zone.weight;
+            if (random <= 0) {
+                return zone;
+            }
+        }
+        
+        return this.HOTSPOT_ZONES[0]; // Fallback
+    },
+
+    // ✅ NEU: Generate Random Location within Hotspot
+    generateRandomLocation() {
+        const hotspot = this.getRandomHotspot();
+        
+        // Random point within hotspot radius
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * hotspot.radius;
+        
+        const lat = hotspot.lat + (distance * Math.cos(angle));
+        const lon = hotspot.lon + (distance * Math.sin(angle));
+        
+        console.log(`📍 Einsatz generiert in Hotspot: ${hotspot.name}`);
+        
+        return {
+            lat: lat,
+            lon: lon,
+            hotspot: hotspot.name
+        };
+    },
+
+    // ✅ NEU: Random Phone Number Generator
+    generatePhoneNumber() {
+        const prefixes = ['0711', '07151', '07144', '07181', '07195']; // BW Vorwahlen
+        const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const number = Math.floor(Math.random() * 9000000) + 1000000; // 7-stellig
+        const formatted = String(number).slice(0, 3) + ' ' + String(number).slice(3);
+        return `${prefix} ${formatted}`;
     },
 
     async generateIncomingCall() {
@@ -32,24 +114,34 @@ const CallSystem = {
         console.group('📞 GENERATING CALL WITH GEOCODING');
 
         try {
-            const callData = await this.createCallWithGroq();
+            // ✅ NEU: Generate location from hotspot
+            const location = this.generateRandomLocation();
+            
+            // Reverse Geocode
+            console.log('🗺️ Hole echte Adresse für Koordinaten:', location);
+            const realAddress = await this.reverseGeocode(location.lat, location.lon);
+            
+            if (realAddress) {
+                console.log('✅ Echte Adresse:', realAddress);
+            } else {
+                console.warn('⚠️ Geocoding fehlgeschlagen, nutze Hotspot-Name');
+            }
+
+            // Generate call data with Groq
+            const callData = await this.createCallWithGroq(location, realAddress);
             if (!callData) {
                 this.isGenerating = false;
                 console.groupEnd();
                 return;
             }
 
-            // REVERSE GEOCODING: Koordinaten → Adresse
-            console.log('🗺️ Hole echte Adresse für Koordinaten:', callData.einsatz.koordinaten);
-            const realAddress = await this.reverseGeocode(callData.einsatz.koordinaten.lat, callData.einsatz.koordinaten.lon);
+            // ✅ NEU: Setze Random Telefonnummer
+            callData.anrufer.telefon = this.generatePhoneNumber();
             
-            if (realAddress) {
-                console.log('✅ Echte Adresse:', realAddress);
-                callData.einsatz.ort = realAddress;
-                callData.antworten.ort = realAddress;
-            } else {
-                console.warn('⚠️ Geocoding fehlgeschlagen, nutze AI-Adresse');
-            }
+            // Set location data
+            callData.einsatz.koordinaten = { lat: location.lat, lon: location.lon };
+            callData.einsatz.ort = realAddress || location.hotspot;
+            callData.antworten.ort = realAddress || location.hotspot;
 
             this.showIncomingCallInSidebar(callData);
             console.groupEnd();
@@ -94,7 +186,7 @@ const CallSystem = {
         }
     },
 
-    async createCallWithGroq() {
+    async createCallWithGroq(location, address) {
         const currentTime = IncidentNumbering.getCurrentTimestamp();
         const hour = parseInt(currentTime.split(':')[0]);
         
@@ -109,15 +201,8 @@ const CallSystem = {
 
 Session: ${randomSeed}
 Uhrzeit: ${currentTime} (${timeOfDay})
+Ort: ${address || location.hotspot}
 SZENARIEN: ${scenarios.join(', ')}
-
-WICHTIG FÜR KOORDINATEN:
-- Rems-Murr-Kreis: Latitude 48.8 - 49.0, Longitude 9.2 - 9.6
-- Waiblingen: ~48.83, 9.32
-- Backnang: ~48.95, 9.43
-- Winnenden: ~48.88, 9.40
-- Schorndorf: ~48.81, 9.53
-- Fellbach: ~48.81, 9.27
 
 WICHTIG FÜR ANRUFER-ANTWORTEN:
 - Länge: 5-15 Wörter pro Antwort
@@ -138,11 +223,11 @@ ANTWORTE NUR als JSON:
 {
   "anrufer": {
     "name": "Vor- Nachname",
-    "telefon": "0151-XXXXXXX",
+    "telefon": "DUMMY",
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "antworten": {
-    "ort": "DUMMY",
+    "ort": "${address || location.hotspot}",
     "was_passiert": "Längere emotionale Beschreibung (8-15 Wörter)",
     "wie_viele": "Eine Person" / "Zwei Leute" / "Drei oder vier, weiß nicht genau",
     "bewusstsein": "Ja, wach" / "Nein, reagiert nicht" / "Also... er macht die Augen auf, aber antwortet nicht richtig",
@@ -169,7 +254,8 @@ ANTWORTE NUR als JSON:
   },
   "einsatz": {
     "stichwort": "Passendes Stichwort (Herzinfarkt/Unfall/Sturz/etc.)",
-    "koordinaten": {"lat": 48.XXX, "lon": 9.XXX}
+    "koordinaten": {"lat": ${location.lat}, "lon": ${location.lon}},
+    "ort": "${address || location.hotspot}"
   },
   "empfehlung": {
     "rtw": 1,
@@ -439,7 +525,6 @@ ANTWORTE NUR als JSON:
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
 
-            // Update Meldebild nach Fragen
             this.updateMeldebild();
         }, 1000);
     },
@@ -448,7 +533,6 @@ ANTWORTE NUR als JSON:
         const meldebildTextarea = document.getElementById('protocol-meldebild');
         if (!meldebildTextarea) return;
 
-        // Generiere Meldebild aus gestellten Fragen
         const parts = [];
         
         if (this.askedQuestions.includes('was_passiert')) {
@@ -619,13 +703,11 @@ ANTWORTE NUR als JSON:
             completed: false
         };
 
-        // NUR zu GAME_DATA hinzufügen (nicht doppelt!)
         if (!GAME_DATA.incidents.find(i => i.id === incident.id)) {
             GAME_DATA.incidents.push(incident);
             console.log('✅ Einsatz hinzugefügt:', incident.id);
         }
 
-        // Fahrzeuge disponieren
         this.selectedVehicles.forEach(vId => {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (vehicle) {
@@ -634,7 +716,6 @@ ANTWORTE NUR als JSON:
                 vehicle.incident = incident.id;
                 vehicle.targetLocation = incident.koordinaten;
 
-                // VehicleMovement starten
                 if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
                     console.log(`🛫 Starte Bewegung für ${vehicle.callsign}`);
                     VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
@@ -644,7 +725,6 @@ ANTWORTE NUR als JSON:
             }
         });
 
-        // Funkspruch (NUR EINMAL!)
         const vehicleNames = this.selectedVehicles.map(vId => {
             const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
             return v ? v.callsign : '';
@@ -655,7 +735,6 @@ ANTWORTE NUR als JSON:
             addRadioMessage(msg, 'dispatcher');
         }
 
-        // UI aktualisieren
         if (typeof updateUI === 'function') {
             updateUI();
         }
