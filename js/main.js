@@ -1,5 +1,5 @@
 // =========================
-// HAUPTSTEUERUNG v3.7.0 - BUGFIXES
+// HAUPTSTEUERUNG v3.8.0 - NO SPEED SPAM
 // =========================
 
 let gamePaused = false;
@@ -92,7 +92,6 @@ function startNewGame(mode) {
     startGameLoop();
     
     addRadioMessage('System', `🚑 ILS Waiblingen - ${mode === 'free' ? 'Freies Spiel' : 'Karrieremodus'} gestartet`);
-    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
     addRadioMessage('System', '🤖 Einsätze werden jetzt mit KI generiert');
 }
 
@@ -107,14 +106,12 @@ function togglePause() {
         icon.classList.add('fa-play');
         btn.title = 'Fortsetzen';
         btn.style.background = '#28a745';
-        addRadioMessage('System', '⏸️ Spiel pausiert');
         console.log('⏸️ Spiel pausiert');
     } else {
         icon.classList.remove('fa-play');
         icon.classList.add('fa-pause');
         btn.title = 'Pausieren';
         btn.style.background = '';
-        addRadioMessage('System', '▶️ Spiel fortgesetzt');
         console.log('▶️ Spiel fortgesetzt');
     }
 }
@@ -276,7 +273,7 @@ function saveSettings() {
     closeSettings();
     alert('✅ Einstellungen gespeichert!');
     
-    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${speed}x`);
+    // KEINE Radio-Meldung bei Einstellungen!
     console.log(`⏱️ Neue Geschwindigkeit: ${speed}x`);
 }
 
@@ -328,12 +325,12 @@ function cycleGameSpeed() {
     
     localStorage.setItem('gameSpeed', nextSpeed);
     
-    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${nextSpeed}x`);
+    // KEINE Radio-Meldung beim Wechseln der Geschwindigkeit!
     console.log(`⏱️ Neue Geschwindigkeit: ${nextSpeed}x`);
 }
 
 function openShop() {
-    alert('🛒️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
+    alert('🛍️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
 }
 
 function startTutorial() {
@@ -373,7 +370,7 @@ function addRadioMessage(sender, message) {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v3.7.0 geladen');
+    console.log('🚀 ILS Waiblingen Simulator v3.8.0 geladen');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
