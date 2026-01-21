@@ -8,7 +8,12 @@ let vehicleMarkers = [];
 let stationsVisible = true;
 
 function initMap() {
-    if (map) return;
+    if (map) {
+        console.log('⚠️ Map already initialized');
+        return;
+    }
+    
+    console.log('🗺️ Initialisiere Karte...');
     
     map = L.map('map', {
         center: CONFIG.MAP_CENTER,
@@ -18,33 +23,64 @@ function initMap() {
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+        attribution: '© OpenStreetMap',
+        maxZoom: 19
     }).addTo(map);
     
+    console.log('✅ Karte erstellt, erstelle Wachen-Marker...');
     createStationMarkers();
+    
+    console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
 }
 
 function createStationMarkers() {
+    // Lösche alte Marker
+    stationMarkers.forEach(m => {
+        if (map.hasLayer(m)) {
+            map.removeLayer(m);
+        }
+    });
+    stationMarkers = [];
+    
+    let count = 0;
     Object.values(STATIONS).forEach(station => {
+        const pos = station.position;
+        
+        // Validierung der Koordinaten
+        if (!pos || pos.length !== 2 || isNaN(pos[0]) || isNaN(pos[1])) {
+            console.error(`❌ Ungültige Position für ${station.name}:`, pos);
+            return;
+        }
+        
+        console.log(`📍 Erstelle Marker für ${station.name} bei [${pos[0]}, ${pos[1]}]`);
+        
         const iconHtml = createStationPixelIcon(station.category);
         
-        const marker = L.marker(station.position, {
-            icon: L.divIcon({
-                html: iconHtml,
-                className: 'station-marker',
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
-            })
-        }).addTo(map);
-        
-        marker.bindPopup(`
-            <strong>${station.name}</strong><br>
-            ${station.address}<br>
-            <small>${station.category} (${station.type})</small>
-        `);
-        
-        stationMarkers.push(marker);
+        try {
+            const marker = L.marker([pos[0], pos[1]], {
+                icon: L.divIcon({
+                    html: iconHtml,
+                    className: 'station-marker',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 40]
+                })
+            });
+            
+            marker.bindPopup(`
+                <strong>${station.name}</strong><br>
+                ${station.address}<br>
+                <small>${station.category} (${station.type})</small>
+            `);
+            
+            marker.addTo(map);
+            stationMarkers.push(marker);
+            count++;
+        } catch (error) {
+            console.error(`❌ Fehler beim Erstellen von Marker ${station.name}:`, error);
+        }
     });
+    
+    console.log(`✅ ${count} von ${Object.keys(STATIONS).length} Wachen erfolgreich erstellt`);
 }
 
 function toggleStations() {
@@ -52,11 +88,17 @@ function toggleStations() {
     
     stationMarkers.forEach(marker => {
         if (stationsVisible) {
-            map.addLayer(marker);
+            if (!map.hasLayer(marker)) {
+                map.addLayer(marker);
+            }
         } else {
-            map.removeLayer(marker);
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
         }
     });
+    
+    console.log(`🏥 Wachen ${stationsVisible ? 'eingeblendet' : 'ausgeblendet'}`);
 }
 
 function createStationPixelIcon(category) {
@@ -140,53 +182,65 @@ function createVehiclePixelIcon(type) {
 }
 
 function updateMap() {
+    if (!map || !game) return;
+    
     // Lösche alte Fahrzeugmarker
-    vehicleMarkers.forEach(m => map.removeLayer(m));
+    vehicleMarkers.forEach(m => {
+        if (map.hasLayer(m)) {
+            map.removeLayer(m);
+        }
+    });
     vehicleMarkers = [];
     
     // Erstelle neue Fahrzeugmarker NUR für unterwegs/im Einsatz
-    if (!game) return;
+    const activeVehicles = game.vehicles.filter(v => 
+        v.owned && (v.status === 'dispatched' || v.status === 'on-scene')
+    );
     
-    game.vehicles.filter(v => v.owned && (v.status === 'dispatched' || v.status === 'on-scene')).forEach(vehicle => {
+    activeVehicles.forEach(vehicle => {
+        const pos = vehicle.position;
+        
+        if (!pos || pos.length !== 2 || isNaN(pos[0]) || isNaN(pos[1])) {
+            console.warn(`⚠️ Ungültige Fahrzeugposition für ${vehicle.name}:`, pos);
+            return;
+        }
+        
         const iconHtml = createVehiclePixelIcon(vehicle.type);
         
-        const marker = L.marker(vehicle.position, {
-            icon: L.divIcon({
-                html: iconHtml,
-                className: 'vehicle-marker',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28]
-            }),
-            zIndexOffset: 1000
-        }).addTo(map);
-        
-        const statusText = {
-            'available': 'Verfügbar',
-            'dispatched': 'Unterwegs',
-            'on-scene': 'Vor Ort'
-        };
-        
-        marker.bindPopup(`
-            <strong>${vehicle.name}</strong><br>
-            Status: ${statusText[vehicle.status] || vehicle.status}<br>
-            <small>${vehicle.type}</small>
-        `);
-        
-        vehicleMarkers.push(marker);
+        try {
+            const marker = L.marker([pos[0], pos[1]], {
+                icon: L.divIcon({
+                    html: iconHtml,
+                    className: 'vehicle-marker',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 28]
+                }),
+                zIndexOffset: 1000
+            });
+            
+            const statusText = {
+                'available': 'Verfügbar',
+                'dispatched': 'Unterwegs',
+                'on-scene': 'Vor Ort'
+            };
+            
+            marker.bindPopup(`
+                <strong>${vehicle.name}</strong><br>
+                Status: ${statusText[vehicle.status] || vehicle.status}<br>
+                <small>${vehicle.type}</small>
+            `);
+            
+            marker.addTo(map);
+            vehicleMarkers.push(marker);
+        } catch (error) {
+            console.error(`❌ Fehler beim Erstellen von Fahrzeugmarker ${vehicle.name}:`, error);
+        }
     });
 }
 
 function centerMap() {
     if (map) {
         map.setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
+        console.log('📍 Karte zentriert auf Waiblingen');
     }
-}
-
-function lightenColor(hex, percent) {
-    const num = parseInt(hex, 16);
-    const amt = Math.round(2.55 * percent);
-    const R = (num >> 16) + amt;
-    const G = (num >> 8 & 0x00FF) + amt;
-    const B = (num & 0x0000FF) + amt;
-    return (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
 }
