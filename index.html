@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
-    <link rel="stylesheet" href="css/style.css?v=4.3.0">
+    <link rel="stylesheet" href="css/style.css?v=4.8.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/map-icons.css?v=4.3.0">
-    <link rel="stylesheet" href="css/draggable.css?v=4.3.0">
-    <link rel="stylesheet" href="css/tabs.css?v=4.3.0">
-    <link rel="stylesheet" href="css/call-system.css?v=4.3.0">
+    
+    <!-- ✅ LEAFLET ROUTING MACHINE CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <link rel="stylesheet" href="css/map-icons.css?v=4.8.0">
+    <link rel="stylesheet" href="css/draggable.css?v=4.8.0">
+    <link rel="stylesheet" href="css/tabs.css?v=4.8.0">
+    <link rel="stylesheet" href="css/call-system.css?v=4.8.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -221,45 +225,48 @@
         </div>
     </div>
 
-    <!-- Skripte mit Cache-Busting v4.3.0 -->
+    <!-- Skripte mit Cache-Busting v4.8.0 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- ✅ LEAFLET ROUTING MACHINE JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
     <!-- NEUE MODULE: Kern-Systeme (ZUERST) -->
-    <script src="js/config.js?v=4.3.0"></script>
-    <script src="js/incident-numbering.js?v=4.3.0"></script>
-    <script src="js/vehicle-analyzer.js?v=4.3.0"></script>
-    <script src="js/address-service.js?v=4.3.0"></script>
+    <script src="js/config.js?v=4.8.0"></script>
+    <script src="js/incident-numbering.js?v=4.8.0"></script>
+    <script src="js/vehicle-analyzer.js?v=4.8.0"></script>
+    <script src="js/address-service.js?v=4.8.0"></script>
     
     <!-- NEUE MODULE: UI-Systeme -->
-    <script src="js/ui-helpers.js?v=4.3.0"></script>
-    <script src="js/notification-system.js?v=4.3.0"></script>
-    <script src="js/scoring-system.js?v=4.3.0"></script>
+    <script src="js/ui-helpers.js?v=4.8.0"></script>
+    <script src="js/notification-system.js?v=4.8.0"></script>
+    <script src="js/scoring-system.js?v=4.8.0"></script>
     
     <!-- NEUE MODULE: Haupt-Logik -->
-    <script src="js/call-system.js?v=4.3.0"></script>
-    <script src="js/protocol-form.js?v=4.3.0"></script>
-    <script src="js/assignment-ui.js?v=4.3.0"></script>
-    <script src="js/groq-validator.js?v=4.3.0"></script>
+    <script src="js/call-system.js?v=4.8.0"></script>
+    <script src="js/protocol-form.js?v=4.8.0"></script>
+    <script src="js/assignment-ui.js?v=4.8.0"></script>
+    <script src="js/groq-validator.js?v=4.8.0"></script>
     
     <!-- MANUAL INCIDENT SYSTEM -->
-    <script src="js/manual-incident.js?v=4.3.0"></script>
+    <script src="js/manual-incident.js?v=4.8.0"></script>
     
     <!-- VEHICLE MOVEMENT SYSTEM -->
-    <script src="js/vehicle-movement.js?v=4.3.0"></script>
+    <script src="js/vehicle-movement.js?v=4.8.0"></script>
     
     <!-- BESTEHENDE MODULE (nach neuen Modulen) -->
-    <script src="js/data.js?v=4.3.0"></script>
-    <script src="js/map.js?v=4.3.0"></script>
-    <script src="js/game.js?v=4.3.0"></script>
-    <script src="js/incidents.js?v=4.3.0"></script>
-    <script src="js/ai.js?v=4.3.0"></script>
-    <script src="js/tutorial.js?v=4.3.0"></script>
-    <script src="js/ui.js?v=4.3.0"></script>
-    <script src="js/tabs.js?v=4.3.0"></script>
-    <script src="js/draggable.js?v=4.3.0"></script>
-    <script src="js/main.js?v=4.3.0"></script>
+    <script src="js/data.js?v=4.8.0"></script>
+    <script src="js/map.js?v=4.8.0"></script>
+    <script src="js/game.js?v=4.8.0"></script>
+    <script src="js/incidents.js?v=4.8.0"></script>
+    <script src="js/ai.js?v=4.8.0"></script>
+    <script src="js/tutorial.js?v=4.8.0"></script>
+    <script src="js/ui.js?v=4.8.0"></script>
+    <script src="js/tabs.js?v=4.8.0"></script>
+    <script src="js/draggable.js?v=4.8.0"></script>
+    <script src="js/main.js?v=4.8.0"></script>
     
     <!-- INTEGRATION BRIDGE (ZULETZT) -->
-    <script src="js/bridge.js?v=4.3.0"></script>
+    <script src="js/bridge.js?v=4.8.0"></script>
 </body>
 </html>
