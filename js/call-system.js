@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v2.5
-// Realistic Caller Responses
+// EMERGENCY CALL SYSTEM v3.0
+// Reverse Geocoding + Realistic Responses
 // =========================
 
 const CallSystem = {
@@ -12,7 +12,7 @@ const CallSystem = {
     selectedVehicles: [],
 
     initialize() {
-        console.log('📞 Call System v2.5 initialisiert');
+        console.log('📞 Call System v3.0 mit Reverse Geocoding initialisiert');
         this.setupRingtone();
     },
 
@@ -28,7 +28,7 @@ const CallSystem = {
         }
 
         this.isGenerating = true;
-        console.group('📞 GENERATING CALL');
+        console.group('📞 GENERATING CALL WITH GEOCODING');
 
         try {
             const callData = await this.createCallWithGroq();
@@ -38,6 +38,18 @@ const CallSystem = {
                 return;
             }
 
+            // REVERSE GEOCODING: Koordinaten → Adresse
+            console.log('🗺️ Hole echte Adresse für Koordinaten:', callData.einsatz.koordinaten);
+            const realAddress = await this.reverseGeocode(callData.einsatz.koordinaten.lat, callData.einsatz.koordinaten.lon);
+            
+            if (realAddress) {
+                console.log('✅ Echte Adresse:', realAddress);
+                callData.einsatz.ort = realAddress;
+                callData.antworten.ort = realAddress;
+            } else {
+                console.warn('⚠️ Geocoding fehlgeschlagen, nutze AI-Adresse');
+            }
+
             this.showIncomingCallInSidebar(callData);
             console.groupEnd();
         } catch (error) {
@@ -45,6 +57,43 @@ const CallSystem = {
             console.groupEnd();
         } finally {
             this.isGenerating = false;
+        }
+    },
+
+    /**
+     * REVERSE GEOCODING via Nominatim (OpenStreetMap)
+     */
+    async reverseGeocode(lat, lon) {
+        try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'ILS-Waiblingen-Simulator/1.0'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('❌ Nominatim Error:', response.status);
+                return null;
+            }
+
+            const data = await response.json();
+            
+            if (!data || !data.address) {
+                console.error('❌ Keine Adresse gefunden');
+                return null;
+            }
+
+            // Adresse formatieren
+            const addr = data.address;
+            const street = addr.road || addr.pedestrian || addr.footway || 'Unbekannte Straße';
+            const houseNumber = addr.house_number || '';
+            const city = addr.city || addr.town || addr.village || 'Waiblingen';
+            
+            return `${street} ${houseNumber}, ${city}`.trim();
+        } catch (error) {
+            console.error('❌ Geocoding Fehler:', error);
+            return null;
         }
     },
 
@@ -58,32 +107,49 @@ const CallSystem = {
 
         const randomSeed = Math.random().toString(36).substring(2, 15);
         const scenarios = this.getRandomScenarios();
-        const locations = this.getRandomLocations();
 
         const prompt = `Erstelle einen realistischen Notruf für ILS Rems-Murr-Kreis.
 
 Session: ${randomSeed}
 Uhrzeit: ${currentTime} (${timeOfDay})
-VORSCHLÄGE: ${scenarios.join(', ')}
-ORTE: ${locations.join(', ')}
+SZENARIEN: ${scenarios.join(', ')}
 
-WICHTIG FÜR ANTWORTEN:
-- Kurz und bündig (2-8 Wörter)
-- Umgangssprache verwenden
-- Emotionen zeigen (Panik, Sorge, Verwirrung)
-- Realistische Formulierungen wie "Ich weiß nicht genau", "Glaub schon", "Kann ich nicht sagen"
-- Bei Unsicherheit: vage Antworten
-- Keine medizinischen Fachbegriffe vom Anrufer
+WICHTIG FÜR KOORDINATEN:
+- Rems-Murr-Kreis: Latitude 48.8 - 49.0, Longitude 9.2 - 9.6
+- Waiblingen: ~48.83, 9.32
+- Backnang: ~48.95, 9.43
+- Winnenden: ~48.88, 9.40
+- Schorndorf: ~48.81, 9.53
+- Fellbach: ~48.81, 9.27
+
+WICHTIG FÜR ANRUFER-ANTWORTEN:
+- Länge: 5-15 Wörter pro Antwort
+- Umgangssprache und Dialekt erlaubt
+- Emotionen zeigen (Panik, Sorge, Nervosität)
+- Realistische Sätze wie:
+  * "Ich weiß es nicht genau, aber..."
+  * "Also... äh... ich glaub schon"
+  * "Moment, ich schau nochmal... ja!"
+  * "Kann ich nicht sagen, ich seh das nicht"
+  * "Er sagt, es tut wahnsinnig weh"
+  * "Die blutet ganz stark am Kopf"
+- KEINE medizinischen Fachbegriffe!
+- Bei Unsicherheit: vage bleiben
+- Realistisch stocken/wiederholen
 
 BEISPIELE FÜR GUTE ANTWORTEN:
-❌ SCHLECHT: "Der Patient hat eine Tachykardie"
-✅ GUT: "Sein Herz rast total!"
 
-❌ SCHLECHT: "Ja, die Atmung ist regelrecht"
-✅ GUT: "Ja, er atmet noch"
+❌ SCHLECHT (zu kurz/fachlich):
+- "Der Patient hat eine Tachykardie"
+- "Ja"
+- "Nein"
 
-❌ SCHLECHT: "Keine Vorerkrankungen bekannt"
-✅ GUT: "Weiß ich nicht" oder "Glaub nicht"
+✅ GUT (realistisch/emotional):
+- "Also sein Herz rast total, der ist ganz blass im Gesicht!"
+- "Ja, er atmet noch, aber ganz flach und komisch"
+- "Weiß ich nicht... moment... nee, ich glaub nicht"
+- "Der schreit vor Schmerzen in der Brust, das ist schlimm!"
+- "Äh... also... ich hab keine Ahnung ehrlich gesagt"
 
 ANTWORTE NUR als JSON:
 {
@@ -93,36 +159,35 @@ ANTWORTE NUR als JSON:
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "antworten": {
-    "ort": "Genaue Adresse in Waiblingen/Winnenden/Schorndorf/Backnang/Fellbach",
-    "was_passiert": "Kurze emotionale Beschreibung (max 10 Wörter)",
-    "wie_viele": "Eine Person" oder "Zwei Personen" etc.,
-    "bewusstsein": "Ja" / "Nein" / "Reagiert nicht mehr",
-    "atmung": "Ja" / "Weiß nicht" / "Ganz schwach",
-    "blutung": "Ja, stark" / "Ein bisschen" / "Nein",
-    "schmerzen": "In der Brust" / "Überall" / "Weiß nicht",
-    "vorerkrankungen": "Weiß ich nicht" / "Herz, glaub ich" / "Keine Ahnung",
-    "medikamente": "Keine Ahnung" / "Irgendwelche Pillen" / "Weiß nicht",
-    "allergien": "Weiß nicht" / "Glaub nicht" / "Keine",
-    "schwangerschaft": "Nein" / "Weiß nicht",
-    "diabetes": "Weiß nicht" / "Ja, hat er" / "Glaub nicht",
-    "epilepsie": "Nein" / "Weiß nicht",
-    "herzerkrankung": "Weiß nicht" / "Ja" / "Glaub schon",
-    "sturz_hoehe": "Von der Treppe" / "Vielleicht 2 Meter" / "Weiß nicht",
-    "aufprall": "Auf dem Boden" / "Mit dem Kopf" / "Weiß nicht",
-    "eingeklemmt": "Ja!" / "Nein",
-    "airbag": "Ja" / "Nein" / "Weiß nicht",
-    "feuer": "Nein" / "Ja, es raucht!" / "Nein",
+    "ort": "DUMMY - wird ersetzt",
+    "was_passiert": "Längere emotionale Beschreibung (8-15 Wörter)",
+    "wie_viele": "Eine Person" / "Zwei Leute" / "Drei oder vier, weiß nicht genau",
+    "bewusstsein": "Ja, wach" / "Nein, reagiert nicht" / "Also... er macht die Augen auf, aber antwortet nicht richtig",
+    "atmung": "Ja, atmet normal" / "Weiß nicht genau... scheint schwach zu sein" / "Ja, aber ganz schnell und flach",
+    "blutung": "Ja, ganz stark am Kopf!" / "Ein bisschen, aber nicht viel" / "Nein, sehe keine",
+    "schmerzen": "Sagt er hat wahnsinnige Schmerzen in der Brust" / "Am ganzen Körper" / "Weiß nicht, kann nicht sprechen",
+    "vorerkrankungen": "Keine Ahnung, ich kenn den nicht" / "Der hat was am Herzen, glaub ich" / "Weiß ich nicht genau",
+    "medikamente": "Keine Ahnung ehrlich" / "Ja, irgendwelche Pillen, weiß aber nicht was" / "Weiß nicht",
+    "allergien": "Weiß ich nicht" / "Glaub nicht, aber sicher bin ich nicht" / "Keine, hat er gesagt",
+    "schwangerschaft": "Nein" / "Weiß ich nicht" / "Glaub nicht",
+    "diabetes": "Moment... ja, der ist Diabetiker!" / "Weiß nicht" / "Glaub schon, ja",
+    "epilepsie": "Nein, glaub nicht" / "Weiß ich nicht",
+    "herzerkrankung": "Ja, der hatte schon mal einen Infarkt!" / "Weiß nicht" / "Kann sein, bin nicht sicher",
+    "sturz_hoehe": "Von der Leiter, vielleicht 3 Meter" / "Die ganze Treppe runter" / "Weiß nicht genau",
+    "aufprall": "Mit dem Kopf auf den Boden" / "Auf die Seite" / "Weiß nicht, hab's nicht gesehen",
+    "eingeklemmt": "Ja, zwischen den Autos!" / "Nein",
+    "airbag": "Ja, ist raus" / "Nein" / "Weiß nicht",
+    "feuer": "Nein" / "Ja, es raucht ganz stark!" / "Nein, kein Feuer",
     "gefahrstoffe": "Nein" / "Weiß nicht",
     "waffe": "Nein",
-    "gewalt": "Nein" / "Weiß nicht",
-    "erreichbarkeit": "Ganz normal" / "Hinterhof" / "2. Stock",
-    "stockwerk": "Erdgeschoss" / "3. Stock" / "Weiß nicht"
+    "gewalt": "Nein" / "Weiß ich nicht",
+    "erreichbarkeit": "Ganz normal von der Straße" / "Im Hinterhof, durch das Tor" / "Im 3. Stock, Aufzug geht",
+    "stockwerk": "Erdgeschoss" / "4. Stock, links" / "Weiß nicht genau"
   },
   "einsatz": {
-    "stichwort": "Passendes Stichwort",
-    "ort": "Straße Nummer, Stadt (MUSS eine der genannten Städte sein!)",
-    "koordinaten": {"lat": 48.xxx, "lon": 9.xxx},
-    "meldebild": "Zusammenfassung"
+    "stichwort": "Passendes Stichwort (Herzinfarkt/Unfall/Sturz/etc.)",
+    "koordinaten": {"lat": 48.XXX, "lon": 9.XXX},
+    "meldebild": "Kurze Zusammenfassung (max 20 Wörter)"
   },
   "empfehlung": {
     "rtw": 1,
@@ -149,14 +214,6 @@ ANTWORTE NUR als JSON:
         return all.sort(() => 0.5 - Math.random()).slice(0, 3);
     },
 
-    getRandomLocations() {
-        const all = [
-            'Hauptstraße, Waiblingen', 'Bahnhof Backnang', 'Sportplatz Winnenden',
-            'Freibad Schorndorf', 'Industriegebiet Fellbach'
-        ];
-        return all.sort(() => 0.5 - Math.random()).slice(0, 2);
-    },
-
     async callGroqAPI(prompt) {
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
         if (!apiKey) {
@@ -176,7 +233,7 @@ ANTWORTE NUR als JSON:
                     { role: 'system', content: 'Antworte NUR als JSON ohne Text drumherum.' },
                     { role: 'user', content: prompt }
                 ],
-                temperature: 1.0,
+                temperature: 1.2,
                 response_format: { type: 'json_object' }
             })
         });
