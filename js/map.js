@@ -6,6 +6,7 @@ let map = null;
 let stationMarkers = [];
 let vehicleMarkers = [];
 let stationsVisible = true;
+let stationsInitialized = false; // NEU: Flag zum Verhindern doppelter Initialisierung
 
 function initMap() {
     if (map) {
@@ -30,6 +31,7 @@ function initMap() {
     
     console.log('✅ Karte erstellt, erstelle Wachen-Marker...');
     createStationMarkers();
+    stationsInitialized = true; // WICHTIG: Marker sind jetzt erstellt
     
     console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
 }
@@ -64,7 +66,13 @@ function getFMSStatusNumber(vehicle) {
 }
 
 function createStationMarkers() {
-    // Lösche alte Marker
+    // PERFORMANCE-FIX: Erstelle Marker nur einmal!
+    if (stationsInitialized) {
+        console.log('⚡ Wachen-Marker bereits erstellt, überspringe');
+        return;
+    }
+    
+    // Lösche alte Marker (nur beim ersten Mal)
     stationMarkers.forEach(m => {
         if (map.hasLayer(m)) {
             map.removeLayer(m);
@@ -96,74 +104,15 @@ function createStationMarkers() {
                 })
             });
             
-            // Finde alle Fahrzeuge dieser Wache
-            const stationVehicles = VEHICLES.filter(v => v.station === station.id && v.owned);
-            
-            // Formatiere Kategorie
-            const categoryText = {
-                'rettungswache': 'Rettungswache',
-                'notarztwache': 'Notarztwache',
-                'ortsverein': 'Ortsverein'
-            }[station.category] || station.category;
-            
-            // Formatiere Typ
-            const typeText = {
-                'hauptamt': 'Hauptamt',
-                'ehrenamt': 'Ehrenamt'
-            }[station.type] || station.type;
-            
-            // Erstelle Fahrzeugliste mit FMS-Status
-            let vehicleListHtml = '';
-            if (stationVehicles.length > 0) {
-                vehicleListHtml = `
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
-                        <strong>🚑 Fahrzeuge (${stationVehicles.length}):</strong><br>
-                        <div style="margin-top: 5px;">
-                            ${stationVehicles.map(v => {
-                                const fms = getFMSStatus(v);
-                                const fmsNumber = getFMSStatusNumber(v);
-                                return `
-                                    <div style="display: flex; align-items: center; margin: 3px 0; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid ${fms.color};">
-                                        <span style="font-size: 0.9em; margin-right: 5px;">${fms.icon}</span>
-                                        <div style="flex: 1;">
-                                            <div style="font-size: 0.85em; font-weight: bold;">${v.callsign}</div>
-                                            <div style="font-size: 0.75em; color: ${fms.color};">
-                                                <strong>Status ${fmsNumber}</strong> | ${fms.name}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            } else {
-                vehicleListHtml = `
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
-                        <small style="color: #888;">Keine Fahrzeuge stationiert</small>
-                    </div>
-                `;
-            }
-            
-            marker.bindPopup(`
-                <div style="min-width: 250px;">
-                    <strong style="font-size: 1.1em;">${station.name}</strong><br>
-                    <small style="color: #a0a0a0;">${station.address}</small><br>
-                    <div style="margin-top: 5px;">
-                        <span style="background: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">
-                            ${categoryText}
-                        </span>
-                        <span style="background: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-left: 5px;">
-                            ${typeText}
-                        </span>
-                    </div>
-                    ${vehicleListHtml}
-                </div>
-            `, {
-                maxWidth: 350,
-                className: 'station-popup',
-                autoClose: false,        // Popup bleibt offen
-                closeOnClick: false      // Schließt nicht beim Klicken auf Karte
+            // Popup-Content wird dynamisch beim Öffnen generiert
+            marker.on('click', function() {
+                const popupContent = generateStationPopupContent(station);
+                marker.bindPopup(popupContent, {
+                    maxWidth: 350,
+                    className: 'station-popup',
+                    autoClose: false,
+                    closeOnClick: false
+                }).openPopup();
             });
             
             marker.addTo(map);
@@ -175,6 +124,73 @@ function createStationMarkers() {
     });
     
     console.log(`✅ ${count} von ${Object.keys(STATIONS).length} Wachen erfolgreich erstellt`);
+}
+
+function generateStationPopupContent(station) {
+    // Finde alle Fahrzeuge dieser Wache (Live-Daten!)
+    const stationVehicles = VEHICLES.filter(v => v.station === station.id && v.owned);
+    
+    // Formatiere Kategorie
+    const categoryText = {
+        'rettungswache': 'Rettungswache',
+        'notarztwache': 'Notarztwache',
+        'ortsverein': 'Ortsverein'
+    }[station.category] || station.category;
+    
+    // Formatiere Typ
+    const typeText = {
+        'hauptamt': 'Hauptamt',
+        'ehrenamt': 'Ehrenamt'
+    }[station.type] || station.type;
+    
+    // Erstelle Fahrzeugliste mit FMS-Status
+    let vehicleListHtml = '';
+    if (stationVehicles.length > 0) {
+        vehicleListHtml = `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
+                <strong>🚑 Fahrzeuge (${stationVehicles.length}):</strong><br>
+                <div style="margin-top: 5px;">
+                    ${stationVehicles.map(v => {
+                        const fms = getFMSStatus(v);
+                        const fmsNumber = getFMSStatusNumber(v);
+                        return `
+                            <div style="display: flex; align-items: center; margin: 3px 0; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid ${fms.color};">
+                                <span style="font-size: 0.9em; margin-right: 5px;">${fms.icon}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.85em; font-weight: bold;">${v.callsign}</div>
+                                    <div style="font-size: 0.75em; color: ${fms.color};">
+                                        <strong>Status ${fmsNumber}</strong> | ${fms.name}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    } else {
+        vehicleListHtml = `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
+                <small style="color: #888;">Keine Fahrzeuge stationiert</small>
+            </div>
+        `;
+    }
+    
+    return `
+        <div style="min-width: 250px;">
+            <strong style="font-size: 1.1em;">${station.name}</strong><br>
+            <small style="color: #a0a0a0;">${station.address}</small><br>
+            <div style="margin-top: 5px;">
+                <span style="background: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">
+                    ${categoryText}
+                </span>
+                <span style="background: #2d3748; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-left: 5px;">
+                    ${typeText}
+                </span>
+            </div>
+            ${vehicleListHtml}
+        </div>
+    `;
 }
 
 function toggleStations() {
@@ -337,10 +353,7 @@ function updateMap() {
         }
     });
     
-    // Aktualisiere auch die Wachen-Popups (für Live-Status)
-    if (stationsVisible) {
-        createStationMarkers();
-    }
+    // ENTFERNT: createStationMarkers() - Wachen werden nur einmal bei initMap() erstellt!
 }
 
 // Alias für Kompatibilität mit main.js
