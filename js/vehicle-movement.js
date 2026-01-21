@@ -1,7 +1,6 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v2
-// Fahrzeuge fahren zu Einsätzen
-// FIX: Keine Speed-Spam Meldungen
+// VEHICLE MOVEMENT SYSTEM v2.1
+// FMS-Status Meldungen im Funk
 // =========================
 
 const VehicleMovement = {
@@ -11,7 +10,7 @@ const VehicleMovement = {
     UPDATE_INTERVAL_MS: 100, // Update alle 100ms
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v2 initialisiert');
+        console.log('🚑 Vehicle Movement System v2.1 initialisiert');
         this.startUpdateLoop();
     },
 
@@ -45,7 +44,7 @@ const VehicleMovement = {
         const startPos = station.position;
         console.log(`🚑 ${vehicle.callsign} fährt von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}]`);
 
-        // FMS 3 - Einsatzfahrt (OHNE Funkspruch hier, nur im alarmSelectedVehicles)
+        // FMS 3 - Einsatzfahrt (wird bereits beim Alarmieren gesendet)
         vehicle.currentStatus = 3;
         vehicle.status = 'dispatched';
         vehicle.incident = incidentId;
@@ -157,7 +156,7 @@ const VehicleMovement = {
         switch (phase) {
             case 'to_scene':
                 // FMS 4 - Am Einsatzort
-                this.setVehicleStatus(vehicle, 4, true); // true = Funkspruch senden
+                this.setVehicleStatus(vehicle, 4);
                 vehicle.status = 'on-scene';
 
                 // Nach 2 Minuten: Transport starten
@@ -168,7 +167,7 @@ const VehicleMovement = {
 
             case 'to_hospital':
                 // FMS 8 - Im Krankenhaus
-                this.setVehicleStatus(vehicle, 8, false); // Kein Funkspruch
+                this.setVehicleStatus(vehicle, 8);
                 vehicle.status = 'at-hospital';
 
                 // Nach 5 Minuten: Zurück zur Wache
@@ -179,7 +178,7 @@ const VehicleMovement = {
 
             case 'returning':
                 // FMS 2 - Einsatzbereit auf Wache
-                this.setVehicleStatus(vehicle, 2, true); // Funkspruch: Wieder verfügbar
+                this.setVehicleStatus(vehicle, 2);
                 vehicle.status = 'available';
                 vehicle.targetLocation = null;
                 vehicle.incident = null;
@@ -203,7 +202,7 @@ const VehicleMovement = {
         const { vehicle } = movement;
 
         // FMS 7 - Patient an Bord
-        this.setVehicleStatus(vehicle, 7, false); // Kein Funkspruch
+        this.setVehicleStatus(vehicle, 7);
         vehicle.status = 'transporting';
 
         // Finde nächstes Krankenhaus (Placeholder)
@@ -235,7 +234,7 @@ const VehicleMovement = {
         const { vehicle } = movement;
 
         // FMS 1 - Einsatz erledigt, auf Rückfahrt
-        this.setVehicleStatus(vehicle, 1, false); // Kein Funkspruch
+        this.setVehicleStatus(vehicle, 1);
         vehicle.status = 'returning';
 
         const station = STATIONS[vehicle.station];
@@ -266,9 +265,9 @@ const VehicleMovement = {
     },
 
     /**
-     * Setzt FMS Status und sendet optional Funkspruch
+     * Setzt FMS Status und sendet Funkspruch
      */
-    setVehicleStatus(vehicle, fmsCode, sendRadio = false) {
+    setVehicleStatus(vehicle, fmsCode) {
         vehicle.currentStatus = fmsCode;
 
         const fmsInfo = CONFIG.FMS_STATUS[fmsCode];
@@ -276,12 +275,10 @@ const VehicleMovement = {
 
         console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
 
-        // NUR bei wichtigen Statusänderungen Funkspruch
-        if (sendRadio) {
-            const message = `${vehicle.callsign} - ${fmsInfo.name}`;
-            if (typeof addRadioMessage === 'function') {
-                addRadioMessage(message, 'vehicle', fmsInfo.color);
-            }
+        // Immer Funkspruch senden
+        const message = `Status ${fmsCode} - ${fmsInfo.name}`;
+        if (typeof addRadioMessage === 'function') {
+            addRadioMessage(vehicle.callsign, message);
         }
 
         // Update UI
