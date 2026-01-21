@@ -1,11 +1,13 @@
 // =========================
 // VEHICLE MOVEMENT SYSTEM
-// Realistische Fahrzeugbewegung mit FMS-Status
+// Fahrzeuge fahren zu Einsätzen
 // =========================
 
 const VehicleMovement = {
     movingVehicles: {},
     updateInterval: null,
+    SPEED_KMH: 60, // Durchschnittsgeschwindigkeit
+    UPDATE_INTERVAL_MS: 100, // Update alle 100ms
 
     initialize() {
         console.log('🚑 Vehicle Movement System initialisiert');
@@ -13,286 +15,289 @@ const VehicleMovement = {
     },
 
     startUpdateLoop() {
-        if (this.updateInterval) return;
-        
-        // Update alle 1 Sekunde (Spielzeit)
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+
         this.updateInterval = setInterval(() => {
             this.updateAllVehicles();
-        }, 1000);
+        }, this.UPDATE_INTERVAL_MS);
     },
 
     /**
-     * Fahrzeug zu Einsatz schicken
+     * Startet Fahrt eines Fahrzeugs zu einem Ziel
      */
     dispatchVehicle(vehicleId, targetCoords, incidentId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) {
-            console.error('❌ Fahrzeug nicht gefunden:', vehicleId);
+            console.error(`❌ Fahrzeug ${vehicleId} nicht gefunden`);
             return;
         }
 
-        console.log(`🚨 Disponiere ${vehicle.name} zu Einsatz ${incidentId}`);
-
-        // Get station position
-        const station = Object.values(STATIONS).find(s => s.id === vehicle.station);
+        // Startposition = Wache
+        const station = STATIONS[vehicle.station];
         if (!station) {
-            console.error('❌ Wache nicht gefunden:', vehicle.station);
+            console.error(`❌ Wache ${vehicle.station} nicht gefunden`);
             return;
         }
 
         const startPos = station.position;
-        const endPos = [targetCoords.lat, targetCoords.lon];
+        console.log(`🚑 ${vehicle.callsign} fährt von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}]`);
 
-        // Berechne Route und ETA
-        const distance = this.calculateDistance(startPos, endPos);
-        const speed = 60; // km/h mit Sondersignal
-        const eta = Math.ceil((distance / speed) * 60); // Minuten
-
-        // Update Fahrzeug
-        vehicle.status = 'dispatched';
-        vehicle.currentStatus = 3; // FMS 3
-        vehicle.position = [...startPos];
-        vehicle.targetLocation = endPos;
-        vehicle.incident = incidentId;
-        vehicle.eta = eta;
+        // FMS 3 - Einsatzfahrt
+        this.setVehicleStatus(vehicle, 3);
 
         // Zeichne Route
         if (typeof drawVehicleRoute === 'function') {
-            drawVehicleRoute(vehicleId, startPos, endPos);
+            drawVehicleRoute(vehicleId, startPos, [targetCoords.lat, targetCoords.lon]);
         }
 
-        // FMS 3 Meldung
-        this.sendFMSMessage(vehicle, 3);
-
-        // Tracking
+        // Setup movement
         this.movingVehicles[vehicleId] = {
-            startPos: startPos,
-            endPos: endPos,
-            currentPos: [...startPos],
+            vehicle: vehicle,
+            start: { lat: startPos[0], lon: startPos[1] },
+            target: { lat: targetCoords.lat, lon: targetCoords.lon },
+            current: { lat: startPos[0], lon: startPos[1] },
+            incidentId: incidentId,
+            phase: 'to_scene', // to_scene, on_scene, to_hospital, returning
             progress: 0,
-            eta: eta,
             startTime: Date.now(),
-            incidentId: incidentId
+            eta: this.calculateETA(startPos, [targetCoords.lat, targetCoords.lon])
         };
 
-        // Update Map
-        if (typeof updateVehicleOnMap === 'function') {
-            updateVehicleOnMap(vehicle);
-        }
+        vehicle.position = [startPos[0], startPos[1]];
+        vehicle.status = 'dispatched';
+        vehicle.targetLocation = [targetCoords.lat, targetCoords.lon];
     },
 
     /**
-     * Update alle bewegenden Fahrzeuge
+     * Berechnet ETA in Minuten
+     */
+    calculateETA(from, to) {
+        const distance = this.calculateDistance(from[0], from[1], to[0], to[1]);
+        const timeHours = distance / this.SPEED_KMH;
+        const timeMinutes = timeHours * 60;
+        return Math.ceil(timeMinutes);
+    },
+
+    /**
+     * Haversine Distanz in km
+     */
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Erdradius in km
+        const dLat = this.toRad(lat2 - lat1);
+        const dLon = this.toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    },
+
+    toRad(degrees) {
+        return degrees * Math.PI / 180;
+    },
+
+    /**
+     * Updated alle fahrenden Fahrzeuge
      */
     updateAllVehicles() {
-        const gameSpeed = game?.timeMultiplier || 1;
-        
         Object.keys(this.movingVehicles).forEach(vehicleId => {
-            this.updateVehiclePosition(vehicleId, gameSpeed);
+            this.updateVehiclePosition(vehicleId);
         });
     },
 
     /**
-     * Update einzelnes Fahrzeug
+     * Updated Position eines Fahrzeugs
      */
-    updateVehiclePosition(vehicleId, gameSpeed) {
+    updateVehiclePosition(vehicleId) {
         const movement = this.movingVehicles[vehicleId];
         if (!movement) return;
 
-        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
-        if (!vehicle) return;
+        const { start, target, vehicle, phase } = movement;
 
-        // Berechne Fortschritt (1% pro Sekunde Spielzeit bei 1x Speed)
-        const progressPerSecond = (1 / vehicle.eta) * gameSpeed; // % pro Sekunde
-        movement.progress += progressPerSecond;
+        // Berechne Fortschritt
+        const totalDistance = this.calculateDistance(start.lat, start.lon, target.lat, target.lon);
+        const timeElapsed = (Date.now() - movement.startTime) / 1000; // in Sekunden
+        const distanceTraveled = (this.SPEED_KMH / 3600) * timeElapsed; // km
 
-        if (movement.progress >= 1) {
-            // Angekommen!
-            this.vehicleArrived(vehicleId);
-            return;
-        }
+        const progress = Math.min(distanceTraveled / totalDistance, 1);
+        movement.progress = progress;
 
         // Interpoliere Position
-        const lat = movement.startPos[0] + (movement.endPos[0] - movement.startPos[0]) * movement.progress;
-        const lon = movement.startPos[1] + (movement.endPos[1] - movement.startPos[1]) * movement.progress;
+        const currentLat = start.lat + (target.lat - start.lat) * progress;
+        const currentLon = start.lon + (target.lon - start.lon) * progress;
 
-        vehicle.position = [lat, lon];
-        movement.currentPos = [lat, lon];
+        movement.current = { lat: currentLat, lon: currentLon };
+        vehicle.position = [currentLat, currentLon];
 
-        // Update Map
+        // Update auf Karte
         if (typeof updateVehicleOnMap === 'function') {
             updateVehicleOnMap(vehicle);
+        }
+
+        // Ziel erreicht?
+        if (progress >= 1) {
+            this.handleArrival(vehicleId);
         }
     },
 
     /**
-     * Fahrzeug am Einsatzort angekommen
+     * Fahrzeug ist angekommen
      */
-    vehicleArrived(vehicleId) {
-        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
-        if (!vehicle) return;
-
+    handleArrival(vehicleId) {
         const movement = this.movingVehicles[vehicleId];
         if (!movement) return;
 
-        console.log(`✅ ${vehicle.name} am Einsatzort angekommen`);
+        const { vehicle, phase, incidentId } = movement;
 
-        // Update Status
-        vehicle.status = 'on-scene';
-        vehicle.currentStatus = 4; // FMS 4
-        vehicle.position = movement.endPos;
+        console.log(`✅ ${vehicle.callsign} angekommen (Phase: ${phase})`);
 
-        // FMS 4 Meldung
-        this.sendFMSMessage(vehicle, 4);
+        switch (phase) {
+            case 'to_scene':
+                // FMS 4 - Am Einsatzort
+                this.setVehicleStatus(vehicle, 4);
+                vehicle.status = 'on-scene';
 
-        // Remove from tracking
-        delete this.movingVehicles[vehicleId];
+                // Nach 2 Minuten: Transport starten
+                setTimeout(() => {
+                    this.startTransport(vehicleId);
+                }, 2 * 60 * 1000);
+                break;
 
-        // Clear Route
-        if (typeof clearVehicleRoute === 'function') {
-            clearVehicleRoute(vehicleId);
+            case 'to_hospital':
+                // FMS 8 - Im Krankenhaus
+                this.setVehicleStatus(vehicle, 8);
+                vehicle.status = 'at-hospital';
+
+                // Nach 5 Minuten: Zurück zur Wache
+                setTimeout(() => {
+                    this.returnToStation(vehicleId);
+                }, 5 * 60 * 1000);
+                break;
+
+            case 'returning':
+                // FMS 2 - Einsatzbereit auf Wache
+                this.setVehicleStatus(vehicle, 2);
+                vehicle.status = 'available';
+                vehicle.targetLocation = null;
+                vehicle.incident = null;
+
+                // Cleanup
+                delete this.movingVehicles[vehicleId];
+                if (typeof clearVehicleRoute === 'function') {
+                    clearVehicleRoute(vehicleId);
+                }
+                break;
         }
-
-        // Update Map
-        if (typeof updateVehicleOnMap === 'function') {
-            updateVehicleOnMap(vehicle);
-        }
-
-        // Simuliere Einsatzabarbeitung (10-30 Minuten)
-        const duration = (Math.random() * 20 + 10) * 60; // Sekunden
-        setTimeout(() => {
-            this.finishIncident(vehicleId);
-        }, (duration / (game?.timeMultiplier || 1)) * 1000);
     },
 
     /**
-     * Einsatz abgeschlossen
+     * Startet Transport ins Krankenhaus
      */
-    finishIncident(vehicleId) {
-        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
-        if (!vehicle) return;
+    startTransport(vehicleId) {
+        const movement = this.movingVehicles[vehicleId];
+        if (!movement) return;
 
-        console.log(`✅ ${vehicle.name} Einsatz beendet`);
+        const { vehicle } = movement;
 
-        // FMS 1 - Rückkehr
-        vehicle.status = 'returning';
-        vehicle.currentStatus = 1;
-        this.sendFMSMessage(vehicle, 1);
+        // FMS 7 - Patient an Bord
+        this.setVehicleStatus(vehicle, 7);
+        vehicle.status = 'transporting';
 
-        // Get station position
-        const station = Object.values(STATIONS).find(s => s.id === vehicle.station);
-        if (!station) return;
+        // Finde nächstes Krankenhaus (Placeholder)
+        const hospitalCoords = this.findNearestHospital(vehicle.position);
 
-        const stationPos = station.position;
-        const currentPos = vehicle.position;
+        console.log(`🏥 ${vehicle.callsign} fährt ins Krankenhaus`);
 
-        // Berechne Rückweg
-        const distance = this.calculateDistance(currentPos, stationPos);
-        const speed = 50; // km/h ohne Sondersignal
-        const eta = Math.ceil((distance / speed) * 60);
+        // Update movement
+        movement.phase = 'to_hospital';
+        movement.start = { lat: vehicle.position[0], lon: vehicle.position[1] };
+        movement.target = { lat: hospitalCoords[0], lon: hospitalCoords[1] };
+        movement.current = { lat: vehicle.position[0], lon: vehicle.position[1] };
+        movement.progress = 0;
+        movement.startTime = Date.now();
 
-        vehicle.targetLocation = stationPos;
-        vehicle.eta = eta;
-
-        // Tracking für Rückfahrt
-        this.movingVehicles[vehicleId] = {
-            startPos: currentPos,
-            endPos: stationPos,
-            currentPos: [...currentPos],
-            progress: 0,
-            eta: eta,
-            startTime: Date.now(),
-            returning: true
-        };
-
-        // Zeichne Route
+        // Zeichne neue Route
         if (typeof drawVehicleRoute === 'function') {
-            drawVehicleRoute(vehicleId, currentPos, stationPos);
+            drawVehicleRoute(vehicleId, vehicle.position, hospitalCoords);
         }
     },
 
     /**
-     * Zurück auf Wache
+     * Fahrzeug kehrt zur Wache zurück
      */
     returnToStation(vehicleId) {
-        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
-        if (!vehicle) return;
+        const movement = this.movingVehicles[vehicleId];
+        if (!movement) return;
 
-        const station = Object.values(STATIONS).find(s => s.id === vehicle.station);
+        const { vehicle } = movement;
+
+        // FMS 1 - Einsatz erledigt, auf Rückfahrt
+        this.setVehicleStatus(vehicle, 1);
+        vehicle.status = 'returning';
+
+        const station = STATIONS[vehicle.station];
         if (!station) return;
 
-        console.log(`🏥 ${vehicle.name} zurück auf Wache`);
+        console.log(`🏠 ${vehicle.callsign} kehrt zur Wache zurück`);
 
-        // FMS 2 - Einsatzbereit Wache
-        vehicle.status = 'available';
-        vehicle.currentStatus = 2;
-        vehicle.position = station.position;
-        vehicle.targetLocation = null;
-        vehicle.incident = null;
+        // Update movement
+        movement.phase = 'returning';
+        movement.start = { lat: vehicle.position[0], lon: vehicle.position[1] };
+        movement.target = { lat: station.position[0], lon: station.position[1] };
+        movement.current = { lat: vehicle.position[0], lon: vehicle.position[1] };
+        movement.progress = 0;
+        movement.startTime = Date.now();
 
-        this.sendFMSMessage(vehicle, 2);
-
-        // Remove tracking
-        delete this.movingVehicles[vehicleId];
-
-        // Clear Route
-        if (typeof clearVehicleRoute === 'function') {
-            clearVehicleRoute(vehicleId);
-        }
-
-        // Update Map
-        if (typeof updateVehicleOnMap === 'function') {
-            updateVehicleOnMap(vehicle);
+        // Zeichne neue Route
+        if (typeof drawVehicleRoute === 'function') {
+            drawVehicleRoute(vehicleId, vehicle.position, station.position);
         }
     },
 
     /**
-     * Sende FMS-Statusmeldung im Funkverkehr
+     * Findet nächstes Krankenhaus
      */
-    sendFMSMessage(vehicle, fmsCode) {
-        if (!CONFIG.FMS_STATUS || !CONFIG.FMS_STATUS[fmsCode]) return;
+    findNearestHospital(position) {
+        // Placeholder: Klinikum Waiblingen
+        return [48.8309, 9.3256];
+    },
 
-        const fmsStatus = CONFIG.FMS_STATUS[fmsCode];
-        const timestamp = IncidentNumbering.getCurrentTimestamp();
+    /**
+     * Setzt FMS Status und sendet Funkspruch
+     */
+    setVehicleStatus(vehicle, fmsCode) {
+        vehicle.currentStatus = fmsCode;
 
-        const message = `[${timestamp}] ${vehicle.callsign}: Status ${fmsCode} - ${fmsStatus.name} ${fmsStatus.icon}`;
+        const fmsInfo = CONFIG.FMS_STATUS[fmsCode];
+        if (!fmsInfo) return;
 
-        // Add to radio log
+        console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
+
+        // Funkspruch
+        const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
+        this.sendRadioMessage(message, fmsInfo.color);
+
+        // Update UI
+        if (typeof UI !== 'undefined' && UI.updateVehicleList) {
+            UI.updateVehicleList();
+        }
+    },
+
+    /**
+     * Sendet Funkspruch
+     */
+    sendRadioMessage(message, color = null) {
         if (typeof addRadioMessage === 'function') {
-            addRadioMessage(message, 'vehicle', fmsStatus.color);
+            addRadioMessage(message, 'vehicle', color);
         }
-
-        console.log(`📡 FMS ${fmsCode}:`, vehicle.callsign, fmsStatus.name);
-    },
-
-    /**
-     * Berechne Distanz zwischen zwei Punkten (Haversine)
-     */
-    calculateDistance(pos1, pos2) {
-        const R = 6371; // Erdradius in km
-        const lat1 = pos1[0] * Math.PI / 180;
-        const lat2 = pos2[0] * Math.PI / 180;
-        const deltaLat = (pos2[0] - pos1[0]) * Math.PI / 180;
-        const deltaLon = (pos2[1] - pos1[1]) * Math.PI / 180;
-
-        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-                  Math.cos(lat1) * Math.cos(lat2) *
-                  Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distanz in km
     }
 };
 
 // Auto-Initialize
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        // Warte bis GAME_DATA geladen ist
-        const checkInterval = setInterval(() => {
-            if (typeof GAME_DATA !== 'undefined' && typeof game !== 'undefined') {
-                VehicleMovement.initialize();
-                clearInterval(checkInterval);
-            }
-        }, 500);
+        VehicleMovement.initialize();
     });
 }
