@@ -1,4 +1,4 @@
-/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v2.0 */
+/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v2.1 */
 
 :root {
     --primary-color: #c8102e;
@@ -10,6 +10,7 @@
     --dark-bg: #1a1a2e;
     --light-bg: #16213e;
     --panel-bg: #0f1419;
+    --bg-secondary: #0a0e14;
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;
     --border-color: #2d3748;
@@ -64,6 +65,7 @@ body {
 .btn-primary:hover { background: #a00d25; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(200, 16, 46, 0.4); }
 .btn-secondary { background: var(--secondary-color); color: white; }
 .btn-success { background: var(--success-color); color: white; }
+.btn-danger { background: var(--danger-color); color: white; }
 .btn-small { padding: 8px 16px; font-size: 14px; }
 
 /* SETTINGS */
@@ -200,110 +202,195 @@ footer .panel { height: 100%; margin: 0; }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
-/* ANIMATIONS */
-@keyframes blink { 0%, 50%, 100% { opacity: 1; } 25%, 75% { opacity: 0.3; } }
-.blinking { animation: blink 2s infinite; }
+/* ========================================
+   BLINKING TAB BUTTON
+   ======================================== */
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.7; 
+        transform: scale(1.05);
+    }
+}
+
+.tab-btn.blinking {
+    animation: pulse 1.5s infinite;
+    background: var(--danger-color) !important;
+    color: white !important;
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.6);
+}
 
 /* ========================================
-   QUESTION CATEGORIES SYSTEM
+   INCOMING CALL CARD IN SIDEBAR
    ======================================== */
+.incoming-call-card {
+    padding: 15px;
+    background: rgba(220, 53, 69, 0.2);
+    border: 2px solid var(--danger-color);
+    border-radius: 8px;
+    cursor: pointer;
+    animation: pulse 1.5s infinite;
+    transition: all 0.3s;
+}
 
-.question-categories {
+.incoming-call-card:hover {
+    background: rgba(220, 53, 69, 0.3);
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* ========================================
+   CALL TAB LAYOUT
+   ======================================== */
+.call-tab-container {
+    height: 100%;
+    overflow: hidden;
+}
+
+.call-no-active {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.call-active {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 8px;
 }
 
-.question-category {
+/* ========================================
+   VEHICLE CARDS IN PROTOCOL
+   ======================================== */
+.vehicle-type-section {
+    margin-bottom: 20px;
+}
+
+.vehicle-type-section h6 {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vehicle-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.vehicle-card {
     background: var(--panel-bg);
+    border: 2px solid var(--border-color);
     border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
 }
 
-.category-btn {
-    width: 100%;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, var(--panel-bg) 0%, #1a1f2e 100%);
-    border: none;
-    color: var(--text-primary);
-    font-size: 15px;
+.vehicle-card:hover {
+    border-color: var(--info-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.vehicle-card.selected {
+    background: var(--success-color);
+    border-color: var(--success-color);
+    color: white;
+}
+
+.vehicle-icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.vehicle-name {
+    font-size: 0.9em;
     font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.vehicle-station {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+}
+
+.vehicle-card.selected .vehicle-station {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========================================
+   QUESTION BUTTONS STYLING
+   ======================================== */
+.question-cat {
+    margin-bottom: 10px;
+}
+
+.cat-header {
+    background: var(--panel-bg);
+    padding: 12px 15px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s;
-    text-align: left;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
-.category-btn:hover {
-    background: linear-gradient(135deg, #1a1f2e 0%, var(--secondary-color) 100%);
+.cat-header:hover {
+    background: var(--secondary-color);
     transform: translateX(3px);
 }
 
-.category-btn .arrow {
-    font-size: 12px;
+.cat-header .arrow {
     transition: transform 0.3s;
-    color: var(--primary-color);
 }
 
-.category-questions {
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.cat-questions {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out;
+    padding: 0 8px;
 }
 
-.category-questions[style*="display: block"] {
+.cat-questions.open {
     max-height: 500px;
-    padding: 12px 8px;
+    padding: 10px 8px;
 }
 
-.question-btn {
+.q-btn {
     width: 100%;
-    padding: 10px 14px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
     border-left: 3px solid var(--info-color);
     color: var(--text-primary);
     font-size: 14px;
-    font-weight: 500;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 5px;
     text-align: left;
     transition: all 0.2s;
 }
 
-.question-btn:hover {
+.q-btn:hover {
     background: var(--secondary-color);
     border-left-color: var(--primary-color);
     transform: translateX(5px);
-    box-shadow: 0 2px 8px rgba(0, 61, 122, 0.3);
 }
 
-.question-btn:active {
-    transform: translateX(5px) scale(0.98);
-}
-
-/* CALLER MESSAGES */
-.caller-message {
-    background: var(--panel-bg);
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 8px;
-    border-left: 4px solid var(--warning-color);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    animation: slideIn 0.3s ease-out;
-}
-
-.dispatcher-question {
+/* ========================================
+   MESSAGE STYLING
+   ======================================== */
+.msg-dispatcher {
     background: rgba(0, 61, 122, 0.3);
     padding: 12px;
     margin: 8px 0;
@@ -312,14 +399,13 @@ footer .panel { height: 100%; margin: 0; }
     animation: slideIn 0.3s ease-out;
 }
 
-.emotion-icon {
-    font-size: 20px;
-    flex-shrink: 0;
-}
-
-.message-text {
-    flex: 1;
-    line-height: 1.5;
+.msg-caller {
+    background: var(--panel-bg);
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border-left: 4px solid var(--warning-color);
+    animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
@@ -343,4 +429,34 @@ footer .panel { height: 100%; margin: 0; }
     margin-bottom: 15px;
     min-height: 200px;
     max-height: 400px;
+}
+
+/* ========================================
+   STICHWORT DROPDOWN
+   ======================================== */
+.stichwort-dropdown {
+    position: absolute;
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    width: calc(100% - 30px);
+    margin-top: 5px;
+}
+
+.stichwort-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.stichwort-item:hover {
+    background: var(--secondary-color);
+}
+
+.stichwort-item:last-child {
+    border-bottom: none;
 }
