@@ -343,9 +343,50 @@ function updateMap() {
     }
 }
 
+// Alias für Kompatibilität mit main.js
+function updateVehicleMarkers() {
+    updateMap();
+}
+
 function centerMap() {
     if (map) {
         map.setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
         console.log('📍 Karte zentriert auf Waiblingen');
     }
+}
+
+// Funktion zum Hinzufügen von Einsatz-Markern
+function addIncidentMarker(incident) {
+    if (!map || !incident || !incident.position) return;
+    
+    console.log(`🚨 Erstelle Einsatz-Marker für ${incident.keyword} an ${incident.location}`);
+    
+    const marker = L.marker(incident.position, {
+        icon: L.divIcon({
+            html: '🚨',
+            className: 'incident-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        }),
+        zIndexOffset: 2000
+    });
+    
+    marker.bindPopup(`
+        <div style="min-width: 200px;">
+            <strong style="color: #dc3545;">🚨 ${incident.keyword}</strong><br>
+            <div style="font-size: 0.9em; margin-top: 5px;">${incident.title}</div>
+            <div style="margin-top: 5px; color: #a0a0a0;">📍 ${incident.location}</div>
+            <div style="margin-top: 5px;">
+                <button class="btn btn-small btn-primary" onclick="selectIncident('${incident.id}')" style="font-size: 0.8em; padding: 4px 8px;">
+                    Details anzeigen
+                </button>
+            </div>
+        </div>
+    `, {
+        autoClose: false,
+        closeOnClick: false
+    });
+    
+    marker.addTo(map);
+    marker.openPopup();
 }
