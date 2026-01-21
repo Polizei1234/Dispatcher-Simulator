@@ -7,7 +7,7 @@ const CallSystem = {
     activeCall: null,
     callQueue: [],
     isRinging: false,
-    isGenerating: false, // NEU: Verhindert doppelte Generierung
+    isGenerating: false,
     ringtoneInterval: null,
     callHistory: [],
 
@@ -40,17 +40,15 @@ const CallSystem = {
      * Generiert neuen eingehenden Anruf
      */
     async generateIncomingCall() {
-        // WICHTIG: Verhindere gleichzeitige/doppelte Generierung!
         if (this.activeCall || this.isRinging || this.isGenerating) {
             console.log('⚠️ Anruf wird übersprungen - Leitung besetzt oder Generierung läuft');
             return;
         }
 
-        this.isGenerating = true; // Setze Flag
+        this.isGenerating = true;
         console.group('📞 GENERATING INCOMING CALL');
 
         try {
-            // Erstelle Groq-Request für kompletten Einsatz
             const callData = await this.createCallWithGroq();
             
             if (!callData) {
@@ -60,7 +58,6 @@ const CallSystem = {
                 return;
             }
 
-            // Call anzeigen
             this.showIncomingCall(callData);
             this.startRinging();
 
@@ -71,7 +68,7 @@ const CallSystem = {
             console.error('❌ Fehler bei Anruf-Generierung:', error);
             console.groupEnd();
         } finally {
-            this.isGenerating = false; // Zurücksetzen
+            this.isGenerating = false;
         }
     },
 
@@ -92,10 +89,23 @@ const CallSystem = {
         // Verfügbare Fahrzeugtypen
         const availableVehicles = VehicleAnalyzer.getAvailableTypes();
 
-        // Erstelle Prompt für Groq
+        // WICHTIG: Füge Zufälligkeit hinzu!
+        const randomSeed = Math.random().toString(36).substring(2, 15);
+        const randomScenarios = this.getRandomScenarios();
+        const randomLocations = this.getRandomLocations();
+        const randomNames = this.getRandomNames();
+
+        // Erstelle Prompt mit Variationen
         const prompt = `Du bist ein Notrufsimulator für die Integrierte Leitstelle Rems-Murr-Kreis.
 
-ERSTELLE einen realistischen Notruf mit folgenden Details:
+=== WICHTIG: VARIIERE DIE EINSÄTZE! ===
+Session-ID: ${randomSeed}
+Vermeide Wiederholungen! Jeder Anruf muss EINZIGARTIG sein.
+
+VORSCHLÄGE FÜR VARIATION:
+Szenarien: ${randomScenarios.join(', ')}
+Orte: ${randomLocations.join(', ')}
+Namen: ${randomNames.join(', ')}
 
 KONTEXT:
 - Ort: Rems-Murr-Kreis (Baden-Württemberg)
@@ -103,20 +113,19 @@ KONTEXT:
 - Verfügbare Fahrzeuge: ${availableVehicles.join(', ')}
 
 ANFORDERUNGEN:
-1. Wähle ein realistisches Einsatzstichwort (z.B. Verkehrsunfall, Sturz, Herzinfarkt)
-2. Erstelle ein Anrufer-Profil (Augenzeuge/Betroffener/Angehöriger)
-3. Der Anrufer gibt zu Beginn nur MINIMALE Information ("Es gab einen Unfall!", "Mein Vater atmet nicht mehr!")
-4. Erstelle realistische Antworten auf Standard-Fragen
-5. Wähle einen Ort im Rems-Murr-Kreis (Stadt, Straße, Landmarke)
-6. Koordinaten müssen in diesem Bereich liegen: Lat 48.7-49.1, Lon 9.2-9.7
-7. WICHTIG: Erstelle VERSCHIEDENE Einsätze - keine Wiederholungen!
+1. Wähle EIN realistisches Szenario aus der Liste oben (oder erfinde ein ähnliches)
+2. Nutze VERSCHIEDENE Namen, Orte und Situationen bei jedem Aufruf
+3. Der Anrufer gibt zu Beginn nur MINIMALE Information
+4. Emotion und Anrufer-Typ müssen zum Szenario passen
+5. Koordinaten: Lat 48.7-49.1, Lon 9.2-9.7
+6. Wähle einen Ort aus der Liste oben oder einen anderen im Kreis
 
 ANTWORTE als JSON:
 {
   "anrufer": {
     "typ": "augenzeuge|betroffener|angehoeriger",
-    "name": "Vorname Nachname",
-    "telefon": "0151-12345678",
+    "name": "Vorname Nachname (aus der Liste wählen)",
+    "telefon": "0151-XXXXXXXX",
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "initial_meldung": "Kurze, aufgeregte erste Meldung (1-2 Sätze)",
@@ -143,6 +152,7 @@ ANTWORTE als JSON:
 }`;
 
         console.log('🤖 Sende Request an Groq...');
+        console.log('🎲 Random Seed:', randomSeed);
         
         try {
             const response = await this.callGroqAPI(prompt);
@@ -155,10 +165,77 @@ ANTWORTE als JSON:
     },
 
     /**
+     * Generiert zufällige Szenario-Vorschläge
+     */
+    getRandomScenarios() {
+        const scenarios = [
+            'Verkehrsunfall mit eingeklemmter Person',
+            'Herzinfarkt bei älterer Person',
+            'Sturz von Leiter/Treppe',
+            'Allergische Reaktion (Wespenstich)',
+            'Atemnot bei Kind',
+            'Schlaganfallverdacht',
+            'Bewusstlosigkeit unklarer Ursache',
+            'Arbeitsunfall in Werkstatt',
+            'Verbrennung beim Kochen',
+            'Unterzuckerung (Diabetes)',
+            'Krampfanfall',
+            'Ertrinken im Schwimmbad',
+            'Fahrradunfall',
+            'Schnittverletzung mit starker Blutung',
+            'Schwangerschaftskomplikation'
+        ];
+        
+        // Wähle 3 zufällige Szenarien
+        const shuffled = scenarios.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 3);
+    },
+
+    /**
+     * Generiert zufällige Orts-Vorschläge
+     */
+    getRandomLocations() {
+        const locations = [
+            'Hauptstraße, Waiblingen',
+            'Bahnhofstraße, Backnang',
+            'Stuttgarter Straße, Fellbach',
+            'Marktplatz, Schorndorf',
+            'Industriegebiet, Winnenden',
+            'Kindergarten Sonnenschein, Waiblingen',
+            'Rewe Parkplatz, Backnang',
+            'Sportplatz, Winnenden',
+            'Altenpflegeheim, Fellbach',
+            'Waldweg bei Murrhardt',
+            'Freibad, Schorndorf',
+            'Bahnhof, Waiblingen',
+            'Firma Bosch, Abstatt',
+            'Wohngebiet Am Berg, Kernen'
+        ];
+        
+        const shuffled = locations.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 4);
+    },
+
+    /**
+     * Generiert zufällige Namen
+     */
+    getRandomNames() {
+        const firstNames = ['Anna', 'Klaus', 'Maria', 'Stefan', 'Julia', 'Thomas', 'Sarah', 'Michael', 'Laura', 'Peter', 'Sophie', 'Martin'];
+        const lastNames = ['Schmidt', 'Müller', 'Weber', 'Fischer', 'Bauer', 'Wagner', 'Hoffmann', 'Klein', 'Koch', 'Richter'];
+        
+        const names = [];
+        for (let i = 0; i < 3; i++) {
+            const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const last = lastNames[Math.floor(Math.random() * lastNames.length)];
+            names.push(`${first} ${last}`);
+        }
+        return names;
+    },
+
+    /**
      * Ruft Groq API auf
      */
     async callGroqAPI(prompt) {
-        // Hole API Key aus Config
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key');
         
         if (!apiKey) {
@@ -179,14 +256,14 @@ ANTWORTE als JSON:
                 messages: [
                     {
                         role: 'system',
-                        content: 'Du bist ein Experte für Rettungsdienst-Notrufe. Antworte immer als valides JSON ohne zusätzlichen Text.'
+                        content: 'Du bist ein Experte für Rettungsdienst-Notrufe. Antworte immer als valides JSON ohne zusätzlichen Text. Erstelle bei jedem Aufruf VERSCHIEDENE Szenarien!'
                     },
                     {
                         role: 'user',
                         content: prompt
                     }
                 ],
-                temperature: 0.9, // HÖHER für mehr Variation!
+                temperature: 1.0, // MAXIMAL für maximale Variation!
                 max_tokens: 2000,
                 response_format: { type: 'json_object' }
             })
@@ -211,7 +288,6 @@ ANTWORTE als JSON:
     showIncomingCall(callData) {
         this.activeCall = callData;
         
-        // Zeige Incoming Call Popup
         const popup = document.getElementById('incoming-call-popup');
         if (popup) {
             popup.style.display = 'block';
@@ -227,13 +303,11 @@ ANTWORTE als JSON:
     startRinging() {
         this.isRinging = true;
         
-        // Visual feedback
         const popup = document.getElementById('incoming-call-popup');
         if (popup) {
             popup.classList.add('ringing');
         }
 
-        // Optional: Audio abspielen (falls vorhanden)
         const audio = document.getElementById('ringtone-audio');
         if (audio) {
             audio.loop = true;
@@ -277,13 +351,11 @@ ANTWORTE als JSON:
 
         this.stopRinging();
         
-        // Verstecke Incoming Call Popup
         const incomingPopup = document.getElementById('incoming-call-popup');
         if (incomingPopup) {
             incomingPopup.style.display = 'none';
         }
 
-        // Zeige Call Dialog
         this.showCallDialog();
     },
 
@@ -296,13 +368,8 @@ ANTWORTE als JSON:
 
         dialog.style.display = 'block';
 
-        // Zeige initiale Meldung
         this.displayCallerMessage(this.activeCall.initial_meldung);
-
-        // Zeige Fragen-Buttons
         this.showQuestionButtons();
-
-        // Zeige Protokoll-Form (leer)
         this.showProtocolForm();
     },
 
@@ -321,11 +388,9 @@ ANTWORTE als JSON:
         
         container.appendChild(messageDiv);
 
-        // Typing effect
         const textSpan = messageDiv.querySelector('.message-text');
         this.typeText(textSpan, message, 30);
 
-        // Scroll to bottom
         container.scrollTop = container.scrollHeight;
     },
 
@@ -389,15 +454,12 @@ ANTWORTE als JSON:
     askQuestion(key, questionText) {
         console.log(`❓ Frage gestellt: ${questionText}`);
 
-        // Zeige Frage vom Disponenten
         this.displayDispatcherQuestion(questionText);
 
-        // Hole Antwort
         const answer = this.activeCall.antworten[key];
         if (answer) {
             setTimeout(() => {
                 this.displayCallerMessage(answer);
-                // Update Protokoll basierend auf Antwort
                 this.updateProtocolFromAnswer(key, answer);
             }, 1000);
         }
@@ -424,7 +486,6 @@ ANTWORTE als JSON:
     hangUp() {
         console.log('📞 Anruf beendet');
 
-        // Speichere in History
         if (this.activeCall) {
             this.callHistory.push({
                 ...this.activeCall,
@@ -435,7 +496,6 @@ ANTWORTE als JSON:
         this.activeCall = null;
         this.stopRinging();
 
-        // Verstecke Dialog
         const dialog = document.getElementById('call-dialog');
         if (dialog) {
             dialog.style.display = 'none';
@@ -446,7 +506,6 @@ ANTWORTE als JSON:
      * Update Protokoll aus Antwort
      */
     updateProtocolFromAnswer(key, answer) {
-        // Wird in protocol-form.js implementiert
         if (typeof ProtocolForm !== 'undefined') {
             ProtocolForm.updateFromCallAnswer(key, answer, this.activeCall);
         }
@@ -456,7 +515,6 @@ ANTWORTE als JSON:
      * Zeigt Protokoll-Formular
      */
     showProtocolForm() {
-        // Wird in protocol-form.js implementiert
         if (typeof ProtocolForm !== 'undefined') {
             ProtocolForm.showForm(this.activeCall);
         }
