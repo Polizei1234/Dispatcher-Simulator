@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
-    <link rel="stylesheet" href="css/style.css?v=3.2">
+    <link rel="stylesheet" href="css/style.css?v=3.3">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/map-icons.css?v=3.2">
-    <link rel="stylesheet" href="css/draggable.css?v=3.2">
-    <link rel="stylesheet" href="css/tabs.css?v=3.2">
+    <link rel="stylesheet" href="css/map-icons.css?v=3.3">
+    <link rel="stylesheet" href="css/draggable.css?v=3.3">
+    <link rel="stylesheet" href="css/tabs.css?v=3.3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -28,13 +28,17 @@
                 </ul>
             </div>
             <div class="welcome-buttons" style="margin-top: 20px;">
-                <button class="btn btn-primary" onclick="startNewGame('career')"><i class="fas fa-trophy"></i> Karrieremodus</button>
+                <button class="btn btn-primary" onclick="showCareerComingSoon()" style="position: relative; cursor: not-allowed; opacity: 0.6;" title="Kommt bald!">
+                    <i class="fas fa-lock" style="margin-right: 5px;"></i>
+                    <i class="fas fa-trophy"></i> Karrieremodus
+                    <span style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; font-weight: bold;">BALD</span>
+                </button>
                 <button class="btn btn-success" onclick="startNewGame('free')"><i class="fas fa-infinity"></i> Freies Spiel</button>
                 <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial</button>
                 <button class="btn btn-secondary" onclick="showSettings()"><i class="fas fa-cog"></i> Einstellungen</button>
             </div>
             <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <p style="margin: 5px 0;"><strong>🏆 Karrieremodus:</strong> Starte mit 6 Fahrzeugen in Waiblingen. Verdiene Geld und kaufe neue Fahrzeuge!</p>
+                <p style="margin: 5px 0;"><strong>🔒 Karrieremodus:</strong> Kommt bald! Starte mit wenigen Fahrzeugen und baue deine Flotte auf.</p>
                 <p style="margin: 5px 0;"><strong>♾️ Freies Spiel:</strong> Alle 90+ Fahrzeuge sofort verfügbar!</p>
             </div>
         </div>
@@ -85,7 +89,6 @@
                 <span id="game-speed-indicator" onclick="cycleGameSpeed()" style="cursor: pointer; background: #2d3748; padding: 5px 10px; border-radius: 5px;" title="Klicken zum Ändern">5x</span>
             </div>
             <div class="header-right">
-                <span><i class="fas fa-coins"></i> <span id="credits">50000</span> €</span>
                 <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
                 <button class="btn btn-small" onclick="openShop()"><i class="fas fa-shopping-cart"></i> Shop</button>
                 <button class="btn btn-small" onclick="showSettings()"><i class="fas fa-cog"></i></button>
@@ -211,18 +214,18 @@
         </div>
     </div>
 
-    <!-- Skripte mit Cache-Busting v3.2 -->
+    <!-- Skripte mit Cache-Busting v3.3 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/config.js?v=3.2"></script>
-    <script src="js/data.js?v=3.2"></script>
-    <script src="js/map.js?v=3.2"></script>
-    <script src="js/game.js?v=3.2"></script>
-    <script src="js/incidents.js?v=3.2"></script>
-    <script src="js/ai.js?v=3.2"></script>
-    <script src="js/tutorial.js?v=3.2"></script>
-    <script src="js/ui.js?v=3.2"></script>
-    <script src="js/tabs.js?v=3.2"></script>
-    <script src="js/draggable.js?v=3.2"></script>
-    <script src="js/main.js?v=3.2"></script>
+    <script src="js/config.js?v=3.3"></script>
+    <script src="js/data.js?v=3.3"></script>
+    <script src="js/map.js?v=3.3"></script>
+    <script src="js/game.js?v=3.3"></script>
+    <script src="js/incidents.js?v=3.3"></script>
+    <script src="js/ai.js?v=3.3"></script>
+    <script src="js/tutorial.js?v=3.3"></script>
+    <script src="js/ui.js?v=3.3"></script>
+    <script src="js/tabs.js?v=3.3"></script>
+    <script src="js/draggable.js?v=3.3"></script>
+    <script src="js/main.js?v=3.3"></script>
 </body>
 </html>
