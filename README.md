@@ -1,207 +1,128 @@
 # 🚑 ILS Waiblingen - Leitstellensimulator
 
-**Dispatcher-Simulator für den Rems-Murr-Kreis**
+**Realistischer Dispatcher-Simulator für den Rems-Murr-Kreis**
 
-![Version](https://img.shields.io/badge/version-2.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+## ✨ Features
 
-## 📍 Über das Projekt
+### 📍 **Echte Daten aus dem Rems-Murr-Kreis**
+- **35 Wachen**: 7 Hauptamtliche Rettungswachen, 2 Notarztwachen, 17 Ortsvereine
+- **90+ Fahrzeuge**: RTW, NEF, KTW, Kommandowagen, GW-San
+- **Realistische Funkrufnamen**: Nach Digitalfunkatlas Baden-Württemberg
+- **Pixel-Art Icons**: Hand-gezeichnete Fahrzeug- und Wachen-Icons
 
-Ein realistischer Leitstellensimulator mit **echten Daten** aus dem Rems-Murr-Kreis:
+### 📱 **v3.0: Tab-Navigation**
+- **🗺️ Karte**: Interaktive Karte mit allen Wachen und Einsatzfahrzeugen
+- **🚑 Fahrzeuge**: Übersichtliche Darstellung nach Kategorien & Wachen
+  - Rettungsdienst, Katastrophenschutz, Krankentransport
+  - Aufklappbare Wachen-Gruppen
+  - FMS-Status mit Zahlen/Buchstaben-Badges
+- **📝 Einsätze**: Alle aktiven Einsätze auf einen Blick
+- **📡 Funkverkehr**: Vollständiger Funkverlauf
 
-- ✅ **35 echte Wachen** (Rettungswachen, Notarztwachen, Ortsvereine)
-- ✅ **90+ echte Fahrzeuge** (RTW, NEF, KTW, Kdow, GW-San)
-- ✅ **Korrekte Funkrufnamen** nach Digitalfunkatlas BW 2023
-- ✅ **Pixel-Art Icons** für alle Wachen und Fahrzeuge auf der Karte
-- ✅ **KI-generierte Einsätze** mit Groq API (Llama 3.3)
-- ✅ **Draggable Telefonfenster** für realistische Notrufabfrage
+### 🚨 **Funkmeldesystem (FMS)**
+- **Status 0-9**: Offizielle FMS-Codes für Feuerwehr & Rettungsdienst
+- **Farbcodierung**: Jeder Status hat eigene Farbe
+- **Live-Updates**: Status ändert sich in Echtzeit
+- **Statusnummern**: `Status 3` statt nur Farbe
 
-## 🗺️ Wachen im Rems-Murr-Kreis
+### 🎮 **Spielmodi**
+- **🏆 Karrieremodus**: Starte mit 6 Fahrzeugen, verdiene Geld, kaufe mehr
+- **♾️ Freies Spiel**: Alle 90+ Fahrzeuge sofort verfügbar
 
-### Hauptamtliche Rettungswachen (7)
+### 🤖 **KI-Features** (Optional mit Groq API)
+- **Dynamische Einsätze**: KI generiert realistische Notfälle
+- **Telefon-Simulationen**: Echte Gespräche mit Anrufern
+- **Kostenlos**: API-Key unter [console.groq.com/keys](https://console.groq.com/keys)
 
-| ID | Name | Ort | Fahrzeuge |
-|----|------|-----|----------|
-| RW1 | Rettungswache Waiblingen | Waiblingen | 8 (Kdow, NEF, 2x RTW, 4x KTW) |
-| RW2 | Rettungswache Backnang | Backnang | 7 (Kdow, NEF, 2x RTW, 3x KTW) |
-| RW3 | Rettungswache Fellbach | Fellbach | 1 (RTW) |
-| RW4 | Rettungswache Murrhardt | Murrhardt | 1 (RTW) |
-| RW5 | Rettungswache Schorndorf | Schorndorf | 7 (NEF, 2x RTW, 4x KTW) |
-| RW6 | Rettungswache Welzheim | Welzheim | 3 (NEF, 2x RTW) |
-| RW7 | Rettungswache Winnenden | Winnenden | 1 (RTW) |
+### ⏱️ **Weitere Features**
+- **Zeitraffer**: 1x - 30x Spielgeschwindigkeit
+- **Shop-System**: Kaufe neue Fahrzeuge für deine Flotte
+- **Realistische Fahrzeiten**: Berechnung nach echter Entfernung
+- **Funkverkehr**: Live-Log aller Funkmeldungen
 
-### Notarztwachen (2)
+## 🚀 Installation
 
-- **Klinikum Winnenden** - 2 NEF
-- **Murrhardt** - 2 NEF
+### Option 1: GitHub Pages (Empfohlen)
+1. Repository forken
+2. In den Settings unter "Pages" aktivieren
+3. Source: `main` Branch auswählen
+4. Unter `https://[username].github.io/Dispatcher-Simulator/` spielen
 
-### Privatanbieter (10)
-
-- RW10: Saniteam Winkler Fellbach
-- RW11: ASB Waiblingen
-- RW13: Rems Murr Ambulanz
-- RW14+20: SAG/Brüder
-- RW15: Ambulanz Schütt
-- RW16: MHD Sulzbach
-- RW17: MHD Hertmannsweiler
-- RW19: JUH Aspach
-- RW20: JUH Schorndorf
-- RW21: DECEBA
-
-### Ortsvereine (17)
-
-- Aspach, Backnang, Burgstetten, Kernen, Oppenweiler, Plüderhausen
-- Remshalden, Rudersberg, Schorndorf, Urbach, Waiblingen
-- Weinstadt, Wieslauftal, Winnenden, Winterbach, MHD Winnenden
-
-## 🚗 Fahrzeugtypen
-
-| Typ | Anzahl | Funkkennung | Farbe (Pixel Art) |
-|-----|--------|-------------|-------------------|
-| **RTW** | ~25 | 83/X | Rot (#dc3545) |
-| **NEF** | ~10 | 82/X | Gelb (#ffc107) |
-| **KTW** | ~50 | 85/X oder 25/X | Grün (#28a745) |
-| **Kdow** | 3 | 10/X | Türkis (#17a2b8) |
-| **GW-San** | 1 | 28/X | Grau (#6c757d) |
-
-## 🎮 Spielmodi
-
-### 🏆 Karrieremodus
-
-- **Startkapital**: 50.000 €
-- **Startfahrzeuge**: 6 Fahrzeuge in Waiblingen/OV Waiblingen
-  - 1x Kdow (RW1)
-  - 1x NEF (Klinikum Winnenden)
-  - 2x RTW (RW1)
-  - 1x KTW (OV Waiblingen)
-- **Ziel**: Geld verdienen durch Einsätze, neue Wachen und Fahrzeuge kaufen
-
-### ♾️ Freimodus
-
-- **Alle 90+ Fahrzeuge** sofort verfügbar
-- **Unbegrenztes Geld**
-- Perfekt zum Experimentieren!
-
-## 🤖 KI-Features
-
-### Groq API Integration
-
-- **Modell**: Llama 3.3 70B Versatile
-- **Einsatzgenerierung**: Jeder Einsatz wird dynamisch mit KI erstellt
-- **Notrufgespräche**: Realistische Dialoge mit aufgeregten Anrufern
-- **API-Key**: Kostenlos auf [console.groq.com](https://console.groq.com/keys)
-
-### Beispiel-Notruf
-
-```
-Disponent: "Notruf 112, wo genau ist der Notfall?"
-Anrufer: "Hilfe! Mein Vater liegt am Boden und atmet kaum noch!"
-Disponent: "Wo befinden Sie sich genau?"
-Anrufer: "Bahnhofstraße 15 in Waiblingen!"
-[...]
-```
-
-## 🗺️ Pixel-Art Icons
-
-### Wachen-Icons
-
-- **Rettungswache** (Rot): Gebäude mit weißem Kreuz
-- **Notarztwache** (Gelb): Gebäude mit Kreuz
-- **Ortsverein** (Rot): Kleineres Gebäude
-
-### Fahrzeug-Icons
-
-- **RTW/NEF**: Rettungswagen mit Blaulicht (Rot/Gelb)
-- **KTW**: Kleinerer Transporter (Grün)
-- **Kdow**: PKW-Form (Türkis)
-- **GW-San**: Großes Fahrzeug (Grau)
-
-Alle Icons sind **animiert** und haben **Hover-Effekte**!
-
-## 🛠️ Installation
-
+### Option 2: Lokal spielen
 ```bash
-# Repository klonen
 git clone https://github.com/Polizei1234/Dispatcher-Simulator.git
 cd Dispatcher-Simulator
-
-# Mit Live Server öffnen (VSCode Extension)
-# ODER einfach index.html im Browser öffnen
+python -m http.server 8000
 ```
+Dann im Browser: `http://localhost:8000`
 
-## ⚙️ Einstellungen
+## 📚 FMS-Statusübersicht
 
-- **Spielgeschwindigkeit**: 1x - 30x (Klick auf "5x" im Header)
-- **Groq API-Key**: Für KI-Einsätze
-- **Sound**: Ein/Aus
+### Fahrzeug → Leitstelle
+| Code | Status | Bedeutung |
+|------|--------|----------|
+| 0 | Sprechwunsch (priorisiert) | Fahrzeug möchte dringend sprechen |
+| 1 | Einsatzbereit über Funk | Unterwegs, erreichbar |
+| 2 | Einsatzbereit auf Wache | Auf Wache bereit |
+| 3 | Einsatzauftrag übernommen | Fährt zum Einsatz |
+| 4 | Ankunft am Einsatzort | Vor Ort |
+| 5 | Sprechwunsch (normal) | Normale Meldung |
+| 6 | Ankunft am Zielort | Z.B. Krankenhaus |
+| 7 | Patient aufgenommen | Transportbeginn |
+| 8 | Am Standort | Bestimmter Ort |
+| 9 | Notfall/Sondersignal | Mit Blaulicht |
+| C | Lagemeldung | Infos übermitteln |
+| E | Nicht einsatzbereit | Pause/Wartung |
 
-## 🎯 Steuerung
+### Leitstelle → Fahrzeug
+| Code | Status | Bedeutung |
+|------|--------|----------|
+| 0 | Sammelruf | Alle melden sich |
+| A | Alarm | Alarmierung |
+| B | Bereitstellung | Anfahrt Bereitstellungsraum |
+| C | Durchsage | Wichtige Info |
+| D | Dringender Auftrag | Eilauftrag |
+| E | Anweisung | Besondere Anweisung |
+| F | Über Telefon melden | Anruf erwünscht |
+| G | Über Funk melden | Funkmeldung |
+| H | Wache anfahren | Rückkehr zur Wache |
+| I | Sonstige Anweisungen | Weitere Infos folgen |
 
-1. **Notruf annehmen**: Auf blinkenden Anruf klicken
-2. **Telefonieren**: Fragen stellen, Adresse ermitteln
-3. **Protokoll schreiben**: Während Telefonat möglich!
-4. **Fahrzeuge alarmieren**: Checkboxen auswählen → Alarmieren
-5. **Karte**: Wachen-Button zum Ein/Ausblenden der Standorte
-
-## 📊 Technische Details
-
-- **Framework**: Vanilla JavaScript (ES6+)
+## 🛠️ Technologie
+- **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Karte**: Leaflet.js + OpenStreetMap
-- **KI**: Groq API (Llama 3.3)
-- **Icons**: Pixel-Art SVG (32x32 / 24x24)
-- **Daten**: `stations.json` + `vehicles.json`
+- **KI**: Groq API (Llama 3.3 70B)
+- **Icons**: Font Awesome + Custom Pixel Art
 
-## 📝 Funkrufnamen (Digitalfunkatlas BW)
+## 📝 Changelog
 
-### DRK Rettungswachen
-```
-Rotkreuz Rems Murr [Wache]/[Kennung]-[Nummer]
+### v3.0 (21.01.2026)
+- ✨ **Tab-Navigation**: Karte, Fahrzeuge, Einsätze, Funkverkehr
+- 🚑 **Fahrzeug-Übersicht**: Sortiert nach Kategorie & Wache
+- 🏷️ **Status-Badges**: Zahlen/Buchstaben statt nur Farbe
+- 📂 **Aufklappbare Gruppen**: Wachen ein-/ausblenden
+- 🎨 **Verbessertes Design**: Moderne Tab-Navigation
 
-Beispiele:
-- Rotkreuz Rems Murr 1/82-2    (NEF RW1)
-- Rotkreuz Rems Murr 1/83-2    (RTW RW1)
-- Rotkreuz Rems Murr 1/85-2    (KTW RW1)
-- Rotkreuz Rems Murr 1/10-1    (Kdow RW1)
-```
+### v2.9 (21.01.2026)
+- 🔢 **FMS mit Nummer**: "Status 3" statt nur Farbe
+- 📍 **Persistente Popups**: Bleiben offen bis wegklicken
 
-### Andere Organisationen
-```
-- Sama Rems Murr 11/83-1       (ASB RTW)
-- Johannes Rems Murr 16/83-1   (MHD RTW)
-- Akkon Rems Murr 19/83-1      (JUH RTW)
-- Sani Team 10/85-1            (Saniteam KTW)
-```
+### v2.8 (21.01.2026)
+- 🎨 **Angepasste FMS-Farben**: Nach Nutzerwunsch
+- ⚫ **Status 6 Schwarz**: Nicht einsatzbereit
 
-### Ortsvereine (Ehrenamt)
-```
-- KTW [ORT]/25-[Nummer]
+### v2.7 (21.01.2026)
+- 🚨 **FMS-Statussystem**: Offizielle Codes implementiert
+- 🎨 **Farbcodierung**: Jeder Status eigene Farbe
 
-Beispiele:
-- KTW WN/25-1     (OV Waiblingen)
-- KTW PLÜ/25-1    (OV Plüderhausen)
-- KTW OPP/25-1    (OV Oppenweiler)
-```
-
-## 🚀 Roadmap
-
-- [ ] OpenStreetMap Routing für Fahrzeuge
-- [ ] Echtzeit-Uhr mit Schichtsystem
-- [ ] Statistiken & Highscores
-- [ ] Multiplayer-Modus
-- [ ] Feuerwehr & Polizei Integration
-- [ ] Mobile Version (PWA)
+## 👥 Credits
+- **Entwicklung**: Polizei1234 + AI Assistant
+- **Daten**: Rems-Murr-Kreis, Digitalfunkatlas BW
+- **FMS-Codes**: [rettungsdienst.net](http://www.rettungsdienst.net/technik/bos/bo-fms)
 
 ## 📜 Lizenz
-
-MIT License - Siehe [LICENSE](LICENSE)
-
-## 🙏 Credits
-
-- **Daten**: Rems-Murr-Kreis, [BOS-Fahrzeuge.info](https://www.bos-fahrzeuge.info)
-- **Funkrufnamen**: Digitalfunkatlas Baden-Württemberg 2023
-- **KI**: Groq API (Llama 3.3)
-- **Karte**: OpenStreetMap, Leaflet.js
+MIT License - Siehe LICENSE Datei
 
 ---
 
-**Entwickelt mit ❤️ für den Rems-Murr-Kreis**
+**🚑 Viel Spaß beim Disponieren! 🚑**
