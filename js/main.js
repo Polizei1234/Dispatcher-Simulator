@@ -1,16 +1,18 @@
 // =========================
-// HAUPTSTEUERUNG MIT GROQ AI
+// HAUPTSTEUERUNG v3.6
 // =========================
 
 let gamePaused = false;
 let gameTime = Date.now();
+let gameTickCounter = 0;
 
 function showCareerComingSoon() {
-    alert('🔒 Karrieremodus kommt bald!\n\nDiese Funktion ist noch in Entwicklung.\nStarte vorerst das Freie Spiel mit allen 90+ Fahrzeugen!');
+    alert('🔒 Karrieremodus kommt bald!\n\nDiese Funktion ist noch in Entwicklung.\nStarte vorerst das Freie Spiel mit allen Fahrzeugen!');
 }
 
 function startNewGame(mode) {
     console.log(`🎮 Starte neues Spiel: ${mode}`);
+    console.log(`⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
     
     // Setze Spielmodus
     CONFIG.GAME_MODE = mode;
@@ -18,6 +20,7 @@ function startNewGame(mode) {
     // Initialisiere Fahrzeuge
     initializeVehicles();
     console.log(`🚑 ${VEHICLES.length} Fahrzeuge initialisiert`);
+    console.log(`🚑 ${VEHICLES.filter(v => v.owned).length} Fahrzeuge verfügbar`);
     
     // Erstelle Spiel
     game = new Game();
@@ -35,17 +38,21 @@ function startNewGame(mode) {
     // Setze Startzeit
     gameTime = Date.now();
     gamePaused = false;
+    gameTickCounter = 0;
     
     // Update UI
     updateUI();
     
     // Starte Game Loop
+    console.log('🔄 Starte Game Loop...');
     startGameLoop();
     
     // Starte Einsatz-Generator
+    console.log('🚨 Starte Einsatz-Generator...');
     startIncidentGenerator();
     
     addRadioMessage('System', `🚑 ILS Waiblingen - ${mode === 'free' ? 'Freies Spiel' : 'Karrieremodus'} gestartet`);
+    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
 }
 
 function togglePause() {
@@ -60,22 +67,28 @@ function togglePause() {
         btn.title = 'Fortsetzen';
         btn.style.background = '#28a745';
         addRadioMessage('System', '⏸️ Spiel pausiert');
+        console.log('⏸️ Spiel pausiert');
     } else {
         icon.classList.remove('fa-play');
         icon.classList.add('fa-pause');
         btn.title = 'Pausieren';
         btn.style.background = '';
         addRadioMessage('System', '▶️ Spiel fortgesetzt');
+        console.log('▶️ Spiel fortgesetzt');
     }
 }
 
 function startIncidentGenerator() {
-    console.log('🚨 Starte Einsatz-Generator...');
+    console.log('🚨 Einsatz-Generator gestartet');
+    console.log(`⏱️ Erster Einsatz in ${10 / CONFIG.GAME_SPEED} Sekunden Echtzeit`);
     
     // Generiere ersten Einsatz nach 10 Sekunden (Spielzeit)
     setTimeout(() => {
+        console.log('🚨 Timer für ersten Einsatz ausgelöst!');
         if (!gamePaused) {
             generateRandomIncident();
+        } else {
+            console.log('⚠️ Spiel ist pausiert, überspringe Einsatz');
         }
     }, (10000 / CONFIG.GAME_SPEED));
     
@@ -84,14 +97,22 @@ function startIncidentGenerator() {
         if (gamePaused) return;
         
         const random = Math.random();
-        if (random < 0.3) { // 30% Chance
+        if (random < 0.5) { // 50% Chance (erhöht für Tests)
+            console.log('🚨 Zufälliger Einsatz wird generiert...');
             generateRandomIncident();
         }
     }, (120000 / CONFIG.GAME_SPEED));
 }
 
 function generateRandomIncident() {
-    if (!game || gamePaused) return;
+    if (!game) {
+        console.error('❌ Kein Game-Objekt vorhanden!');
+        return;
+    }
+    if (gamePaused) {
+        console.log('⏸️ Spiel pausiert, kein Einsatz');
+        return;
+    }
     
     console.log('🚨 Generiere neuen Einsatz...');
     
@@ -108,7 +129,8 @@ function generateRandomIncident() {
     // Zufällige Straße
     const streets = [
         'Hauptstraße', 'Bahnhofstraße', 'Schulstraße', 'Mühlweg',
-        'Gartenstraße', 'Waldweg', 'Kirchplatz', 'Marktplatz'
+        'Gartenstraße', 'Waldweg', 'Kirchplatz', 'Marktplatz',
+        'Industriestraße', 'Friedhofstraße', 'Römerstraße'
     ];
     const street = streets[Math.floor(Math.random() * streets.length)];
     const number = Math.floor(Math.random() * 100) + 1;
@@ -131,6 +153,7 @@ function generateRandomIncident() {
     
     // Zeige Notification
     addRadioMessage('System', `🚨 Neuer Einsatz: ${keyword} - ${incident.location}`);
+    console.log(`✅ Einsatz erstellt: ${keyword} an ${incident.location}`);
     
     // Zeige auf Karte
     if (map) {
@@ -139,16 +162,26 @@ function generateRandomIncident() {
     
     // Update UI
     updateIncidentList();
-    
-    console.log(`✅ Einsatz ${incident.id} erstellt: ${keyword}`);
 }
 
 let gameLoopInterval = null;
 
 function startGameLoop() {
-    if (gameLoopInterval) clearInterval(gameLoopInterval);
+    if (gameLoopInterval) {
+        clearInterval(gameLoopInterval);
+        console.log('🗑️ Alter Game Loop gestoppt');
+    }
+    
+    console.log('🔄 Starte neuen Game Loop (1000ms Intervall)...');
     
     gameLoopInterval = setInterval(() => {
+        gameTickCounter++;
+        
+        // Debug-Log alle 5 Sekunden
+        if (gameTickCounter % 5 === 0) {
+            console.log(`⏱️ Game Loop Tick #${gameTickCounter} | Pausiert: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0}`);
+        }
+        
         if (gamePaused) return;
         
         if (game) {
@@ -156,6 +189,8 @@ function startGameLoop() {
             updateUI();
         }
     }, 1000);
+    
+    console.log('✅ Game Loop gestartet!');
 }
 
 function updateUI() {
@@ -166,13 +201,17 @@ function updateUI() {
     const availableVehicles = ownedVehicles.filter(v => v.status === 'available');
     
     // Update Header
-    document.getElementById('total-vehicles').textContent = ownedVehicles.length;
-    document.getElementById('active-vehicles').textContent = availableVehicles.length;
+    const totalEl = document.getElementById('total-vehicles');
+    const activeEl = document.getElementById('active-vehicles');
     
-    // Update Zeit (nur wenn nicht pausiert)
-    if (!gamePaused) {
+    if (totalEl) totalEl.textContent = ownedVehicles.length;
+    if (activeEl) activeEl.textContent = availableVehicles.length;
+    
+    // Update Zeit (immer, auch wenn pausiert, damit man sieht dass es läuft)
+    const timeEl = document.getElementById('current-time');
+    if (timeEl) {
         const now = new Date();
-        document.getElementById('current-time').textContent = now.toLocaleTimeString('de-DE');
+        timeEl.textContent = now.toLocaleTimeString('de-DE');
     }
     
     // Update Einsatzliste
@@ -189,6 +228,8 @@ function updateIncidentList() {
     
     const container = document.getElementById('incident-list');
     const countBadge = document.getElementById('incident-count');
+    
+    if (!container || !countBadge) return;
     
     const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
     countBadge.textContent = activeIncidents.length;
@@ -229,6 +270,8 @@ function selectIncident(incidentId) {
 
 function showIncidentDetails(incident) {
     const container = document.getElementById('incident-details');
+    if (!container) return;
+    
     const keywordData = KEYWORDS_BW[incident.keyword];
     
     container.innerHTML = `
@@ -263,7 +306,6 @@ function showIncidentDetails(incident) {
 }
 
 function showVehicleSelection(incidentId) {
-    // Zeige Fahrzeug-Auswahl Dialog
     alert('🚑 Fahrzeugauswahl - In Entwicklung!\n\nKlicke auf der Karte auf Fahrzeuge oder nutze den Fahrzeuge-Tab.');
 }
 
@@ -318,7 +360,9 @@ function loadSettings() {
     
     if (speed) {
         CONFIG.GAME_SPEED = parseInt(speed);
-        document.getElementById('game-speed-indicator').textContent = speed + 'x';
+        const indicator = document.getElementById('game-speed-indicator');
+        if (indicator) indicator.textContent = speed + 'x';
+        console.log(`⚙️ Geschwindigkeit geladen: ${speed}x`);
     }
     
     if (apiKey && game) {
@@ -351,6 +395,7 @@ function cycleGameSpeed() {
     localStorage.setItem('gameSpeed', speeds[nextIndex]);
     
     addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${speeds[nextIndex]}x`);
+    console.log(`⏱️ Neue Geschwindigkeit: ${speeds[nextIndex]}x`);
 }
 
 function openShop() {
@@ -385,7 +430,8 @@ function addRadioMessage(sender, message) {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator geladen');
+    console.log('🚀 ILS Waiblingen Simulator v3.6 geladen');
     console.log(`📍 ${Object.keys(STATIONS).length} Wachen verfügbar`);
     console.log(`🚑 ${VEHICLES_CATALOG.length} Fahrzeuge im Katalog`);
+    console.log(`⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
 });
