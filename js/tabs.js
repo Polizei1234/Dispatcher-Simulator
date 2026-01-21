@@ -36,6 +36,14 @@ function switchTab(tabName) {
     }
 }
 
+// Schnellnavigation zu Kategorie
+function scrollToCategory(categoryKey) {
+    const element = document.getElementById(`category-${categoryKey}`);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
 // Fahrzeuge-Übersicht aktualisieren
 function updateVehiclesOverview() {
     if (!game) return;
@@ -58,9 +66,9 @@ function updateVehiclesOverview() {
     
     // Gruppiere Fahrzeuge nach Kategorie
     const categories = {
-        'rettungsdienst': { name: 'Rettungsdienst', icon: '🚑', vehicles: [] },
-        'katastrophenschutz': { name: 'Katastrophenschutz', icon: '🚒', vehicles: [] },
-        'krankentransport': { name: 'Krankentransport', icon: '🚑', vehicles: [] }
+        'rettungsdienst': { name: 'Rettungsdienst', icon: '🚑', vehicles: [], color: '#dc3545' },
+        'katastrophenschutz': { name: 'Katastrophenschutz', icon: '🚒', vehicles: [], color: '#ffc107' },
+        'krankentransport': { name: 'Krankentransport', icon: '🚑', vehicles: [], color: '#28a745' }
     };
     
     ownedVehicles.forEach(vehicle => {
@@ -75,8 +83,23 @@ function updateVehiclesOverview() {
         categories[category].vehicles.push(vehicle);
     });
     
-    // Erstelle HTML
-    let html = '';
+    // Erstelle Schnellnavigation
+    let quickNavHtml = '<div class="quick-nav">';
+    Object.entries(categories).forEach(([catKey, catData]) => {
+        if (catData.vehicles.length > 0) {
+            quickNavHtml += `
+                <button class="quick-nav-btn" onclick="scrollToCategory('${catKey}')">
+                    <span>${catData.icon}</span>
+                    <span>${catData.name}</span>
+                    <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;">${catData.vehicles.length}</span>
+                </button>
+            `;
+        }
+    });
+    quickNavHtml += '</div>';
+    
+    // Erstelle Kategorien
+    let categoriesHtml = '';
     
     Object.entries(categories).forEach(([catKey, catData]) => {
         if (catData.vehicles.length === 0) return;
@@ -90,16 +113,16 @@ function updateVehiclesOverview() {
             stationGroups[v.station].push(v);
         });
         
-        html += `
-            <div class="vehicle-category">
-                <div class="category-header" onclick="toggleCategory('${catKey}')">
+        categoriesHtml += `
+            <div class="vehicle-category" id="category-${catKey}">
+                <div class="category-header">
                     <h2>
                         <span>${catData.icon}</span>
                         ${catData.name}
                     </h2>
                     <span class="category-badge">${catData.vehicles.length} Fahrzeuge</span>
                 </div>
-                <div id="category-${catKey}" class="category-content">
+                <div class="stations-grid">
                     ${Object.entries(stationGroups).map(([stationId, vehicles]) => {
                         const station = STATIONS[stationId];
                         if (!station) return '';
@@ -114,7 +137,7 @@ function updateVehiclesOverview() {
                                         ${station.name}
                                     </h3>
                                     <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span class="station-badge">${vehicles.length} Fahrzeuge</span>
+                                        <span class="station-badge">${vehicles.length} Fzg</span>
                                         <i class="fas fa-chevron-down collapse-icon ${isCollapsed ? '' : 'open'}" id="icon-${stationId}"></i>
                                     </div>
                                 </div>
@@ -129,7 +152,7 @@ function updateVehiclesOverview() {
         `;
     });
     
-    container.innerHTML = html;
+    container.innerHTML = quickNavHtml + categoriesHtml;
 }
 
 function createVehicleCard(vehicle) {
@@ -146,18 +169,18 @@ function createVehicleCard(vehicle) {
                     <strong>${statusDisplay}</strong>
                 </div>
                 <div class="vehicle-details">
-                    <div class="vehicle-name">${getVehicleIcon(vehicle.type)} ${vehicle.callsign}</div>
-                    <div class="vehicle-type">${fms.name}</div>
+                    <div class="vehicle-name" title="${vehicle.callsign}">${getVehicleIcon(vehicle.type)} ${vehicle.callsign}</div>
+                    <div class="vehicle-type" title="${fms.name}">${fms.name}</div>
                 </div>
             </div>
             <div class="vehicle-actions">
                 ${vehicle.status === 'available' ? `
-                    <button class="btn btn-small btn-primary" onclick="selectVehicleForIncident('${vehicle.id}')">
-                        <i class="fas fa-bell"></i> Alarmieren
+                    <button class="btn btn-small btn-primary" onclick="selectVehicleForIncident('${vehicle.id}')" title="Alarmieren">
+                        <i class="fas fa-bell"></i>
                     </button>
                 ` : `
-                    <button class="btn btn-small" disabled style="opacity: 0.5;">
-                        <i class="fas fa-clock"></i> Im Einsatz
+                    <button class="btn btn-small" disabled style="opacity: 0.5;" title="Im Einsatz">
+                        <i class="fas fa-clock"></i>
                     </button>
                 `}
             </div>
@@ -179,17 +202,6 @@ function toggleStation(stationId) {
         collapsedStations.add(stationId);
         vehiclesDiv.classList.remove('open');
         icon.classList.remove('open');
-    }
-}
-
-function toggleCategory(categoryKey) {
-    const content = document.getElementById(`category-${categoryKey}`);
-    if (!content) return;
-    
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-    } else {
-        content.style.display = 'none';
     }
 }
 
