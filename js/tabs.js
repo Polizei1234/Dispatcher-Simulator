@@ -72,18 +72,20 @@ function updateVehiclesOverview() {
     };
     
     ownedVehicles.forEach(vehicle => {
-        // Prüfe ob Fahrzeug zu einem Ortsverein gehört
+        // Prüfe ZUERST ob Fahrzeug zu einem Ortsverein gehört
         const station = STATIONS[vehicle.station];
         const isOrtsverein = station && station.category === 'ortsverein';
         
         // Kategorisiere Fahrzeug
         let category = 'rettungsdienst';
         
-        if (vehicle.type === 'KTW') {
-            category = 'krankentransport';
-        } else if (vehicle.type === 'GW-San' || isOrtsverein) {
-            // GW-San UND alle Ortsvereine gehören zum Katastrophenschutz
+        // WICHTIG: Ortsverein-Check VOR Fahrzeugtyp-Check!
+        if (isOrtsverein || vehicle.type === 'GW-San') {
+            // Alle Ortsvereine UND GW-San gehören zum Katastrophenschutz
             category = 'katastrophenschutz';
+        } else if (vehicle.type === 'KTW') {
+            // Nur KTW von NICHT-Ortsvereinen sind Krankentransport
+            category = 'krankentransport';
         }
         
         categories[category].vehicles.push(vehicle);
