@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v3.0
-// Reverse Geocoding + Realistic Responses
+// EMERGENCY CALL SYSTEM v3.1
+// Meldebild erst nach Fragen generieren
 // =========================
 
 const CallSystem = {
@@ -10,9 +10,10 @@ const CallSystem = {
     ringtoneAudio: null,
     callHistory: [],
     selectedVehicles: [],
+    askedQuestions: [],
 
     initialize() {
-        console.log('📞 Call System v3.0 mit Reverse Geocoding initialisiert');
+        console.log('📞 Call System v3.1 initialisiert');
         this.setupRingtone();
     },
 
@@ -60,9 +61,6 @@ const CallSystem = {
         }
     },
 
-    /**
-     * REVERSE GEOCODING via Nominatim (OpenStreetMap)
-     */
     async reverseGeocode(lat, lon) {
         try {
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
@@ -84,7 +82,6 @@ const CallSystem = {
                 return null;
             }
 
-            // Adresse formatieren
             const addr = data.address;
             const street = addr.road || addr.pedestrian || addr.footway || 'Unbekannte Straße';
             const houseNumber = addr.house_number || '';
@@ -137,20 +134,6 @@ WICHTIG FÜR ANRUFER-ANTWORTEN:
 - Bei Unsicherheit: vage bleiben
 - Realistisch stocken/wiederholen
 
-BEISPIELE FÜR GUTE ANTWORTEN:
-
-❌ SCHLECHT (zu kurz/fachlich):
-- "Der Patient hat eine Tachykardie"
-- "Ja"
-- "Nein"
-
-✅ GUT (realistisch/emotional):
-- "Also sein Herz rast total, der ist ganz blass im Gesicht!"
-- "Ja, er atmet noch, aber ganz flach und komisch"
-- "Weiß ich nicht... moment... nee, ich glaub nicht"
-- "Der schreit vor Schmerzen in der Brust, das ist schlimm!"
-- "Äh... also... ich hab keine Ahnung ehrlich gesagt"
-
 ANTWORTE NUR als JSON:
 {
   "anrufer": {
@@ -159,7 +142,7 @@ ANTWORTE NUR als JSON:
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "antworten": {
-    "ort": "DUMMY - wird ersetzt",
+    "ort": "DUMMY",
     "was_passiert": "Längere emotionale Beschreibung (8-15 Wörter)",
     "wie_viele": "Eine Person" / "Zwei Leute" / "Drei oder vier, weiß nicht genau",
     "bewusstsein": "Ja, wach" / "Nein, reagiert nicht" / "Also... er macht die Augen auf, aber antwortet nicht richtig",
@@ -186,8 +169,7 @@ ANTWORTE NUR als JSON:
   },
   "einsatz": {
     "stichwort": "Passendes Stichwort (Herzinfarkt/Unfall/Sturz/etc.)",
-    "koordinaten": {"lat": 48.XXX, "lon": 9.XXX},
-    "meldebild": "Kurze Zusammenfassung (max 20 Wörter)"
+    "koordinaten": {"lat": 48.XXX, "lon": 9.XXX}
   },
   "empfehlung": {
     "rtw": 1,
@@ -295,6 +277,7 @@ ANTWORTE NUR als JSON:
         console.log('📞 Anruf angenommen - Wechsle zu Tab "Notruf"');
         this.stopRingtone();
         this.selectedVehicles = [];
+        this.askedQuestions = [];
 
         const callList = document.getElementById('call-list');
         if (callList) {
@@ -318,7 +301,7 @@ ANTWORTE NUR als JSON:
         const active = document.getElementById('call-active');
         
         if (noActive) noActive.style.display = 'none';
-        if (active) active.style.display = 'block';
+        if (active) active.style.display = 'flex';
 
         this.populateCallDialog();
     },
@@ -442,6 +425,10 @@ ANTWORTE NUR als JSON:
         qDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${text}`;
         container.appendChild(qDiv);
 
+        if (!this.askedQuestions.includes(key)) {
+            this.askedQuestions.push(key);
+        }
+
         setTimeout(() => {
             const answer = this.activeCall.antworten[key] || 'Keine Angabe';
             const aDiv = document.createElement('div');
@@ -451,7 +438,30 @@ ANTWORTE NUR als JSON:
 
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
+
+            // Update Meldebild nach Fragen
+            this.updateMeldebild();
         }, 1000);
+    },
+
+    updateMeldebild() {
+        const meldebildTextarea = document.getElementById('protocol-meldebild');
+        if (!meldebildTextarea) return;
+
+        // Generiere Meldebild aus gestellten Fragen
+        const parts = [];
+        
+        if (this.askedQuestions.includes('was_passiert')) {
+            parts.push(this.activeCall.antworten.was_passiert);
+        }
+        if (this.askedQuestions.includes('bewusstsein')) {
+            parts.push('Bewusstsein: ' + this.activeCall.antworten.bewusstsein);
+        }
+        if (this.askedQuestions.includes('atmung')) {
+            parts.push('Atmung: ' + this.activeCall.antworten.atmung);
+        }
+
+        meldebildTextarea.value = parts.join('. ') || 'Notfall';
     },
 
     initProtocolForm(container) {
@@ -472,7 +482,7 @@ ANTWORTE NUR als JSON:
             </div>
             <div class="form-group">
                 <label>Meldebild:</label>
-                <textarea id="protocol-meldebild" rows="3" readonly>${this.activeCall.einsatz.meldebild}</textarea>
+                <textarea id="protocol-meldebild" rows="3" readonly placeholder="Stellen Sie Fragen, um das Meldebild zu erstellen..."></textarea>
             </div>
             
             <div id="inline-vehicle-selection" style="margin-top: 20px;">
@@ -601,7 +611,7 @@ ANTWORTE NUR als JSON:
             id: document.getElementById('protocol-nummer').value,
             stichwort: document.getElementById('protocol-stichwort').value || 'Notfall',
             ort: document.getElementById('protocol-ort').value,
-            meldebild: document.getElementById('protocol-meldebild').value,
+            meldebild: document.getElementById('protocol-meldebild').value || 'Notfall',
             koordinaten: this.activeCall.einsatz.koordinaten,
             vehicles: [...this.selectedVehicles],
             zeitstempel: IncidentNumbering.getCurrentTimestamp(),
@@ -634,10 +644,15 @@ ANTWORTE NUR als JSON:
             }
         });
 
-        // Funkspruch
-        const msg = `${incident.stichwort}, ${incident.ort}. ${incident.vehicles.length} Fahrzeug(e) alarmiert.`;
+        // Funkspruch (NUR EINMAL!)
+        const vehicleNames = this.selectedVehicles.map(vId => {
+            const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
+            return v ? v.callsign : '';
+        }).filter(Boolean).join(', ');
+
+        const msg = `${incident.stichwort}, ${incident.ort} - Alarmiert: ${vehicleNames}`;
         if (typeof addRadioMessage === 'function') {
-            addRadioMessage('Einsatz ' + incident.id, msg);
+            addRadioMessage(msg, 'dispatcher');
         }
 
         // UI aktualisieren
@@ -658,6 +673,7 @@ ANTWORTE NUR als JSON:
         
         this.activeCall = null;
         this.selectedVehicles = [];
+        this.askedQuestions = [];
         
         const noActive = document.getElementById('call-no-active');
         const active = document.getElementById('call-active');
