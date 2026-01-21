@@ -1,5 +1,6 @@
 // =========================
-// MANUAL INCIDENT CREATION v3.0
+// MANUAL INCIDENT CREATION v3.1
+// + Entfernungsanzeige bei Fahrzeugen!
 // + showInline() für Notruf-Tab Integration
 // + Modal für manuelle Einsatzerstellung mit Keywords-Dropdown
 // =========================
@@ -13,7 +14,7 @@ const ManualIncident = {
     currentCallData: null,
 
     initialize() {
-        console.log('📝 Manual Incident System v3.0 initialisiert');
+        console.log('📝 Manual Incident System v3.1 initialisiert');
         this.createModalHTML();
         this.attachEventListeners();
     },
@@ -140,7 +141,7 @@ const ManualIncident = {
         console.log('📝 Manual Incident Modal geöffnet');
     },
 
-    // 🚀 NEU: Inline-Modus für Notruf-Tab
+    // 🚀 Inline-Modus für Notruf-Tab
     showInline(callData) {
         this.inlineMode = true;
         this.currentCallData = callData;
@@ -186,7 +187,7 @@ const ManualIncident = {
             </div>
 
             <div style="margin-bottom: 20px;">
-                <h4 style="margin-bottom: 10px;">🚑 Fahrzeuge auswählen</h4>
+                <h4 style="margin-bottom: 10px;">🚑 Fahrzeuge auswählen <small style="color: #888; font-weight: normal;">(sortiert nach Entfernung)</small></h4>
                 <div id="inline-vehicle-grid" class="vehicle-cards-improved" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
 
@@ -209,7 +210,7 @@ const ManualIncident = {
         console.log('✅ Manual Incident Inline angezeigt');
     },
 
-    // 🚀 NEU: Clear Inline Container
+    // Clear Inline Container
     clearInline() {
         const container = document.getElementById('manual-incident-inline-container');
         if (container) {
@@ -220,7 +221,7 @@ const ManualIncident = {
         this.selectedVehicles = [];
     },
 
-    // 🚀 NEU: Update from Call Answer
+    // Update from Call Answer
     updateFromCallAnswer(key, answer, callData) {
         if (!this.inlineMode) return;
 
@@ -269,7 +270,7 @@ const ManualIncident = {
         });
     },
 
-    // 🚀 NEU: Keywords Dropdowns für Inline
+    // Keywords Dropdowns für Inline
     initializeKeywordsDropdownsInline() {
         if (typeof KeywordsDropdown === 'undefined') {
             console.error('❌ KeywordsDropdown nicht geladen!');
@@ -319,7 +320,7 @@ const ManualIncident = {
         this.updateUI();
     },
 
-    // 🚀 NEU: Auto-Select für Inline
+    // Auto-Select für Inline
     autoSelectVehiclesInline(suggestedTypes) {
         const availableVehicles = GAME_DATA.vehicles.filter(v => 
             v.status === 'available' && v.owned
@@ -394,7 +395,7 @@ const ManualIncident = {
         });
     },
 
-    // 🚀 NEU: Load Vehicles für Inline
+    // 🚀 Load Vehicles für Inline mit Entfernungsanzeige
     loadVehiclesInline() {
         const grid = document.getElementById('inline-vehicle-grid');
         if (!grid) return;
@@ -403,7 +404,7 @@ const ManualIncident = {
         grid.innerHTML = '';
 
         vehicleTypes.forEach(type => {
-            const vehicles = GAME_DATA.vehicles.filter(v => {
+            let vehicles = GAME_DATA.vehicles.filter(v => {
                 const vType = v.type.toUpperCase();
                 return (vType === type || vType.includes(type)) && 
                        v.status === 'available' && 
@@ -411,6 +412,19 @@ const ManualIncident = {
             });
 
             if (vehicles.length === 0) return;
+
+            // 🚀 SORTIERE nach Entfernung zum Einsatzort
+            if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
+                this.currentCallData?.einsatz?.koordinaten) {
+                vehicles = vehicles.map(v => {
+                    const distInfo = VehicleMovement.getDistanceToIncident(v.station, this.currentCallData.einsatz.koordinaten);
+                    return {
+                        ...v,
+                        distance: distInfo ? parseFloat(distInfo.km) : 999,
+                        distanceText: distInfo ? distInfo.text : 'Unbekannt'
+                    };
+                }).sort((a, b) => a.distance - b.distance);
+            }
 
             const section = document.createElement('div');
             section.className = 'vehicle-type-section';
@@ -423,6 +437,7 @@ const ManualIncident = {
                             <div class="vehicle-card-name" style="font-size: 0.85em;">${v.callsign || v.name}</div>
                             <div class="vehicle-card-station" style="font-size: 0.75em;">${v.station || 'Wache'}</div>
                             <div class="vehicle-card-type" style="font-size: 0.75em;">${v.type}</div>
+                            ${v.distanceText ? `<div class="vehicle-card-distance" style="font-size: 0.75em; color: #4CAF50; margin-top: 3px;">📍 ${v.distanceText}</div>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -446,7 +461,7 @@ const ManualIncident = {
         this.updateUI();
     },
 
-    // 🚀 NEU: Toggle für Inline
+    // Toggle für Inline
     toggleVehicleInline(id) {
         const card = document.querySelector(`#inline-vehicle-grid .vehicle-card-large[data-id="${id}"]`);
         if (!card) return;
@@ -475,7 +490,7 @@ const ManualIncident = {
         }
     },
 
-    // 🚀 NEU: Update UI für Inline
+    // Update UI für Inline
     updateUIInline() {
         const countSpan = document.getElementById('inline-selected-count');
         const alarmBtn = document.getElementById('inline-alarm-btn');
@@ -578,7 +593,7 @@ const ManualIncident = {
         alert(`✅ Einsatz ${incident.id} erfolgreich erstellt!`);
     },
 
-    // 🚀 NEU: Create Incident Inline
+    // Create Incident Inline
     async createIncidentInline() {
         const priorityInput = document.getElementById('inline-priority').value.trim();
         const detailInput = document.getElementById('inline-detail').value.trim();
