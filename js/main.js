@@ -2,6 +2,9 @@
 // HAUPTSTEUERUNG MIT GROQ AI
 // =========================
 
+let gamePaused = false;
+let gameTime = Date.now();
+
 function showCareerComingSoon() {
     alert('🔒 Karrieremodus kommt bald!\n\nDiese Funktion ist noch in Entwicklung.\nStarte vorerst das Freie Spiel mit allen 90+ Fahrzeugen!');
 }
@@ -29,6 +32,10 @@ function startNewGame(mode) {
     document.getElementById('welcome-screen').classList.remove('active');
     document.getElementById('game-container').classList.remove('hidden');
     
+    // Setze Startzeit
+    gameTime = Date.now();
+    gamePaused = false;
+    
     // Update UI
     updateUI();
     
@@ -41,25 +48,50 @@ function startNewGame(mode) {
     addRadioMessage('System', `🚑 ILS Waiblingen - ${mode === 'free' ? 'Freies Spiel' : 'Karrieremodus'} gestartet`);
 }
 
+function togglePause() {
+    gamePaused = !gamePaused;
+    
+    const icon = document.getElementById('pause-icon');
+    const btn = document.getElementById('pause-btn');
+    
+    if (gamePaused) {
+        icon.classList.remove('fa-pause');
+        icon.classList.add('fa-play');
+        btn.title = 'Fortsetzen';
+        btn.style.background = '#28a745';
+        addRadioMessage('System', '⏸️ Spiel pausiert');
+    } else {
+        icon.classList.remove('fa-play');
+        icon.classList.add('fa-pause');
+        btn.title = 'Pausieren';
+        btn.style.background = '';
+        addRadioMessage('System', '▶️ Spiel fortgesetzt');
+    }
+}
+
 function startIncidentGenerator() {
     console.log('🚨 Starte Einsatz-Generator...');
     
-    // Generiere ersten Einsatz nach 10 Sekunden
+    // Generiere ersten Einsatz nach 10 Sekunden (Spielzeit)
     setTimeout(() => {
-        generateRandomIncident();
-    }, 10000 / CONFIG.SIMULATION_SPEED);
-    
-    // Dann alle 2-5 Minuten
-    setInterval(() => {
-        const random = Math.random();
-        if (random < 0.3) { // 30% Chance alle 2 Minuten
+        if (!gamePaused) {
             generateRandomIncident();
         }
-    }, 120000 / CONFIG.SIMULATION_SPEED);
+    }, (10000 / CONFIG.GAME_SPEED));
+    
+    // Dann alle 2-5 Minuten (Spielzeit)
+    setInterval(() => {
+        if (gamePaused) return;
+        
+        const random = Math.random();
+        if (random < 0.3) { // 30% Chance
+            generateRandomIncident();
+        }
+    }, (120000 / CONFIG.GAME_SPEED));
 }
 
 function generateRandomIncident() {
-    if (!game) return;
+    if (!game || gamePaused) return;
     
     console.log('🚨 Generiere neuen Einsatz...');
     
@@ -117,6 +149,8 @@ function startGameLoop() {
     if (gameLoopInterval) clearInterval(gameLoopInterval);
     
     gameLoopInterval = setInterval(() => {
+        if (gamePaused) return;
+        
         if (game) {
             game.update();
             updateUI();
@@ -135,9 +169,11 @@ function updateUI() {
     document.getElementById('total-vehicles').textContent = ownedVehicles.length;
     document.getElementById('active-vehicles').textContent = availableVehicles.length;
     
-    // Update Zeit
-    const now = new Date();
-    document.getElementById('current-time').textContent = now.toLocaleTimeString('de-DE');
+    // Update Zeit (nur wenn nicht pausiert)
+    if (!gamePaused) {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString('de-DE');
+    }
     
     // Update Einsatzliste
     updateIncidentList();
@@ -267,7 +303,7 @@ function saveSettings() {
     localStorage.setItem('groqApiKey', apiKey);
     localStorage.setItem('soundEnabled', sound);
     
-    CONFIG.SIMULATION_SPEED = parseInt(speed);
+    CONFIG.GAME_SPEED = parseInt(speed);
     if (game) game.apiKey = apiKey;
     
     document.getElementById('game-speed-indicator').textContent = speed + 'x';
@@ -281,7 +317,7 @@ function loadSettings() {
     const apiKey = localStorage.getItem('groqApiKey');
     
     if (speed) {
-        CONFIG.SIMULATION_SPEED = parseInt(speed);
+        CONFIG.GAME_SPEED = parseInt(speed);
         document.getElementById('game-speed-indicator').textContent = speed + 'x';
     }
     
@@ -307,12 +343,14 @@ function toggleAPIKeyVisibility() {
 
 function cycleGameSpeed() {
     const speeds = [1, 2, 5, 10, 30];
-    const currentIndex = speeds.indexOf(CONFIG.SIMULATION_SPEED);
+    const currentIndex = speeds.indexOf(CONFIG.GAME_SPEED);
     const nextIndex = (currentIndex + 1) % speeds.length;
     
-    CONFIG.SIMULATION_SPEED = speeds[nextIndex];
+    CONFIG.GAME_SPEED = speeds[nextIndex];
     document.getElementById('game-speed-indicator').textContent = speeds[nextIndex] + 'x';
     localStorage.setItem('gameSpeed', speeds[nextIndex]);
+    
+    addRadioMessage('System', `⏱️ Spielgeschwindigkeit: ${speeds[nextIndex]}x`);
 }
 
 function openShop() {

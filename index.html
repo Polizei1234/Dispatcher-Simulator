@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
-    <link rel="stylesheet" href="css/style.css?v=3.3">
+    <link rel="stylesheet" href="css/style.css?v=3.4">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/map-icons.css?v=3.3">
-    <link rel="stylesheet" href="css/draggable.css?v=3.3">
-    <link rel="stylesheet" href="css/tabs.css?v=3.3">
+    <link rel="stylesheet" href="css/map-icons.css?v=3.4">
+    <link rel="stylesheet" href="css/draggable.css?v=3.4">
+    <link rel="stylesheet" href="css/tabs.css?v=3.4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -86,7 +86,10 @@
             <div class="header-left">
                 <h1><i class="fas fa-hospital-symbol"></i> ILS Waiblingen</h1>
                 <span id="current-time">00:00:00</span>
-                <span id="game-speed-indicator" onclick="cycleGameSpeed()" style="cursor: pointer; background: #2d3748; padding: 5px 10px; border-radius: 5px;" title="Klicken zum Ändern">5x</span>
+                <button id="pause-btn" onclick="togglePause()" class="btn btn-small" style="margin-left: 10px;" title="Pausieren">
+                    <i class="fas fa-pause" id="pause-icon"></i>
+                </button>
+                <button id="game-speed-indicator" onclick="cycleGameSpeed()" class="btn btn-small" style="margin-left: 5px;" title="Spielgeschwindigkeit ändern">5x</button>
             </div>
             <div class="header-right">
                 <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
@@ -214,18 +217,18 @@
         </div>
     </div>
 
-    <!-- Skripte mit Cache-Busting v3.3 -->
+    <!-- Skripte mit Cache-Busting v3.4 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/config.js?v=3.3"></script>
-    <script src="js/data.js?v=3.3"></script>
-    <script src="js/map.js?v=3.3"></script>
-    <script src="js/game.js?v=3.3"></script>
-    <script src="js/incidents.js?v=3.3"></script>
-    <script src="js/ai.js?v=3.3"></script>
-    <script src="js/tutorial.js?v=3.3"></script>
-    <script src="js/ui.js?v=3.3"></script>
-    <script src="js/tabs.js?v=3.3"></script>
-    <script src="js/draggable.js?v=3.3"></script>
-    <script src="js/main.js?v=3.3"></script>
+    <script src="js/config.js?v=3.4"></script>
+    <script src="js/data.js?v=3.4"></script>
+    <script src="js/map.js?v=3.4"></script>
+    <script src="js/game.js?v=3.4"></script>
+    <script src="js/incidents.js?v=3.4"></script>
+    <script src="js/ai.js?v=3.4"></script>
+    <script src="js/tutorial.js?v=3.4"></script>
+    <script src="js/ui.js?v=3.4"></script>
+    <script src="js/tabs.js?v=3.4"></script>
+    <script src="js/draggable.js?v=3.4"></script>
+    <script src="js/main.js?v=3.4"></script>
 </body>
 </html>
