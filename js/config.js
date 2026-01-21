@@ -1,83 +1,333 @@
 // =========================
-// KONFIGURATION
+// CONFIGURATION
+// Zentrale Konfiguration für ILS-Simulator
 // =========================
 
 const CONFIG = {
-    // Karteneinstellungen
-    MAP_CENTER: [48.8309415, 9.3256194], // Waiblingen
-    MAP_ZOOM: 11,
-    MAP_MIN_ZOOM: 9,
-    MAP_MAX_ZOOM: 18,
-    
-    // Spieleinstellungen
-    GAME_MODE: 'career', // 'career' oder 'free'
-    GAME_SPEED: 5, // Zeitfaktor (1 = Echtzeit, 5 = 5x schneller)
-    START_CREDITS: 50000,
-    
-    // Einsatzgenerierung
-    INCIDENT_SPAWN_MIN: 120, // Sekunden (Spielzeit)
-    INCIDENT_SPAWN_MAX: 300,
-    
-    // Fahrzeugkosten
-    VEHICLE_COSTS: {
-        'RTW': 120000,
-        'NEF': 150000,
-        'KTW': 60000,
-        'Kdow': 80000,
-        'GW-San': 100000
+    // =============================
+    // API KEYS
+    // =============================
+    GROQ_API_KEY: '', // Wird aus localStorage geladen oder hier eingetragen
+
+    // =============================
+    // GAME SETTINGS
+    // =============================
+    GAME: {
+        // Zeitraffer (1.0 = Echtzeit, 2.0 = doppelt so schnell)
+        timeMultiplier: 1.0,
+
+        // Schwierigkeitsgrad
+        difficulty: 'normal', // 'easy', 'normal', 'hard', 'expert'
+
+        // Anruf-Frequenz (Minuten zwischen Anrufen)
+        callFrequency: {
+            easy: 10,
+            normal: 5,
+            hard: 3,
+            expert: 2
+        },
+
+        // Spielzeit-Start (Uhrzeit)
+        startTime: '08:00:00',
+
+        // Auto-Pause bei Anruf
+        autoPauseOnCall: true,
+
+        // Scoring aktiviert
+        scoringEnabled: true,
+
+        // Tutorial-Modus
+        tutorialMode: false
     },
-    
-    // Einnahmen pro Einsatz
-    INCIDENT_REWARDS: {
-        'medical_emergency': 500,
-        'traffic_accident': 800,
-        'fire': 1000,
-        'patient_transport': 300
+
+    // =============================
+    // SIMULATION SETTINGS
+    // =============================
+    SIMULATION: {
+        // Fahrzeug-Geschwindigkeiten (km/h)
+        vehicleSpeeds: {
+            default: 60,        // Durchschnitt mit Sondersignal
+            city: 40,           // Innerorts
+            highway: 100        // Autobahn
+        },
+
+        // Ausrückzeit (Sekunden)
+        responseTime: {
+            RTW: 120,           // 2 Minuten
+            NEF: 90,            // 1.5 Minuten
+            KTW: 180,           // 3 Minuten
+            ITW: 150,           // 2.5 Minuten
+            Kdow: 60            // 1 Minute
+        },
+
+        // Einsatz-Dauer (Minuten)
+        incidentDuration: {
+            min: 15,
+            max: 60,
+            average: 30
+        },
+
+        // FMS-Status Auto-Update
+        autoFMSUpdate: true,
+        fmsUpdateInterval: 5000 // 5 Sekunden
     },
-    
-    // FMS Status (Funkmeldesystem) - OFFIZIELL für Feuerwehr & Rettungsdienst
-    // Quelle: http://www.rettungsdienst.net/technik/bos/bo-fms
-    
-    // STATUS FAHRZEUG -> LEITSTELLE (0-9)
-    FMS_STATUS: {
-        0: { name: 'Fahrzeugstatus 0', color: '#6c757d', icon: '⚪', description: 'Nicht fest definiert' },
-        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢', description: 'Sprechwunsch oder Einsatzbereit über Funk' },
-        2: { name: 'Einsatzbereit auf Wache', color: '#1e7e34', icon: '🟢', description: 'Ankunft auf Wache / Einsatzbereit' },
-        3: { name: 'Einsatzauftrag übernommen', color: '#ffc107', icon: '🟡', description: 'Einsatz übernommen' },
-        4: { name: 'Am Einsatzort', color: '#fd7e14', icon: '🟠', description: 'Ankunft Einsatzort' },
-        5: { name: 'Sprechwunsch', color: '#17a2b8', icon: '🔵', description: 'Sprechwunsch (Fahrzeug möchte kommunizieren)' },
-        6: { name: 'Nicht einsatzbereit', color: '#000000', icon: '⚫', description: 'Nicht Einsatzbereit' },
-        7: { name: 'Patient aufgenommen', color: '#e83e8c', icon: '🟣', description: 'Patient aufgenommen / Transport' },
-        8: { name: 'Am Zielort', color: '#6f42c1', icon: '🟣', description: 'Ankunft Ziel (Krankenhaus)' },
-        9: { name: 'Sondersignal', color: '#dc3545', icon: '🔴', description: 'Sondersignal (Blaulicht + Martinshorn)' }
+
+    // =============================
+    // MAP SETTINGS
+    // =============================
+    MAP: {
+        // Startposition (Waiblingen)
+        center: [48.8309415, 9.3256194],
+        zoom: 11,
+
+        // Karten-Style
+        style: 'streets', // 'streets', 'satellite', 'dark'
+
+        // Layer
+        showVehicles: true,
+        showStations: true,
+        showIncidents: true,
+        showHospitals: true,
+
+        // Auto-Center auf aktiven Einsatz
+        autoCenterOnIncident: true,
+
+        // Routing-Service
+        routingService: 'osrm' // 'osrm', 'graphhopper'
     },
-    
-    // STATUS LEITSTELLE -> FAHRZEUG (A-I)
-    FMS_LEITSTELLE_STATUS: {
-        'A': { name: 'Außer Dienst', color: '#6c757d', icon: '⚪', description: 'Fahrzeug außer Dienst stellen' },
-        'B': { name: 'Bereitstellung', color: '#17a2b8', icon: '🔵', description: 'Bereitstellung an einem Ort' },
-        'C': { name: 'Nicht vergeben', color: '#6c757d', icon: '⚪', description: 'Reserviert' },
-        'D': { name: 'Dringende Sprechwunsch', color: '#dc3545', icon: '🔴', description: 'Sofort Sprechverbindung aufbauen' },
-        'E': { name: 'Einsatzauftrag', color: '#ffc107', icon: '🟡', description: 'Einsatzauftrag folgt/liegt vor' },
-        'F': { name: 'Fernmeldeverbindung', color: '#28a745', icon: '🟢', description: 'Über Telefon/Fax melden' },
-        'G': { name: 'Geruf wird wiederholt', color: '#fd7e14', icon: '🟠', description: 'Funkruf wird wiederholt' },
-        'H': { name: 'Heimkehr', color: '#1e7e34', icon: '🟢', description: 'Wache/Standort anfahren' },
-        'I': { name: 'Individuell', color: '#6f42c1', icon: '🟣', description: 'Individuell definierbar' }
+
+    // =============================
+    // UI SETTINGS
+    // =============================
+    UI: {
+        // Sprache
+        language: 'de',
+
+        // Theme
+        theme: 'dark', // 'light', 'dark', 'auto'
+
+        // Sounds
+        soundEnabled: true,
+        soundVolume: 0.7,
+
+        // Notifications
+        notificationsEnabled: true,
+        notificationDuration: 5000,
+
+        // Klingelton-Dauer
+        ringtoneMaxDuration: 30000, // 30 Sekunden
+
+        // Animationen
+        animationsEnabled: true,
+
+        // Compact Mode (für kleinere Bildschirme)
+        compactMode: false
     },
-    
-    // Groq AI
-    GROQ_API_URL: 'https://api.groq.com/openai/v1/chat/completions',
-    GROQ_MODEL: 'llama-3.3-70b-versatile'
+
+    // =============================
+    // GROQ AI SETTINGS
+    // =============================
+    GROQ: {
+        // Model
+        model: 'llama-3.3-70b-versatile',
+
+        // Temperature (0.0 - 1.0)
+        temperature: 0.8,
+
+        // Max Tokens
+        maxTokens: 2000,
+
+        // Timeout (ms)
+        timeout: 30000,
+
+        // Retry bei Fehler
+        retryOnError: true,
+        maxRetries: 3
+    },
+
+    // =============================
+    // LOGGING & DEBUG
+    // =============================
+    DEBUG: {
+        // Console Logging
+        enabled: true,
+        level: 'info', // 'debug', 'info', 'warn', 'error'
+
+        // Performance Tracking
+        trackPerformance: true,
+
+        // API Calls loggen
+        logAPICalls: true
+    },
+
+    // =============================
+    // STATISTICS & ANALYTICS
+    // =============================
+    ANALYTICS: {
+        // Lokale Statistiken speichern
+        saveLocalStats: true,
+
+        // Session-Tracking
+        trackSessions: true,
+
+        // Export-Format
+        exportFormat: 'json' // 'json', 'csv'
+    },
+
+    // =============================
+    // METHODS
+    // =============================
+
+    /**
+     * Lädt Konfiguration aus LocalStorage
+     */
+    load() {
+        console.group('⚙️ LOADING CONFIG');
+
+        // Groq API Key
+        const savedApiKey = localStorage.getItem('groq_api_key');
+        if (savedApiKey) {
+            this.GROQ_API_KEY = savedApiKey;
+            console.log('✅ Groq API Key geladen');
+        } else {
+            console.warn('⚠️ Kein Groq API Key gefunden');
+        }
+
+        // Game Settings
+        const savedDifficulty = localStorage.getItem('game_difficulty');
+        if (savedDifficulty) {
+            this.GAME.difficulty = savedDifficulty;
+        }
+
+        const savedTheme = localStorage.getItem('ui_theme');
+        if (savedTheme) {
+            this.UI.theme = savedTheme;
+        }
+
+        const savedSoundEnabled = localStorage.getItem('sound_enabled');
+        if (savedSoundEnabled !== null) {
+            this.UI.soundEnabled = savedSoundEnabled === 'true';
+        }
+
+        console.log('✅ Konfiguration geladen');
+        console.groupEnd();
+    },
+
+    /**
+     * Speichert Konfiguration in LocalStorage
+     */
+    save() {
+        if (this.GROQ_API_KEY) {
+            localStorage.setItem('groq_api_key', this.GROQ_API_KEY);
+        }
+        localStorage.setItem('game_difficulty', this.GAME.difficulty);
+        localStorage.setItem('ui_theme', this.UI.theme);
+        localStorage.setItem('sound_enabled', this.UI.soundEnabled.toString());
+
+        console.log('✅ Konfiguration gespeichert');
+    },
+
+    /**
+     * Setzt API Key
+     */
+    setApiKey(key) {
+        this.GROQ_API_KEY = key;
+        localStorage.setItem('groq_api_key', key);
+        console.log('✅ Groq API Key gesetzt');
+    },
+
+    /**
+     * Setzt Schwierigkeitsgrad
+     */
+    setDifficulty(level) {
+        if (!['easy', 'normal', 'hard', 'expert'].includes(level)) {
+            console.error('❌ Ungültiger Schwierigkeitsgrad:', level);
+            return;
+        }
+        this.GAME.difficulty = level;
+        this.save();
+        console.log('✅ Schwierigkeitsgrad geändert:', level);
+    },
+
+    /**
+     * Toggle Sound
+     */
+    toggleSound() {
+        this.UI.soundEnabled = !this.UI.soundEnabled;
+        this.save();
+        return this.UI.soundEnabled;
+    },
+
+    /**
+     * Setzt Theme
+     */
+    setTheme(theme) {
+        if (!['light', 'dark', 'auto'].includes(theme)) {
+            console.error('❌ Ungültiges Theme:', theme);
+            return;
+        }
+        this.UI.theme = theme;
+        this.save();
+        this.applyTheme();
+    },
+
+    /**
+     * Wendet Theme an
+     */
+    applyTheme() {
+        document.body.className = `theme-${this.UI.theme}`;
+        console.log('🎨 Theme angewendet:', this.UI.theme);
+    },
+
+    /**
+     * Validiert Konfiguration
+     */
+    validate() {
+        const errors = [];
+
+        if (!this.GROQ_API_KEY) {
+            errors.push('Kein Groq API Key konfiguriert');
+        }
+
+        if (errors.length > 0) {
+            console.warn('⚠️ Konfigurations-Probleme:', errors);
+            return false;
+        }
+
+        console.log('✅ Konfiguration valide');
+        return true;
+    },
+
+    /**
+     * Reset auf Standardwerte
+     */
+    reset() {
+        if (!confirm('Möchten Sie die Konfiguration wirklich zurücksetzen?')) {
+            return;
+        }
+
+        localStorage.removeItem('groq_api_key');
+        localStorage.removeItem('game_difficulty');
+        localStorage.removeItem('ui_theme');
+        localStorage.removeItem('sound_enabled');
+
+        // Seite neu laden um Defaults zu laden
+        window.location.reload();
+    },
+
+    /**
+     * Zeigt Konfigurations-UI
+     */
+    showSettingsUI() {
+        console.log('⚙️ Settings UI wird geöffnet');
+        // TODO: Settings Modal öffnen
+    }
 };
 
-// Spielmodus festlegen
-function setGameMode(mode) {
-    CONFIG.GAME_MODE = mode;
-    console.log(`🎮 Spielmodus: ${mode}`);
-}
-
-// Spielgeschwindigkeit ändern
-function setGameSpeed(speed) {
-    CONFIG.GAME_SPEED = speed;
-    console.log(`⏱️ Spielgeschwindigkeit: ${speed}x`);
+// Auto-Load bei Initialisierung
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        CONFIG.load();
+        CONFIG.applyTheme();
+    });
 }
