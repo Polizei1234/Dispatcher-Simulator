@@ -12,31 +12,36 @@ class Game {
         this.reputation = 100;
         this.apiKey = null;
         
-        this.lastIncidentSpawn = Date.now();
-        this.nextIncidentTime = this.getRandomIncidentTime();
+        // WICHTIG: Speichere Spielzeit statt Echtzeit!
+        this.gameTimeElapsed = 0; // Verstrichene Spielzeit in ms
+        this.lastUpdateTime = Date.now();
+        this.nextIncidentGameTime = this.getRandomIncidentGameTime();
         
-        console.log(`🎮 Game initialisiert | Nächster Einsatz in ${Math.round(this.nextIncidentTime/1000/CONFIG.GAME_SPEED)}s Echtzeit`);
+        console.log(`🎮 Game initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
     }
     
-    getRandomIncidentTime() {
-        // Neuer Einsatz alle 60-180 Sekunden (Spielzeit)
-        const minTime = 60000; // 60 Sekunden Spielzeit
-        const maxTime = 180000; // 180 Sekunden Spielzeit (3 Minuten)
+    getRandomIncidentGameTime() {
+        // Neuer Einsatz alle 60-180 Sekunden SPIELZEIT
+        const minTime = 60000; // 60 Sekunden
+        const maxTime = 180000; // 180 Sekunden (3 Minuten)
         const gameTime = minTime + Math.random() * (maxTime - minTime);
         
-        // Konvertiere zu Echtzeit basierend auf Spielgeschwindigkeit
-        const realTime = gameTime / CONFIG.GAME_SPEED;
-        
-        console.log(`⏱️ Nächster Einsatz: ${Math.round(gameTime/1000)}s Spielzeit = ${Math.round(realTime/1000)}s Echtzeit (${CONFIG.GAME_SPEED}x Speed)`);
-        return realTime;
+        console.log(`⏱️ Nächster Einsatz in ${Math.round(gameTime/1000)}s Spielzeit (unabhängig von Speed)`);
+        return gameTime;
     }
     
     async update() {
         const now = Date.now();
+        const deltaRealTime = now - this.lastUpdateTime;
+        this.lastUpdateTime = now;
         
-        // Spawne neue Einsätze mit Groq AI
-        if (now - this.lastIncidentSpawn >= this.nextIncidentTime) {
-            console.log('🚨 Generiere neuen KI-Einsatz...');
+        // Berechne verstrichene Spielzeit basierend auf aktueller Geschwindigkeit
+        const deltaGameTime = deltaRealTime * CONFIG.GAME_SPEED;
+        this.gameTimeElapsed += deltaGameTime;
+        
+        // Spawne neue Einsätze wenn Spielzeit erreicht ist
+        if (this.gameTimeElapsed >= this.nextIncidentGameTime) {
+            console.log(`🚨 Generiere neuen KI-Einsatz... (Spielzeit: ${Math.round(this.gameTimeElapsed/1000)}s)`);
             
             const ownedVehicles = this.vehicles.filter(v => v.owned);
             const incident = await generateIncidentWithAI(ownedVehicles, this.apiKey);
@@ -46,16 +51,16 @@ class Game {
                 showIncomingCallNotification(incident);
                 addRadioMessage('System', 'Neuer Notruf 112 eingegangen!');
                 
-                // Setze Timer für nächsten Einsatz
-                this.lastIncidentSpawn = now;
-                this.nextIncidentTime = this.getRandomIncidentTime();
+                // Setze nächsten Einsatz als absolute Spielzeit
+                const nextInterval = this.getRandomIncidentGameTime();
+                this.nextIncidentGameTime = this.gameTimeElapsed + nextInterval;
                 
-                console.log(`✅ Einsatz erstellt: ${incident.keyword} | Nächster in ${Math.round(this.nextIncidentTime/1000)}s Echtzeit`);
+                const realTimeUntilNext = nextInterval / CONFIG.GAME_SPEED;
+                console.log(`✅ Einsatz erstellt: ${incident.keyword} | Nächster in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${CONFIG.GAME_SPEED}x)`);
             } else {
                 console.warn('⚠️ KI-Einsatzgenerierung fehlgeschlagen, versuche später erneut');
-                // Bei Fehler: Retry in 30 Sekunden
-                this.lastIncidentSpawn = now;
-                this.nextIncidentTime = 30000 / CONFIG.GAME_SPEED;
+                // Bei Fehler: Retry in 30 Sekunden SPIELZEIT
+                this.nextIncidentGameTime = this.gameTimeElapsed + 30000;
             }
         }
         
