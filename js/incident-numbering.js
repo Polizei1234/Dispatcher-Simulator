@@ -8,51 +8,42 @@ const IncidentNumbering = {
     counter: 0,
     prefix: 'RMK',
 
-    /**
-     * Initialisiert Zähler
-     */
     initialize() {
-        // Lade gespeicherten Zähler (falls vorhanden)
         const saved = localStorage.getItem('incident_counter');
         this.counter = saved ? parseInt(saved) : 0;
         
         console.log(`🔢 Incident Numbering initialisiert - Nächste Nummer: ${this.formatNumber(this.counter + 1)}`);
     },
 
-    /**
-     * Generiert nächste Einsatznummer
-     * Format: RMK-YYYY-NNNNNN
-     */
+    generateNumber() {
+        // Alias für generateIncidentNumber
+        return this.generateIncidentNumber();
+    },
+
     generateIncidentNumber() {
         this.counter++;
-        
-        // Speichere Zähler
         localStorage.setItem('incident_counter', this.counter.toString());
         
         const number = this.formatNumber(this.counter);
-        
-        console.log(`🆕 Neue Einsatznummer generiert: ${number}`);
+        console.log(`🆕 Neue Einsatznummer: ${number}`);
         return number;
     },
 
-    /**
-     * Formatiert Nummer im Format RMK-YYYY-NNNNNN
-     */
     formatNumber(count) {
         const paddedCount = count.toString().padStart(6, '0');
         return `${this.prefix}-${this.currentYear}-${paddedCount}`;
     },
 
-    /**
-     * Gibt aktuelle Spielzeit zurück (HH:MM:SS)
-     */
     getCurrentTimestamp() {
-        // Verwende Spielzeit falls vorhanden, sonst echte Zeit
+        // Verwende game.gameTime falls verfügbar
         let date;
         
-        if (typeof GAME_STATE !== 'undefined' && GAME_STATE.gameTime) {
-            date = new Date(GAME_STATE.gameTime);
+        if (typeof game !== 'undefined' && game && game.gameTime) {
+            date = new Date(game.gameTime);
+        } else if (typeof window !== 'undefined' && window.game && window.game.gameTime) {
+            date = new Date(window.game.gameTime);
         } else {
+            // Fallback: Echte Zeit
             date = new Date();
         }
 
@@ -63,9 +54,6 @@ const IncidentNumbering = {
         return `${hours}:${minutes}:${seconds}`;
     },
 
-    /**
-     * Erstellt vollständiges Einsatz-Basis-Objekt
-     */
     createIncidentBase() {
         const number = this.generateIncidentNumber();
         const timestamp = this.getCurrentTimestamp();
@@ -78,9 +66,6 @@ const IncidentNumbering = {
         };
     },
 
-    /**
-     * Reset Zähler (für neues Spiel)
-     */
     reset() {
         this.counter = 0;
         localStorage.setItem('incident_counter', '0');
