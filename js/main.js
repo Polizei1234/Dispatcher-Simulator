@@ -2,6 +2,8 @@
 // HAUPTMODUL
 // =========================
 
+let clockInterval = null;
+
 function selectIncident(incidentId) {
     const incident = game.incidents.find(i => i.id === incidentId);
     if (!incident) return;
@@ -196,6 +198,15 @@ function addRadioMessage(sender, message) {
     feed.scrollTop = feed.scrollHeight;
 }
 
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('de-DE');
+    const clockElement = document.getElementById('current-time');
+    if (clockElement) {
+        clockElement.textContent = timeString;
+    }
+}
+
 function playSound(type) {
     if (!CONFIG.SOUND_ENABLED) return;
     console.log(`Sound: ${type}`);
@@ -203,17 +214,24 @@ function playSound(type) {
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing...');
+    console.log('Initializing ILS Waiblingen v2.1...');
     initializeVehicles();
     game = new Game();
     
     // Initialisiere Karte
     if (typeof initMap === 'function') {
         initMap();
+        console.log('✅ Karte initialisiert');
     } else {
-        console.error('initMap function not found!');
+        console.error('❌ initMap function not found!');
     }
     
+    // Starte Uhr
+    updateClock();
+    clockInterval = setInterval(updateClock, 1000);
+    console.log('✅ Uhr gestartet');
+    
+    // Update-Loop
     setInterval(() => {
         if (game) {
             game.update();
@@ -224,4 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }, 2000);
+    
+    console.log('✅ Alle Systeme bereit!');
 });

@@ -32,8 +32,8 @@ function createStationMarkers() {
             icon: L.divIcon({
                 html: iconHtml,
                 className: 'station-marker',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
             })
         }).addTo(map);
         
@@ -61,25 +61,34 @@ function toggleStations() {
 
 function createStationPixelIcon(category) {
     const colors = {
-        'rettungswache': '#dc3545',
-        'notarztwache': '#ffc107',
-        'ortsverein': '#ff0000'
+        'rettungswache': { primary: '#dc3545', secondary: '#a02830', cross: '#ffffff' },
+        'notarztwache': { primary: '#ffc107', secondary: '#d4a006', cross: '#000000' },
+        'ortsverein': { primary: '#ff6b6b', secondary: '#d45555', cross: '#ffffff' }
     };
     
-    const color = colors[category] || '#6c757d';
-    const lightColor = lightenColor(color.replace('#', ''), 20);
+    const color = colors[category] || colors['rettungswache'];
     
     return `
-        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <!-- Pixel Art Gebäude -->
-            <rect x="8" y="12" width="16" height="16" fill="${color}" stroke="#000" stroke-width="1"/>
-            <rect x="8" y="8" width="16" height="4" fill="#${lightColor}" stroke="#000" stroke-width="1"/>
-            <!-- Kreuz -->
-            <rect x="14" y="16" width="4" height="8" fill="#fff"/>
-            <rect x="12" y="18" width="8" height="4" fill="#fff"/>
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <!-- Schatten -->
+            <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
+            
+            <!-- Gebäude -->
+            <rect x="10" y="18" width="20" height="20" fill="${color.primary}" stroke="#000" stroke-width="1.5"/>
+            
+            <!-- Dach -->
+            <path d="M 8 18 L 20 10 L 32 18 Z" fill="${color.secondary}" stroke="#000" stroke-width="1.5"/>
+            
+            <!-- DRK Kreuz -->
+            <rect x="17" y="24" width="6" height="10" fill="${color.cross}" stroke="#000" stroke-width="1"/>
+            <rect x="14" y="27" width="12" height="4" fill="${color.cross}" stroke="#000" stroke-width="1"/>
+            
+            <!-- Tür -->
+            <rect x="16" y="32" width="8" height="6" fill="#654321" stroke="#000" stroke-width="1"/>
+            
             <!-- Fenster -->
-            <rect x="10" y="10" width="2" height="2" fill="#add8e6"/>
-            <rect x="20" y="10" width="2" height="2" fill="#add8e6"/>
+            <rect x="12" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+            <rect x="25" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
         </svg>
     `;
 }
@@ -96,19 +105,36 @@ function createVehiclePixelIcon(type) {
     const color = colors[type] || '#007bff';
     
     return `
-        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Pixel Art Fahrzeug -->
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+            <!-- Schatten -->
+            <ellipse cx="14" cy="26" rx="10" ry="2" fill="rgba(0,0,0,0.3)"/>
+            
             <!-- Fahrzeugkörper -->
-            <rect x="6" y="10" width="12" height="8" fill="${color}" stroke="#000" stroke-width="1"/>
+            <rect x="6" y="12" width="16" height="10" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
+            
             <!-- Fahrerhaus -->
-            <rect x="14" y="8" width="4" height="4" fill="${color}" stroke="#000" stroke-width="1"/>
+            <rect x="16" y="8" width="6" height="6" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
+            
             <!-- Windschutzscheibe -->
-            <rect x="15" y="9" width="2" height="2" fill="#add8e6"/>
+            <rect x="17" y="9" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+            
+            <!-- Seitenfenster -->
+            <rect x="8" y="14" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+            
             <!-- Räder -->
-            <circle cx="9" cy="18" r="2" fill="#000"/>
-            <circle cx="15" cy="18" r="2" fill="#000"/>
+            <circle cx="10" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
+            <circle cx="18" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
+            <circle cx="10" cy="22" r="1" fill="#666"/>
+            <circle cx="18" cy="22" r="1" fill="#666"/>
+            
             <!-- Blaulicht -->
-            <rect x="10" y="8" width="2" height="1" fill="#0000ff"/>
+            <rect x="11" y="6" width="3" height="2" fill="#0000ff" stroke="#000" stroke-width="0.5" rx="0.5">
+                <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
+            </rect>
+            
+            <!-- DRK Logo -->
+            <rect x="13" y="15" width="2" height="4" fill="#fff"/>
+            <rect x="12" y="16" width="4" height="2" fill="#fff"/>
         </svg>
     `;
 }
@@ -118,19 +144,20 @@ function updateMap() {
     vehicleMarkers.forEach(m => map.removeLayer(m));
     vehicleMarkers = [];
     
-    // Erstelle neue Fahrzeugmarker
+    // Erstelle neue Fahrzeugmarker NUR für unterwegs/im Einsatz
     if (!game) return;
     
-    game.vehicles.filter(v => v.owned).forEach(vehicle => {
+    game.vehicles.filter(v => v.owned && (v.status === 'dispatched' || v.status === 'on-scene')).forEach(vehicle => {
         const iconHtml = createVehiclePixelIcon(vehicle.type);
         
         const marker = L.marker(vehicle.position, {
             icon: L.divIcon({
                 html: iconHtml,
                 className: 'vehicle-marker',
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
-            })
+                iconSize: [28, 28],
+                iconAnchor: [14, 28]
+            }),
+            zIndexOffset: 1000
         }).addTo(map);
         
         const statusText = {
