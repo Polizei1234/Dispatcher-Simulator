@@ -1,16 +1,19 @@
 // =========================
-// MANUAL INCIDENT CREATION v2.0
-// Modal für manuelle Einsatzerstellung mit Keywords-Dropdown
+// MANUAL INCIDENT CREATION v3.0
+// + showInline() für Notruf-Tab Integration
+// + Modal für manuelle Einsatzerstellung mit Keywords-Dropdown
 // =========================
 
 const ManualIncident = {
     selectedVehicles: [],
     modalOpen: false,
+    inlineMode: false,
     selectedPriorityKeyword: null,
     selectedDetailKeyword: null,
+    currentCallData: null,
 
     initialize() {
-        console.log('📝 Manual Incident System initialisiert');
+        console.log('📝 Manual Incident System v3.0 initialisiert');
         this.createModalHTML();
         this.attachEventListeners();
     },
@@ -106,6 +109,7 @@ const ManualIncident = {
         this.selectedVehicles = [];
         this.selectedPriorityKeyword = null;
         this.selectedDetailKeyword = null;
+        this.inlineMode = false;
         this.modalOpen = true;
 
         // Generiere Einsatznummer
@@ -136,6 +140,111 @@ const ManualIncident = {
         console.log('📝 Manual Incident Modal geöffnet');
     },
 
+    // 🚀 NEU: Inline-Modus für Notruf-Tab
+    showInline(callData) {
+        this.inlineMode = true;
+        this.currentCallData = callData;
+        this.selectedVehicles = [];
+        this.selectedPriorityKeyword = null;
+        this.selectedDetailKeyword = null;
+
+        const container = document.getElementById('manual-incident-inline-container');
+        if (!container) {
+            console.error('❌ manual-incident-inline-container nicht gefunden!');
+            return;
+        }
+
+        const nummer = IncidentNumbering.generateNumber();
+
+        container.innerHTML = `
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-file-medical"></i> Einsatzprotokoll</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label>Einsatznummer:</label>
+                    <input type="text" id="inline-nummer" value="${nummer}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>🚨 Prioritätsstufe (RD/MANV):</label>
+                    <input type="text" id="inline-priority" placeholder="z.B. RD 2, MANV 1" autocomplete="off">
+                    <small style="color: #888; font-size: 0.85em;">Grobes Einsatzstichwort</small>
+                </div>
+                <div class="form-group">
+                    <label>💔 Detail-Stichwort:</label>
+                    <input type="text" id="inline-detail" placeholder="z.B. VU, Herzinfarkt" autocomplete="off">
+                    <small style="color: #888; font-size: 0.85em;">Detailliertes Stichwort</small>
+                </div>
+                <div class="form-group">
+                    <label>Ort:</label>
+                    <input type="text" id="inline-ort" value="${callData?.einsatz?.ort || ''}" readonly>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Meldebild:</label>
+                <textarea id="inline-meldebild" rows="3" placeholder="Wird automatisch aus Anruf-Antworten erstellt..."></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">🚑 Fahrzeuge auswählen</h4>
+                <div id="inline-vehicle-grid" class="vehicle-cards-improved" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 2px solid var(--border-color);">
+                <span style="color: var(--text-secondary);"><span id="inline-selected-count">0</span> Fahrzeug(e) ausgewählt</span>
+                <button class="btn btn-success" id="inline-alarm-btn" onclick="ManualIncident.createIncidentInline()" disabled>
+                    <i class="fas fa-bell"></i> ALARMIEREN
+                </button>
+            </div>
+        `;
+
+        // Lade Fahrzeuge für Inline
+        this.loadVehiclesInline();
+
+        // Initialisiere Keywords-Dropdowns
+        setTimeout(() => {
+            this.initializeKeywordsDropdownsInline();
+        }, 100);
+
+        console.log('✅ Manual Incident Inline angezeigt');
+    },
+
+    // 🚀 NEU: Clear Inline Container
+    clearInline() {
+        const container = document.getElementById('manual-incident-inline-container');
+        if (container) {
+            container.innerHTML = '';
+        }
+        this.inlineMode = false;
+        this.currentCallData = null;
+        this.selectedVehicles = [];
+    },
+
+    // 🚀 NEU: Update from Call Answer
+    updateFromCallAnswer(key, answer, callData) {
+        if (!this.inlineMode) return;
+
+        const meldebildTextarea = document.getElementById('inline-meldebild');
+        if (!meldebildTextarea) return;
+
+        const parts = [];
+        
+        if (callData.antworten.was_passiert) {
+            parts.push(callData.antworten.was_passiert);
+        }
+        if (callData.antworten.bewusstsein) {
+            parts.push('Bewusstsein: ' + callData.antworten.bewusstsein);
+        }
+        if (callData.antworten.atmung) {
+            parts.push('Atmung: ' + callData.antworten.atmung);
+        }
+        if (callData.antworten.blutung) {
+            parts.push('Blutung: ' + callData.antworten.blutung);
+        }
+
+        meldebildTextarea.value = parts.join('. ') || 'Notfall';
+    },
+
     initializeKeywordsDropdowns() {
         if (typeof KeywordsDropdown === 'undefined') {
             console.error('❌ KeywordsDropdown nicht geladen!');
@@ -155,6 +264,31 @@ const ManualIncident = {
 
         // Detail-Dropdown
         KeywordsDropdown.initializeDetailDropdown('manual-detail', (keywordData) => {
+            this.selectedDetailKeyword = keywordData;
+            console.log('✅ Detail-Stichwort ausgewählt:', keywordData.keyword);
+        });
+    },
+
+    // 🚀 NEU: Keywords Dropdowns für Inline
+    initializeKeywordsDropdownsInline() {
+        if (typeof KeywordsDropdown === 'undefined') {
+            console.error('❌ KeywordsDropdown nicht geladen!');
+            return;
+        }
+
+        // Prioritäts-Dropdown
+        KeywordsDropdown.initializePriorityDropdown('inline-priority', (keywordData) => {
+            this.selectedPriorityKeyword = keywordData;
+            console.log('✅ Priorität ausgewählt:', keywordData.keyword);
+            
+            // Automatisch vorgeschlagene Fahrzeuge auswählen
+            if (keywordData.suggestedVehicles && keywordData.suggestedVehicles.length > 0) {
+                this.autoSelectVehiclesInline(keywordData.suggestedVehicles);
+            }
+        });
+
+        // Detail-Dropdown
+        KeywordsDropdown.initializeDetailDropdown('inline-detail', (keywordData) => {
             this.selectedDetailKeyword = keywordData;
             console.log('✅ Detail-Stichwort ausgewählt:', keywordData.keyword);
         });
@@ -183,6 +317,31 @@ const ManualIncident = {
         });
 
         this.updateUI();
+    },
+
+    // 🚀 NEU: Auto-Select für Inline
+    autoSelectVehiclesInline(suggestedTypes) {
+        const availableVehicles = GAME_DATA.vehicles.filter(v => 
+            v.status === 'available' && v.owned
+        );
+
+        suggestedTypes.forEach(type => {
+            const vehicle = availableVehicles.find(v => {
+                const vType = v.type.toUpperCase();
+                return (vType === type.toUpperCase() || vType.includes(type.toUpperCase())) &&
+                       !this.selectedVehicles.includes(v.id);
+            });
+
+            if (vehicle) {
+                this.selectedVehicles.push(vehicle.id);
+                const card = document.querySelector(`#inline-vehicle-grid .vehicle-card-large[data-id="${vehicle.id}"]`);
+                if (card) {
+                    card.classList.add('selected');
+                }
+            }
+        });
+
+        this.updateUIInline();
     },
 
     closeModal() {
@@ -235,6 +394,43 @@ const ManualIncident = {
         });
     },
 
+    // 🚀 NEU: Load Vehicles für Inline
+    loadVehiclesInline() {
+        const grid = document.getElementById('inline-vehicle-grid');
+        if (!grid) return;
+
+        const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
+        grid.innerHTML = '';
+
+        vehicleTypes.forEach(type => {
+            const vehicles = GAME_DATA.vehicles.filter(v => {
+                const vType = v.type.toUpperCase();
+                return (vType === type || vType.includes(type)) && 
+                       v.status === 'available' && 
+                       v.owned;
+            });
+
+            if (vehicles.length === 0) return;
+
+            const section = document.createElement('div');
+            section.className = 'vehicle-type-section';
+            section.innerHTML = `
+                <h6 style="margin: 10px 0; color: #a0a0a0; font-size: 0.9em;">${type} - ${vehicles.length} verfügbar</h6>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 15px;">
+                    ${vehicles.map(v => `
+                        <div class="vehicle-card-large" data-id="${v.id}" onclick="ManualIncident.toggleVehicleInline('${v.id}')">
+                            <div class="vehicle-card-icon">🚑</div>
+                            <div class="vehicle-card-name" style="font-size: 0.85em;">${v.callsign || v.name}</div>
+                            <div class="vehicle-card-station" style="font-size: 0.75em;">${v.station || 'Wache'}</div>
+                            <div class="vehicle-card-type" style="font-size: 0.75em;">${v.type}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            grid.appendChild(section);
+        });
+    },
+
     toggleVehicle(id) {
         const card = document.querySelector(`#manual-vehicle-grid .vehicle-card-large[data-id="${id}"]`);
         if (!card) return;
@@ -250,9 +446,39 @@ const ManualIncident = {
         this.updateUI();
     },
 
+    // 🚀 NEU: Toggle für Inline
+    toggleVehicleInline(id) {
+        const card = document.querySelector(`#inline-vehicle-grid .vehicle-card-large[data-id="${id}"]`);
+        if (!card) return;
+
+        if (this.selectedVehicles.includes(id)) {
+            this.selectedVehicles = this.selectedVehicles.filter(v => v !== id);
+            card.classList.remove('selected');
+        } else {
+            this.selectedVehicles.push(id);
+            card.classList.add('selected');
+        }
+
+        this.updateUIInline();
+    },
+
     updateUI() {
         const countSpan = document.getElementById('manual-selected-count');
         const alarmBtn = document.getElementById('manual-alarm-btn');
+
+        if (countSpan) {
+            countSpan.textContent = this.selectedVehicles.length;
+        }
+
+        if (alarmBtn) {
+            alarmBtn.disabled = this.selectedVehicles.length === 0;
+        }
+    },
+
+    // 🚀 NEU: Update UI für Inline
+    updateUIInline() {
+        const countSpan = document.getElementById('inline-selected-count');
+        const alarmBtn = document.getElementById('inline-alarm-btn');
 
         if (countSpan) {
             countSpan.textContent = this.selectedVehicles.length;
@@ -286,7 +512,7 @@ const ManualIncident = {
             return;
         }
 
-        // Kombiniere Stichwörter
+        // Kombiniere Stichwrter
         const stichwortParts = [];
         if (priorityInput) stichwortParts.push(priorityInput);
         if (detailInput) stichwortParts.push(detailInput);
@@ -339,16 +565,99 @@ const ManualIncident = {
         }
 
         // Fahrzeuge disponieren
+        this.dispatchVehicles(incident);
+
+        // Modal schließen
+        this.closeModal();
+
+        // Zur Karte wechseln
+        if (typeof switchTab === 'function') {
+            switchTab('map');
+        }
+
+        alert(`✅ Einsatz ${incident.id} erfolgreich erstellt!`);
+    },
+
+    // 🚀 NEU: Create Incident Inline
+    async createIncidentInline() {
+        const priorityInput = document.getElementById('inline-priority').value.trim();
+        const detailInput = document.getElementById('inline-detail').value.trim();
+        const ort = document.getElementById('inline-ort').value.trim();
+        const meldebild = document.getElementById('inline-meldebild').value.trim();
+
+        // Validierung
+        if (!priorityInput && !detailInput) {
+            alert('⚠️ Bitte mindestens ein Stichwort (Priorität oder Detail) eingeben!');
+            return;
+        }
+
+        if (this.selectedVehicles.length === 0) {
+            alert('⚠️ Bitte mindestens 1 Fahrzeug auswählen!');
+            return;
+        }
+
+        // Kombiniere Stichwrter
+        const stichwortParts = [];
+        if (priorityInput) stichwortParts.push(priorityInput);
+        if (detailInput) stichwortParts.push(detailInput);
+        const stichwort = stichwortParts.join(' - ');
+
+        // Koordinaten aus CallData
+        const koordinaten = this.currentCallData?.einsatz?.koordinaten;
+
+        if (!koordinaten) {
+            alert('⚠️ Koordinaten fehlen!');
+            return;
+        }
+
+        // Erstelle Einsatz
+        const incident = {
+            id: document.getElementById('inline-nummer').value,
+            stichwort: stichwort,
+            priorityKeyword: priorityInput,
+            detailKeyword: detailInput,
+            ort: ort,
+            meldebild: meldebild || 'Notruf 112',
+            koordinaten: koordinaten,
+            vehicles: [...this.selectedVehicles],
+            zeitstempel: IncidentNumbering.getCurrentTimestamp(),
+            status: 'active',
+            completed: false
+        };
+
+        // Zu GAME_DATA hinzufügen
+        if (!GAME_DATA.incidents.find(i => i.id === incident.id)) {
+            GAME_DATA.incidents.push(incident);
+            console.log('✅ Einsatz aus Notruf erstellt:', incident.id);
+        }
+
+        // Fahrzeuge disponieren
+        this.dispatchVehicles(incident);
+
+        // CallSystem beenden
+        if (typeof CallSystem !== 'undefined' && CallSystem.hangUp) {
+            CallSystem.hangUp();
+        }
+
+        // Zur Karte wechseln
+        if (typeof switchTab === 'function') {
+            switchTab('map');
+        }
+
+        alert(`✅ Einsatz ${incident.id} erfolgreich erstellt und alarmiert!`);
+    },
+
+    dispatchVehicles(incident) {
         this.selectedVehicles.forEach(vId => {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (vehicle) {
                 vehicle.status = 'dispatched';
                 vehicle.incident = incident.id;
-                vehicle.targetLocation = koordinaten;
+                vehicle.targetLocation = incident.koordinaten;
 
                 // VehicleMovement starten
                 if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
-                    VehicleMovement.dispatchVehicle(vId, koordinaten, incident.id);
+                    VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
                 }
             }
         });
@@ -363,16 +672,6 @@ const ManualIncident = {
         if (typeof updateUI === 'function') {
             updateUI();
         }
-
-        // Modal schließen
-        this.closeModal();
-
-        // Zur Karte wechseln
-        if (typeof switchTab === 'function') {
-            switchTab('map');
-        }
-
-        alert(`✅ Einsatz ${incident.id} erfolgreich erstellt!`);
     },
 
     async geocodeAddress(address) {
