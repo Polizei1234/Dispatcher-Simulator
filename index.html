@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
-    <link rel="stylesheet" href="css/style.css?v=4.0.0">
+    <link rel="stylesheet" href="css/style.css?v=4.0.1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/map-icons.css?v=4.0.0">
-    <link rel="stylesheet" href="css/draggable.css?v=4.0.0">
-    <link rel="stylesheet" href="css/tabs.css?v=4.0.0">
-    <link rel="stylesheet" href="css/call-system.css?v=4.0.0">
+    <link rel="stylesheet" href="css/map-icons.css?v=4.0.1">
+    <link rel="stylesheet" href="css/draggable.css?v=4.0.1">
+    <link rel="stylesheet" href="css/tabs.css?v=4.0.1">
+    <link rel="stylesheet" href="css/call-system.css?v=4.0.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -218,65 +218,42 @@
         </div>
     </div>
 
-    <!-- NEU: Vehicle Selection Container -->
-    <div id="vehicle-selection-container" style="display: none;"></div>
-
-    <!-- NEU: Notification Container -->
-    <div id="notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 9000; width: 350px;"></div>
-
-    <!-- NEU: Points Animation Container -->
-    <div id="points-animation-container" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9500; pointer-events: none;"></div>
-
-    <!-- Shop Dialog (bestehendes) -->
-    <div id="shop-dialog" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-shopping-cart"></i> Shop</h3>
-                <button class="close-btn" onclick="closeShop()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="shop-tabs">
-                    <button class="tab-btn active" onclick="showShopTab('vehicles')">Fahrzeuge</button>
-                    <button class="tab-btn" onclick="showShopTab('stations')">Wachen</button>
-                </div>
-                <div id="shop-content"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Skripte mit Cache-Busting v4.0.0 -->
+    <!-- Skripte mit Cache-Busting v4.0.1 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- NEUE MODULE: Kern-Systeme (ZUERST) -->
-    <script src="js/config.js?v=4.0.0"></script>
-    <script src="js/incident-numbering.js?v=4.0.0"></script>
-    <script src="js/vehicle-analyzer.js?v=4.0.0"></script>
-    <script src="js/address-service.js?v=4.0.0"></script>
+    <script src="js/config.js?v=4.0.1"></script>
+    <script src="js/incident-numbering.js?v=4.0.1"></script>
+    <script src="js/vehicle-analyzer.js?v=4.0.1"></script>
+    <script src="js/address-service.js?v=4.0.1"></script>
     
     <!-- NEUE MODULE: UI-Systeme -->
-    <script src="js/ui-helpers.js?v=4.0.0"></script>
-    <script src="js/notification-system.js?v=4.0.0"></script>
-    <script src="js/scoring-system.js?v=4.0.0"></script>
+    <script src="js/ui-helpers.js?v=4.0.1"></script>
+    <script src="js/notification-system.js?v=4.0.1"></script>
+    <script src="js/scoring-system.js?v=4.0.1"></script>
     
     <!-- NEUE MODULE: Haupt-Logik -->
-    <script src="js/call-system.js?v=4.0.0"></script>
-    <script src="js/protocol-form.js?v=4.0.0"></script>
-    <script src="js/assignment-ui.js?v=4.0.0"></script>
-    <script src="js/groq-validator.js?v=4.0.0"></script>
+    <script src="js/call-system.js?v=4.0.1"></script>
+    <script src="js/protocol-form.js?v=4.0.1"></script>
+    <script src="js/assignment-ui.js?v=4.0.1"></script>
+    <script src="js/groq-validator.js?v=4.0.1"></script>
+    
+    <!-- VEHICLE MOVEMENT SYSTEM -->
+    <script src="js/vehicle-movement.js?v=4.0.1"></script>
     
     <!-- BESTEHENDE MODULE (nach neuen Modulen) -->
-    <script src="js/data.js?v=4.0.0"></script>
-    <script src="js/map.js?v=4.0.0"></script>
-    <script src="js/game.js?v=4.0.0"></script>
-    <script src="js/incidents.js?v=4.0.0"></script>
-    <script src="js/ai.js?v=4.0.0"></script>
-    <script src="js/tutorial.js?v=4.0.0"></script>
-    <script src="js/ui.js?v=4.0.0"></script>
-    <script src="js/tabs.js?v=4.0.0"></script>
-    <script src="js/draggable.js?v=4.0.0"></script>
-    <script src="js/main.js?v=4.0.0"></script>
+    <script src="js/data.js?v=4.0.1"></script>
+    <script src="js/map.js?v=4.0.1"></script>
+    <script src="js/game.js?v=4.0.1"></script>
+    <script src="js/incidents.js?v=4.0.1"></script>
+    <script src="js/ai.js?v=4.0.1"></script>
+    <script src="js/tutorial.js?v=4.0.1"></script>
+    <script src="js/ui.js?v=4.0.1"></script>
+    <script src="js/tabs.js?v=4.0.1"></script>
+    <script src="js/draggable.js?v=4.0.1"></script>
+    <script src="js/main.js?v=4.0.1"></script>
     
     <!-- INTEGRATION BRIDGE (ZULETZT) -->
-    <script src="js/bridge.js?v=4.0.0"></script>
+    <script src="js/bridge.js?v=4.0.1"></script>
 </body>
 </html>
