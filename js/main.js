@@ -3,9 +3,32 @@
 // =========================
 
 let gamePaused = false;
-let gameTime = Date.now();
 let gameTickCounter = 0;
-let simulatedTime = new Date(); // Simulierte Spielzeit
+
+// ⏰ ZENTRALES ZEITSYSTEM - Wird von game.js genutzt!
+window.GameTime = {
+    simulated: new Date(),    // Uhrzeit für Anzeige (z.B. "16:42:35")
+    elapsed: 0,               // Verstrichene Spielzeit in ms (für Einsatz-Timing)
+    speed: CONFIG.GAME_SPEED, // Aktuelle Geschwindigkeit
+    
+    // Hilfsfunktionen
+    tick: function(deltaMs) {
+        const gameMs = deltaMs * this.speed;
+        this.elapsed += gameMs;
+        this.simulated = new Date(this.simulated.getTime() + gameMs);
+    },
+    
+    reset: function() {
+        this.simulated = new Date();
+        this.elapsed = 0;
+        this.speed = CONFIG.GAME_SPEED;
+    },
+    
+    updateSpeed: function(newSpeed) {
+        this.speed = newSpeed;
+        CONFIG.GAME_SPEED = newSpeed;
+    }
+};
 
 function showCareerComingSoon() {
     alert('🔒 Karrieremodus kommt bald!\n\nDiese Funktion ist noch in Entwicklung.\nStarte vorerst das Freie Spiel mit allen Fahrzeugen!');
@@ -36,9 +59,8 @@ function startNewGame(mode) {
     document.getElementById('welcome-screen').classList.remove('active');
     document.getElementById('game-container').classList.remove('hidden');
     
-    // Setze Startzeit
-    gameTime = Date.now();
-    simulatedTime = new Date(); // Starte bei aktueller Zeit
+    // Reset zentrales Zeitsystem
+    GameTime.reset();
     gamePaused = false;
     gameTickCounter = 0;
     
@@ -92,13 +114,13 @@ function startGameLoop() {
         
         // Debug-Log alle 5 Sekunden
         if (gameTickCounter % 5 === 0) {
-            console.log(`⏱️ Game Loop Tick #${gameTickCounter} | Pausiert: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0} | Speed: ${CONFIG.GAME_SPEED}x`);
+            console.log(`⏱️ Tick #${gameTickCounter} | Pause: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0} | Speed: ${GameTime.speed}x | Spielzeit: ${Math.round(GameTime.elapsed/1000)}s`);
         }
         
         if (gamePaused) return;
         
-        // Aktualisiere simulierte Zeit basierend auf Spielgeschwindigkeit
-        simulatedTime = new Date(simulatedTime.getTime() + (1000 * CONFIG.GAME_SPEED));
+        // Aktualisiere ZENTRALES Zeitsystem
+        GameTime.tick(1000);
         
         if (game) {
             game.update();
@@ -123,10 +145,10 @@ function updateUI() {
     if (totalEl) totalEl.textContent = ownedVehicles.length;
     if (activeEl) activeEl.textContent = availableVehicles.length;
     
-    // Update Zeit MIT Spielgeschwindigkeit!
+    // Update Zeit aus ZENTRALEM System
     const timeEl = document.getElementById('current-time');
     if (timeEl) {
-        timeEl.textContent = simulatedTime.toLocaleTimeString('de-DE');
+        timeEl.textContent = GameTime.simulated.toLocaleTimeString('de-DE');
     }
     
     // Update Einsatzliste
@@ -260,7 +282,8 @@ function saveSettings() {
     localStorage.setItem('groqApiKey', apiKey);
     localStorage.setItem('soundEnabled', sound);
     
-    CONFIG.GAME_SPEED = parseInt(speed);
+    // Update ZENTRALES Zeitsystem
+    GameTime.updateSpeed(parseInt(speed));
     if (game) game.apiKey = apiKey;
     
     document.getElementById('game-speed-indicator').textContent = speed + 'x';
@@ -277,7 +300,7 @@ function loadSettings() {
     const apiKey = localStorage.getItem('groqApiKey');
     
     if (speed) {
-        CONFIG.GAME_SPEED = parseInt(speed);
+        GameTime.updateSpeed(parseInt(speed));
         const indicator = document.getElementById('game-speed-indicator');
         if (indicator) indicator.textContent = speed + 'x';
         console.log(`⚙️ Geschwindigkeit geladen: ${speed}x`);
@@ -305,10 +328,11 @@ function toggleAPIKeyVisibility() {
 
 function cycleGameSpeed() {
     const speeds = [1, 2, 5, 10, 30];
-    const currentIndex = speeds.indexOf(CONFIG.GAME_SPEED);
+    const currentIndex = speeds.indexOf(GameTime.speed);
     const nextIndex = (currentIndex + 1) % speeds.length;
     
-    CONFIG.GAME_SPEED = speeds[nextIndex];
+    // Update ZENTRALES Zeitsystem
+    GameTime.updateSpeed(speeds[nextIndex]);
     document.getElementById('game-speed-indicator').textContent = speeds[nextIndex] + 'x';
     localStorage.setItem('gameSpeed', speeds[nextIndex]);
     
@@ -329,7 +353,7 @@ function addRadioMessage(sender, message) {
     const feed = document.getElementById('radio-feed');
     if (!feed) return;
     
-    const time = simulatedTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const time = GameTime.simulated.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
     
     const entry = document.createElement('div');
     entry.className = 'radio-entry';
