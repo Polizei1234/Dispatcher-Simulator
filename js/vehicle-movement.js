@@ -1,5 +1,6 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v5.0 - ALL BUGS FIXED
+// VEHICLE MOVEMENT SYSTEM v5.1
+// + 130% Speed bei Sondersignal
 // + Memory Leak Fix
 // + Route-Caching
 // + Routing Error Handler
@@ -10,17 +11,19 @@
 const VehicleMovement = {
     movingVehicles: {},
     updateInterval: null,
-    SPEED_KMH: 60,
+    SPEED_KMH: 60, // Basis-Geschwindigkeit
+    EMERGENCY_SPEED_MULTIPLIER: 1.3, // 🚨 NEU: 30% schneller bei Sondersignal
     UPDATE_INTERVAL_MS: 100,
     lastStatusReports: {},
     arrivalReported: {},
     routingControls: {},
-    routeCache: {}, // 🚀 NEU: Route-Cache
-    pendingMapUpdates: [], // 🚀 NEU: Batch-Updates
+    routeCache: {},
+    pendingMapUpdates: [],
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v5.0 initialisiert');
+        console.log('🚑 Vehicle Movement System v5.1 initialisiert');
         console.log('✅ Alle Bugs gefixt');
+        console.log('🚨 Sondersignal: 130% Geschwindigkeit');
         this.startUpdateLoop();
     },
 
@@ -31,11 +34,20 @@ const VehicleMovement = {
 
         this.updateInterval = setInterval(() => {
             this.updateAllVehicles();
-            this.processBatchMapUpdates(); // 🚀 Batch-Update
+            this.processBatchMapUpdates();
         }, this.UPDATE_INTERVAL_MS);
     },
 
-    // 🚀 FIX #1, #2, #4, #7: Komplett überarbeitete dispatchVehicle Methode
+    // 🚨 NEU: Berechne aktuelle Geschwindigkeit basierend auf Phase
+    getSpeedForPhase(phase) {
+        // Sondersignal bei: to_scene (FMS 3) und to_hospital (FMS 7)
+        if (phase === 'to_scene' || phase === 'to_hospital') {
+            return this.SPEED_KMH * this.EMERGENCY_SPEED_MULTIPLIER;
+        }
+        // Normale Fahrt bei returning (FMS 1)
+        return this.SPEED_KMH;
+    },
+
     async dispatchVehicle(vehicleId, targetCoords, incidentId, options = {}) {
         const { skipRadio = false, phase = 'to_scene' } = options;
         
@@ -51,7 +63,7 @@ const VehicleMovement = {
             return;
         }
 
-        // 🚀 FIX #1: Entferne alte Routing Controls (Memory Leak Fix)
+        // Entferne alte Routing Controls (Memory Leak Fix)
         if (this.routingControls[vehicleId]) {
             try {
                 map.removeControl(this.routingControls[vehicleId]);
@@ -63,18 +75,25 @@ const VehicleMovement = {
         }
 
         const startPos = vehicle.position || station.position;
-        console.log(`🚑 ${vehicle.callsign} fährt von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}]`);
+        const speedKmh = this.getSpeedForPhase(phase);
+        const speedIcon = phase === 'returning' ? '🏠' : '🚨';
+        
+        console.log(`${speedIcon} ${vehicle.callsign} fährt von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}] mit ${speedKmh} km/h`);
 
         vehicle.status = phase === 'to_scene' ? 'dispatched' : phase === 'to_hospital' ? 'transporting' : 'returning';
         vehicle.incident = incidentId;
         vehicle.position = [startPos[0], startPos[1]];
         vehicle.targetLocation = [targetCoords.lat, targetCoords.lon];
 
-        // 🚀 FIX #8: Route-Cache prüfen
-        const cacheKey = `${startPos[0]}_${startPos[1]}_${targetCoords.lat}_${targetCoords.lon}`;
+        // Route-Cache prüfen
+        const cacheKey = `${startPos[0]}_${startPos[1]}_${targetCoords.lat}_${targetCoords.lon}_${phase}`;
         if (this.routeCache[cacheKey]) {
             console.log(`📦 Cache-Hit für Route ${cacheKey.substring(0, 20)}...`);
             const cached = this.routeCache[cacheKey];
+            
+            // 🚨 NEU: Berechne Zeit mit aktueller Geschwindigkeit
+            const adjustedTime = (cached.time * 1000) / this.EMERGENCY_SPEED_MULTIPLIER;
+            const adjustedEta = Math.ceil(cached.time / 60 / this.EMERGENCY_SPEED_MULTIPLIER);
             
             this.movingVehicles[vehicleId] = {
                 vehicle: vehicle,
@@ -83,14 +102,13 @@ const VehicleMovement = {
                 incidentId: incidentId,
                 phase: phase,
                 startTime: Date.now(),
-                totalTime: cached.time * 1000,
+                totalTime: phase === 'returning' ? cached.time * 1000 : adjustedTime,
                 distanceKm: cached.distance,
-                eta: Math.ceil(cached.time / 60)
+                eta: phase === 'returning' ? Math.ceil(cached.time / 60) : adjustedEta
             };
             
-            // 🚀 FIX #4: Nur Funkspruch bei Initial-Alarm
             if (!skipRadio && phase === 'to_scene') {
-                const message = `${vehicle.callsign} alarmiert - ${cached.distance} km, ETA ${Math.ceil(cached.time / 60)} min`;
+                const message = `${vehicle.callsign} alarmiert - ${cached.distance} km, ETA ${adjustedEta} min (Sondersignal)`;
                 if (typeof addRadioMessage === 'function') {
                     addRadioMessage(message, 'dispatcher', '#17a2b8');
                 }
@@ -98,7 +116,7 @@ const VehicleMovement = {
             return;
         }
 
-        // 🚀 ROUTING MIT LEAFLET ROUTING MACHINE
+        // ROUTING MIT LEAFLET ROUTING MACHINE
         if (typeof L !== 'undefined' && L.Routing && map) {
             console.log('🗺️ Berechne Straßenroute...');
             
@@ -113,7 +131,12 @@ const VehicleMovement = {
                 createMarker: () => null,
                 lineOptions: {
                     styles: [
-                        { color: phase === 'returning' ? '#28a745' : '#17a2b8', weight: 4, opacity: 0.8, dashArray: '10, 5' }
+                        { 
+                            color: phase === 'returning' ? '#28a745' : '#dc3545', // Rot bei Sondersignal
+                            weight: phase === 'returning' ? 3 : 5, // Dicker bei Sondersignal
+                            opacity: 0.8, 
+                            dashArray: phase === 'returning' ? '10, 5' : '5, 10' // Anderes Muster
+                        }
                     ]
                 },
                 router: L.Routing.osrmv1({
@@ -123,11 +146,14 @@ const VehicleMovement = {
             .on('routesfound', (e) => {
                 const route = e.routes[0];
                 const distanceKm = (route.summary.totalDistance / 1000).toFixed(1);
-                const timeMin = Math.ceil(route.summary.totalTime / 60);
                 
-                console.log(`✅ Route berechnet: ${distanceKm} km, ETA ${timeMin} min`);
+                // 🚨 NEU: ETA mit Geschwindigkeits-Multiplikator
+                const baseTimeMin = Math.ceil(route.summary.totalTime / 60);
+                const adjustedTimeMin = phase === 'returning' ? baseTimeMin : Math.ceil(baseTimeMin / this.EMERGENCY_SPEED_MULTIPLIER);
                 
-                // 🚀 FIX #8: Route cachen
+                console.log(`✅ Route berechnet: ${distanceKm} km, ETA ${adjustedTimeMin} min ${phase === 'returning' ? '' : '(Sondersignal)'}`);
+                
+                // Route cachen
                 const routeCoords = route.coordinates.map(c => ({ lat: c.lat, lon: c.lng }));
                 this.routeCache[cacheKey] = {
                     coords: routeCoords,
@@ -135,13 +161,17 @@ const VehicleMovement = {
                     time: route.summary.totalTime
                 };
                 
-                // 🚀 FIX #4: Nur Funkspruch bei Initial-Alarm
                 if (!skipRadio && phase === 'to_scene') {
-                    const message = `${vehicle.callsign} alarmiert - ${distanceKm} km, ETA ${timeMin} min`;
+                    const message = `${vehicle.callsign} alarmiert - ${distanceKm} km, ETA ${adjustedTimeMin} min (Sondersignal)`;
                     if (typeof addRadioMessage === 'function') {
                         addRadioMessage(message, 'dispatcher', '#17a2b8');
                     }
                 }
+                
+                // 🚨 NEU: totalTime mit Geschwindigkeits-Multiplikator
+                const adjustedTotalTime = phase === 'returning' ? 
+                    route.summary.totalTime * 1000 : 
+                    (route.summary.totalTime * 1000) / this.EMERGENCY_SPEED_MULTIPLIER;
                 
                 this.movingVehicles[vehicleId] = {
                     vehicle: vehicle,
@@ -150,17 +180,14 @@ const VehicleMovement = {
                     incidentId: incidentId,
                     phase: phase,
                     startTime: Date.now(),
-                    totalTime: route.summary.totalTime * 1000,
+                    totalTime: adjustedTotalTime,
                     distanceKm: distanceKm,
-                    eta: timeMin
+                    eta: adjustedTimeMin
                 };
             })
-            // 🚀 FIX #7: Routing Error Handler
             .on('routingerror', (e) => {
                 console.error('❌ Routing Error:', e.error);
                 console.log('🔄 Fallback zu Luftlinie');
-                
-                // Fallback zu Luftlinie
                 this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
             })
             .addTo(map);
@@ -179,7 +206,7 @@ const VehicleMovement = {
             drawVehicleRoute(vehicle.id, startPos, [targetCoords.lat, targetCoords.lon]);
         }
 
-        const eta = this.calculateETA(startPos, [targetCoords.lat, targetCoords.lon]);
+        const eta = this.calculateETA(startPos, [targetCoords.lat, targetCoords.lon], phase);
         
         this.movingVehicles[vehicle.id] = {
             vehicle: vehicle,
@@ -194,9 +221,11 @@ const VehicleMovement = {
         };
     },
 
-    calculateETA(from, to) {
+    // 🚨 NEU: calculateETA mit Phase-Parameter
+    calculateETA(from, to, phase = 'to_scene') {
         const distance = this.calculateDistance(from[0], from[1], to[0], to[1]);
-        const timeHours = distance / this.SPEED_KMH;
+        const speed = this.getSpeedForPhase(phase);
+        const timeHours = distance / speed;
         const timeMinutes = timeHours * 60;
         return Math.ceil(timeMinutes);
     },
@@ -241,18 +270,18 @@ const VehicleMovement = {
                 vehicle.position = [coord.lat, coord.lon];
             }
             
-            // 🚀 FIX #9: Batch Map Update
             this.pendingMapUpdates.push(vehicle);
             
             if (progress >= 1) {
                 this.handleArrival(vehicleId);
             }
         } else {
-            // Fallback: Luftlinie
-            const { start, target } = movement;
+            // Fallback: Luftlinie mit Geschwindigkeits-Multiplikator
+            const { start, target, phase } = movement;
             const totalDistance = this.calculateDistance(start.lat, start.lon, target.lat, target.lon);
             const timeElapsed = (Date.now() - movement.startTime) / 1000;
-            const distanceTraveled = (this.SPEED_KMH / 3600) * timeElapsed;
+            const speed = this.getSpeedForPhase(phase);
+            const distanceTraveled = (speed / 3600) * timeElapsed;
 
             const progress = Math.min(distanceTraveled / totalDistance, 1);
             movement.progress = progress;
@@ -271,7 +300,6 @@ const VehicleMovement = {
         }
     },
 
-    // 🚀 FIX #9: Batch Map Updates (Performance)
     processBatchMapUpdates() {
         if (this.pendingMapUpdates.length === 0) return;
         
@@ -299,7 +327,7 @@ const VehicleMovement = {
 
         console.log(`✅ ${vehicle.callsign} angekommen (Phase: ${phase})`);
 
-        // 🚀 FIX #12: Cleanup Routing Control bei Ankunft
+        // Cleanup Routing Control bei Ankunft
         if (this.routingControls[vehicleId]) {
             try {
                 map.removeControl(this.routingControls[vehicleId]);
@@ -349,7 +377,6 @@ const VehicleMovement = {
         }
     },
 
-    // 🚀 FIX #2, #4: Verbesserte startTransport (kein neuer Funkspruch)
     startTransport(vehicleId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
@@ -360,14 +387,12 @@ const VehicleMovement = {
         const hospitalCoords = this.findNearestHospital(vehicle.position);
         console.log(`🏥 ${vehicle.callsign} fährt ins Krankenhaus`);
 
-        // 🚀 FIX: skipRadio = true, phase = 'to_hospital'
         this.dispatchVehicle(vehicleId, { lat: hospitalCoords[0], lon: hospitalCoords[1] }, vehicle.incident, {
             skipRadio: true,
             phase: 'to_hospital'
         });
     },
 
-    // 🚀 FIX #2, #4: Verbesserte returnToStation (kein neuer Funkspruch)
     returnToStation(vehicleId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
@@ -380,7 +405,6 @@ const VehicleMovement = {
 
         console.log(`🏠 ${vehicle.callsign} kehrt zur Wache zurück`);
 
-        // 🚀 FIX: skipRadio = true, phase = 'returning'
         this.dispatchVehicle(vehicleId, { lat: station.position[0], lon: station.position[1] }, vehicle.incident, {
             skipRadio: true,
             phase: 'returning'
@@ -416,6 +440,7 @@ const VehicleMovement = {
         }
     },
 
+    // 🚨 NEU: getDistanceToIncident berücksichtigt jetzt Sondersignal
     getDistanceToIncident(vehicleStation, incidentCoords) {
         const station = STATIONS[vehicleStation];
         if (!station) return null;
@@ -427,9 +452,12 @@ const VehicleMovement = {
             incidentCoords.lon
         );
         
+        // ETA mit Sondersignal (30% schneller)
+        const eta = this.calculateETA(station.position, [incidentCoords.lat, incidentCoords.lon], 'to_scene');
+        
         return {
             km: distance.toFixed(1),
-            eta: this.calculateETA(station.position, [incidentCoords.lat, incidentCoords.lon])
+            eta: eta
         };
     }
 };
