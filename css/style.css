@@ -1,4 +1,4 @@
-/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v2.1 */
+/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v2.2 */
 
 :root {
     --primary-color: #c8102e;
@@ -264,7 +264,85 @@ footer .panel { height: 100%; margin: 0; }
 }
 
 /* ========================================
-   VEHICLE CARDS IN PROTOCOL
+   IMPROVED VEHICLE CARDS (LARGER)
+   ======================================== */
+.vehicle-cards-improved {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.vehicle-card-large {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.vehicle-card-large:hover {
+    border-color: var(--info-color);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(23, 162, 184, 0.4);
+}
+
+.vehicle-card-large.selected {
+    background: var(--success-color);
+    border-color: var(--success-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.5);
+}
+
+.vehicle-card-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.vehicle-card-name {
+    font-size: 1.1em;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--text-primary);
+}
+
+.vehicle-card-large.selected .vehicle-card-name {
+    color: white;
+}
+
+.vehicle-card-station {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+}
+
+.vehicle-card-large.selected .vehicle-card-station {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.vehicle-card-type {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.vehicle-card-large.selected .vehicle-card-type {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* ========================================
+   OLD VEHICLE CARDS (FALLBACK)
    ======================================== */
 .vehicle-type-section {
     margin-bottom: 20px;
