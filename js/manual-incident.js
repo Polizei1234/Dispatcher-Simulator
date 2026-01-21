@@ -1,11 +1,13 @@
 // =========================
-// MANUAL INCIDENT CREATION v1.0
-// Modal für manuelle Einsatzerstellung
+// MANUAL INCIDENT CREATION v2.0
+// Modal für manuelle Einsatzerstellung mit Keywords-Dropdown
 // =========================
 
 const ManualIncident = {
     selectedVehicles: [],
     modalOpen: false,
+    selectedPriorityKeyword: null,
+    selectedDetailKeyword: null,
 
     initialize() {
         console.log('📝 Manual Incident System initialisiert');
@@ -32,8 +34,14 @@ const ManualIncident = {
                                 <input type="text" id="manual-nummer" readonly>
                             </div>
                             <div class="form-group">
-                                <label>Stichwort:</label>
-                                <input type="text" id="manual-stichwort" placeholder="z.B. Herzinfarkt">
+                                <label>🚨 Prioritätsstufe (RD/MANV):</label>
+                                <input type="text" id="manual-priority" placeholder="z.B. RD 2, MANV 1" autocomplete="off">
+                                <small style="color: #888; font-size: 0.85em;">Grobes Einsatzstichwort mit Durchsuchung</small>
+                            </div>
+                            <div class="form-group">
+                                <label>💔 Detail-Stichwort:</label>
+                                <input type="text" id="manual-detail" placeholder="z.B. VU, Herzinfarkt, Geburt" autocomplete="off">
+                                <small style="color: #888; font-size: 0.85em;">Detailliertes medizinisches Stichwort</small>
                             </div>
                             <div class="form-group">
                                 <label>Ort:</label>
@@ -96,6 +104,8 @@ const ManualIncident = {
 
     openModal() {
         this.selectedVehicles = [];
+        this.selectedPriorityKeyword = null;
+        this.selectedDetailKeyword = null;
         this.modalOpen = true;
 
         // Generiere Einsatznummer
@@ -103,7 +113,8 @@ const ManualIncident = {
         document.getElementById('manual-nummer').value = nummer;
 
         // Leere Felder
-        document.getElementById('manual-stichwort').value = '';
+        document.getElementById('manual-priority').value = '';
+        document.getElementById('manual-detail').value = '';
         document.getElementById('manual-ort').value = '';
         document.getElementById('manual-coords').value = '';
         document.getElementById('manual-meldebild').value = '';
@@ -117,12 +128,68 @@ const ManualIncident = {
             modal.classList.add('active');
         }
 
+        // Initialisiere Keywords-Dropdowns (nach Modal-Anzeige)
+        setTimeout(() => {
+            this.initializeKeywordsDropdowns();
+        }, 100);
+
         console.log('📝 Manual Incident Modal geöffnet');
+    },
+
+    initializeKeywordsDropdowns() {
+        if (typeof KeywordsDropdown === 'undefined') {
+            console.error('❌ KeywordsDropdown nicht geladen!');
+            return;
+        }
+
+        // Prioritäts-Dropdown
+        KeywordsDropdown.initializePriorityDropdown('manual-priority', (keywordData) => {
+            this.selectedPriorityKeyword = keywordData;
+            console.log('✅ Priorität ausgewählt:', keywordData.keyword);
+            
+            // Automatisch vorgeschlagene Fahrzeuge auswählen (optional)
+            if (keywordData.suggestedVehicles && keywordData.suggestedVehicles.length > 0) {
+                this.autoSelectVehicles(keywordData.suggestedVehicles);
+            }
+        });
+
+        // Detail-Dropdown
+        KeywordsDropdown.initializeDetailDropdown('manual-detail', (keywordData) => {
+            this.selectedDetailKeyword = keywordData;
+            console.log('✅ Detail-Stichwort ausgewählt:', keywordData.keyword);
+        });
+    },
+
+    autoSelectVehicles(suggestedTypes) {
+        // Automatische Auswahl von Fahrzeugen basierend auf Vorschlägen
+        const availableVehicles = GAME_DATA.vehicles.filter(v => 
+            v.status === 'available' && v.owned
+        );
+
+        suggestedTypes.forEach(type => {
+            const vehicle = availableVehicles.find(v => {
+                const vType = v.type.toUpperCase();
+                return (vType === type.toUpperCase() || vType.includes(type.toUpperCase())) &&
+                       !this.selectedVehicles.includes(v.id);
+            });
+
+            if (vehicle) {
+                this.selectedVehicles.push(vehicle.id);
+                const card = document.querySelector(`#manual-vehicle-grid .vehicle-card-large[data-id="${vehicle.id}"]`);
+                if (card) {
+                    card.classList.add('selected');
+                }
+            }
+        });
+
+        this.updateUI();
     },
 
     closeModal() {
         this.modalOpen = false;
         this.selectedVehicles = [];
+        this.selectedPriorityKeyword = null;
+        this.selectedDetailKeyword = null;
 
         const modal = document.getElementById('manual-incident-modal');
         if (modal) {
@@ -197,14 +264,15 @@ const ManualIncident = {
     },
 
     async createIncident() {
-        const stichwort = document.getElementById('manual-stichwort').value.trim();
+        const priorityInput = document.getElementById('manual-priority').value.trim();
+        const detailInput = document.getElementById('manual-detail').value.trim();
         const ort = document.getElementById('manual-ort').value.trim();
         const meldebild = document.getElementById('manual-meldebild').value.trim();
         const coordsInput = document.getElementById('manual-coords').value.trim();
 
         // Validierung
-        if (!stichwort) {
-            alert('⚠️ Bitte Stichwort eingeben!');
+        if (!priorityInput && !detailInput) {
+            alert('⚠️ Bitte mindestens ein Stichwort (Priorität oder Detail) eingeben!');
             return;
         }
 
@@ -217,6 +285,12 @@ const ManualIncident = {
             alert('⚠️ Bitte mindestens 1 Fahrzeug auswählen!');
             return;
         }
+
+        // Kombiniere Stichwörter
+        const stichwortParts = [];
+        if (priorityInput) stichwortParts.push(priorityInput);
+        if (detailInput) stichwortParts.push(detailInput);
+        const stichwort = stichwortParts.join(' - ');
 
         // Koordinaten parsen oder aus Ort ermitteln
         let koordinaten = null;
@@ -247,6 +321,8 @@ const ManualIncident = {
         const incident = {
             id: document.getElementById('manual-nummer').value,
             stichwort: stichwort,
+            priorityKeyword: priorityInput,
+            detailKeyword: detailInput,
             ort: ort,
             meldebild: meldebild || 'Manuell erstellter Einsatz',
             koordinaten: koordinaten,
