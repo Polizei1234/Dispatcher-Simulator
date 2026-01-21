@@ -72,11 +72,17 @@ function updateVehiclesOverview() {
     };
     
     ownedVehicles.forEach(vehicle => {
+        // Prüfe ob Fahrzeug zu einem Ortsverein gehört
+        const station = STATIONS[vehicle.station];
+        const isOrtsverein = station && station.category === 'ortsverein';
+        
         // Kategorisiere Fahrzeug
         let category = 'rettungsdienst';
+        
         if (vehicle.type === 'KTW') {
             category = 'krankentransport';
-        } else if (vehicle.type === 'GW-San') {
+        } else if (vehicle.type === 'GW-San' || isOrtsverein) {
+            // GW-San UND alle Ortsvereine gehören zum Katastrophenschutz
             category = 'katastrophenschutz';
         }
         
@@ -129,11 +135,19 @@ function updateVehiclesOverview() {
                         
                         const isCollapsed = collapsedStations.has(stationId);
                         
+                        // Icon basierend auf Kategorie
+                        let stationIcon = '🏥';
+                        if (station.category === 'ortsverein') {
+                            stationIcon = '🔴'; // Roter Kreis für OV
+                        } else if (station.category === 'notarztwache') {
+                            stationIcon = '⚠️'; // Warnung für NEF-Wache
+                        }
+                        
                         return `
                             <div class="station-group">
                                 <div class="station-header" onclick="toggleStation('${stationId}')">
                                     <h3>
-                                        <i class="fas fa-hospital"></i>
+                                        ${stationIcon}
                                         ${station.name}
                                     </h3>
                                     <div style="display: flex; align-items: center; gap: 10px;">
