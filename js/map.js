@@ -50,6 +50,19 @@ function getFMSStatus(vehicle) {
     return CONFIG.FMS_STATUS[fmsCode];
 }
 
+function getFMSStatusNumber(vehicle) {
+    const statusMap = {
+        'available': 2,
+        'dispatched': 3,
+        'on-scene': 4,
+        'transporting': 7,
+        'at-hospital': 8,
+        'returning': 1,
+        'unavailable': 6
+    };
+    return statusMap[vehicle.status] || 2;
+}
+
 function createStationMarkers() {
     // Lösche alte Marker
     stationMarkers.forEach(m => {
@@ -108,12 +121,15 @@ function createStationMarkers() {
                         <div style="margin-top: 5px;">
                             ${stationVehicles.map(v => {
                                 const fms = getFMSStatus(v);
+                                const fmsNumber = getFMSStatusNumber(v);
                                 return `
                                     <div style="display: flex; align-items: center; margin: 3px 0; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid ${fms.color};">
                                         <span style="font-size: 0.9em; margin-right: 5px;">${fms.icon}</span>
                                         <div style="flex: 1;">
                                             <div style="font-size: 0.85em; font-weight: bold;">${v.callsign}</div>
-                                            <div style="font-size: 0.75em; color: ${fms.color};">${fms.name}</div>
+                                            <div style="font-size: 0.75em; color: ${fms.color};">
+                                                <strong>Status ${fmsNumber}</strong> | ${fms.name}
+                                            </div>
                                         </div>
                                     </div>
                                 `;
@@ -297,13 +313,15 @@ function updateMap() {
             });
             
             const fms = getFMSStatus(vehicle);
+            const fmsNumber = getFMSStatusNumber(vehicle);
             
             marker.bindPopup(`
                 <div style="min-width: 200px;">
                     <strong>${vehicle.name}</strong><br>
                     <div style="margin-top: 5px; padding: 5px; background: rgba(0,0,0,0.2); border-left: 3px solid ${fms.color}; border-radius: 4px;">
                         <span style="font-size: 1.2em;">${fms.icon}</span>
-                        <strong style="color: ${fms.color}; margin-left: 5px;">${fms.name}</strong>
+                        <strong style="color: ${fms.color}; margin-left: 5px;">Status ${fmsNumber}</strong>
+                        <span style="color: ${fms.color};"> | ${fms.name}</span>
                     </div>
                     <small style="color: #a0a0a0; display: block; margin-top: 5px;">${vehicle.type}</small>
                 </div>
