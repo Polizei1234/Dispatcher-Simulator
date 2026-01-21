@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v5.1
-// + Improved Stichwort Dropdown
+// EMERGENCY CALL SYSTEM v5.2
+// + Verwendet jetzt ProtocolForm.showForm() für Keywords-Dropdown!
 // + Random Telefonnummern
 // + Hotspot-System
 // + Entfernungsanzeige
@@ -14,7 +14,6 @@ const CallSystem = {
     isGenerating: false,
     ringtoneAudio: null,
     callHistory: [],
-    selectedVehicles: [],
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
@@ -35,8 +34,8 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v5.1 initialisiert');
-        console.log('✅ Verbessertes Stichwort-Dropdown');
+        console.log('📞 Call System v5.2 initialisiert');
+        console.log('✅ Nutzt jetzt ProtocolForm mit Keywords-Dropdown!');
         this.setupRingtone();
     },
 
@@ -358,7 +357,6 @@ ANTWORTE NUR als JSON:
 
         console.log('📞 Anruf angenommen - Wechsle zu Tab "Notruf"');
         this.stopRingtone();
-        this.selectedVehicles = [];
         this.askedQuestions = [];
 
         const callList = document.getElementById('call-list');
@@ -391,9 +389,8 @@ ANTWORTE NUR als JSON:
     populateCallDialog() {
         const messagesContainer = document.getElementById('caller-messages');
         const questionsContainer = document.getElementById('question-buttons');
-        const protocolContainer = document.getElementById('protocol-form-content');
 
-        if (!messagesContainer || !questionsContainer || !protocolContainer) return;
+        if (!messagesContainer || !questionsContainer) return;
 
         messagesContainer.innerHTML = `
             <div class="msg-dispatcher">
@@ -411,7 +408,13 @@ ANTWORTE NUR als JSON:
         }, 1000);
 
         this.initQuestionButtons(questionsContainer);
-        this.initProtocolForm(protocolContainer);
+        
+        // 🚀 NEU: Nutze ProtocolForm statt eigenem Formular!
+        if (typeof ProtocolForm !== 'undefined') {
+            ProtocolForm.showForm(this.activeCall);
+        } else {
+            console.error('❌ ProtocolForm nicht gefunden!');
+        }
     },
 
     typeText(element, text, speed = 30) {
@@ -521,257 +524,11 @@ ANTWORTE NUR als JSON:
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
 
-            this.updateMeldebild();
+            // 🚀 NEU: Aktualisiere ProtocolForm statt eigenes Formular
+            if (typeof ProtocolForm !== 'undefined') {
+                ProtocolForm.updateFromCallAnswer(key, answer, this.activeCall);
+            }
         }, 1000);
-    },
-
-    updateMeldebild() {
-        const meldebildTextarea = document.getElementById('protocol-meldebild');
-        if (!meldebildTextarea) return;
-
-        const parts = [];
-        
-        if (this.askedQuestions.includes('was_passiert')) {
-            parts.push(this.activeCall.antworten.was_passiert);
-        }
-        if (this.askedQuestions.includes('bewusstsein')) {
-            parts.push('Bewusstsein: ' + this.activeCall.antworten.bewusstsein);
-        }
-        if (this.askedQuestions.includes('atmung')) {
-            parts.push('Atmung: ' + this.activeCall.antworten.atmung);
-        }
-
-        meldebildTextarea.value = parts.join('. ') || 'Notfall';
-    },
-
-    initProtocolForm(container) {
-        container.innerHTML = `
-            <div class="form-group">
-                <label>Einsatznummer:</label>
-                <input type="text" id="protocol-nummer" value="${IncidentNumbering.generateNumber()}" readonly>
-            </div>
-            <div class="form-group">
-                <label>Stichwort:</label>
-                <input type="text" id="stichwort-search" placeholder="Stichwort suchen oder auswählen...">
-                <div id="stichwort-results" class="stichwort-dropdown"></div>
-                <input type="hidden" id="protocol-stichwort">
-            </div>
-            <div class="form-group">
-                <label>Ort:</label>
-                <input type="text" id="protocol-ort" value="${this.activeCall.einsatz.ort}" readonly>
-            </div>
-            <div class="form-group">
-                <label>Meldebild:</label>
-                <textarea id="protocol-meldebild" rows="3" readonly placeholder="Stellen Sie Fragen, um das Meldebild zu erstellen..."></textarea>
-            </div>
-            
-            <div id="inline-vehicle-selection" style="margin-top: 20px;">
-                <h5 style="margin-bottom: 15px;">🚑 Fahrzeuge disponieren</h5>
-                <div id="vehicle-grid" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;"></div>
-                <button class="btn btn-success" onclick="CallSystem.alarmSelectedVehicles()" id="alarm-btn" disabled style="width: 100%; padding: 15px; font-size: 1.1em;">
-                    <i class="fas fa-bell"></i> ALARMIEREN (<span id="selected-count">0</span> Fahrzeuge)
-                </button>
-            </div>
-        `;
-
-        this.initStichwortSearch();
-        this.initVehicleSelection();
-    },
-
-    // 🚀 VERBESSERT: Stichwort-Dropdown zeigt alle Optionen beim Fokus
-    initStichwortSearch() {
-        const input = document.getElementById('stichwort-search');
-        const results = document.getElementById('stichwort-results');
-        const hidden = document.getElementById('protocol-stichwort');
-
-        if (!input || !results || !hidden) return;
-
-        const stichworte = [
-            'Herzinfarkt', 'Schlaganfall', 'Atemnot', 'Bewusstlosigkeit',
-            'Verkehrsunfall', 'Sturz', 'Verbrennung', 'Vergiftung',
-            'Allergie', 'Krampfanfall', 'Unterzuckerung', 'Badeunfall'
-        ];
-
-        // 🚀 NEU: Funktion zum Anzeigen der Stichworte
-        const showStichworte = (query = '') => {
-            results.innerHTML = '';
-            const filtered = query ? 
-                stichworte.filter(s => s.toLowerCase().includes(query.toLowerCase())) : 
-                stichworte;
-            
-            if (filtered.length === 0) {
-                results.style.display = 'none';
-                return;
-            }
-
-            filtered.forEach(stichwort => {
-                const item = document.createElement('div');
-                item.className = 'stichwort-item';
-                item.textContent = stichwort;
-                item.onclick = () => {
-                    input.value = stichwort;
-                    hidden.value = stichwort;
-                    results.style.display = 'none';
-                };
-                results.appendChild(item);
-            });
-
-            results.style.display = 'block';
-        };
-
-        // 🚀 NEU: Zeige alle Stichworte beim Fokus
-        input.addEventListener('focus', () => {
-            showStichworte(input.value);
-        });
-
-        // 🚀 GEÄNDERT: Filter ohne Mindestlänge
-        input.addEventListener('input', (e) => {
-            showStichworte(e.target.value);
-        });
-
-        // 🚀 NEU: Verstecke Dropdown beim Klick außerhalb
-        document.addEventListener('click', (e) => {
-            if (e.target !== input && !results.contains(e.target)) {
-                results.style.display = 'none';
-            }
-        });
-    },
-
-    initVehicleSelection() {
-        const grid = document.getElementById('vehicle-grid');
-        if (!grid) return;
-
-        const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
-        
-        vehicleTypes.forEach(type => {
-            const count = this.activeCall.empfehlung[type.toLowerCase()] || 0;
-            this.addVehicleTypeToGrid(grid, type, count);
-        });
-    },
-
-    addVehicleTypeToGrid(grid, type, count) {
-        const vehicles = GAME_DATA.vehicles.filter(v => {
-            const vType = v.type.toUpperCase();
-            const searchType = type.toUpperCase();
-            return (vType === searchType || vType.includes(searchType)) && 
-                   v.status === 'available' && 
-                   v.owned;
-        });
-
-        if (vehicles.length === 0) return;
-
-        if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
-            this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
-            vehicles.sort((a, b) => {
-                const distA = VehicleMovement.getDistanceToIncident(a.station, this.activeCall.einsatz.koordinaten);
-                const distB = VehicleMovement.getDistanceToIncident(b.station, this.activeCall.einsatz.koordinaten);
-                if (!distA || !distB) return 0;
-                return parseFloat(distA.km) - parseFloat(distB.km);
-            });
-        }
-
-        const typeDiv = document.createElement('div');
-        typeDiv.className = 'vehicle-type-section';
-        typeDiv.innerHTML = `
-            <h6 style="margin: 10px 0; color: #a0a0a0;">${type} (${count > 0 ? count + 'x empfohlen' : 'optional'}) - ${vehicles.length} verfügbar</h6>
-            <div class="vehicle-cards-improved">
-                ${vehicles.map(v => {
-                    let distanceInfo = '';
-                    if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && 
-                        this.activeCall && this.activeCall.einsatz && this.activeCall.einsatz.koordinaten) {
-                        const dist = VehicleMovement.getDistanceToIncident(v.station, this.activeCall.einsatz.koordinaten);
-                        if (dist) {
-                            distanceInfo = `<div class="vehicle-card-distance" style="font-size: 0.75em; color: #17a2b8; margin-top: 4px;">📍 ${dist.km} km | ⏱️ ${dist.eta} min</div>`;
-                        }
-                    }
-                    
-                    return `
-                        <div class="vehicle-card-large" data-id="${v.id}" onclick="CallSystem.toggleVehicle('${v.id}')">
-                            <div class="vehicle-card-icon">🚑</div>
-                            <div class="vehicle-card-name">${v.callsign || v.name}</div>
-                            <div class="vehicle-card-station">${v.station || 'Wache'}</div>
-                            <div class="vehicle-card-type">${v.type}</div>
-                            ${distanceInfo}
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-        grid.appendChild(typeDiv);
-    },
-
-    toggleVehicle(id) {
-        const card = document.querySelector(`.vehicle-card-large[data-id="${id}"]`);
-        if (!card) return;
-
-        if (this.selectedVehicles.includes(id)) {
-            this.selectedVehicles = this.selectedVehicles.filter(v => v !== id);
-            card.classList.remove('selected');
-        } else {
-            this.selectedVehicles.push(id);
-            card.classList.add('selected');
-        }
-
-        const btn = document.getElementById('alarm-btn');
-        const countSpan = document.getElementById('selected-count');
-        if (btn) btn.disabled = this.selectedVehicles.length === 0;
-        if (countSpan) countSpan.textContent = this.selectedVehicles.length;
-    },
-
-    alarmSelectedVehicles() {
-        if (this.selectedVehicles.length === 0) return;
-
-        console.log('🚨 Alarmiere Fahrzeuge:', this.selectedVehicles);
-        
-        const incident = {
-            id: document.getElementById('protocol-nummer').value,
-            stichwort: document.getElementById('protocol-stichwort').value || 'Notfall',
-            ort: document.getElementById('protocol-ort').value,
-            meldebild: document.getElementById('protocol-meldebild').value || 'Notfall',
-            koordinaten: this.activeCall.einsatz.koordinaten,
-            vehicles: [...this.selectedVehicles],
-            zeitstempel: IncidentNumbering.getCurrentTimestamp(),
-            status: 'active',
-            completed: false
-        };
-
-        if (!GAME_DATA.incidents.find(i => i.id === incident.id)) {
-            GAME_DATA.incidents.push(incident);
-            console.log('✅ Einsatz hinzugefügt:', incident.id);
-        }
-
-        this.selectedVehicles.forEach(vId => {
-            const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
-            if (vehicle) {
-                console.log(`🚑 Disponiere ${vehicle.callsign || vehicle.name}`);
-                vehicle.status = 'dispatched';
-                vehicle.incident = incident.id;
-                vehicle.targetLocation = incident.koordinaten;
-
-                if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
-                    console.log(`🛫 Starte Bewegung für ${vehicle.callsign}`);
-                    VehicleMovement.dispatchVehicle(vId, incident.koordinaten, incident.id);
-                } else {
-                    console.warn('⚠️ VehicleMovement nicht verfügbar');
-                }
-            }
-        });
-
-        const vehicleNames = this.selectedVehicles.map(vId => {
-            const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
-            return v ? v.callsign : '';
-        }).filter(Boolean).join(', ');
-
-        const msg = `${incident.stichwort}, ${incident.ort} - Alarmiert: ${vehicleNames}`;
-        if (typeof addRadioMessage === 'function') {
-            addRadioMessage(msg, 'dispatcher');
-        }
-
-        if (typeof updateUI === 'function') {
-            updateUI();
-        }
-
-        this.hangUp();
     },
 
     hangUp() {
@@ -783,7 +540,6 @@ ANTWORTE NUR als JSON:
         }
         
         this.activeCall = null;
-        this.selectedVehicles = [];
         this.askedQuestions = [];
         
         const noActive = document.getElementById('call-no-active');
