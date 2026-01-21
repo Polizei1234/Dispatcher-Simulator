@@ -37,7 +37,12 @@ function initMap() {
 }
 
 function getFMSStatus(vehicle) {
-    // Mappe Fahrzeugstatus auf FMS-Status
+    // Prüfe zuerst ob vehicle.currentStatus existiert (neues System)
+    if (vehicle.currentStatus && CONFIG.FMS_STATUS && CONFIG.FMS_STATUS[vehicle.currentStatus]) {
+        return CONFIG.FMS_STATUS[vehicle.currentStatus];
+    }
+    
+    // Fallback: Mappe Fahrzeugstatus auf FMS-Status
     const statusMap = {
         'available': 2,      // Status 2: Einsatzbereit auf Wache
         'dispatched': 3,     // Status 3: Einsatzauftrag übernommen
@@ -49,10 +54,27 @@ function getFMSStatus(vehicle) {
     };
     
     const fmsCode = statusMap[vehicle.status] || 2;
+    
+    // Double-Check: Gibt es CONFIG.FMS_STATUS?
+    if (!CONFIG.FMS_STATUS || !CONFIG.FMS_STATUS[fmsCode]) {
+        console.warn(`⚠️ FMS_STATUS nicht gefunden für Code ${fmsCode}, verwende Fallback`);
+        return {
+            name: vehicle.status || 'Unbekannt',
+            color: '#6c757d',
+            icon: '🚑'
+        };
+    }
+    
     return CONFIG.FMS_STATUS[fmsCode];
 }
 
 function getFMSStatusNumber(vehicle) {
+    // Prüfe zuerst currentStatus
+    if (vehicle.currentStatus) {
+        return vehicle.currentStatus;
+    }
+    
+    // Fallback
     const statusMap = {
         'available': 2,
         'dispatched': 3,
