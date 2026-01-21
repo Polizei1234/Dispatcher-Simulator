@@ -21,25 +21,56 @@ function initMap() {
     const mapZoom = CONFIG.MAP?.zoom || 11;
     
     console.log('📍 Map Center:', mapCenter, 'Zoom:', mapZoom);
+    console.log('🌐 Leaflet Version:', L.version);
     
-    map = L.map('map', {
-        center: mapCenter,
-        zoom: mapZoom,
-        minZoom: 9,
-        maxZoom: 18,
-        closePopupOnClick: true
-    });
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 19
-    }).addTo(map);
-    
-    console.log('✅ Karte erstellt, erstelle Wachen-Marker...');
-    createStationMarkers();
-    stationsInitialized = true;
-    
-    console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
+    try {
+        // Erstelle Map
+        map = L.map('map', {
+            center: mapCenter,
+            zoom: mapZoom,
+            minZoom: 9,
+            maxZoom: 18,
+            closePopupOnClick: true,
+            preferCanvas: false,
+            zoomControl: true
+        });
+        
+        console.log('✅ Map-Objekt erstellt');
+        
+        // Füge Tile Layer hinzu mit Fehler-Handling
+        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19,
+            subdomains: ['a', 'b', 'c'],
+            errorTileUrl: '', // Verhindert rote X bei Fehler
+            crossOrigin: true
+        });
+        
+        tileLayer.on('tileerror', function(error, tile) {
+            console.warn('⚠️ Tile Ladefehler:', error);
+        });
+        
+        tileLayer.on('tileload', function() {
+            console.log('✅ Tile geladen');
+        });
+        
+        tileLayer.addTo(map);
+        console.log('✅ TileLayer hinzugefügt');
+        
+        // Warte kurz und erstelle dann Marker
+        setTimeout(() => {
+            createStationMarkers();
+            stationsInitialized = true;
+            console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
+            
+            // Force Map Refresh
+            map.invalidateSize();
+            console.log('🔄 Map Size refreshed');
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Initialisieren der Karte:', error);
+    }
 }
 
 function getFMSStatus(vehicle) {
@@ -98,7 +129,7 @@ function createStationMarkers() {
     }
     
     stationMarkers.forEach(m => {
-        if (map.hasLayer(m)) {
+        if (map && map.hasLayer(m)) {
             map.removeLayer(m);
         }
     });
@@ -112,8 +143,6 @@ function createStationMarkers() {
             console.error(`❌ Ungültige Position für ${station.name}:`, pos);
             return;
         }
-        
-        console.log(`📍 Erstelle Marker für ${station.name} bei [${pos[0]}, ${pos[1]}]`);
         
         const iconHtml = createStationPixelIcon(station.category);
         
@@ -301,7 +330,6 @@ function updateMap() {
         const pos = vehicle.position;
         
         if (!pos || pos.length !== 2 || isNaN(pos[0]) || isNaN(pos[1])) {
-            console.warn(`⚠️ Ungültige Fahrzeugposition für ${vehicle.name}:`, pos);
             return;
         }
         
