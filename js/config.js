@@ -35,18 +35,17 @@ const CONFIG = {
         'patient_transport': 300
     },
     
-    // FMS Status (Funkmeldesystem Baden-Württemberg)
+    // FMS Status (Funkmeldesystem - angepasst)
     FMS_STATUS: {
-        0: { name: 'Nicht einsatzbereit', color: '#6c757d', icon: '⚫' },
-        1: { name: 'Einsatzbereit auf Funk', color: '#28a745', icon: '🟢' },
-        2: { name: 'Einsatzbereit auf Wache', color: '#20c997', icon: '🟢' },
-        3: { name: 'Einsatzauftrag übernommen', color: '#17a2b8', icon: '🔵' },
-        4: { name: 'Ankunft am Einsatzort', color: '#ffc107', icon: '🟡' },
-        5: { name: 'Patient aufgenommen', color: '#fd7e14', icon: '🟠' },
-        6: { name: 'Verlässt Einsatzort', color: '#20c997', icon: '🟢' },
-        7: { name: 'Ankunft Krankenhaus', color: '#e83e8c', icon: '🟣' },
-        8: { name: 'Am Standort', color: '#6610f2', icon: '🟣' },
-        9: { name: 'Sondersignal', color: '#dc3545', icon: '🔴' }
+        0: { name: 'Priorisierter Sprechwunsch', color: '#8b4513', icon: '🟤' },  // Braun
+        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },   // Grün
+        2: { name: 'Einsatzbereit auf Wache', color: '#1e7e34', icon: '🟢' },    // Dunkelgrün
+        3: { name: 'Einsatzauftrag übernommen', color: '#ffc107', icon: '🟡' }, // Gelb
+        4: { name: 'Ankunft am Einsatzort', color: '#fd7e14', icon: '🟠' },      // Orange
+        5: { name: 'Sprechwunsch', color: '#17a2b8', icon: '🔵' },               // Cyan
+        6: { name: 'Nicht einsatzbereit', color: '#000000', icon: '⚫' },            // Schwarz
+        7: { name: 'Patient aufgenommen', color: '#e83e8c', icon: '🟣' },        // Pink
+        8: { name: 'Krankenhausdesinfektion', color: '#6f42c1', icon: '🟣' }    // Lila
     },
     
     // Groq AI
