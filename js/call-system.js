@@ -1,5 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v5.3
+// EMERGENCY CALL SYSTEM v6.0
+// + Freitextfeld für eigene Fragen!
 // + Integriert ManualIncident.showInline() im Notruf-Tab!
 // + Anruf-Chat links, Manual Incident Formular rechts
 // + Random Telefonnummern
@@ -33,8 +34,9 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v5.3 initialisiert');
+        console.log('📞 Call System v6.0 initialisiert');
         console.log('✅ Nutzt ManualIncident.showInline() im Notruf-Tab!');
+        console.log('✅ Freitextfeld für eigene Fragen aktiviert!');
         this.setupRingtone();
     },
 
@@ -485,20 +487,122 @@ ANTWORTE NUR als JSON:
             }
         ];
 
-        container.innerHTML = categories.map(cat => `
-            <div class="question-cat">
-                <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">
-                    ${cat.name} <span class="arrow">▼</span>
+        container.innerHTML = `
+            <!-- 🆕 FREITEXTFELD -->
+            <div style="margin-bottom: 20px; padding: 15px; background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px;">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <i class="fas fa-keyboard" style="color: #2196F3; margin-right: 8px;"></i>
+                    <strong style="color: #2196F3;">Eigene Frage stellen:</strong>
                 </div>
-                <div class="cat-questions">
-                    ${cat.questions.map(q => `
-                        <button class="q-btn" onclick="CallSystem.askQuestion('${q.key}', '${q.text}')">
-                            ${q.text}
-                        </button>
-                    `).join('')}
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="custom-question-input" placeholder="z.B. Haben Sie den Patienten bewegt?" 
+                           style="flex: 1; padding: 10px; border: 1px solid #2196F3; border-radius: 5px; background: rgba(0,0,0,0.3); color: #fff;"
+                           onkeypress="if(event.key === 'Enter') CallSystem.askCustomQuestion()">
+                    <button class="btn btn-primary" onclick="CallSystem.askCustomQuestion()" style="white-space: nowrap;">
+                        <i class="fas fa-paper-plane"></i> Fragen
+                    </button>
                 </div>
             </div>
-        `).join('');
+            
+            <!-- VORDEFINIERTE FRAGEN -->
+            ${categories.map(cat => `
+                <div class="question-cat">
+                    <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        ${cat.name} <span class="arrow">▼</span>
+                    </div>
+                    <div class="cat-questions">
+                        ${cat.questions.map(q => `
+                            <button class="q-btn" onclick="CallSystem.askQuestion('${q.key}', '${q.text}')">
+                                ${q.text}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    },
+
+    /**
+     * 🆕 NEUE FUNKTION: Stelle eigene Frage
+     */
+    async askCustomQuestion() {
+        const input = document.getElementById('custom-question-input');
+        if (!input || !input.value.trim()) return;
+        
+        const question = input.value.trim();
+        input.value = ''; // Clear input
+        
+        const container = document.getElementById('caller-messages');
+        
+        // Zeige Frage
+        const qDiv = document.createElement('div');
+        qDiv.className = 'msg-dispatcher';
+        qDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${question}`;
+        container.appendChild(qDiv);
+        container.scrollTop = container.scrollHeight;
+        
+        // Generiere Antwort mit Groq AI
+        const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
+        if (!apiKey) {
+            this.showCallerAnswer('Tut mir leid, ich habe Sie nicht verstanden.');
+            return;
+        }
+        
+        try {
+            const prompt = `Du bist ein Anrufer beim Notruf 112 in Deutschland.
+
+Deine Situation:
+${JSON.stringify(this.activeCall.antworten, null, 2)}
+
+Deine Emotion: ${this.activeCall.anrufer.emotion}
+
+Der Disponent fragt dich:
+"${question}"
+
+Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuell Unsicherheit. KEINE medizinischen Fachbegriffe! Antworte NUR mit der Antwort, kein JSON.`;
+            
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [
+                        { role: 'system', content: 'Antworte als Anrufer beim Notruf. NUR die direkte Antwort, kein JSON.' },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 1.1,
+                    max_tokens: 100
+                })
+            });
+            
+            if (!response.ok) throw new Error('API Error');
+            
+            const data = await response.json();
+            const answer = data.choices[0].message.content.replace(/"/g, '').trim();
+            
+            this.showCallerAnswer(answer);
+            
+        } catch (error) {
+            console.error('❌ Fehler bei Custom Question:', error);
+            this.showCallerAnswer('Äh... was haben Sie gesagt? Ich bin gerade etwas verwirrt...');
+        }
+    },
+
+    showCallerAnswer(answer) {
+        const container = document.getElementById('caller-messages');
+        
+        setTimeout(() => {
+            const aDiv = document.createElement('div');
+            aDiv.className = 'msg-caller';
+            aDiv.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
+            container.appendChild(aDiv);
+
+            this.typeText(aDiv.querySelector('.typing'), answer);
+            container.scrollTop = container.scrollHeight;
+        }, 800);
     },
 
     askQuestion(key, text) {
@@ -568,3 +672,5 @@ if (typeof window !== 'undefined') {
         CallSystem.initialize();
     });
 }
+
+console.log('✅ Call System v6.0 geladen (mit Freitextfeld)');
