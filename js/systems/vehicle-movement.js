@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v6.5
+// VEHICLE MOVEMENT SYSTEM v7.0
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -7,6 +7,7 @@
 // + RTW ohne Wartezeit am Einsatzort
 // + 130% Speed bei Sondersignal
 // + ✅ PHASE 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt
+// + ✅ PHASE 3.2: Automatischer FMS-Wechsel nach Einsatzende
 // =========================
 
 const VehicleMovement = {
@@ -22,15 +23,26 @@ const VehicleMovement = {
     routeCache: {},
     pendingMapUpdates: [],
     activeRouteLines: {}, // ✅ NEU: Speichert die Polylines
+    onSceneTimers: {}, // ✅ PHASE 3.2: Timer für Einsatz-Maßnahmen
+
+    // ✅ PHASE 3.2: Maßnahmenzeiten je Fahrzeugtyp (in Sekunden)
+    TREATMENT_TIMES: {
+        'RTW': { min: 180, max: 480 },      // 3-8 Minuten
+        'NEF': { min: 300, max: 720 },      // 5-12 Minuten
+        'KTW': { min: 120, max: 300 },      // 2-5 Minuten
+        'Kdow': { min: 240, max: 420 },     // 4-7 Minuten
+        'GW-San': { min: 180, max: 360 }    // 3-6 Minuten
+    },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v6.5 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.0 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
         console.log('✅ NEF bleibt am Einsatzort');
         console.log('✅ RTW ohne Wartezeit');
         console.log('✅ Phase 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt');
+        console.log('✅ Phase 3.2: Automatischer FMS-Wechsel nach Einsatzende');
         this.startUpdateLoop();
     },
 
@@ -436,15 +448,8 @@ const VehicleMovement = {
                 vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
-                if (vehicle.type === 'RTW') {
-                    console.log(`🚑 ${vehicle.callsign} startet sofort Transport (keine Wartezeit)`);
-                    this.startTransport(vehicleId);
-                } else if (vehicle.type === 'NEF') {
-                    console.log(`🚑 ${vehicle.callsign} (NEF) bleibt am Einsatzort`);
-                    setTimeout(() => {
-                        this.returnToStation(vehicleId);
-                    }, 15 * 60 * 1000);
-                }
+                // ✅ PHASE 3.2: Automatische Maßnahmen-Timer
+                this.startTreatmentTimer(vehicleId);
                 break;
 
             case 'to_hospital':
@@ -472,6 +477,50 @@ const VehicleMovement = {
                     clearVehicleRoute(vehicleId);
                 }
                 break;
+        }
+    },
+
+    // ✅ PHASE 3.2: Starte automatischen Maßnahmen-Timer
+    startTreatmentTimer(vehicleId) {
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+
+        // Hole Maßnahmenzeit für Fahrzeugtyp
+        const treatmentTime = this.TREATMENT_TIMES[vehicle.type] || this.TREATMENT_TIMES['RTW'];
+        
+        // Zufällige Zeit im Bereich
+        const randomTime = Math.floor(
+            Math.random() * (treatmentTime.max - treatmentTime.min) + treatmentTime.min
+        );
+        
+        const timeInMinutes = (randomTime / 60).toFixed(1);
+        
+        console.log(`⏱️ ${vehicle.callsign} - Maßnahmen starten (${timeInMinutes} Min.)`);
+        
+        // Timer speichern
+        this.onSceneTimers[vehicleId] = setTimeout(() => {
+            this.completeTreatment(vehicleId);
+        }, randomTime * 1000);
+    },
+
+    // ✅ PHASE 3.2: Maßnahmen abgeschlossen
+    completeTreatment(vehicleId) {
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+
+        console.log(`✅ ${vehicle.callsign} - Maßnahmen abgeschlossen`);
+        
+        delete this.onSceneTimers[vehicleId];
+
+        // Entscheide basierend auf Fahrzeugtyp
+        if (vehicle.type === 'RTW') {
+            // RTW fährt mit Patient ins Krankenhaus
+            console.log(`🏥 ${vehicle.callsign} (RTW) - Transport ins Krankenhaus`);
+            this.startTransport(vehicleId);
+        } else {
+            // NEF, KTW, Kdow, etc. kehren zur Wache zurück
+            console.log(`🏠 ${vehicle.callsign} (${vehicle.type}) - Rückfahrt zur Wache`);
+            this.returnToStation(vehicleId);
         }
     },
 
@@ -575,4 +624,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v6.5 geladen - Phase 3.1 komplett!');
+console.log('✅ Vehicle Movement System v7.0 geladen - Phase 3.2 komplett!');
