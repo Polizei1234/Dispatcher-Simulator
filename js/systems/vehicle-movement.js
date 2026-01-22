@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.1
+// VEHICLE MOVEMENT SYSTEM v7.2
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -9,6 +9,7 @@
 // + ✅ PHASE 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt
 // + ✅ PHASE 3.2: Automatischer FMS-Wechsel nach Einsatzende
 // + ✅ PHASE 3.2.1: Intelligente Maßnahmendauer je Einsatztyp
+// + ✅ PHASE 3.2.2: Groq AI für dynamische Maßnahmendauer
 // =========================
 
 const VehicleMovement = {
@@ -17,71 +18,58 @@ const VehicleMovement = {
     SPEED_KMH: 60,
     EMERGENCY_SPEED_MULTIPLIER: 1.3,
     UPDATE_INTERVAL_MS: 100,
-    DISPATCH_DELAY_MS: 10000, // ✅ 10 Sekunden Ausrückzeit
+    DISPATCH_DELAY_MS: 10000,
     lastStatusReports: {},
     arrivalReported: {},
     routingControls: {},
     routeCache: {},
     pendingMapUpdates: [],
-    activeRouteLines: {}, // ✅ NEU: Speichert die Polylines
-    onSceneTimers: {}, // ✅ PHASE 3.2: Timer für Einsatz-Maßnahmen
+    activeRouteLines: {},
+    onSceneTimers: {},
 
-    // ✅ PHASE 3.2: Maßnahmenzeiten je Fahrzeugtyp (in Sekunden)
+    // ✅ PHASE 3.2: Maßnahmenzeiten je Fahrzeugtyp (Fallback)
     TREATMENT_TIMES: {
-        'RTW': { min: 180, max: 480 },      // 3-8 Minuten
-        'NEF': { min: 300, max: 720 },      // 5-12 Minuten
-        'KTW': { min: 120, max: 300 },      // 2-5 Minuten
-        'Kdow': { min: 240, max: 420 },     // 4-7 Minuten
-        'GW-San': { min: 180, max: 360 }    // 3-6 Minuten
+        'RTW': { min: 180, max: 480 },
+        'NEF': { min: 300, max: 720 },
+        'KTW': { min: 120, max: 300 },
+        'Kdow': { min: 240, max: 420 },
+        'GW-San': { min: 180, max: 360 }
     },
 
-    // ✅ PHASE 3.2.1: Einsatztyp-spezifische Zeiten (in Sekunden)
+    // ✅ PHASE 3.2.1: Einsatztyp-spezifische Zeiten (Fallback)
     INCIDENT_TREATMENT_TIMES: {
-        // Herz-Kreislauf
-        'herzinfarkt': { min: 480, max: 900 },          // 8-15 Min (kritisch!)
-        'herz': { min: 420, max: 780 },                 // 7-13 Min
-        'cardiac': { min: 480, max: 900 },              // 8-15 Min
-        'reanimation': { min: 900, max: 1800 },         // 15-30 Min (sehr lang)
-        'bewusstlos': { min: 360, max: 720 },           // 6-12 Min
-        
-        // Neurologisch
-        'schlaganfall': { min: 360, max: 720 },         // 6-12 Min (Zeit = Gehirn!)
-        'stroke': { min: 360, max: 720 },               // 6-12 Min
-        'krampfanfall': { min: 300, max: 600 },         // 5-10 Min
-        
-        // Trauma
-        'verkehrsunfall': { min: 300, max: 600 },       // 5-10 Min
-        'vu p': { min: 900, max: 1500 },                // 15-25 Min (Rettung!)
-        'eingeklemmt': { min: 900, max: 1500 },         // 15-25 Min
-        'sturz': { min: 240, max: 480 },                // 4-8 Min
-        'fraktur': { min: 300, max: 540 },              // 5-9 Min
-        'verletzung': { min: 240, max: 420 },           // 4-7 Min
-        
-        // Atemwege
-        'atemnot': { min: 300, max: 600 },              // 5-10 Min
-        'asthma': { min: 240, max: 480 },               // 4-8 Min
-        'erstickung': { min: 420, max: 780 },           // 7-13 Min
-        
-        // Internistisch
-        'bauchschmerzen': { min: 180, max: 420 },       // 3-7 Min
-        'übelkeit': { min: 120, max: 300 },             // 2-5 Min
-        'fieber': { min: 180, max: 360 },               // 3-6 Min
-        'diabetes': { min: 240, max: 480 },             // 4-8 Min
-        
-        // Sonstige
-        'vergiftung': { min: 300, max: 600 },           // 5-10 Min
-        'verbrennung': { min: 360, max: 660 },          // 6-11 Min
-        'blutung': { min: 300, max: 540 },              // 5-9 Min
-        
-        // Keywords (Baden-Württemberg)
-        'rd 1': { min: 180, max: 420 },                 // 3-7 Min
-        'rd 2': { min: 360, max: 720 },                 // 6-12 Min (schwer)
-        'rd 3': { min: 480, max: 900 },                 // 8-15 Min (lebensbedrohlich)
-        'vu': { min: 300, max: 600 },                   // 5-10 Min
+        'herzinfarkt': { min: 480, max: 900 },
+        'herz': { min: 420, max: 780 },
+        'cardiac': { min: 480, max: 900 },
+        'reanimation': { min: 900, max: 1800 },
+        'bewusstlos': { min: 360, max: 720 },
+        'schlaganfall': { min: 360, max: 720 },
+        'stroke': { min: 360, max: 720 },
+        'krampfanfall': { min: 300, max: 600 },
+        'verkehrsunfall': { min: 300, max: 600 },
+        'vu p': { min: 900, max: 1500 },
+        'eingeklemmt': { min: 900, max: 1500 },
+        'sturz': { min: 240, max: 480 },
+        'fraktur': { min: 300, max: 540 },
+        'verletzung': { min: 240, max: 420 },
+        'atemnot': { min: 300, max: 600 },
+        'asthma': { min: 240, max: 480 },
+        'erstickung': { min: 420, max: 780 },
+        'bauchschmerzen': { min: 180, max: 420 },
+        'übelkeit': { min: 120, max: 300 },
+        'fieber': { min: 180, max: 360 },
+        'diabetes': { min: 240, max: 480 },
+        'vergiftung': { min: 300, max: 600 },
+        'verbrennung': { min: 360, max: 660 },
+        'blutung': { min: 300, max: 540 },
+        'rd 1': { min: 180, max: 420 },
+        'rd 2': { min: 360, max: 720 },
+        'rd 3': { min: 480, max: 900 },
+        'vu': { min: 300, max: 600 },
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.1 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.2 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -90,6 +78,7 @@ const VehicleMovement = {
         console.log('✅ Phase 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt');
         console.log('✅ Phase 3.2: Automatischer FMS-Wechsel nach Einsatzende');
         console.log('✅ Phase 3.2.1: Intelligente Maßnahmendauer je Einsatztyp');
+        console.log('✅ Phase 3.2.2: Groq AI für dynamische Maßnahmendauer');
         this.startUpdateLoop();
     },
 
@@ -126,12 +115,9 @@ const VehicleMovement = {
             return;
         }
 
-        // ✅ Ausrückzeit nur bei to_scene
         if (phase === 'to_scene') {
             console.log(`⏱️ ${vehicle.callsign} - Ausrückzeit 10s...`);
             vehicle.status = 'preparing';
-            
-            // ✅ PHASE 3.1 FIX: Status 3 bei Alarmierung
             this.setVehicleStatus(vehicle, 3);
             
             setTimeout(() => {
@@ -463,7 +449,6 @@ const VehicleMovement = {
                 vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
-                // ✅ PHASE 3.2.1: Intelligenter Timer basierend auf Einsatztyp
                 this.startTreatmentTimer(vehicleId);
                 break;
 
@@ -495,8 +480,8 @@ const VehicleMovement = {
         }
     },
 
-    // ✅ PHASE 3.2.1: Intelligente Maßnahmendauer basierend auf Einsatztyp
-    startTreatmentTimer(vehicleId) {
+    // ✅ PHASE 3.2.2: Groq AI für intelligente Maßnahmendauer
+    async startTreatmentTimer(vehicleId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
 
@@ -509,41 +494,49 @@ const VehicleMovement = {
         let treatmentTime = this.TREATMENT_TIMES[vehicle.type] || this.TREATMENT_TIMES['RTW'];
         let timeSource = `Fahrzeugtyp ${vehicle.type}`;
 
-        // ✅ PHASE 3.2.1: Prüfe Einsatztyp für spezifische Zeiten
         if (incident) {
-            const keyword = (incident.stichwort || incident.keyword || '').toLowerCase();
-            const description = (incident.meldebild || incident.description || '').toLowerCase();
-            const combined = `${keyword} ${description}`;
+            console.log(`🤖 Starte Groq AI Analyse für Einsatz: ${incident.stichwort}`);
+            
+            // ✅ PHASE 3.2.2: Versuche Groq AI
+            const aiTime = await this.calculateTreatmentTimeWithAI(incident, vehicle);
+            
+            if (aiTime) {
+                treatmentTime = aiTime.time;
+                timeSource = aiTime.reason;
+                console.log(`✅ Groq AI Ergebnis: ${aiTime.time.min/60}-${aiTime.time.max/60} Min`);
+                console.log(`📝 Begründung: ${aiTime.reason}`);
+            } else {
+                console.log(`⚠️ Groq AI nicht verfügbar, nutze Keyword-Matching`);
+                
+                // Fallback: Keyword-Matching (Phase 3.2.1)
+                const keyword = (incident.stichwort || incident.keyword || '').toLowerCase();
+                const description = (incident.meldebild || incident.description || '').toLowerCase();
+                const combined = `${keyword} ${description}`;
 
-            console.log(`🔍 Analysiere Einsatztyp: "${combined}"`);
-
-            // Suche nach passenden Keywords
-            for (const [key, times] of Object.entries(this.INCIDENT_TREATMENT_TIMES)) {
-                if (combined.includes(key)) {
-                    treatmentTime = times;
-                    timeSource = `Einsatztyp "${key}"`;
-                    console.log(`✅ Match gefunden: ${key} → ${times.min/60}-${times.max/60} Min`);
-                    break;
+                for (const [key, times] of Object.entries(this.INCIDENT_TREATMENT_TIMES)) {
+                    if (combined.includes(key)) {
+                        treatmentTime = times;
+                        timeSource = `Einsatztyp "${key}"`;
+                        break;
+                    }
                 }
-            }
 
-            // ✅ Schweregrad-Multiplikator
-            if (incident.schweregrad) {
-                const severity = incident.schweregrad.toLowerCase();
-                if (severity === 'schwer' || severity === 'kritisch') {
-                    treatmentTime = {
-                        min: Math.floor(treatmentTime.min * 1.3),
-                        max: Math.floor(treatmentTime.max * 1.3)
-                    };
-                    timeSource += ` (${severity} +30%)`;
-                    console.log(`⚠️ Schweregrad ${severity} → Zeit erhöht`);
-                } else if (severity === 'leicht') {
-                    treatmentTime = {
-                        min: Math.floor(treatmentTime.min * 0.7),
-                        max: Math.floor(treatmentTime.max * 0.7)
-                    };
-                    timeSource += ` (${severity} -30%)`;
-                    console.log(`✅ Schweregrad ${severity} → Zeit reduziert`);
+                // Schweregrad-Anpassung
+                if (incident.schweregrad) {
+                    const severity = incident.schweregrad.toLowerCase();
+                    if (severity === 'schwer' || severity === 'kritisch') {
+                        treatmentTime = {
+                            min: Math.floor(treatmentTime.min * 1.3),
+                            max: Math.floor(treatmentTime.max * 1.3)
+                        };
+                        timeSource += ` (${severity} +30%)`;
+                    } else if (severity === 'leicht') {
+                        treatmentTime = {
+                            min: Math.floor(treatmentTime.min * 0.7),
+                            max: Math.floor(treatmentTime.max * 0.7)
+                        };
+                        timeSource += ` (${severity} -30%)`;
+                    }
                 }
             }
         }
@@ -561,6 +554,109 @@ const VehicleMovement = {
         this.onSceneTimers[vehicleId] = setTimeout(() => {
             this.completeTreatment(vehicleId);
         }, randomTime * 1000);
+    },
+
+    // ✅ PHASE 3.2.2: Groq AI Analyse
+    async calculateTreatmentTimeWithAI(incident, vehicle) {
+        // Prüfe ob Groq API Key verfügbar
+        const apiKey = localStorage.getItem('groqApiKey');
+        if (!apiKey) {
+            console.log('⚠️ Kein Groq API Key gefunden');
+            return null;
+        }
+
+        try {
+            // Sammle alle verfügbaren Informationen
+            const incidentInfo = {
+                stichwort: incident.stichwort || incident.keyword || 'Unbekannt',
+                meldebild: incident.meldebild || incident.description || 'Keine Details',
+                schweregrad: incident.schweregrad || 'mittel',
+                alter: incident.alter || incident.patient_age || 'unbekannt',
+                geschlecht: incident.geschlecht || 'unbekannt',
+                vitalzeichen: incident.vitalzeichen || {},
+                symptome: incident.symptome || [],
+                besonderheiten: incident.besonderheiten || 'keine',
+                anzahl_patienten: incident.anzahl_patienten || 1,
+                fahrzeugtyp: vehicle.type
+            };
+
+            const prompt = `Du bist ein erfahrener Notfallmediziner. Analysiere folgenden Rettungsdienst-Einsatz und bestimme die realistische Behandlungsdauer VOR ORT (nicht Transport!).
+
+Einsatzdaten:
+- Stichwort: ${incidentInfo.stichwort}
+- Meldebild: ${incidentInfo.meldebild}
+- Schweregrad: ${incidentInfo.schweregrad}
+- Patient: ${incidentInfo.alter} Jahre, ${incidentInfo.geschlecht}
+- Vitalzeichen: ${JSON.stringify(incidentInfo.vitalzeichen)}
+- Symptome: ${incidentInfo.symptome.join(', ') || 'keine Angabe'}
+- Besonderheiten: ${incidentInfo.besonderheiten}
+- Anzahl Patienten: ${incidentInfo.anzahl_patienten}
+- Fahrzeugtyp: ${incidentInfo.fahrzeugtyp}
+
+Berücksichtige:
+- Anamnese-Erhebung
+- Vitalzeichen-Kontrolle
+- Diagnostik vor Ort
+- Stabilisierungsmaßnahmen
+- Vorbereitung für Transport
+- Dokumentation
+
+Antworte NUR im folgenden JSON-Format (ohne Markdown!):
+{
+  "min_minuten": <Zahl>,
+  "max_minuten": <Zahl>,
+  "begruendung": "<Kurze medizinische Begründung>"
+}`;
+
+            console.log('🤖 Sende Anfrage an Groq AI...');
+
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [
+                        { role: 'system', content: 'Du bist ein Notfallmediziner der realistische Behandlungszeiten bestimmt. Antworte NUR mit JSON, ohne Markdown!' },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 300
+                })
+            });
+
+            if (!response.ok) {
+                console.error('❌ Groq API Fehler:', response.status);
+                return null;
+            }
+
+            const data = await response.json();
+            const content = data.choices[0].message.content.trim();
+            
+            console.log('📥 Groq Antwort:', content);
+
+            // Parse JSON (entferne ggf. Markdown-Code-Blocks)
+            let cleanContent = content;
+            if (content.includes('```')) {
+                cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            }
+
+            const result = JSON.parse(cleanContent);
+
+            return {
+                time: {
+                    min: result.min_minuten * 60,  // Konvertiere zu Sekunden
+                    max: result.max_minuten * 60
+                },
+                reason: `AI: ${result.begruendung}`
+            };
+
+        } catch (error) {
+            console.error('❌ Groq AI Fehler:', error);
+            return null;
+        }
     },
 
     completeTreatment(vehicleId) {
@@ -677,4 +773,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v7.1 geladen - Phase 3.2.1 komplett!');
+console.log('✅ Vehicle Movement System v7.2 geladen - Phase 3.2.2 komplett!');
