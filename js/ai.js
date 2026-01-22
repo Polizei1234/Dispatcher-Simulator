@@ -1,5 +1,9 @@
 // =========================
-// KI-TELEFONSYSTEM MIT GROQ
+// KI-TELEFONSYSTEM MIT GROQ v2.0
+// + ✅ Phase 3 FINAL: Natürliche emotionale Dialoge
+// + Anrufer reagiert auf ALLE Aussagen
+// + Emotionale Zustände (Panik, Angst, Beruhigung)
+// + Realistische Gesprächsführung
 // =========================
 
 let currentCall = null;
@@ -37,6 +41,14 @@ function acceptIncomingCall(incidentId) {
 function showCallDialog(incident) {
     currentCall = incident;
     conversationHistory = [];
+    
+    // ✅ Initiale Emotionszustände
+    incident.emotionalState = incident.emotionalState || {
+        panic: 8,        // 1-10, wie panisch ist der Anrufer
+        calmness: 2,     // 1-10, wie ruhig ist der Anrufer
+        cooperation: 7,  // 1-10, wie kooperativ ist der Anrufer
+        turns: 0         // Zähler für Gesprächsrunden
+    };
     
     const dialog = document.getElementById('call-dialog');
     const conversation = document.getElementById('call-conversation');
@@ -84,11 +96,11 @@ function showCallResponses(incident) {
         const btn = document.createElement('button');
         btn.className = 'response-btn';
         btn.textContent = s;
-        btn.onclick = () => askQuestion(s, incident);
+        btn.onclick = () => sendDispatcherMessage(s, incident);
         responses.appendChild(btn);
     });
     
-    if (incident.conversationState.locationKnown) {
+    if (incident.conversationState.locationKnown && incident.conversationState.detailsKnown) {
         const createBtn = document.createElement('button');
         createBtn.className = 'btn btn-success';
         createBtn.style.marginTop = '15px';
@@ -100,7 +112,9 @@ function showCallResponses(incident) {
 
 function getContextualSuggestions(incident) {
     const suggestions = [];
+    const state = incident.emotionalState;
     
+    // ✅ Kontext-abhängige Vorschläge
     if (!incident.conversationState.locationKnown) {
         suggestions.push('Wo genau befinden Sie sich?');
         suggestions.push('Welche Straße?');
@@ -108,6 +122,7 @@ function getContextualSuggestions(incident) {
     
     if (!incident.conversationState.detailsKnown) {
         suggestions.push('Was ist passiert?');
+        suggestions.push('Beschreiben Sie die Situation.');
     }
     
     if (incident.keyword.includes('RD') && !incident.conversationState.symptomsKnown) {
@@ -115,8 +130,19 @@ function getContextualSuggestions(incident) {
         suggestions.push('Atmet die Person?');
     }
     
-    suggestions.push('Bleiben Sie am Telefon.');
-    return suggestions.slice(0, 4);
+    // ✅ Beruhigende Aussagen
+    if (state.panic > 6) {
+        suggestions.push('Bleiben Sie ruhig, Hilfe ist unterwegs.');
+        suggestions.push('Ich verstehe. Atmen Sie tief durch.');
+    }
+    
+    // ✅ Anweisungen
+    if (incident.conversationState.locationKnown) {
+        suggestions.push('Bleiben Sie am Telefon.');
+        suggestions.push('Hilfe ist in wenigen Minuten bei Ihnen.');
+    }
+    
+    return suggestions.slice(0, 5);
 }
 
 function sendCustomMessage() {
@@ -124,61 +150,156 @@ function sendCustomMessage() {
     if (!input || !input.value.trim()) return;
     
     const message = input.value.trim();
-    askQuestion(message, currentCall);
+    sendDispatcherMessage(message, currentCall);
     input.value = '';
 }
 
-async function askQuestion(question, incident) {
-    addCallMessage('Disponent', question, 'dispatcher');
-    conversationHistory.push({ role: 'assistant', content: question });
+// ✅ PHASE 3 FIX: Einheitliche Funktion für ALLE Disponent-Nachrichten
+async function sendDispatcherMessage(message, incident) {
+    addCallMessage('Disponent', message, 'dispatcher');
+    conversationHistory.push({ role: 'assistant', content: message });
     
-    const simpleAnswer = generateSimpleResponse(question, incident);
+    // ✅ Erhöhe Turn-Counter
+    incident.emotionalState.turns++;
     
-    if (simpleAnswer) {
-        setTimeout(() => {
-            addCallMessage('Anrufer', simpleAnswer, 'caller');
-            conversationHistory.push({ role: 'user', content: simpleAnswer });
-            updateConversationState(question, incident);
-            showCallResponses(incident);
-        }, 800);
-    } else {
-        const aiAnswer = await generateAIResponse(question, incident);
-        setTimeout(() => {
-            addCallMessage('Anrufer', aiAnswer, 'caller');
-            conversationHistory.push({ role: 'user', content: aiAnswer });
-            showCallResponses(incident);
-        }, 1200);
-    }
+    // ✅ Analysiere Nachricht und generiere passende Antwort
+    const response = await generateIntelligentResponse(message, incident);
+    
+    setTimeout(() => {
+        addCallMessage('Anrufer', response, 'caller');
+        conversationHistory.push({ role: 'user', content: response });
+        updateConversationState(message, response, incident);
+        showCallResponses(incident);
+    }, 800 + Math.random() * 400); // 0.8-1.2s Verzögerung
 }
 
-function generateSimpleResponse(question, incident) {
-    const q = question.toLowerCase();
+// ✅ PHASE 3: INTELLIGENTE ANTWORT-GENERIERUNG
+async function generateIntelligentResponse(dispatcherMessage, incident) {
+    const msg = dispatcherMessage.toLowerCase();
+    const state = incident.emotionalState;
     
-    if (q.includes('wo') || q.includes('adresse') || q.includes('straße')) {
+    // ✅ 1. DIREKTE FAKTEN-FRAGEN (schnelle einfache Antworten)
+    const factResponse = getFactBasedResponse(msg, incident);
+    if (factResponse) {
+        return factResponse;
+    }
+    
+    // ✅ 2. BERUHIGENDE AUSSAGEN (emotionale Reaktion)
+    if (msg.includes('ruhig') || msg.includes('hilfe') || msg.includes('unterwegs') || msg.includes('gleich da')) {
+        // Anrufer beruhigt sich
+        state.panic = Math.max(1, state.panic - 2);
+        state.calmness = Math.min(10, state.calmness + 2);
+        
+        const responses = [
+            'Okay... okay... Gott sei Dank.',
+            'Danke... das hört sich gut an.',
+            'Wie lange dauert das noch?',
+            'Ich versuche ruhig zu bleiben...',
+            'Bitte beeilen Sie sich!'
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // ✅ 3. ANWEISUNGEN (Bestätigungen)
+    if (msg.includes('bleiben sie') || msg.includes('warten sie') || msg.includes('nicht auflegen')) {
+        state.cooperation = Math.min(10, state.cooperation + 1);
+        
+        const responses = [
+            'Ja, ich bleibe hier.',
+            'Okay, ich warte.',
+            'Verstanden.',
+            'Ich bleibe am Telefon.'
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // ✅ 4. NEGATIV/HEKTISCHE AUSSAGEN (Anrufer wird nervöser)
+    if (msg.includes('schnell') || msg.includes('beeilen') || msg.includes('sofort')) {
+        state.panic = Math.min(10, state.panic + 1);
+        
+        const responses = [
+            'Ja bitte! Es ist dringend!',
+            'Wie lange dauert das denn noch?!',
+            'Das geht doch nicht schneller?!',
+            'Bitte machen Sie schnell!'
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // ✅ 5. ALLGEMEINE FRAGEN/AUSSAGEN (KI-generiert)
+    return await generateAIResponse(dispatcherMessage, incident);
+}
+
+// ✅ Fakten-basierte Antworten (ohne KI)
+function getFactBasedResponse(message, incident) {
+    const msg = message.toLowerCase();
+    
+    // Ort/Adresse
+    if (msg.includes('wo') || msg.includes('adresse') || msg.includes('straße') || msg.includes('standort')) {
         return incident.actualLocation;
     }
-    if (q.includes('passiert')) {
+    
+    // Was ist passiert
+    if (msg.includes('was') && (msg.includes('passiert') || msg.includes('geschehen') || msg.includes('los'))) {
         return incident.fullDetails.description;
     }
-    if (q.includes('ansprechbar')) {
-        return incident.fullDetails.conscious ? 'Ja, bei Bewusstsein.' : 'Nein, reagiert nicht!';
-    }
-    if (q.includes('atmet')) {
-        return incident.fullDetails.breathing ? 'Ja, atmet.' : 'Keine Atmung!';
-    }
-    if (q.includes('alt')) {
-        return incident.fullDetails.age || 'Weiß ich nicht genau...';
+    
+    // Bewusstsein
+    if (msg.includes('ansprechbar') || msg.includes('bewusstsein') || msg.includes('wach')) {
+        return incident.fullDetails.conscious ? 'Ja, ist bei Bewusstsein!' : 'Nein, reagiert nicht mehr!';
     }
     
-    return null;
+    // Atmung
+    if (msg.includes('atmet') || msg.includes('atmung')) {
+        return incident.fullDetails.breathing ? 'Ja, atmet noch.' : 'Nein, keine Atmung!';
+    }
+    
+    // Alter
+    if (msg.includes('alt') || msg.includes('alter')) {
+        return incident.fullDetails.age || 'Weiß ich nicht genau... vielleicht Mitte 40?';
+    }
+    
+    // Geschlecht
+    if (msg.includes('männlich') || msg.includes('weiblich') || msg.includes('geschlecht')) {
+        return incident.fullDetails.gender === 'm' ? 'Ein Mann.' : 'Eine Frau.';
+    }
+    
+    // Name
+    if (msg.includes('name') || msg.includes('heißt')) {
+        const names = ['Michael', 'Thomas', 'Sandra', 'Julia', 'Peter', 'Maria'];
+        return names[Math.floor(Math.random() * names.length)] + '... glaube ich.';
+    }
+    
+    return null; // Keine Fakten-Antwort gefunden
 }
 
-async function generateAIResponse(question, incident) {
+// ✅ KI-generierte Antwort (für komplexe Dialoge)
+async function generateAIResponse(message, incident) {
     if (!game || !game.apiKey) {
-        return 'Bitte schicken Sie schnell jemanden!';
+        return generateFallbackResponse(incident);
     }
     
     try {
+        const state = incident.emotionalState;
+        const emotionLevel = state.panic > 7 ? 'sehr aufgeregt und ängstlich' : 
+                            state.panic > 4 ? 'gestresst aber noch ruhig' : 
+                            'einigermaßen ruhig';
+        
+        const systemPrompt = `Du bist ein Notrufer in einer Notsituation.
+
+Situation: ${incident.fullDetails.description}
+Ort: ${incident.actualLocation}
+Emotionaler Zustand: ${emotionLevel}
+Gesprächsrunde: ${state.turns}
+
+REGELN:
+1. Antworte IMMER auf die Aussage/Frage des Disponenten
+2. Reagiere emotional passend (Panik, Angst, Beruhigung)
+3. Maximal 1-2 kurze Sätze
+4. Sei realistisch - Menschen wiederholen sich unter Stress
+5. Zeige Dankbarkeit bei Beruhigung
+6. Werde nervös wenn es zu lange dauert`;
+        
         const response = await fetch(CONFIG.GROQ_API_URL, {
             method: 'POST',
             headers: {
@@ -188,12 +309,12 @@ async function generateAIResponse(question, incident) {
             body: JSON.stringify({
                 model: CONFIG.GROQ_MODEL,
                 messages: [
-                    { role: 'system', content: `Du bist ein aufgeregter Notrufer. Situation: ${incident.fullDetails.description}. Ort: ${incident.actualLocation}. Antworte kurz (max 2 Sätze) und leicht gestresst.` },
-                    ...conversationHistory.slice(-6),
-                    { role: 'user', content: question }
+                    { role: 'system', content: systemPrompt },
+                    ...conversationHistory.slice(-8), // Letzte 8 Nachrichten für Kontext
+                    { role: 'user', content: message }
                 ],
-                temperature: 0.8,
-                max_tokens: 80
+                temperature: 0.9, // Höhere Temperatur = natürlicher
+                max_tokens: 100
             })
         });
         
@@ -201,25 +322,58 @@ async function generateAIResponse(question, incident) {
         return data.choices[0].message.content.trim();
     } catch (error) {
         console.error('Groq API Fehler:', error);
-        return 'Bitte beeilen Sie sich!';
+        return generateFallbackResponse(incident);
     }
 }
 
-function updateConversationState(question, incident) {
-    const q = question.toLowerCase();
+// ✅ Fallback ohne KI
+function generateFallbackResponse(incident) {
+    const state = incident.emotionalState;
     
-    if (q.includes('wo') || q.includes('adresse') || q.includes('straße')) {
+    if (state.panic > 7) {
+        const responses = [
+            'Bitte beeilen Sie sich!',
+            'Es ist wirklich dringend!',
+            'Wie lange dauert das noch?!',
+            'Oh Gott, bitte machen Sie schnell!'
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    } else {
+        const responses = [
+            'Okay, verstanden.',
+            'Ja, ich warte.',
+            'Danke.',
+            'Bitte beeilen Sie sich.'
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+}
+
+// ✅ Update Gesprächsstatus basierend auf Inhalt
+function updateConversationState(dispatcherMsg, callerResponse, incident) {
+    const dMsg = dispatcherMsg.toLowerCase();
+    const cMsg = callerResponse.toLowerCase();
+    
+    // Ort erkannt
+    if ((dMsg.includes('wo') || dMsg.includes('adresse')) && 
+        (cMsg.includes('straße') || cMsg.includes(incident.actualLocation.toLowerCase()))) {
         incident.conversationState.locationKnown = true;
         incident.location = incident.actualLocation;
     }
-    if (q.includes('passiert')) {
+    
+    // Details erkannt
+    if (dMsg.includes('passiert') || dMsg.includes('geschehen')) {
         incident.conversationState.detailsKnown = true;
         incident.description = incident.fullDetails.description;
     }
-    if (q.includes('alt')) {
+    
+    // Alter erkannt
+    if (dMsg.includes('alt')) {
         incident.conversationState.ageKnown = true;
     }
-    if (q.includes('ansprechbar') || q.includes('atmet')) {
+    
+    // Symptome erkannt
+    if (dMsg.includes('ansprechbar') || dMsg.includes('atmet')) {
         incident.conversationState.symptomsKnown = true;
     }
 }
