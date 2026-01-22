@@ -1,6 +1,7 @@
 // =========================
-// UI SYSTEM - Updated v3.0
+// UI SYSTEM - Updated v3.1
 // Fixed Radio Messages with Colors
+// + Incident Manager Integration
 // =========================
 
 const UI = {
@@ -9,28 +10,29 @@ const UI = {
         if (!container) return;
 
         const incidents = GAME_DATA?.incidents || [];
+        const activeIncidents = incidents.filter(i => !i.completed && i.status !== 'completed');
         const badge = document.getElementById('incident-count');
         
         if (badge) {
-            badge.textContent = incidents.length;
+            badge.textContent = activeIncidents.length;
         }
 
-        if (incidents.length === 0) {
+        if (activeIncidents.length === 0) {
             container.innerHTML = '<p class="no-data">Keine aktiven Einsätze</p>';
             return;
         }
 
-        container.innerHTML = incidents.map(incident => `
+        container.innerHTML = activeIncidents.map(incident => `
             <div class="incident-item" onclick="UI.selectIncident('${incident.id}')">
                 <div class="incident-header">
                     <span class="incident-badge">🚨</span>
-                    <span class="incident-number">${incident.id}</span>
+                    <span class="incident-number">${incident.id || incident.nummer}</span>
                 </div>
                 <div class="incident-keyword">${incident.stichwort}</div>
                 <div class="incident-location">📍 ${incident.ort}</div>
                 <div class="incident-time">🕒 ${incident.zeitstempel}</div>
                 <div class="incident-vehicles">
-                    ${incident.vehicles.map(vId => {
+                    ${(incident.vehicles || incident.assignedVehicles || []).map(vId => {
                         const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
                         if (!v) return '';
                         const fms = this.getFMSStatus(v);
@@ -42,13 +44,14 @@ const UI = {
     },
 
     selectIncident(incidentId) {
-        const incident = GAME_DATA.incidents.find(i => i.id === incidentId);
+        const incident = GAME_DATA.incidents.find(i => i.id === incidentId || i.nummer === incidentId);
         if (!incident) return;
 
         const detailsContainer = document.getElementById('incident-details');
         if (!detailsContainer) return;
 
-        const assignedVehicles = incident.vehicles.map(vId => {
+        const vehicleIds = incident.vehicles || incident.assignedVehicles || [];
+        const assignedVehicles = vehicleIds.map(vId => {
             const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
             if (!v) return null;
             const fms = this.getFMSStatus(v);
@@ -59,7 +62,7 @@ const UI = {
             <div class="incident-details-content">
                 <div class="detail-header">
                     <h3>🚨 ${incident.stichwort}</h3>
-                    <span class="incident-badge-large">${incident.id}</span>
+                    <span class="incident-badge-large">${incident.id || incident.nummer}</span>
                 </div>
                 
                 <div class="detail-section">
@@ -80,7 +83,7 @@ const UI = {
                 <div class="detail-section">
                     <h4>🚑 Alarmierte Fahrzeuge (${assignedVehicles.length})</h4>
                     <div class="vehicle-list">
-                        ${assignedVehicles.map(({ vehicle, fms }) => `
+                        ${assignedVehicles.length > 0 ? assignedVehicles.map(({ vehicle, fms }) => `
                             <div class="vehicle-detail-card" style="border-left: 4px solid ${fms.color};">
                                 <div class="vehicle-detail-header">
                                     <span style="font-size: 1.5em;">${fms.icon}</span>
@@ -93,13 +96,13 @@ const UI = {
                                     <strong>Status ${vehicle.currentStatus || 2}</strong> - ${fms.name}
                                 </div>
                             </div>
-                        `).join('')}
+                        `).join('') : '<p style="color: #888; font-style: italic;">Noch keine Fahrzeuge alarmiert</p>'}
                     </div>
                 </div>
 
                 <div class="detail-actions">
-                    <button class="btn btn-danger" onclick="UI.closeIncident('${incident.id}')">
-                        <i class="fas fa-check"></i> Einsatz abschließen
+                    <button class="btn btn-danger" onclick="UI.closeIncident('${incident.id || incident.nummer}')">
+                        <i class="fas fa-flag-checkered"></i> Einsatz abschließen
                     </button>
                 </div>
             </div>
@@ -110,8 +113,26 @@ const UI = {
         }
     },
 
+    /**
+     * ✅ PHASE 2 FIX 2: Nutzt jetzt IncidentManager für sicheren Abschluss
+     */
     closeIncident(incidentId) {
-        const index = GAME_DATA.incidents.findIndex(i => i.id === incidentId);
+        console.log(`📋 UI: Einsatzabschluss angefordert für ${incidentId}`);
+        
+        // ✅ Nutze den neuen IncidentManager mit Sicherheits-Dialog
+        if (typeof IncidentManager !== 'undefined' && IncidentManager.showCompleteIncidentDialog) {
+            IncidentManager.showCompleteIncidentDialog(incidentId);
+        } else {
+            console.error('❌ IncidentManager nicht verfügbar - Fallback zu alter Methode');
+            this.closeIncidentFallback(incidentId);
+        }
+    },
+
+    /**
+     * ⚠️ FALLBACK: Alte Methode (sollte nicht mehr benutzt werden)
+     */
+    closeIncidentFallback(incidentId) {
+        const index = GAME_DATA.incidents.findIndex(i => i.id === incidentId || i.nummer === incidentId);
         if (index === -1) return;
 
         const incident = GAME_DATA.incidents[index];
@@ -122,7 +143,8 @@ const UI = {
 
         GAME_DATA.incidents.splice(index, 1);
 
-        incident.vehicles.forEach(vId => {
+        const vehicleIds = incident.vehicles || incident.assignedVehicles || [];
+        vehicleIds.forEach(vId => {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (vehicle) {
                 vehicle.status = 'available';
@@ -134,14 +156,13 @@ const UI = {
         this.updateIncidentList();
         document.getElementById('incident-details').innerHTML = '<p class="no-data">Wählen Sie einen Einsatz aus</p>';
 
-        console.log(`✅ Einsatz ${incidentId} abgeschlossen`);
+        console.log(`✅ Einsatz ${incidentId} abgeschlossen (Fallback)`);
     },
 
     getFMSStatus(vehicle) {
         const fmsCode = vehicle.currentStatus || 2;
         return CONFIG.FMS_STATUS[fmsCode] || {
-            name: 'Unbekannt',
-            color: '#6c757d',
+            name: 'Unbekannt',n            color: '#6c757d',
             icon: '🚑'
         };
     },
