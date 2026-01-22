@@ -1,9 +1,11 @@
 // =========================
-// KARTENLOGIK v4.8
+// KARTENLOGIK v4.9
 // + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge anklickbar mit Details
 // + Fahrzeuge in Wache unsichtbar
 // + Popups schließbar
+// + ✅ Krankenhäuser werden angezeigt
+// + ✅ Routen werden beim Löschen entfernt
 // =========================
 
 let map = null;
@@ -11,6 +13,7 @@ let stationMarkers = [];
 let vehicleMarkers = {};
 let incidentMarkers = {};
 let vehicleRoutes = {};
+let hospitalMarkers = {};
 let stationsVisible = true;
 let stationsInitialized = false;
 
@@ -58,6 +61,9 @@ function initMap() {
             stationsInitialized = true;
             console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
             
+            // ✅ FIXED: Krankenhäuser anzeigen
+            createHospitalMarkers();
+            
             map.invalidateSize();
             console.log('🔄 Map Size refreshed');
         }, 500);
@@ -65,6 +71,88 @@ function initMap() {
     } catch (error) {
         console.error('❌ Fehler beim Initialisieren der Karte:', error);
     }
+}
+
+// ✅ FIXED: Funktion zum Anzeigen der Krankenhäuser
+function createHospitalMarkers() {
+    if (typeof HOSPITALS === 'undefined') {
+        console.warn('⚠️ HOSPITALS nicht definiert');
+        return;
+    }
+    
+    console.group('🏥 ERSTELLE KRANKENHAUS-MARKER');
+    
+    Object.values(HOSPITALS).forEach(hospital => {
+        const iconHtml = createHospitalPixelIcon();
+        
+        try {
+            const marker = L.marker([hospital.position[0], hospital.position[1]], {
+                icon: L.divIcon({
+                    html: iconHtml,
+                    className: 'hospital-marker',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 40]
+                }),
+                zIndexOffset: 500
+            });
+            
+            marker.on('click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                
+                const popupContent = generateHospitalPopupContent(hospital);
+                marker.bindPopup(popupContent, {
+                    maxWidth: 350,
+                    className: 'hospital-popup',
+                    autoClose: true,
+                    closeOnClick: false
+                }).openPopup();
+            });
+            
+            marker.addTo(map);
+            hospitalMarkers[hospital.id] = marker;
+            console.log(`✅ ${hospital.name} platziert bei [${hospital.position[0]}, ${hospital.position[1]}]`);
+        } catch (error) {
+            console.error(`❌ Fehler beim Erstellen von Krankenhaus-Marker ${hospital.name}:`, error);
+        }
+    });
+    
+    console.log(`✅ ${Object.keys(hospitalMarkers).length} Krankenhäuser auf Karte angezeigt`);
+    console.groupEnd();
+}
+
+function createHospitalPixelIcon() {
+    return `
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
+            <rect x="10" y="18" width="20" height="20" fill="#e74c3c" stroke="#000" stroke-width="1.5"/>
+            <path d="M 8 18 L 20 10 L 32 18 Z" fill="#c0392b" stroke="#000" stroke-width="1.5"/>
+            <rect x="17" y="22" width="6" height="12" fill="#fff" stroke="#000" stroke-width="1"/>
+            <rect x="14" y="26" width="12" height="4" fill="#fff" stroke="#000" stroke-width="1"/>
+            <circle cx="15" cy="14" r="2" fill="#e74c3c" stroke="#000" stroke-width="0.5">
+                <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="25" cy="14" r="2" fill="#e74c3c" stroke="#000" stroke-width="0.5">
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite"/>
+            </circle>
+        </svg>
+    `;
+}
+
+function generateHospitalPopupContent(hospital) {
+    return `
+        <div style="min-width: 250px;">
+            <strong style="font-size: 1.1em;">🏥 ${hospital.name}</strong><br>
+            <small style="color: #a0a0a0;">${hospital.address}</small><br>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
+                <strong>🏥 Abteilungen:</strong><br>
+                <div style="margin-top: 5px;">
+                    ${hospital.departments.map(dept => `
+                        <div style="padding: 2px 0; font-size: 0.9em;">• ${dept}</div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function getFMSStatus(vehicle) {
@@ -452,11 +540,27 @@ function drawVehicleRoute(vehicleId, startPos, endPos) {
     console.log(`🗺️ Route für ${vehicleId} gezeichnet`);
 }
 
+// ✅ FIXED: Route wird jetzt korrekt gelöscht
 function clearVehicleRoute(vehicleId) {
     if (vehicleRoutes[vehicleId]) {
         map.removeLayer(vehicleRoutes[vehicleId]);
         delete vehicleRoutes[vehicleId];
+        console.log(`✅ Route für ${vehicleId} gelöscht`);
     }
+}
+
+// ✅ FIXED: Funktion zum Löschen aller Ressourcen eines Fahrzeugs
+function removeVehicleFromMap(vehicleId) {
+    // Lösche Marker
+    if (vehicleMarkers[vehicleId]) {
+        map.removeLayer(vehicleMarkers[vehicleId]);
+        delete vehicleMarkers[vehicleId];
+    }
+    
+    // Lösche Route
+    clearVehicleRoute(vehicleId);
+    
+    console.log(`✅ Fahrzeug ${vehicleId} vollständig von Karte entfernt`);
 }
 
 function updateMap() {
