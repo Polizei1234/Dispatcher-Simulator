@@ -1,5 +1,5 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.1
+// EMERGENCY CALL SYSTEM v7.2
 // + Freitextfeld für eigene Fragen!
 // + Integriert ManualIncident.showInline() im Notruf-Tab!
 // + Anruf-Chat links, Manual Incident Formular rechts
@@ -9,6 +9,7 @@
 // + ✅ PHASE 2: Tracking beantworteter Fragen für Meldebild
 // + ✅ PHASE 3.3: Natürlicher Gesprächsfluss mit automatischen Rückfragen
 // + ✅ PHASE 3.3.1: Optimiertes Groq Prompt für realistische Antworten
+// + ✅ PHASE 3.3.2: Nur Ort automatisch, Rest manuell!
 // =========================
 
 const CallSystem = {
@@ -20,7 +21,6 @@ const CallSystem = {
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
-    conversationState: 0,
 
     HOTSPOT_ZONES: [
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
@@ -38,9 +38,9 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.1 initialisiert (Phase 3.3.1)');
-        console.log('✅ Natürlicher Gesprächsfluss mit automatischen Rückfragen!');
-        console.log('✅ Optimiertes Groq Prompt für realistische Antworten');
+        console.log('📞 Call System v7.2 initialisiert (Phase 3.3.2)');
+        console.log('✅ Nur Ort automatisch, alle anderen Fragen manuell!');
+        console.log('✅ User hat volle Kontrolle über Gesprächsverlauf');
         this.setupRingtone();
     },
 
@@ -197,7 +197,6 @@ const CallSystem = {
         const randomSeed = Math.random().toString(36).substring(2, 15);
         const scenarios = this.getRandomScenarios();
 
-        // ✅ PHASE 3.3.1: KOMPLETT ÜBERARBEITETES PROMPT!
         const prompt = `Du bist ein KI-System das realistische deutsche Notrufe generiert.
 
 📍 EINSATZDATEN:
@@ -340,7 +339,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                     { role: 'system', content: 'Du generierst realistische deutsche Notrufe. Antworte NUR als JSON ohne Markdown.' },
                     { role: 'user', content: prompt }
                 ],
-                temperature: 1.3, // ✅ Höher für mehr Variation
+                temperature: 1.3,
                 response_format: { type: 'json_object' }
             })
         });
@@ -402,7 +401,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         console.log('📞 Anruf angenommen - Wechsle zu Tab "Notruf"');
         this.stopRingtone();
         this.askedQuestions = [];
-        this.conversationState = 0;
 
         const callList = document.getElementById('call-list');
         if (callList) {
@@ -439,7 +437,8 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
 
         messagesContainer.innerHTML = '';
 
-        this.startNaturalConversation(messagesContainer);
+        // ✅ PHASE 3.3.2: NUR ORT-FRAGE AUTOMATISCH!
+        this.startMinimalConversation(messagesContainer);
 
         this.initQuestionButtons(questionsContainer);
         
@@ -450,37 +449,20 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         }
     },
 
-    startNaturalConversation(container) {
-        const steps = [
-            { delay: 0, type: 'dispatcher', text: 'Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?' },
-            { delay: 1000, type: 'caller', text: this.activeCall.antworten.ort, updateKey: 'ort' },
-            { delay: 1500, type: 'dispatcher', text: 'Was ist genau passiert?' },
-            { delay: 1000, type: 'caller', text: this.activeCall.antworten.was_passiert, updateKey: 'was_passiert' },
-            { delay: 2000, type: 'dispatcher', text: 'Ist die Person bei Bewusstsein? Reagiert sie auf Ansprache?' },
-            { delay: 1200, type: 'caller', text: this.activeCall.antworten.bewusstsein, updateKey: 'bewusstsein' },
-            { delay: 1800, type: 'dispatcher', text: 'Atmet die Person normal?' },
-            { delay: 1000, type: 'caller', text: this.activeCall.antworten.atmung, updateKey: 'atmung' }
-        ];
-
-        let totalDelay = 0;
-        steps.forEach((step, index) => {
-            totalDelay += step.delay;
+    // ✅ PHASE 3.3.2: Nur Begrüßung + Ort, REST MANUELL!
+    startMinimalConversation(container) {
+        // 1. Begrüßung
+        this.addDispatcherMessage(container, 'Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?');
+        
+        // 2. Anrufer nennt Ort nach 1 Sekunde
+        setTimeout(() => {
+            this.addCallerMessage(container, this.activeCall.antworten.ort, 'ort');
             
+            // ✅ Nach 2 Sekunden: Buttons aktivieren
             setTimeout(() => {
-                if (step.type === 'dispatcher') {
-                    this.addDispatcherMessage(container, step.text);
-                } else {
-                    this.addCallerMessage(container, step.text, step.updateKey);
-                }
-                
-                if (index === steps.length - 1) {
-                    setTimeout(() => {
-                        this.conversationState = 1;
-                        console.log('✅ Basis-Gespräch abgeschlossen - Buttons aktiv');
-                    }, 1500);
-                }
-            }, totalDelay);
-        });
+                console.log('✅ Ort erhalten - User kann jetzt selbst fragen!');
+            }, 2000);
+        }, 1000);
     },
 
     addDispatcherMessage(container, text) {
@@ -527,53 +509,57 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
     initQuestionButtons(container) {
         const categories = [
             {
+                name: '🚨 Situation',
+                questions: [
+                    { key: 'was_passiert', text: 'Was ist genau passiert?' },
+                    { key: 'wie_viele', text: 'Wie viele Personen betroffen?' },
+                    { key: 'gefahrstoffe', text: 'Gefahrstoffe/Chemikalien?' },
+                    { key: 'feuer', text: 'Feuer oder Rauch vorhanden?' },
+                    { key: 'gewalt', text: 'Gewalteinwirkung?' },
+                    { key: 'waffe', text: 'Waffen im Spiel?' }
+                ]
+            },
+            {
                 name: '🩺 Patient',
                 questions: [
-                    { key: 'wie_viele', text: 'Wie viele Personen betroffen?' },
-                    { key: 'blutung', text: 'Blutungen vorhanden?' },
-                    { key: 'schmerzen', text: 'Wo hat der Patient Schmerzen?' }
+                    { key: 'bewusstsein', text: 'Bei Bewusstsein?' },
+                    { key: 'atmung', text: 'Normale Atmung?' },
+                    { key: 'blutung', text: 'Blutungen?' },
+                    { key: 'schmerzen', text: 'Wo Schmerzen?' }
                 ]
             },
             {
                 name: '💊 Medizinisch',
                 questions: [
-                    { key: 'vorerkrankungen', text: 'Bekannte Vorerkrankungen?' },
-                    { key: 'medikamente', text: 'Nimmt der Patient Medikamente?' },
-                    { key: 'allergien', text: 'Bekannte Allergien?' },
-                    { key: 'diabetes', text: 'Ist der Patient Diabetiker?' },
-                    { key: 'epilepsie', text: 'Bekannte Epilepsie?' },
-                    { key: 'herzerkrankung', text: 'Herzerkrankung bekannt?' },
-                    { key: 'schwangerschaft', text: 'Ist die Patientin schwanger?' }
+                    { key: 'vorerkrankungen', text: 'Vorerkrankungen?' },
+                    { key: 'medikamente', text: 'Medikamente?' },
+                    { key: 'allergien', text: 'Allergien?' },
+                    { key: 'diabetes', text: 'Diabetes?' },
+                    { key: 'epilepsie', text: 'Epilepsie?' },
+                    { key: 'herzerkrankung', text: 'Herzerkrankung?' },
+                    { key: 'schwangerschaft', text: 'Schwanger?' }
                 ]
             },
             {
                 name: '🚗 Unfall',
                 questions: [
-                    { key: 'sturz_hoehe', text: 'Aus welcher Höhe gestürzt?' },
-                    { key: 'aufprall', text: 'Wo ist der Patient aufgeprallt?' },
-                    { key: 'eingeklemmt', text: 'Ist jemand eingeklemmt?' },
-                    { key: 'airbag', text: 'Wurde der Airbag ausgelöst?' }
-                ]
-            },
-            {
-                name: '🚨 Situation',
-                questions: [
-                    { key: 'feuer', text: 'Ist Feuer oder Rauch vorhanden?' },
-                    { key: 'gefahrstoffe', text: 'Gefahrstoffe beteiligt?' },
-                    { key: 'gewalt', text: 'War Gewalt im Spiel?' },
-                    { key: 'waffe', text: 'Sind Waffen vorhanden?' }
+                    { key: 'sturz_hoehe', text: 'Sturzhöhe?' },
+                    { key: 'aufprall', text: 'Wo aufgeprallt?' },
+                    { key: 'eingeklemmt', text: 'Eingeklemmt?' },
+                    { key: 'airbag', text: 'Airbag ausgelöst?' }
                 ]
             },
             {
                 name: '📍 Einsatzstelle',
                 questions: [
-                    { key: 'erreichbarkeit', text: 'Wie ist die Einsatzstelle erreichbar?' },
-                    { key: 'stockwerk', text: 'In welchem Stockwerk?' }
+                    { key: 'erreichbarkeit', text: 'Wie erreichen?' },
+                    { key: 'stockwerk', text: 'Stockwerk/Aufzug?' }
                 ]
             }
         ];
 
         container.innerHTML = `
+            <!-- 🆕 FREITEXTFELD -->
             <div style="margin-bottom: 20px; padding: 15px; background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px;">
                 <div style="display: flex; align-items: center; margin-bottom: 10px;">
                     <i class="fas fa-keyboard" style="color: #2196F3; margin-right: 8px;"></i>
@@ -589,6 +575,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                 </div>
             </div>
             
+            <!-- VORDEFINIERTE FRAGEN -->
             ${categories.map(cat => `
                 <div class="question-cat">
                     <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">
@@ -737,7 +724,6 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
         
         this.activeCall = null;
         this.askedQuestions = [];
-        this.conversationState = 0;
         
         const noActive = document.getElementById('call-no-active');
         const active = document.getElementById('call-active');
@@ -766,4 +752,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v7.1 geladen (Phase 3.3.1 - Optimiertes Groq Prompt)');
+console.log('✅ Call System v7.2 geladen (Phase 3.3.2 - Nur Ort automatisch, Rest manuell)');
