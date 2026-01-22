@@ -1,5 +1,6 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW
+// TAB NAVIGATION & VEHICLE OVERVIEW v4.0
+// ✅ Phase 3 Fix 1: Fahrzeuge nach Wachen gruppiert
 // =========================
 
 let currentTab = 'map';
@@ -36,15 +37,7 @@ function switchTab(tabName) {
     }
 }
 
-// Schnellnavigation zu Kategorie
-function scrollToCategory(categoryKey) {
-    const element = document.getElementById(`category-${categoryKey}`);
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-// Fahrzeuge-Übersicht aktualisieren
+// ✅ PHASE 3 FIX 1: Fahrzeuge direkt nach Wachen gruppiert
 function updateVehiclesOverview() {
     if (!game) return;
     
@@ -64,111 +57,118 @@ function updateVehiclesOverview() {
         return;
     }
     
-    // Gruppiere Fahrzeuge nach Kategorie
-    const categories = {
-        'rettungsdienst': { name: 'Rettungsdienst', icon: '🚑', vehicles: [], color: '#dc3545' },
-        'katastrophenschutz': { name: 'Katastrophenschutz', icon: '🚒', vehicles: [], color: '#ffc107' },
-        'krankentransport': { name: 'Krankentransport', icon: '🚑', vehicles: [], color: '#28a745' }
-    };
+    // ✅ NEU: Gruppiere Fahrzeuge direkt nach Wachen
+    const stationGroups = {};
     
     ownedVehicles.forEach(vehicle => {
-        // Prüfe ZUERST ob Fahrzeug zu einem Ortsverein gehört
-        const station = STATIONS[vehicle.station];
-        const isOrtsverein = station && station.category === 'ortsverein';
-        
-        // Kategorisiere Fahrzeug
-        let category = 'rettungsdienst';
-        
-        // WICHTIG: Ortsverein-Check VOR Fahrzeugtyp-Check!
-        if (isOrtsverein || vehicle.type === 'GW-San') {
-            // Alle Ortsvereine UND GW-San gehören zum Katastrophenschutz
-            category = 'katastrophenschutz';
-        } else if (vehicle.type === 'KTW') {
-            // Nur KTW von NICHT-Ortsvereinen sind Krankentransport
-            category = 'krankentransport';
+        const stationId = vehicle.station;
+        if (!stationGroups[stationId]) {
+            stationGroups[stationId] = [];
         }
-        
-        categories[category].vehicles.push(vehicle);
+        stationGroups[stationId].push(vehicle);
     });
     
-    // Erstelle Schnellnavigation
-    let quickNavHtml = '<div class="quick-nav">';
-    Object.entries(categories).forEach(([catKey, catData]) => {
-        if (catData.vehicles.length > 0) {
-            quickNavHtml += `
-                <button class="quick-nav-btn" onclick="scrollToCategory('${catKey}')">
-                    <span>${catData.icon}</span>
-                    <span>${catData.name}</span>
-                    <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;">${catData.vehicles.length}</span>
-                </button>
-            `;
+    // Sortiere Wachen: Hauptamtliche zuerst, dann Ortsvereine
+    const sortedStations = Object.keys(stationGroups).sort((a, b) => {
+        const stationA = STATIONS[a];
+        const stationB = STATIONS[b];
+        
+        if (!stationA || !stationB) return 0;
+        
+        // Hauptamtliche Wachen zuerst
+        const isOvA = stationA.category === 'ortsverein';
+        const isOvB = stationB.category === 'ortsverein';
+        
+        if (isOvA !== isOvB) {
+            return isOvA ? 1 : -1; // Hauptamtliche (false) vor Ortsvereinen (true)
         }
+        
+        // Innerhalb Kategorie alphabetisch
+        return stationA.name.localeCompare(stationB.name);
     });
-    quickNavHtml += '</div>';
     
-    // Erstelle Kategorien
-    let categoriesHtml = '';
+    // Zähle verfügbare Fahrzeuge
+    const totalVehicles = ownedVehicles.length;
+    const availableVehicles = ownedVehicles.filter(v => v.status === 'available').length;
     
-    Object.entries(categories).forEach(([catKey, catData]) => {
-        if (catData.vehicles.length === 0) return;
-        
-        // Gruppiere nach Wachen
-        const stationGroups = {};
-        catData.vehicles.forEach(v => {
-            if (!stationGroups[v.station]) {
-                stationGroups[v.station] = [];
-            }
-            stationGroups[v.station].push(v);
-        });
-        
-        categoriesHtml += `
-            <div class="vehicle-category" id="category-${catKey}">
-                <div class="category-header">
-                    <h2>
-                        <span>${catData.icon}</span>
-                        ${catData.name}
-                    </h2>
-                    <span class="category-badge">${catData.vehicles.length} Fahrzeuge</span>
+    // Header mit Statistik
+    let html = `
+        <div class="vehicles-header">
+            <h2>🚑 Alle Fahrzeuge</h2>
+            <div class="vehicles-stats">
+                <div class="stat-item">
+                    <span class="stat-value">${totalVehicles}</span>
+                    <span class="stat-label">Gesamt</span>
                 </div>
-                <div class="stations-grid">
-                    ${Object.entries(stationGroups).map(([stationId, vehicles]) => {
-                        const station = STATIONS[stationId];
-                        if (!station) return '';
-                        
-                        const isCollapsed = collapsedStations.has(stationId);
-                        
-                        // Icon basierend auf Kategorie
-                        let stationIcon = '🏥';
-                        if (station.category === 'ortsverein') {
-                            stationIcon = '🔴'; // Roter Kreis für OV
-                        } else if (station.category === 'notarztwache') {
-                            stationIcon = '⚠️'; // Warnung für NEF-Wache
-                        }
-                        
-                        return `
-                            <div class="station-group">
-                                <div class="station-header" onclick="toggleStation('${stationId}')">
-                                    <h3>
-                                        ${stationIcon}
-                                        ${station.name}
-                                    </h3>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span class="station-badge">${vehicles.length} Fzg</span>
-                                        <i class="fas fa-chevron-down collapse-icon ${isCollapsed ? '' : 'open'}" id="icon-${stationId}"></i>
-                                    </div>
-                                </div>
-                                <div class="station-vehicles ${isCollapsed ? '' : 'open'}" id="station-${stationId}">
-                                    ${vehicles.map(v => createVehicleCard(v)).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+                <div class="stat-item" style="color: #28a745;">
+                    <span class="stat-value">${availableVehicles}</span>
+                    <span class="stat-label">Verfügbar</span>
+                </div>
+                <div class="stat-item" style="color: #dc3545;">
+                    <span class="stat-value">${totalVehicles - availableVehicles}</span>
+                    <span class="stat-label">Im Einsatz</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Erstelle Wachen-Gruppen
+    html += '<div class="stations-container">';
+    
+    sortedStations.forEach(stationId => {
+        const station = STATIONS[stationId];
+        if (!station) return;
+        
+        const vehicles = stationGroups[stationId];
+        const isCollapsed = collapsedStations.has(stationId);
+        
+        // Icon basierend auf Kategorie
+        let stationIcon = '🏥';
+        let categoryBadge = '';
+        
+        if (station.category === 'ortsverein') {
+            stationIcon = '🔴'; // Roter Kreis für OV
+            categoryBadge = '<span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px;">OV</span>';
+        } else if (station.category === 'notarztwache') {
+            stationIcon = '⚠️'; // Warnung für NEF-Wache
+            categoryBadge = '<span style="background: #dc3545; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px;">NEF</span>';
+        } else {
+            categoryBadge = '<span style="background: #17a2b8; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px;">RW</span>';
+        }
+        
+        // Zähle verfügbare Fahrzeuge dieser Wache
+        const stationAvailable = vehicles.filter(v => v.status === 'available').length;
+        const availabilityColor = stationAvailable === vehicles.length ? '#28a745' : 
+                                  stationAvailable > 0 ? '#ffc107' : '#dc3545';
+        
+        html += `
+            <div class="station-group-new">
+                <div class="station-header-new" onclick="toggleStation('${stationId}')">
+                    <div class="station-info">
+                        <span class="station-icon">${stationIcon}</span>
+                        <h3 class="station-name">
+                            ${station.name}
+                            ${categoryBadge}
+                        </h3>
+                    </div>
+                    <div class="station-meta">
+                        <span class="vehicle-count" style="color: ${availabilityColor};">
+                            <i class="fas fa-ambulance"></i>
+                            ${stationAvailable}/${vehicles.length}
+                        </span>
+                        <i class="fas fa-chevron-down collapse-icon ${isCollapsed ? '' : 'open'}" id="icon-${stationId}"></i>
+                    </div>
+                </div>
+                <div class="station-vehicles-new ${isCollapsed ? '' : 'open'}" id="station-${stationId}">
+                    ${vehicles.map(v => createVehicleCard(v)).join('')}
                 </div>
             </div>
         `;
     });
     
-    container.innerHTML = quickNavHtml + categoriesHtml;
+    html += '</div>';
+    
+    container.innerHTML = html;
 }
 
 // ✅ FIXED: Funktion getFMSStatusNumber hinzugefügt
@@ -313,3 +313,5 @@ setInterval(() => {
         syncRadioFeed();
     }
 }, 3000);
+
+console.log('✅ Tabs v4.0 geladen - Fahrzeuge nach Wachen gruppiert');
