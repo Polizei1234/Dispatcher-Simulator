@@ -1,5 +1,5 @@
 // =========================
-// HAUPTSTEUERUNG v3.8.0 - NO SPEED SPAM
+// HAUPTSTEUERUNG v4.9.0 - NEW AI SYSTEMS INTEGRATED
 // =========================
 
 let gamePaused = false;
@@ -44,6 +44,12 @@ window.GAME_DATA = {
     stations: {}
 };
 
+// 🆕 NEUE GLOBALE SYSTEME
+window.gameWeatherSystem = null;
+window.gameAIGenerator = null;
+window.gameMissionTimer = null;
+window.gameEscalationSystem = null;
+
 function showCareerComingSoon() {
     alert('🔒 Karrieremodus kommt bald!\n\nDiese Funktion ist noch in Entwicklung.\nStarte vorerst das Freie Spiel mit allen Fahrzeugen!');
 }
@@ -69,6 +75,9 @@ function startNewGame(mode) {
     window.GAME_DATA.stations = game.stations;
     console.log('✅ GAME_DATA initialisiert');
     
+    // 🆕 INITIALISIERE NEUE SYSTEME
+    initializeNewSystems();
+    
     // Lade gespeicherte Einstellungen
     loadSettings();
     
@@ -93,6 +102,60 @@ function startNewGame(mode) {
     
     addRadioMessage('System', `🚑 ILS Waiblingen - ${mode === 'free' ? 'Freies Spiel' : 'Karrieremodus'} gestartet`);
     addRadioMessage('System', '🤖 Einsätze werden jetzt mit KI generiert');
+}
+
+// 🆕 NEUE SYSTEME INITIALISIEREN
+function initializeNewSystems() {
+    console.group('🆕 INITIALISIERE NEUE SYSTEME');
+    
+    try {
+        // 1. Weather System
+        if (typeof WeatherSystem !== 'undefined') {
+            window.gameWeatherSystem = new WeatherSystem();
+            window.gameWeatherSystem.initialize();
+            console.log('✅ Weather System initialisiert');
+        } else {
+            console.warn('⚠️ WeatherSystem nicht gefunden');
+        }
+        
+        // 2. AI Incident Generator
+        if (typeof AIIncidentGenerator !== 'undefined') {
+            const apiKey = localStorage.getItem('groqApiKey') || CONFIG.GROQ_API_KEY || '';
+            window.gameAIGenerator = new AIIncidentGenerator(apiKey);
+            
+            // Verbinde mit Weather System
+            if (window.gameWeatherSystem) {
+                window.gameAIGenerator.setWeatherSystem(window.gameWeatherSystem);
+            }
+            
+            console.log('✅ AI Incident Generator initialisiert');
+        } else {
+            console.warn('⚠️ AIIncidentGenerator nicht gefunden');
+        }
+        
+        // 3. Mission Timer
+        if (typeof MissionTimer !== 'undefined') {
+            window.gameMissionTimer = new MissionTimer();
+            console.log('✅ Mission Timer initialisiert');
+        } else {
+            console.warn('⚠️ MissionTimer nicht gefunden');
+        }
+        
+        // 4. Escalation System
+        if (typeof EscalationSystem !== 'undefined') {
+            window.gameEscalationSystem = new EscalationSystem();
+            console.log('✅ Escalation System initialisiert');
+        } else {
+            console.warn('⚠️ EscalationSystem nicht gefunden');
+        }
+        
+        console.log('✅ Alle neuen Systeme erfolgreich initialisiert!');
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Initialisieren neuer Systeme:', error);
+    }
+    
+    console.groupEnd();
 }
 
 function togglePause() {
@@ -139,6 +202,11 @@ function startGameLoop() {
         // Aktualisiere ZENTRALES Zeitsystem
         GameTime.tick(1000);
         
+        // Aktualisiere Weather System (Tageszeit)
+        if (window.gameWeatherSystem) {
+            window.gameWeatherSystem.updateTimeOfDay(GameTime.simulated.getHours());
+        }
+        
         if (game) {
             game.update();
         }
@@ -171,6 +239,11 @@ function updateUI() {
         const minutes = String(GameTime.simulated.getMinutes()).padStart(2, '0');
         const seconds = String(GameTime.simulated.getSeconds()).padStart(2, '0');
         timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    
+    // Update Wetter UI
+    if (window.gameWeatherSystem) {
+        window.gameWeatherSystem.updateUI();
     }
     
     // Update Einsatzliste (nur wenn UI.updateIncidentList existiert)
@@ -267,13 +340,17 @@ function saveSettings() {
     GameTime.updateSpeed(parseInt(speed));
     if (game) game.apiKey = apiKey;
     
+    // Update AI Generator mit neuem API Key
+    if (window.gameAIGenerator) {
+        window.gameAIGenerator.apiKey = apiKey;
+    }
+    
     const indicator = document.getElementById('game-speed-indicator');
     if (indicator) indicator.textContent = speed + 'x';
     
     closeSettings();
     alert('✅ Einstellungen gespeichert!');
     
-    // KEINE Radio-Meldung bei Einstellungen!
     console.log(`⏱️ Neue Geschwindigkeit: ${speed}x`);
 }
 
@@ -288,8 +365,9 @@ function loadSettings() {
         console.log(`⚙️ Geschwindigkeit geladen: ${speed}x`);
     }
     
-    if (apiKey && game) {
-        game.apiKey = apiKey;
+    if (apiKey) {
+        if (game) game.apiKey = apiKey;
+        if (window.gameAIGenerator) window.gameAIGenerator.apiKey = apiKey;
         console.log('✅ API Key geladen');
     }
 }
@@ -325,12 +403,11 @@ function cycleGameSpeed() {
     
     localStorage.setItem('gameSpeed', nextSpeed);
     
-    // KEINE Radio-Meldung beim Wechseln der Geschwindigkeit!
     console.log(`⏱️ Neue Geschwindigkeit: ${nextSpeed}x`);
 }
 
 function openShop() {
-    alert('🛍️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
+    alert('🛒️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
 }
 
 function startTutorial() {
@@ -370,7 +447,7 @@ function addRadioMessage(sender, message) {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v3.8.0 geladen');
+    console.log('🚀 ILS Waiblingen Simulator v4.9.0 geladen');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
