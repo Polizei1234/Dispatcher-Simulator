@@ -68,37 +68,79 @@
 
     <!-- Einstellungen -->
     <div id="settings-overlay" class="overlay">
-        <div class="settings-container">
+        <div class="settings-container" style="max-width: 600px;">
             <h2><i class="fas fa-cog"></i> Einstellungen</h2>
             <div class="settings-content">
-                <div class="setting-item">
-                    <label>Spielgeschwindigkeit:</label>
-                    <select id="game-speed">
-                        <option value="1">Echtzeit (1x)</option>
-                        <option value="2">2x</option>
-                        <option value="5" selected>5x</option>
-                        <option value="10">10x</option>
-                        <option value="30">30x</option>
-                    </select>
-                </div>
+                <!-- 🆕 PHASE 4: Erweiterte Einstellungen -->
                 <div class="setting-item">
                     <label><i class="fas fa-robot"></i> Groq API Key:</label>
-                    <input type="password" id="groq-api-key" placeholder="gsk_...">
-                    <button class="btn btn-small" onclick="toggleAPIKeyVisibility()" style="margin-left: 5px;">
-                        <i class="fas fa-eye" id="api-key-toggle-icon"></i>
-                    </button>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="password" id="groq-api-key" placeholder="gsk_..." style="flex: 1;">
+                        <button class="btn btn-small" onclick="toggleAPIKeyVisibility()" style="padding: 8px 12px;">
+                            <i class="fas fa-eye" id="api-key-toggle-icon"></i>
+                        </button>
+                    </div>
                     <small style="display: block; margin-top: 5px; color: #a0a0a0;">
                         🤖 Für KI-generierte Einsätze & Telefonate<br>
-                        🌐 Kostenlos: <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>
+                        🌐 Kostenlos: <a href="https://console.groq.com/keys" target="_blank" style="color: #17a2b8;">console.groq.com/keys</a>
                     </small>
                 </div>
+
                 <div class="setting-item">
-                    <label>Sound:</label>
+                    <label><i class="fas fa-volume-up"></i> Sound:</label>
                     <input type="checkbox" id="sound-enabled" checked>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Aktiviert Klingelton bei eingehenden Notrufen
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-bell"></i> Benachrichtigungen:</label>
+                    <input type="checkbox" id="notifications-enabled" checked>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Zeigt wichtige System-Meldungen an
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-map"></i> Auto-Zoom bei Einsatz:</label>
+                    <input type="checkbox" id="auto-zoom-enabled" checked>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Karte zoomt automatisch zu neuen Einsätzen
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-tachometer-alt"></i> Fahrzeug-Geschwindigkeit:</label>
+                    <select id="vehicle-speed-multiplier">
+                        <option value="0.5">Langsam (0.5x)</option>
+                        <option value="1" selected>Normal (1x)</option>
+                        <option value="1.5">Schnell (1.5x)</option>
+                        <option value="2">Sehr schnell (2x)</option>
+                    </select>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Beeinflusst die Fahrgeschwindigkeit aller Fahrzeuge
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-clock"></i> Einsatzfrequenz:</label>
+                    <select id="incident-frequency">
+                        <option value="30">Sehr oft (30s)</option>
+                        <option value="60">Oft (1 Min)</option>
+                        <option value="120" selected>Normal (2 Min)</option>
+                        <option value="180">Selten (3 Min)</option>
+                        <option value="300">Sehr selten (5 Min)</option>
+                    </select>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Zeitabstand zwischen automatischen Einsätzen
+                    </small>
                 </div>
             </div>
-            <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Speichern</button>
-            <button class="btn btn-secondary" onclick="closeSettings()">Abbrechen</button>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeSettings()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Speichern</button>
+            </div>
         </div>
     </div>
 
@@ -115,6 +157,10 @@
             </div>
             <div class="header-right">
                 <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
+                <!-- 🆕 DEBUG BUTTON -->
+                <button class="btn btn-small" onclick="DebugMenu.toggle()" style="background: #6c757d; border-color: #6c757d;" title="Debug-Menü (Öffnen mit Strg+D)">
+                    <i class="fas fa-bug"></i> Debug
+                </button>
                 <button class="btn btn-small" onclick="openShop()"><i class="fas fa-shopping-cart"></i> Shop</button>
                 <button class="btn btn-small" onclick="showSettings()"><i class="fas fa-cog"></i></button>
             </div>
@@ -379,7 +425,7 @@
     <script src="js/core/main.js?v=5.0.0"></script>
     <script src="js/core/bridge.js?v=5.0.0"></script>
     
-    <!-- 🆕 PHASE 4 & 5: DEBUG MENU -->
+    <!-- 🆕 PHASE 4 & 5: DEBUG MENU (GANZ ZULETZT) -->
     <script src="js/utils/debug-menu.js?v=5.0.0"></script>
 </body>
 </html>
