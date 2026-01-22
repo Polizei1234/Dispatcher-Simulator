@@ -302,13 +302,14 @@ function syncRadioFeed() {
     }
 }
 
+// ✅ FIXED: tabName → currentTab
 // Auto-Update wenn Tab aktiv
 setInterval(() => {
     if (currentTab === 'vehicles') {
         updateVehiclesOverview();
     } else if (currentTab === 'incidents') {
         updateIncidentsOverview();
-    } else if (tabName === 'radio') {
+    } else if (currentTab === 'radio') {
         syncRadioFeed();
     }
 }, 3000);
