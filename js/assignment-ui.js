@@ -1,6 +1,7 @@
 // =========================
-// ASSIGNMENT UI
+// ASSIGNMENT UI v4.9.0
 // Fahrzeugauswahl-Interface mit ETA-Sortierung
+// + VehicleMovement Integration
 // =========================
 
 const AssignmentUI = {
@@ -12,7 +13,7 @@ const AssignmentUI = {
      * Initialisiert Assignment UI
      */
     initialize() {
-        console.log('🚑 Assignment UI initialisiert');
+        console.log('🚑 Assignment UI v4.9.0 initialisiert');
         this.setupEventListeners();
     },
 
@@ -63,6 +64,15 @@ const AssignmentUI = {
         if (incident.fahrzeuge_vorschlag?.pflicht) {
             incident.fahrzeuge_vorschlag.pflicht.forEach(fz => {
                 types.push(fz.typ);
+            });
+        }
+
+        // Aus benoetigte_fahrzeuge (neues Format)
+        if (incident.benoetigte_fahrzeuge) {
+            Object.entries(incident.benoetigte_fahrzeuge).forEach(([type, count]) => {
+                if (count > 0) {
+                    types.push(type);
+                }
             });
         }
 
@@ -242,7 +252,7 @@ const AssignmentUI = {
      */
     toggleVehicleSelection(element) {
         const vehicleId = element.dataset.vehicleId;
-        const vehicle = VEHICLES.find(v => v.id === vehicleId);
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         
         if (!vehicle) return;
 
@@ -252,12 +262,12 @@ const AssignmentUI = {
             // Abwählen
             element.classList.remove('selected');
             this.selectedVehicles = this.selectedVehicles.filter(v => v.id !== vehicleId);
-            console.log('❌ Fahrzeug abgewählt:', vehicle.name);
+            console.log('❌ Fahrzeug abgewählt:', vehicle.callsign);
         } else {
             // Auswählen
             element.classList.add('selected');
             this.selectedVehicles.push(vehicle);
-            console.log('✅ Fahrzeug ausgewählt:', vehicle.name);
+            console.log('✅ Fahrzeug ausgewählt:', vehicle.callsign);
         }
 
         // Update Zähler
@@ -277,7 +287,7 @@ const AssignmentUI = {
         }
 
         console.group('🚨 ALARMING VEHICLES');
-        console.log('👨‍🚒 Fahrzeuge:', this.selectedVehicles.map(v => v.name));
+        console.log('👨‍🚒 Fahrzeuge:', this.selectedVehicles.map(v => v.callsign));
         console.log('🚨 Einsatz:', this.currentIncident.nummer);
 
         // Alarmierung durchführen
@@ -300,22 +310,39 @@ const AssignmentUI = {
     },
 
     /**
-     * Alarmiert einzelnes Fahrzeug
+     * ✅ NEU: Alarmiert einzelnes Fahrzeug mit VehicleMovement Integration
      */
     dispatchVehicle(vehicle, incident) {
-        console.log(`📡 Alarmiere ${vehicle.name} zu Einsatz ${incident.nummer}`);
-
-        // Setze Status auf "3" (Einsatzauftrag übernommen)
-        vehicle.currentStatus = '3';
-        vehicle.status = 'dispatched';
-        vehicle.currentIncident = incident.id;
+        console.log(`📡 Alarmiere ${vehicle.callsign} zu Einsatz ${incident.nummer}`);
 
         // Funkspruch
-        const funkspruch = `Florian Leitstelle an ${vehicle.name}: ${incident.stichwort}, ${incident.ort}. Kommen!`;
-        console.log(`📡 Funkspruch: ${funkspruch}`);
+        const funkspruch = `${vehicle.callsign} - Einsatzauftrag: ${incident.stichwort}, ${incident.ort}`;
+        if (typeof addRadioMessage === 'function') {
+            addRadioMessage('Leitstelle', funkspruch);
+        }
 
-        // TODO: Update Map, add to active incidents
-        // Wird in main.js / incidents.js integriert
+        // ✅ WICHTIG: Nutze VehicleMovement System!
+        if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
+            VehicleMovement.dispatchVehicle(
+                vehicle.id,
+                incident.koordinaten,
+                incident.id,
+                { phase: 'to_scene' }
+            );
+        } else {
+            console.error('❌ VehicleMovement System nicht verfügbar!');
+        }
+
+        // Füge Fahrzeug zur Einsatzliste hinzu
+        if (!incident.assignedVehicles) {
+            incident.assignedVehicles = [];
+        }
+        incident.assignedVehicles.push(vehicle.id);
+
+        // Update UI
+        if (typeof UI !== 'undefined' && UI.updateIncidentList) {
+            UI.updateIncidentList();
+        }
     },
 
     /**
@@ -339,3 +366,5 @@ if (typeof window !== 'undefined') {
         AssignmentUI.initialize();
     });
 }
+
+console.log('✅ Assignment UI v4.9.0 geladen');
