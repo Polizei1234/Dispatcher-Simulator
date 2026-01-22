@@ -1,11 +1,12 @@
 // =========================
-// KARTENLOGIK v4.9
+// KARTENLOGIK v5.0
 // + Fahrzeuge während Ausrückzeit sichtbar
-// + Fahrzeuge anklickbar mit Details
+// + Fahrzeuge IMMER anklickbar (auch während Fahrt)
 // + Fahrzeuge in Wache unsichtbar
 // + Popups schließbar
 // + ✅ Krankenhäuser werden angezeigt
 // + ✅ Routen werden beim Löschen entfernt
+// + ✅ Phase 3.1: Marker-Updates ohne Neuerstellen
 // =========================
 
 let map = null;
@@ -471,6 +472,7 @@ function removeIncidentFromMap(incidentId) {
 
 // ========================================
 // FAHRZEUG-BEWEGUNG
+// ✅ PHASE 3.1: Marker-Updates OHNE Neuerstellen
 // ========================================
 
 function updateVehicleOnMap(vehicle) {
@@ -486,11 +488,24 @@ function updateVehicleOnMap(vehicle) {
         return;
     }
 
-    // Remove old marker
+    // ✅ PHASE 3.1 FIX: Marker nur EINMAL erstellen, dann nur Position updaten!
     if (vehicleMarkers[vehicle.id]) {
-        map.removeLayer(vehicleMarkers[vehicle.id]);
+        // Marker existiert bereits - nur Position aktualisieren
+        vehicleMarkers[vehicle.id].setLatLng([vehicle.position[0], vehicle.position[1]]);
+        
+        // Icon-Typ könnte sich geändert haben (z.B. bei Statuswechsel)
+        const iconHtml = createVehiclePixelIcon(vehicle.type);
+        vehicleMarkers[vehicle.id].setIcon(L.divIcon({
+            html: iconHtml,
+            className: 'vehicle-marker-moving',
+            iconSize: [28, 28],
+            iconAnchor: [14, 28]
+        }));
+        
+        return; // ✅ Click-Handler bleibt erhalten!
     }
 
+    // Marker existiert noch nicht - erstellen
     const iconHtml = createVehiclePixelIcon(vehicle.type);
 
     const marker = L.marker([vehicle.position[0], vehicle.position[1]], {
@@ -503,10 +518,11 @@ function updateVehicleOnMap(vehicle) {
         zIndexOffset: 1000
     });
 
-    // ✅ Click Handler mit verbessertem Popup
+    // ✅ Click Handler mit verbessertem Popup - EINMALIG!
     marker.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
         
+        // Popup IMMER neu generieren bei Click (aktueller Status!)
         const popupContent = createVehiclePopupContent(vehicle);
         marker.bindPopup(popupContent, {
             maxWidth: 250,
@@ -517,6 +533,8 @@ function updateVehicleOnMap(vehicle) {
 
     marker.addTo(map);
     vehicleMarkers[vehicle.id] = marker;
+    
+    console.log(`✅ Fahrzeug-Marker erstellt: ${vehicle.callsign} (IMMER anklickbar!)`);
 }
 
 function drawVehicleRoute(vehicleId, startPos, endPos) {
