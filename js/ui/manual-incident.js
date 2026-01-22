@@ -1,11 +1,11 @@
 // =========================
-// MANUAL INCIDENT CREATION v4.2
+// MANUAL INCIDENT CREATION v4.3
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
 // + Vollständiges Formular mit allen Feldern
 // + ✅ PHASE 2 FIX: Meldebild NUR aus gestellten Fragen
-// + ✅ PHASE 3.1: Gespräch bleibt offen, Alarmierungs-Meldung entfernt
+// + ✅ PHASE 3.1: Gespräch bleibt offen, vollständiges Protokoll
 // =========================
 
 const ManualIncident = {
@@ -20,7 +20,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v4.2 initialisiert (Phase 3.1)');
+        console.log('📝 Manual Incident System v4.3 initialisiert (Phase 3.1)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -33,7 +33,7 @@ const ManualIncident = {
             <div class="modal-content" style="max-width: 1000px; height: 80vh;">
                 <div class="modal-header">
                     <h2><i class="fas fa-ambulance"></i> Fahrzeugdisposition</h2>
-                    <button class="close-btn" onclick="ManualIncident.closeVehicleModal()">×</button>
+                    <button class="close-btn" onclick="ManualIncident.closeVehicleModal()">&times;</button>
                 </div>
                 <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 120px);">
                     <div style="padding: 15px; background: var(--card-bg); border-radius: 8px; margin-bottom: 15px;">
@@ -181,6 +181,205 @@ const ManualIncident = {
                 </div>
             </div>
 
+            <!-- ABSCHNITT 2: PATIENTENINFORMATIONEN -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('patient')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-user-injured"></i> Patienteninformationen</h4>
+                    <i class="fas fa-chevron-right" id="icon-patient"></i>
+                </div>
+                <div class="section-content" id="section-patient" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Geschlecht:</label>
+                            <select id="inline-geschlecht">
+                                <option value="">Unbekannt</option>
+                                <option value="männlich">Männlich</option>
+                                <option value="weiblich">Weiblich</option>
+                                <option value="divers">Divers</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Alter (Jahre):</label>
+                            <input type="number" id="inline-alter" placeholder="z.B. 45">
+                        </div>
+                        <div class="form-group">
+                            <label>Bewusstseinszustand:</label>
+                            <select id="inline-bewusstsein">
+                                <option value="">Bitte wählen</option>
+                                <option value="wach">Wach</option>
+                                <option value="schläfrig">Schläfrig</option>
+                                <option value="bewusstlos">Bewusstlos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Atmung:</label>
+                            <select id="inline-atmung">
+                                <option value="">Bitte wählen</option>
+                                <option value="normal">Normal</option>
+                                <option value="erschwert">Erschwert</option>
+                                <option value="keine">Keine Atmung</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABSCHNITT 3: MEDIZINISCHE HISTORIE -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('medical')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-notes-medical"></i> Medizinische Historie</h4>
+                    <i class="fas fa-chevron-right" id="icon-medical"></i>
+                </div>
+                <div class="section-content" id="section-medical" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="form-group">
+                        <label>Vorerkrankungen:</label>
+                        <textarea id="inline-vorerkrankungen" rows="2" placeholder="z.B. Diabetes, Bluthochdruck"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Medikamente:</label>
+                        <textarea id="inline-medikamente" rows="2" placeholder="z.B. Aspirin, Insulin"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Allergien:</label>
+                        <input type="text" id="inline-allergien" placeholder="z.B. Penicillin, Bienenstiche">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABSCHNITT 4: SYMPTOME & VERLETZUNGEN -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('symptoms')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-heartbeat"></i> Symptome & Verletzungen</h4>
+                    <i class="fas fa-chevron-right" id="icon-symptoms"></i>
+                </div>
+                <div class="section-content" id="section-symptoms" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="form-group">
+                        <label>Hauptbeschwerde:</label>
+                        <textarea id="inline-hauptbeschwerde" rows="2" placeholder="z.B. Brustschmerzen, Atemnot"></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Schmerzstärke (0-10):</label>
+                            <input type="number" id="inline-schmerzstaerke" min="0" max="10" placeholder="0-10">
+                        </div>
+                        <div class="form-group">
+                            <label>Symptombeginn:</label>
+                            <input type="text" id="inline-symptombeginn" placeholder="z.B. vor 30 Minuten">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sichtbare Verletzungen:</label>
+                        <textarea id="inline-verletzungen" rows="2" placeholder="z.B. Platzwunde am Kopf, Schürfwunden"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABSCHNITT 5: UNFALL-DETAILS -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('accident')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-car-crash"></i> Unfall-Details</h4>
+                    <i class="fas fa-chevron-right" id="icon-accident"></i>
+                </div>
+                <div class="section-content" id="section-accident" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="form-group">
+                        <label>Unfallhergang:</label>
+                        <textarea id="inline-unfallhergang" rows="3" placeholder="Beschreibung des Unfalls"></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Anzahl Beteiligter:</label>
+                            <input type="number" id="inline-beteiligte" min="1" placeholder="z.B. 2">
+                        </div>
+                        <div class="form-group">
+                            <label>Anzahl Verletzter:</label>
+                            <input type="number" id="inline-verletzte" min="0" placeholder="z.B. 1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Eingeklemmte Person?</label>
+                        <select id="inline-eingeklemmt">
+                            <option value="nein">Nein</option>
+                            <option value="ja">Ja</option>
+                            <option value="unklar">Unklar</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABSCHNITT 6: GEFAHREN -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('hazards')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-exclamation-triangle"></i> Gefahren & Besonderheiten</h4>
+                    <i class="fas fa-chevron-right" id="icon-hazards"></i>
+                </div>
+                <div class="section-content" id="section-hazards" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Feuer:</label>
+                            <select id="inline-feuer">
+                                <option value="nein">Nein</option>
+                                <option value="ja">Ja</option>
+                                <option value="unklar">Unklar</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gefahrstoffe:</label>
+                            <select id="inline-gefahrstoffe">
+                                <option value="nein">Nein</option>
+                                <option value="ja">Ja</option>
+                                <option value="unklar">Unklar</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gewalt/Aggression:</label>
+                            <select id="inline-gewalt">
+                                <option value="nein">Nein</option>
+                                <option value="ja">Ja</option>
+                                <option value="unklar">Unklar</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Polizei angefordert:</label>
+                            <select id="inline-polizei">
+                                <option value="nein">Nein</option>
+                                <option value="ja">Ja</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABSCHNITT 7: ANRUFER-INFORMATIONEN -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('caller')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-phone"></i> Anrufer-Informationen</h4>
+                    <i class="fas fa-chevron-right" id="icon-caller"></i>
+                </div>
+                <div class="section-content" id="section-caller" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" id="inline-anrufer-name" placeholder="Name des Anrufers">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefonnummer:</label>
+                            <input type="tel" id="inline-anrufer-tel" placeholder="Rückrufnummer">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Beziehung zum Patienten:</label>
+                        <select id="inline-anrufer-beziehung">
+                            <option value="">Bitte wählen</option>
+                            <option value="selbst">Patient selbst</option>
+                            <option value="angehoerig">Angehöriger</option>
+                            <option value="zeuge">Zeuge</option>
+                            <option value="ersthelfer">Ersthelfer</option>
+                            <option value="sonstiges">Sonstiges</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <!-- ABSCHNITT 8: EINSATZMITTEL -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" style="padding: 12px; background: var(--card-bg); border-radius: 8px; margin-bottom: 10px;">
@@ -194,6 +393,20 @@ const ManualIncident = {
                         <div style="color: var(--text-secondary); font-size: 0.9em;">
                             <i class="fas fa-info-circle"></i> Noch keine Fahrzeuge ausgewählt
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABSCHNITT 9: NOTIZEN -->
+            <div class="protocol-section" style="margin-bottom: 15px;">
+                <div class="section-header" onclick="ManualIncident.toggleSection('notes')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-sticky-note"></i> Notizen</h4>
+                    <i class="fas fa-chevron-right" id="icon-notes"></i>
+                </div>
+                <div class="section-content" id="section-notes" style="display: none; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="form-group">
+                        <label>Freie Notizen:</label>
+                        <textarea id="inline-notizen" rows="4" placeholder="Zusätzliche Informationen..."></textarea>
                     </div>
                 </div>
             </div>
@@ -215,7 +428,7 @@ const ManualIncident = {
             this.initializeKeywordsDropdownsInline();
         }, 100);
 
-        console.log('✅ Manual Incident Inline v4.2 angezeigt');
+        console.log('✅ Manual Incident Inline v4.3 angezeigt - Vollständiges Protokoll');
     },
 
     toggleSection(sectionName) {
@@ -596,18 +809,10 @@ const ManualIncident = {
 
         this.dispatchVehicles(incident);
 
-        // ✅ PHASE 3.1 FIX 1: KEIN CallSystem.hangUp() mehr!
-        // Gespräch bleibt offen, kann weitergeführt werden
-        
-        // NICHT mehr zur Map wechseln - bleib im Notruf-Tab
-        // if (typeof switchTab === 'function') {
-        //     switchTab('map');
-        // }
-
-        // Notification statt Alert
+        // ✅ PHASE 3.1: Gespräch bleibt offen
         console.log(`✅ Einsatz ${incident.id} erfolgreich erstellt und alarmiert!`);
         
-        // Optional: Visual Feedback
+        // Visual Feedback
         const alarmBtn = document.getElementById('inline-alarm-btn');
         if (alarmBtn) {
             const originalText = alarmBtn.innerHTML;
@@ -637,9 +842,6 @@ const ManualIncident = {
             }
         });
 
-        // ✅ PHASE 3.1 FIX 2: KEINE Alarmierungs-Meldung mehr im Funk!
-        // Alarmierung ist intern, kein Funkspruch nötig
-        
         if (typeof updateUI === 'function') {
             updateUI();
         }
@@ -655,4 +857,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v4.2 geladen (Phase 3.1 - Gespräch bleibt offen)');
+console.log('✅ Manual Incident System v4.3 geladen (Phase 3.1 - Vollständiges Protokoll)');
