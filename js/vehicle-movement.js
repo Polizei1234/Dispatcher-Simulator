@@ -1,5 +1,6 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v6.1
+// VEHICLE MOVEMENT SYSTEM v6.2
+// + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + Routen verschwinden hinter Fahrzeugen
 // + NEF bleibt am Einsatzort, nur RTW fährt ins KH
@@ -13,7 +14,7 @@ const VehicleMovement = {
     SPEED_KMH: 60,
     EMERGENCY_SPEED_MULTIPLIER: 1.3,
     UPDATE_INTERVAL_MS: 100,
-    DISPATCH_DELAY_MS: 10000, // ✅ NEU: 10 Sekunden Ausrückzeit
+    DISPATCH_DELAY_MS: 10000, // ✅ 10 Sekunden Ausrückzeit
     lastStatusReports: {},
     arrivalReported: {},
     routingControls: {},
@@ -21,7 +22,8 @@ const VehicleMovement = {
     pendingMapUpdates: [],
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v6.1 initialisiert');
+        console.log('🚑 Vehicle Movement System v6.2 initialisiert');
+        console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
         console.log('✅ NEF bleibt am Einsatzort');
@@ -62,16 +64,15 @@ const VehicleMovement = {
             return;
         }
 
-        // ✅ NEU: Ausrückzeit nur bei to_scene
+        // ✅ Ausrückzeit nur bei to_scene
         if (phase === 'to_scene') {
             console.log(`⏱️ ${vehicle.callsign} - Ausrückzeit 10s...`);
-            vehicle.status = 'preparing'; // Neuer Status für Ausrückzeit
+            vehicle.status = 'preparing';
             
             setTimeout(() => {
                 this.startDriving(vehicleId, targetCoords, incidentId, options);
             }, this.DISPATCH_DELAY_MS);
         } else {
-            // Keine Verzögerung bei to_hospital oder returning
             this.startDriving(vehicleId, targetCoords, incidentId, options);
         }
     },
@@ -85,7 +86,6 @@ const VehicleMovement = {
         const station = STATIONS[vehicle.station];
         if (!station) return;
 
-        // ✅ NEU: Entferne alte Route komplett
         this.removeVehicleRoute(vehicleId);
 
         const startPos = vehicle.position || station.position;
@@ -111,6 +111,8 @@ const VehicleMovement = {
                 vehicle: vehicle,
                 routeCoords: cached.coords,
                 currentIndex: 0,
+                // ✅ NEU: Smooth Interpolation
+                currentSegmentProgress: 0,
                 incidentId: incidentId,
                 phase: phase,
                 startTime: Date.now(),
@@ -151,7 +153,8 @@ const VehicleMovement = {
                     ]
                 },
                 router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    timeout: 30000 // ✅ FIX #3: 30 Sekunden Timeout
                 })
             })
             .on('routesfound', (e) => {
@@ -185,6 +188,8 @@ const VehicleMovement = {
                     vehicle: vehicle,
                     routeCoords: routeCoords,
                     currentIndex: 0,
+                    // ✅ NEU: Smooth Interpolation
+                    currentSegmentProgress: 0,
                     incidentId: incidentId,
                     phase: phase,
                     startTime: Date.now(),
@@ -198,9 +203,25 @@ const VehicleMovement = {
                 console.log('🔄 Fallback zu Luftlinie');
                 this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
             })
+            // ✅ FIX #3: Timeout Handler
+            .on('routingerror', (e) => {
+                if (e.error && e.error.message && e.error.message.includes('timeout')) {
+                    console.error('❌ Routing Timeout - Fallback zu Luftlinie');
+                    this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
+                }
+            })
             .addTo(map);
             
             this.routingControls[vehicleId] = routingControl;
+            
+            // ✅ FIX #3: Manueller Timeout nach 30s
+            setTimeout(() => {
+                if (!this.movingVehicles[vehicleId]) {
+                    console.error('❌ Routing dauert zu lange - Fallback');
+                    this.removeVehicleRoute(vehicleId);
+                    this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
+                }
+            }, 30000);
             
         } else {
             console.warn('⚠️ Leaflet Routing Machine nicht verfügbar, nutze Luftlinie');
@@ -257,6 +278,7 @@ const VehicleMovement = {
         });
     },
 
+    // ✅ FIX #2: KOMPLETT NEU - Smooth Interpolation zwischen Wegpunkten
     updateVehiclePosition(vehicleId) {
         const movement = this.movingVehicles[vehicleId];
         if (!movement) return;
@@ -265,24 +287,40 @@ const VehicleMovement = {
 
         if (movement.routeCoords) {
             const elapsed = Date.now() - movement.startTime;
-            const progress = Math.min(elapsed / movement.totalTime, 1);
+            const totalProgress = Math.min(elapsed / movement.totalTime, 1);
             
-            const targetIndex = Math.floor(progress * (movement.routeCoords.length - 1));
-            movement.currentIndex = targetIndex;
+            // Berechne welches Segment wir ansteuern sollten
+            const targetIndex = Math.floor(totalProgress * (movement.routeCoords.length - 1));
             
-            if (targetIndex < movement.routeCoords.length) {
-                const coord = movement.routeCoords[targetIndex];
-                vehicle.position = [coord.lat, coord.lon];
-                
-                this.updateRouteBehindVehicle(vehicleId, targetIndex);
+            // ✅ NEU: Smooth Interpolation zwischen aktuellem und nächstem Wegpunkt
+            if (targetIndex >= movement.routeCoords.length - 1) {
+                // Wir sind am Ziel
+                const lastCoord = movement.routeCoords[movement.routeCoords.length - 1];
+                vehicle.position = [lastCoord.lat, lastCoord.lon];
+                this.pendingMapUpdates.push(vehicle);
+                this.handleArrival(vehicleId);
+                return;
             }
             
+            // Berechne wie weit wir im aktuellen Segment sind
+            const segmentProgress = (totalProgress * (movement.routeCoords.length - 1)) - targetIndex;
+            
+            const currentCoord = movement.routeCoords[targetIndex];
+            const nextCoord = movement.routeCoords[targetIndex + 1];
+            
+            // ✅ INTERPOLIERE zwischen currentCoord und nextCoord
+            const interpolatedLat = currentCoord.lat + (nextCoord.lat - currentCoord.lat) * segmentProgress;
+            const interpolatedLon = currentCoord.lon + (nextCoord.lon - currentCoord.lon) * segmentProgress;
+            
+            vehicle.position = [interpolatedLat, interpolatedLon];
+            movement.currentIndex = targetIndex;
+            movement.currentSegmentProgress = segmentProgress;
+            
+            this.updateRouteBehindVehicle(vehicleId, targetIndex);
             this.pendingMapUpdates.push(vehicle);
             
-            if (progress >= 1) {
-                this.handleArrival(vehicleId);
-            }
         } else {
+            // Fallback: Luftlinie (bereits smooth)
             const { start, target, phase } = movement;
             const totalDistance = this.calculateDistance(start.lat, start.lon, target.lat, target.lon);
             const timeElapsed = (Date.now() - movement.startTime) / 1000;
@@ -480,7 +518,8 @@ const VehicleMovement = {
         
         return {
             km: distance.toFixed(1),
-            eta: eta
+            eta: eta,
+            minutes: Math.ceil(eta)
         };
     }
 };
@@ -491,4 +530,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v6.1 geladen');
+console.log('✅ Vehicle Movement System v6.2 geladen');
