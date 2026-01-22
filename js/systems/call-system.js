@@ -1,5 +1,5 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.0
+// EMERGENCY CALL SYSTEM v7.1
 // + Freitextfeld für eigene Fragen!
 // + Integriert ManualIncident.showInline() im Notruf-Tab!
 // + Anruf-Chat links, Manual Incident Formular rechts
@@ -8,6 +8,7 @@
 // + Geocoding Cache
 // + ✅ PHASE 2: Tracking beantworteter Fragen für Meldebild
 // + ✅ PHASE 3.3: Natürlicher Gesprächsfluss mit automatischen Rückfragen
+// + ✅ PHASE 3.3.1: Optimiertes Groq Prompt für realistische Antworten
 // =========================
 
 const CallSystem = {
@@ -19,7 +20,7 @@ const CallSystem = {
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
-    conversationState: 0, // ✅ NEU: Track Gesprächsfortschritt
+    conversationState: 0,
 
     HOTSPOT_ZONES: [
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
@@ -37,9 +38,9 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.0 initialisiert (Phase 3.3)');
+        console.log('📞 Call System v7.1 initialisiert (Phase 3.3.1)');
         console.log('✅ Natürlicher Gesprächsfluss mit automatischen Rückfragen!');
-        console.log('✅ Realistischer Dialog wie echtes Notrufgespräch');
+        console.log('✅ Optimiertes Groq Prompt für realistische Antworten');
         this.setupRingtone();
     },
 
@@ -196,84 +197,102 @@ const CallSystem = {
         const randomSeed = Math.random().toString(36).substring(2, 15);
         const scenarios = this.getRandomScenarios();
 
-        const prompt = `Erstelle einen realistischen Notruf für ILS Rems-Murr-Kreis.
+        // ✅ PHASE 3.3.1: KOMPLETT ÜBERARBEITETES PROMPT!
+        const prompt = `Du bist ein KI-System das realistische deutsche Notrufe generiert.
 
+📍 EINSATZDATEN:
 Session: ${randomSeed}
 Uhrzeit: ${currentTime} (${timeOfDay})
 Ort: ${address || location.hotspot}
-SZENARIEN: ${scenarios.join(', ')}
+Mögliche Szenarien: ${scenarios.join(', ')}
 
-✅ WICHTIG - REALISTISCHE ANTWORTEN:
+⚠️ KRITISCH - REALISTISCHE ANTWORTEN:
 
-1. ERSTE ANTWORT (was_passiert):
-   - 8-15 Wörter, SEHR grob und emotional
-   - Nur das Offensichtlichste
-   - Beispiele:
-     * "Mein Vater! Der hat plötzlich Brustschmerzen bekommen und sieht ganz blass aus!"
-     * "Oh Gott, mein Mann ist die Treppe runtergefallen! Der liegt jetzt unten und bewegt sich kaum!"
-     * "Meine Frau kriegt keine Luft mehr! Die ringt nach Atem und wird ganz blau!"
-     * "Hier war ein Unfall! Die Autos sind zusammengestoßen und einer blutet am Kopf!"
+1️⃣ "was_passiert" - ERSTE SPONTANE BESCHREIBUNG:
+   📏 Länge: 10-20 Wörter (WICHTIG: Nicht zu kurz!)
+   🎭 Emotional und aufgeregt
+   ❌ NICHT: "Mein Onkel, plötzlich schlimme Brustschmerzen"
+   ✅ SONDERN: "Oh Gott, mein Onkel! Der sitzt da und fasst sich die ganze Zeit an die Brust, der sieht total blass aus und schwitzt wie verrückt! Ich weiß nicht was ich machen soll!"
+   
+   Weitere Beispiele:
+   ✅ "Meine Mutter ist die ganze Treppe runtergefallen! Die liegt jetzt unten und stöhnt die ganze Zeit, ich glaub die hat sich was gebrochen!"
+   ✅ "Hier war gerade ein Unfall! Die beiden Autos sind voll zusammengekracht und aus dem einen kommt Rauch raus! Der Fahrer bewegt sich nicht!"
+   ✅ "Mein Mann kriegt keine Luft mehr! Der ringt richtig nach Atem und wird schon ganz blau im Gesicht, ich hab total Angst!"
+   ✅ "Mein Vater ist umgekippt! Der ist einfach so zusammengebrochen beim Essen und jetzt reagiert der gar nicht mehr!"
 
-2. DETAILFRAGEN (bewusstsein, atmung, etc.):
-   - 5-12 Wörter
-   - Oft unsicher oder vage
-   - Beispiele:
-     * "Äh... ja, er macht die Augen auf, aber redet irgendwie wirr"
-     * "Also atmen tut er schon, aber ganz schnell und flach irgendwie"
-     * "Moment, ich schau... ja, am Kopf blutet es ganz stark!"
-     * "Weiß ich nicht genau, ich kenn den nicht"
+2️⃣ "bewusstsein" - BEWUSSTSEINSZUSTAND:
+   📏 Länge: 8-15 Wörter
+   🤔 Oft unsicher, beschreibend
+   ✅ Beispiele:
+   • "Äh... ja, er macht die Augen auf, aber der redet total wirr und weiß nicht wo er ist"
+   • "Also... er reagiert schon, aber ganz langsam und komisch irgendwie"
+   • "Nee, der liegt da und rührt sich gar nicht, egal was ich sage"
+   • "Moment, ich versuch's... Papa? Papa?! Nein, der antwortet nicht!"
+   • "Ja, sie ist wach, aber die weint nur und schreit die ganze Zeit vor Schmerzen"
 
-3. MEDIZINISCHE FRAGEN:
-   - Oft "Weiß ich nicht" oder "Glaub schon"
-   - Beispiele:
-     * "Keine Ahnung ehrlich, ich weiß das nicht"
-     * "Der hat irgendwas am Herzen, glaub ich... oder war das Diabetes?"
-     * "Moment, ich frag ihn... ja, er nimmt Blutdrucktabletten"
+3️⃣ "atmung" - ATMUNG:
+   📏 Länge: 8-15 Wörter
+   👀 Beobachtungen, nicht medizinisch
+   ✅ Beispiele:
+   • "Also atmen tut er schon, aber ganz schnell und flach, als ob er keine Luft kriegt"
+   • "Ja, ich seh dass die Brust sich hebt, aber das sieht irgendwie angestrengt aus"
+   • "Oh Gott, ich weiß nicht... warten Sie... ja, ich glaub schon dass er atmet"
+   • "Die schnauft ganz komisch und macht so komische Geräusche beim Atmen"
+   • "Nein! Der atmet nicht mehr! Oh Gott, was soll ich denn jetzt machen?!"
 
-4. UNFALLDETAILS:
-   - Konkrete Angaben wenn beobachtet
-   - Beispiele:
-     * "Von der Leiter, vielleicht so 3-4 Meter hoch"
-     * "Die ganze Treppe runter, bestimmt 15 Stufen"
-     * "Mit voller Wucht gegen den Baum, der Airbag ist raus"
+4️⃣ ALLE ANDEREN FRAGEN:
+   📏 Länge: 5-12 Wörter
+   🤷 Oft "Weiß ich nicht" oder vage
+   ✅ Beispiele für Medizinisches:
+   • "Keine Ahnung ehrlich, ich kenn den nicht so gut"
+   • "Äh... der nimmt irgendwelche Tabletten, aber was genau weiß ich nicht"
+   • "Moment, ich frag ihn... er sagt er ist Diabetiker"
+   • "Glaub schon, der hatte schon mal was am Herzen"
+   • "Weiß ich nicht, ob die schwanger ist"
 
-KEINE Fachbegriffe! Umgangssprache! Emotionen!
+5️⃣ WICHTIGE REGELN:
+   ❌ KEINE medizinischen Fachbegriffe (kein "Hypertonie", "Tachykardie", etc.)
+   ✅ Umgangssprache und Dialekt erlaubt ("nix", "net", "halt", "gell")
+   ✅ Füllwörter nutzen ("also", "äh", "irgendwie", "halt")
+   ✅ Stocken und Wiederholen ("der... also... der liegt da")
+   ✅ Emotionen zeigen (Angst, Panik, Sorge)
+   ✅ Bei Unsicherheit vage bleiben
 
-ANTWORTE NUR als JSON:
+ANTWORTE NUR ALS JSON (ohne Markdown!):
 {
   "anrufer": {
-    "name": "Vor- Nachname",
+    "name": "Deutscher Vor- und Nachname",
     "telefon": "DUMMY",
     "emotion": "ruhig|aufgeregt|panisch|verwirrt"
   },
   "antworten": {
     "ort": "${address || location.hotspot}",
-    "was_passiert": "8-15 Wörter, SEHR emotional und grob",
-    "wie_viele": "Eine Person" / "Zwei Leute" / "Drei oder vier, weiß nicht genau",
-    "bewusstsein": "5-12 Wörter, oft unsicher",
-    "atmung": "5-12 Wörter, Beschreibung",
+    "was_passiert": "10-20 Wörter, sehr emotional und detailliert!",
+    "wie_viele": "Eine Person|Zwei Leute|Drei oder vier Personen",
+    "bewusstsein": "8-15 Wörter, beschreibend",
+    "atmung": "8-15 Wörter, Beobachtung",
     "blutung": "5-12 Wörter",
     "schmerzen": "5-12 Wörter",
-    "vorerkrankungen": "Oft \"Weiß ich nicht\" oder vage Angabe",
+    "vorerkrankungen": "Oft 'Weiß ich nicht' oder vage",
     "medikamente": "Oft unsicher",
-    "allergien": "Meist \"Weiß nicht\"",
-    "schwangerschaft": "Nein" / "Weiß ich nicht" / "Ja, im 7. Monat",
-    "diabetes": "Glaub schon" / "Weiß nicht" / "Ja, der spritzt Insulin",
-    "epilepsie": "Nein" / "Weiß nicht" / "Ja, hatte schon öfter Anfälle",
-    "herzerkrankung": "Weiß nicht genau" / "Ja, hatte schon mal Infarkt",
-    "sturz_hoehe": "Konkrete Angabe wenn Unfall",
-    "aufprall": "Wo aufgeprallt",
-    "eingeklemmt": "Ja/Nein",
-    "airbag": "Ja/Nein bei Unfall",
-    "feuer": "Nein" / "Ja, es raucht!",
-    "gefahrstoffe": "Nein",
+    "allergien": "Meist 'Weiß nicht'",
+    "schwangerschaft": "Nein|Weiß ich nicht|Ja, im X. Monat",
+    "diabetes": "Weiß nicht|Glaub schon|Ja, spritzt Insulin",
+    "epilepsie": "Nein|Weiß nicht|Ja, hatte schon Anfälle",
+    "herzerkrankung": "Weiß nicht|Ja, hatte mal Infarkt",
+    "sturz_hoehe": "Konkrete Angabe bei Sturz",
+    "aufprall": "Beschreibung",
+    "eingeklemmt": "Ja|Nein",
+    "airbag": "Ja, ist raus|Nein|Weiß nicht",
+    "feuer": "Nein|Ja, es raucht stark!",
+    "gefahrstoffe": "Nein|Weiß nicht",
     "waffe": "Nein",
-    "gewalt": "Nein",
-    "erreichbarkeit": "Von der Straße" / "Im Hof",
-    "stockwerk": "Erdgeschoss" / "3. Stock"
+    "gewalt": "Nein|Weiß nicht",
+    "erreichbarkeit": "Von der Straße|Im Hinterhof",
+    "stockwerk": "Erdgeschoss|X. Stock"
   },
   "einsatz": {
-    "stichwort": "Passend",
+    "stichwort": "Herzinfarkt|Verkehrsunfall|Sturz|Atemnot|etc.",
     "koordinaten": {"lat": ${location.lat}, "lon": ${location.lon}},
     "ort": "${address || location.hotspot}"
   },
@@ -318,10 +337,10 @@ ANTWORTE NUR als JSON:
             body: JSON.stringify({
                 model: 'llama-3.3-70b-versatile',
                 messages: [
-                    { role: 'system', content: 'Antworte NUR als JSON ohne Text drumherum.' },
+                    { role: 'system', content: 'Du generierst realistische deutsche Notrufe. Antworte NUR als JSON ohne Markdown.' },
                     { role: 'user', content: prompt }
                 ],
-                temperature: 1.2,
+                temperature: 1.3, // ✅ Höher für mehr Variation
                 response_format: { type: 'json_object' }
             })
         });
@@ -383,7 +402,7 @@ ANTWORTE NUR als JSON:
         console.log('📞 Anruf angenommen - Wechsle zu Tab "Notruf"');
         this.stopRingtone();
         this.askedQuestions = [];
-        this.conversationState = 0; // ✅ NEU: Reset conversation state
+        this.conversationState = 0;
 
         const callList = document.getElementById('call-list');
         if (callList) {
@@ -420,12 +439,10 @@ ANTWORTE NUR als JSON:
 
         messagesContainer.innerHTML = '';
 
-        // ✅ PHASE 3.3: Starte natürliches Gespräch
         this.startNaturalConversation(messagesContainer);
 
         this.initQuestionButtons(questionsContainer);
         
-        // 🚀 Zeige ManualIncident inline rechts
         if (typeof ManualIncident !== 'undefined' && ManualIncident.showInline) {
             ManualIncident.showInline(this.activeCall);
         } else {
@@ -433,61 +450,16 @@ ANTWORTE NUR als JSON:
         }
     },
 
-    // ✅ PHASE 3.3: Natürliches Gespräch mit automatischen Rückfragen
     startNaturalConversation(container) {
         const steps = [
-            // 1. Begrüßung und Ortsfrage
-            {
-                delay: 0,
-                type: 'dispatcher',
-                text: 'Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?'
-            },
-            // 2. Anrufer nennt Ort
-            {
-                delay: 1000,
-                type: 'caller',
-                text: this.activeCall.antworten.ort,
-                updateKey: 'ort'
-            },
-            // 3. Was-ist-passiert Frage
-            {
-                delay: 1500,
-                type: 'dispatcher',
-                text: 'Was ist genau passiert?'
-            },
-            // 4. Anrufer beschreibt grob
-            {
-                delay: 1000,
-                type: 'caller',
-                text: this.activeCall.antworten.was_passiert,
-                updateKey: 'was_passiert'
-            },
-            // 5. Bewusstseinsfrage
-            {
-                delay: 1500,
-                type: 'dispatcher',
-                text: 'Ist die Person bei Bewusstsein? Reagiert sie auf Ansprache?'
-            },
-            // 6. Bewusstseinsantwort
-            {
-                delay: 1200,
-                type: 'caller',
-                text: this.activeCall.antworten.bewusstsein,
-                updateKey: 'bewusstsein'
-            },
-            // 7. Atmungsfrage
-            {
-                delay: 1500,
-                type: 'dispatcher',
-                text: 'Atmet die Person normal?'
-            },
-            // 8. Atmungsantwort
-            {
-                delay: 1000,
-                type: 'caller',
-                text: this.activeCall.antworten.atmung,
-                updateKey: 'atmung'
-            }
+            { delay: 0, type: 'dispatcher', text: 'Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?' },
+            { delay: 1000, type: 'caller', text: this.activeCall.antworten.ort, updateKey: 'ort' },
+            { delay: 1500, type: 'dispatcher', text: 'Was ist genau passiert?' },
+            { delay: 1000, type: 'caller', text: this.activeCall.antworten.was_passiert, updateKey: 'was_passiert' },
+            { delay: 2000, type: 'dispatcher', text: 'Ist die Person bei Bewusstsein? Reagiert sie auf Ansprache?' },
+            { delay: 1200, type: 'caller', text: this.activeCall.antworten.bewusstsein, updateKey: 'bewusstsein' },
+            { delay: 1800, type: 'dispatcher', text: 'Atmet die Person normal?' },
+            { delay: 1000, type: 'caller', text: this.activeCall.antworten.atmung, updateKey: 'atmung' }
         ];
 
         let totalDelay = 0;
@@ -501,10 +473,9 @@ ANTWORTE NUR als JSON:
                     this.addCallerMessage(container, step.text, step.updateKey);
                 }
                 
-                // Nach letztem Schritt: Buttons freigeben
                 if (index === steps.length - 1) {
                     setTimeout(() => {
-                        this.conversationState = 1; // Basis-Infos erhalten
+                        this.conversationState = 1;
                         console.log('✅ Basis-Gespräch abgeschlossen - Buttons aktiv');
                     }, 1500);
                 }
@@ -529,7 +500,6 @@ ANTWORTE NUR als JSON:
         this.typeText(div.querySelector('.typing'), text);
         container.scrollTop = container.scrollHeight;
         
-        // Update ManualIncident
         if (updateKey && typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
             setTimeout(() => {
                 ManualIncident.updateFromCallAnswer(updateKey, text, this.activeCall);
@@ -604,7 +574,6 @@ ANTWORTE NUR als JSON:
         ];
 
         container.innerHTML = `
-            <!-- 🆕 FREITEXTFELD -->
             <div style="margin-bottom: 20px; padding: 15px; background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px;">
                 <div style="display: flex; align-items: center; margin-bottom: 10px;">
                     <i class="fas fa-keyboard" style="color: #2196F3; margin-right: 8px;"></i>
@@ -620,7 +589,6 @@ ANTWORTE NUR als JSON:
                 </div>
             </div>
             
-            <!-- VORDEFINIERTE FRAGEN -->
             ${categories.map(cat => `
                 <div class="question-cat">
                     <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">
@@ -670,7 +638,14 @@ Deine Emotion: ${this.activeCall.anrufer.emotion}
 Der Disponent fragt dich:
 "${question}"
 
-Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuell Unsicherheit. KEINE medizinischen Fachbegriffe! Antworte NUR mit der Antwort, kein JSON.`;
+Antworte realistisch in 5-15 Wörtern mit:
+- Umgangssprache ("nix", "net", "halt")
+- Füllwörter ("äh", "also", "irgendwie")
+- Emotionen (Angst, Sorge, Panik)
+- Eventuell Unsicherheit
+- KEINE medizinischen Fachbegriffe!
+
+Antworte NUR mit der direkten Antwort, kein JSON.`;
             
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
@@ -681,10 +656,10 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
                 body: JSON.stringify({
                     model: 'llama-3.3-70b-versatile',
                     messages: [
-                        { role: 'system', content: 'Antworte als Anrufer beim Notruf. NUR die direkte Antwort, kein JSON.' },
+                        { role: 'system', content: 'Antworte als deutscher Notruf-Anrufer. NUR die direkte Antwort, kein JSON.' },
                         { role: 'user', content: prompt }
                     ],
-                    temperature: 1.1,
+                    temperature: 1.2,
                     max_tokens: 100
                 })
             });
@@ -791,4 +766,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v7.0 geladen (Phase 3.3 - Natürlicher Gesprächsfluss)');
+console.log('✅ Call System v7.1 geladen (Phase 3.3.1 - Optimiertes Groq Prompt)');
