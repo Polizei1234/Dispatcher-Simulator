@@ -1,8 +1,9 @@
 // =========================
-// HOSPITALS v2.0
+// HOSPITALS v2.1
 // Krankenhäuser im Rems-Murr-Kreis
 // + Korrekte Koordinaten
 // + Karten-Symbole
+// + ✅ FIXED: Schorndorf Position korrigiert
 // =========================
 
 const HOSPITALS = {
@@ -33,7 +34,7 @@ const HOSPITALS = {
         name: 'Rems-Murr-Klinik Schorndorf',
         shortName: 'Schorndorf',
         address: 'Schlichtener Straße 105, 73614 Schorndorf',
-        position: [48.8042, 9.5352], // ✅ KORRIGIERT
+        position: [48.7967, 9.5295], // ✅ FIXED: 48°47'48"N, 9°31'46"E (offiziell LBA)
         departments: [
             'Notaufnahme',
             'Innere Medizin',
@@ -199,6 +200,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Hospital Service v2.0 initialisiert: Winnenden & Schorndorf (mit Karten-Symbolen)');
+console.log('✅ Hospital Service v2.1 initialisiert: Winnenden & Schorndorf (mit korrigierten Koordinaten)');
 console.log('🏥 Winnenden: [48.8700, 9.3922]');
-console.log('🏥 Schorndorf: [48.8042, 9.5352]');
+console.log('🏥 Schorndorf: [48.7967, 9.5295] - KORRIGIERT');
