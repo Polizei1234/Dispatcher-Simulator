@@ -1,15 +1,8 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.2
-// + Freitextfeld für eigene Fragen!
-// + Integriert ManualIncident.showInline() im Notruf-Tab!
-// + Anruf-Chat links, Manual Incident Formular rechts
-// + Random Telefonnummern
-// + Hotspot-System
-// + Geocoding Cache
-// + ✅ PHASE 2: Tracking beantworteter Fragen für Meldebild
-// + ✅ PHASE 3.3: Natürlicher Gesprächsfluss mit automatischen Rückfragen
-// + ✅ PHASE 3.3.1: Optimiertes Groq Prompt für realistische Antworten
-// + ✅ PHASE 3.3.2: Nur Ort automatisch, Rest manuell!
+// EMERGENCY CALL SYSTEM v7.3
+// + RATE LIMITING für Groq API
+// + Retry Logic mit Exponential Backoff
+// + Fallback bei API-Fehlern
 // =========================
 
 const CallSystem = {
@@ -21,6 +14,12 @@ const CallSystem = {
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
+    
+    // 🆕 RATE LIMITING
+    lastGroqRequest: 0,
+    minGroqDelay: 2000, // 2 Sekunden zwischen Groq-Calls
+    groqRetries: 0,
+    maxGroqRetries: 3,
 
     HOTSPOT_ZONES: [
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
@@ -38,7 +37,7 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.2 initialisiert (Phase 3.3.2)');
+        console.log('📞 Call System v7.3 initialisiert (Rate Limiting)');
         console.log('✅ Nur Ort automatisch, alle anderen Fragen manuell!');
         console.log('✅ User hat volle Kontrolle über Gesprächsverlauf');
         this.setupRingtone();
@@ -105,8 +104,11 @@ const CallSystem = {
 
             const callData = await this.createCallWithGroq(location, realAddress);
             if (!callData) {
-                this.isGenerating = false;
+                // Fallback: Generiere ohne AI
+                const fallbackData = this.createFallbackCall(location, realAddress);
+                this.showIncomingCallInSidebar(fallbackData);
                 console.groupEnd();
+                this.isGenerating = false;
                 return;
             }
 
@@ -125,6 +127,81 @@ const CallSystem = {
         }
     },
 
+    /**
+     * 🆕 Fallback ohne AI
+     */
+    createFallbackCall(location, address) {
+        const scenarios = [
+            {
+                stichwort: 'Herzinfarkt',
+                was_passiert: 'Mein Mann hat plötzlich starke Schmerzen in der Brust und schwitzt ganz stark!',
+                bewusstsein: 'Ja, er ist wach, aber er sieht ganz blass aus',
+                atmung: 'Ja, er atmet, aber ganz schwer und schnell',
+                rtw: 1, nef: 1
+            },
+            {
+                stichwort: 'Sturz',
+                was_passiert: 'Meine Oma ist die Treppe runtergefallen! Sie liegt jetzt unten und kann nicht aufstehen!',
+                bewusstsein: 'Sie ist wach, aber total durcheinander',
+                atmung: 'Ja, sie atmet normal',
+                rtw: 1, nef: 0
+            },
+            {
+                stichwort: 'Atemnot',
+                was_passiert: 'Mein Kind kriegt keine Luft mehr! Das keucht total und wird schon blau!',
+                bewusstsein: 'Ja, aber total panisch',
+                atmung: 'Ganz schwer, ringt nach Luft',
+                rtw: 1, nef: 1
+            }
+        ];
+        
+        const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+        
+        return {
+            anrufer: {
+                name: 'Max Mustermann',
+                telefon: this.generatePhoneNumber(),
+                emotion: 'aufgeregt'
+            },
+            antworten: {
+                ort: address || location.hotspot,
+                was_passiert: scenario.was_passiert,
+                wie_viele: 'Eine Person',
+                bewusstsein: scenario.bewusstsein,
+                atmung: scenario.atmung,
+                blutung: 'Keine sichtbare Blutung',
+                schmerzen: 'Weiß ich nicht genau',
+                vorerkrankungen: 'Weiß ich nicht',
+                medikamente: 'Keine Ahnung',
+                allergien: 'Weiß nicht',
+                schwangerschaft: 'Nein',
+                diabetes: 'Weiß nicht',
+                epilepsie: 'Nein',
+                herzerkrankung: 'Weiß nicht',
+                sturz_hoehe: 'Normale Treppe',
+                aufprall: 'Auf den Boden',
+                eingeklemmt: 'Nein',
+                airbag: 'Kein Unfall',
+                feuer: 'Nein',
+                gefahrstoffe: 'Nein',
+                waffe: 'Nein',
+                gewalt: 'Nein',
+                erreichbarkeit: 'Von der Straße',
+                stockwerk: 'Erdgeschoss'
+            },
+            einsatz: {
+                stichwort: scenario.stichwort,
+                koordinaten: { lat: location.lat, lon: location.lon },
+                ort: address || location.hotspot
+            },
+            empfehlung: {
+                rtw: scenario.rtw,
+                nef: scenario.nef,
+                ktw: 0
+            }
+        };
+    },
+
     async reverseGeocode(lat, lon, retries = 0) {
         const cacheKey = `${lat.toFixed(4)}_${lon.toFixed(4)}`;
         
@@ -137,7 +214,7 @@ const CallSystem = {
         const timeSinceLastRequest = now - this.lastGeocodeRequest;
         if (timeSinceLastRequest < 1000) {
             const waitTime = 1000 - timeSinceLastRequest;
-            console.log(`⏳ Warte ${waitTime}ms (Rate Limiting)`);
+            console.log(`⏳ Warte ${waitTime}ms (Nominatim Rate Limiting)`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
         }
         this.lastGeocodeRequest = Date.now();
@@ -187,6 +264,16 @@ const CallSystem = {
     },
 
     async createCallWithGroq(location, address) {
+        // 🆕 RATE LIMITING CHECK
+        const now = Date.now();
+        const timeSinceLastGroq = now - this.lastGroqRequest;
+        
+        if (timeSinceLastGroq < this.minGroqDelay) {
+            const waitTime = this.minGroqDelay - timeSinceLastGroq;
+            console.log(`⏳ Groq Rate Limiting: Warte ${waitTime}ms`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+
         const currentTime = IncidentNumbering.getCurrentTimestamp();
         const hour = parseInt(currentTime.split(':')[0]);
         
@@ -212,50 +299,26 @@ Mögliche Szenarien: ${scenarios.join(', ')}
    🎭 Emotional und aufgeregt
    ❌ NICHT: "Mein Onkel, plötzlich schlimme Brustschmerzen"
    ✅ SONDERN: "Oh Gott, mein Onkel! Der sitzt da und fasst sich die ganze Zeit an die Brust, der sieht total blass aus und schwitzt wie verrückt! Ich weiß nicht was ich machen soll!"
-   
-   Weitere Beispiele:
-   ✅ "Meine Mutter ist die ganze Treppe runtergefallen! Die liegt jetzt unten und stöhnt die ganze Zeit, ich glaub die hat sich was gebrochen!"
-   ✅ "Hier war gerade ein Unfall! Die beiden Autos sind voll zusammengekracht und aus dem einen kommt Rauch raus! Der Fahrer bewegt sich nicht!"
-   ✅ "Mein Mann kriegt keine Luft mehr! Der ringt richtig nach Atem und wird schon ganz blau im Gesicht, ich hab total Angst!"
-   ✅ "Mein Vater ist umgekippt! Der ist einfach so zusammengebrochen beim Essen und jetzt reagiert der gar nicht mehr!"
 
 2️⃣ "bewusstsein" - BEWUSSTSEINSZUSTAND:
    📏 Länge: 8-15 Wörter
    🤔 Oft unsicher, beschreibend
-   ✅ Beispiele:
-   • "Äh... ja, er macht die Augen auf, aber der redet total wirr und weiß nicht wo er ist"
-   • "Also... er reagiert schon, aber ganz langsam und komisch irgendwie"
-   • "Nee, der liegt da und rührt sich gar nicht, egal was ich sage"
-   • "Moment, ich versuch's... Papa? Papa?! Nein, der antwortet nicht!"
-   • "Ja, sie ist wach, aber die weint nur und schreit die ganze Zeit vor Schmerzen"
+   ✅ Beispiele: "Äh... ja, er macht die Augen auf, aber der redet total wirr und weiß nicht wo er ist"
 
 3️⃣ "atmung" - ATMUNG:
    📏 Länge: 8-15 Wörter
    👀 Beobachtungen, nicht medizinisch
-   ✅ Beispiele:
-   • "Also atmen tut er schon, aber ganz schnell und flach, als ob er keine Luft kriegt"
-   • "Ja, ich seh dass die Brust sich hebt, aber das sieht irgendwie angestrengt aus"
-   • "Oh Gott, ich weiß nicht... warten Sie... ja, ich glaub schon dass er atmet"
-   • "Die schnauft ganz komisch und macht so komische Geräusche beim Atmen"
-   • "Nein! Der atmet nicht mehr! Oh Gott, was soll ich denn jetzt machen?!"
+   ✅ Beispiele: "Also atmen tut er schon, aber ganz schnell und flach, als ob er keine Luft kriegt"
 
 4️⃣ ALLE ANDEREN FRAGEN:
    📏 Länge: 5-12 Wörter
    🤷 Oft "Weiß ich nicht" oder vage
-   ✅ Beispiele für Medizinisches:
-   • "Keine Ahnung ehrlich, ich kenn den nicht so gut"
-   • "Äh... der nimmt irgendwelche Tabletten, aber was genau weiß ich nicht"
-   • "Moment, ich frag ihn... er sagt er ist Diabetiker"
-   • "Glaub schon, der hatte schon mal was am Herzen"
-   • "Weiß ich nicht, ob die schwanger ist"
 
 5️⃣ WICHTIGE REGELN:
-   ❌ KEINE medizinischen Fachbegriffe (kein "Hypertonie", "Tachykardie", etc.)
-   ✅ Umgangssprache und Dialekt erlaubt ("nix", "net", "halt", "gell")
-   ✅ Füllwörter nutzen ("also", "äh", "irgendwie", "halt")
-   ✅ Stocken und Wiederholen ("der... also... der liegt da")
-   ✅ Emotionen zeigen (Angst, Panik, Sorge)
-   ✅ Bei Unsicherheit vage bleiben
+   ❌ KEINE medizinischen Fachbegriffe
+   ✅ Umgangssprache und Dialekt erlaubt
+   ✅ Füllwörter nutzen ("also", "äh", "irgendwie")
+   ✅ Emotionen zeigen
 
 ANTWORTE NUR ALS JSON (ohne Markdown!):
 {
@@ -266,32 +329,32 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
   },
   "antworten": {
     "ort": "${address || location.hotspot}",
-    "was_passiert": "10-20 Wörter, sehr emotional und detailliert!",
-    "wie_viele": "Eine Person|Zwei Leute|Drei oder vier Personen",
-    "bewusstsein": "8-15 Wörter, beschreibend",
-    "atmung": "8-15 Wörter, Beobachtung",
+    "was_passiert": "10-20 Wörter, sehr emotional!",
+    "wie_viele": "Eine Person",
+    "bewusstsein": "8-15 Wörter",
+    "atmung": "8-15 Wörter",
     "blutung": "5-12 Wörter",
     "schmerzen": "5-12 Wörter",
-    "vorerkrankungen": "Oft 'Weiß ich nicht' oder vage",
+    "vorerkrankungen": "Oft 'Weiß ich nicht'",
     "medikamente": "Oft unsicher",
     "allergien": "Meist 'Weiß nicht'",
-    "schwangerschaft": "Nein|Weiß ich nicht|Ja, im X. Monat",
-    "diabetes": "Weiß nicht|Glaub schon|Ja, spritzt Insulin",
-    "epilepsie": "Nein|Weiß nicht|Ja, hatte schon Anfälle",
-    "herzerkrankung": "Weiß nicht|Ja, hatte mal Infarkt",
-    "sturz_hoehe": "Konkrete Angabe bei Sturz",
+    "schwangerschaft": "Nein",
+    "diabetes": "Weiß nicht",
+    "epilepsie": "Nein",
+    "herzerkrankung": "Weiß nicht",
+    "sturz_hoehe": "Konkrete Angabe",
     "aufprall": "Beschreibung",
-    "eingeklemmt": "Ja|Nein",
-    "airbag": "Ja, ist raus|Nein|Weiß nicht",
-    "feuer": "Nein|Ja, es raucht stark!",
-    "gefahrstoffe": "Nein|Weiß nicht",
+    "eingeklemmt": "Nein",
+    "airbag": "Weiß nicht",
+    "feuer": "Nein",
+    "gefahrstoffe": "Nein",
     "waffe": "Nein",
-    "gewalt": "Nein|Weiß nicht",
-    "erreichbarkeit": "Von der Straße|Im Hinterhof",
-    "stockwerk": "Erdgeschoss|X. Stock"
+    "gewalt": "Nein",
+    "erreichbarkeit": "Von der Straße",
+    "stockwerk": "Erdgeschoss"
   },
   "einsatz": {
-    "stichwort": "Herzinfarkt|Verkehrsunfall|Sturz|Atemnot|etc.",
+    "stichwort": "Herzinfarkt|Verkehrsunfall|Sturz|etc.",
     "koordinaten": {"lat": ${location.lat}, "lon": ${location.lon}},
     "ort": "${address || location.hotspot}"
   },
@@ -303,10 +366,23 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
 }`;
 
         try {
+            this.lastGroqRequest = Date.now(); // Update timestamp
             const response = await this.callGroqAPI(prompt);
+            this.groqRetries = 0; // Reset counter bei Erfolg
             return response;
         } catch (error) {
             console.error('❌ Groq Fehler:', error);
+            
+            // Retry Logic
+            if (this.groqRetries < this.maxGroqRetries && error.message.includes('429')) {
+                this.groqRetries++;
+                const backoff = Math.pow(2, this.groqRetries) * 2000; // 2s, 4s, 8s
+                console.warn(`🔄 Groq Retry ${this.groqRetries}/${this.maxGroqRetries} in ${backoff}ms`);
+                await new Promise(resolve => setTimeout(resolve, backoff));
+                return this.createCallWithGroq(location, address);
+            }
+            
+            this.groqRetries = 0;
             return null;
         }
     },
@@ -324,7 +400,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
         if (!apiKey) {
             console.error('❌ Kein Groq API Key gefunden');
-            return null;
+            throw new Error('Kein API Key');
         }
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -344,7 +420,10 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
             })
         });
 
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+        
         const data = await response.json();
         return JSON.parse(data.choices[0].message.content);
     },
@@ -436,10 +515,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         if (!messagesContainer || !questionsContainer) return;
 
         messagesContainer.innerHTML = '';
-
-        // ✅ PHASE 3.3.2: NUR ORT-FRAGE AUTOMATISCH!
         this.startMinimalConversation(messagesContainer);
-
         this.initQuestionButtons(questionsContainer);
         
         if (typeof ManualIncident !== 'undefined' && ManualIncident.showInline) {
@@ -449,16 +525,12 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         }
     },
 
-    // ✅ PHASE 3.3.2: Nur Begrüßung + Ort, REST MANUELL!
     startMinimalConversation(container) {
-        // 1. Begrüßung
         this.addDispatcherMessage(container, 'Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?');
         
-        // 2. Anrufer nennt Ort nach 1 Sekunde
         setTimeout(() => {
             this.addCallerMessage(container, this.activeCall.antworten.ort, 'ort');
             
-            // ✅ Nach 2 Sekunden: Buttons aktivieren
             setTimeout(() => {
                 console.log('✅ Ort erhalten - User kann jetzt selbst fragen!');
             }, 2000);
@@ -608,6 +680,14 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         container.appendChild(qDiv);
         container.scrollTop = container.scrollHeight;
         
+        // 🆕 RATE LIMITING
+        const now = Date.now();
+        const timeSinceLastGroq = now - this.lastGroqRequest;
+        if (timeSinceLastGroq < this.minGroqDelay) {
+            const waitTime = this.minGroqDelay - timeSinceLastGroq;
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+        
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
         if (!apiKey) {
             this.showCallerAnswer('Tut mir leid, ich habe Sie nicht verstanden.');
@@ -633,6 +713,8 @@ Antworte realistisch in 5-15 Wörtern mit:
 - KEINE medizinischen Fachbegriffe!
 
 Antworte NUR mit der direkten Antwort, kein JSON.`;
+            
+            this.lastGroqRequest = Date.now();
             
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
@@ -752,4 +834,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v7.2 geladen (Phase 3.3.2 - Nur Ort automatisch, Rest manuell)');
+console.log('✅ Call System v7.3 geladen (Rate Limiting + Fallback)');
