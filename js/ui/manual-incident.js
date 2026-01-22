@@ -1,10 +1,11 @@
 // =========================
-// MANUAL INCIDENT CREATION v4.1
+// MANUAL INCIDENT CREATION v4.2
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
 // + Vollständiges Formular mit allen Feldern
 // + ✅ PHASE 2 FIX: Meldebild NUR aus gestellten Fragen
+// + ✅ PHASE 3.1: Gespräch bleibt offen, Alarmierungs-Meldung entfernt
 // =========================
 
 const ManualIncident = {
@@ -16,11 +17,10 @@ const ManualIncident = {
     selectedDetailKeyword: null,
     currentCallData: null,
     collapsedSections: {},
-    // ✅ NEU: Track welche Fragen tatsächlich gestellt wurden
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v4.1 initialisiert (Phase 2)');
+        console.log('📝 Manual Incident System v4.2 initialisiert (Phase 3.1)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -92,7 +92,7 @@ const ManualIncident = {
         this.selectedVehicles = [];
         this.selectedPriorityKeyword = null;
         this.selectedDetailKeyword = null;
-        this.answeredQuestions = {}; // ✅ NEU: Reset
+        this.answeredQuestions = {};
         this.collapsedSections = {
             basis: false,
             patient: true,
@@ -181,8 +181,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ... (rest of the sections remain the same) -->
-
             <!-- ABSCHNITT 8: EINSATZMITTEL -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" style="padding: 12px; background: var(--card-bg); border-radius: 8px; margin-bottom: 10px;">
@@ -217,7 +215,7 @@ const ManualIncident = {
             this.initializeKeywordsDropdownsInline();
         }, 100);
 
-        console.log('✅ Manual Incident Inline v4.1 angezeigt');
+        console.log('✅ Manual Incident Inline v4.2 angezeigt');
     },
 
     toggleSection(sectionName) {
@@ -436,22 +434,18 @@ const ManualIncident = {
         this.inlineMode = false;
         this.currentCallData = null;
         this.selectedVehicles = [];
-        this.answeredQuestions = {}; // ✅ Reset
+        this.answeredQuestions = {};
     },
 
-    // ✅ PHASE 2 FIX: Nur tatsächlich beantwortete Fragen im Meldebild
     updateFromCallAnswer(key, answer, callData) {
         if (!this.inlineMode) return;
 
-        // ✅ NEU: Speichere die Antwort
         this.answeredQuestions[key] = answer;
         console.log(`✅ Frage beantwortet: ${key} = ${answer}`);
 
-        // ✅ NEU: Generiere Meldebild NUR aus beantworteten Fragen
         this.regenerateMeldebild();
     },
 
-    // ✅ NEU: Dynamische Meldebild-Generierung
     regenerateMeldebild() {
         const meldebildTextarea = document.getElementById('inline-meldebild');
         if (!meldebildTextarea) return;
@@ -459,12 +453,10 @@ const ManualIncident = {
         const parts = [];
         const answers = this.answeredQuestions;
 
-        // Basis-Information (immer dabei aus dem Anruf)
         if (answers.was_passiert) {
             parts.push(answers.was_passiert);
         }
 
-        // Patientenzustand - NUR wenn gefragt!
         if (answers.bewusstsein) {
             parts.push(`Bewusstsein: ${answers.bewusstsein}`);
         }
@@ -481,12 +473,10 @@ const ManualIncident = {
             parts.push(`Schmerzen: ${answers.schmerzen}`);
         }
 
-        // Personenanzahl
         if (answers.wie_viele) {
             parts.push(`Anzahl: ${answers.wie_viele}`);
         }
 
-        // Medizinische Historie - NUR wenn gefragt!
         const medHistory = [];
         if (answers.vorerkrankungen) medHistory.push(`Vorerkr.: ${answers.vorerkrankungen}`);
         if (answers.diabetes) medHistory.push(`Diabetes: ${answers.diabetes}`);
@@ -496,7 +486,6 @@ const ManualIncident = {
             parts.push(medHistory.join(', '));
         }
 
-        // Unfall-Details - NUR wenn gefragt!
         if (answers.sturz_hoehe) {
             parts.push(`Sturz: ${answers.sturz_hoehe}`);
         }
@@ -507,7 +496,6 @@ const ManualIncident = {
             parts.push(`Airbag: ${answers.airbag}`);
         }
 
-        // Gefahren - NUR wenn gefragt!
         const hazards = [];
         if (answers.feuer) hazards.push(`Feuer: ${answers.feuer}`);
         if (answers.gefahrstoffe) hazards.push(`Gefahrstoffe: ${answers.gefahrstoffe}`);
@@ -516,7 +504,6 @@ const ManualIncident = {
             parts.push(hazards.join(', '));
         }
 
-        // Erreichbarkeit - NUR wenn gefragt!
         if (answers.erreichbarkeit) {
             parts.push(`Zugang: ${answers.erreichbarkeit}`);
         }
@@ -524,7 +511,6 @@ const ManualIncident = {
             parts.push(`Stockwerk: ${answers.stockwerk}`);
         }
 
-        // ✅ Fallback falls noch gar nichts gefragt wurde
         const meldebild = parts.length > 0 ? parts.join('. ') + '.' : 'Notruf 112 - Details werden noch abgefragt';
         
         meldebildTextarea.value = meldebild;
@@ -610,15 +596,31 @@ const ManualIncident = {
 
         this.dispatchVehicles(incident);
 
-        if (typeof CallSystem !== 'undefined' && CallSystem.hangUp) {
-            CallSystem.hangUp();
-        }
+        // ✅ PHASE 3.1 FIX 1: KEIN CallSystem.hangUp() mehr!
+        // Gespräch bleibt offen, kann weitergeführt werden
+        
+        // NICHT mehr zur Map wechseln - bleib im Notruf-Tab
+        // if (typeof switchTab === 'function') {
+        //     switchTab('map');
+        // }
 
-        if (typeof switchTab === 'function') {
-            switchTab('map');
+        // Notification statt Alert
+        console.log(`✅ Einsatz ${incident.id} erfolgreich erstellt und alarmiert!`);
+        
+        // Optional: Visual Feedback
+        const alarmBtn = document.getElementById('inline-alarm-btn');
+        if (alarmBtn) {
+            const originalText = alarmBtn.innerHTML;
+            alarmBtn.innerHTML = '<i class="fas fa-check"></i> ALARMIERT!';
+            alarmBtn.style.background = '#28a745';
+            alarmBtn.disabled = true;
+            
+            setTimeout(() => {
+                alarmBtn.innerHTML = originalText;
+                alarmBtn.style.background = '';
+                alarmBtn.disabled = false;
+            }, 2000);
         }
-
-        alert(`✅ Einsatz ${incident.id} erfolgreich erstellt und alarmiert!`);
     },
 
     dispatchVehicles(incident) {
@@ -635,11 +637,9 @@ const ManualIncident = {
             }
         });
 
-        const msg = `${incident.stichwort}, ${incident.ort}. ${incident.vehicles.length} Fahrzeug(e) alarmiert.`;
-        if (typeof addRadioMessage === 'function') {
-            addRadioMessage(msg, 'dispatcher');
-        }
-
+        // ✅ PHASE 3.1 FIX 2: KEINE Alarmierungs-Meldung mehr im Funk!
+        // Alarmierung ist intern, kein Funkspruch nötig
+        
         if (typeof updateUI === 'function') {
             updateUI();
         }
@@ -655,4 +655,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v4.1 geladen (Phase 2 - Meldebild nur mit gestellten Fragen)');
+console.log('✅ Manual Incident System v4.2 geladen (Phase 3.1 - Gespräch bleibt offen)');
