@@ -1,7 +1,8 @@
 // =========================
-// UI SYSTEM - Updated v3.1
+// UI SYSTEM - Updated v3.2
 // Fixed Radio Messages with Colors
 // + Incident Manager Integration
+// + ✅ Phase 3: Radio Interface
 // =========================
 
 const UI = {
@@ -162,7 +163,8 @@ const UI = {
     getFMSStatus(vehicle) {
         const fmsCode = vehicle.currentStatus || 2;
         return CONFIG.FMS_STATUS[fmsCode] || {
-            name: 'Unbekannt',n            color: '#6c757d',
+            name: 'Unbekannt',
+            color: '#6c757d',
             icon: '🚑'
         };
     },
@@ -174,20 +176,45 @@ const UI = {
     }
 };
 
-// IMPROVED: Radio Messages mit Farben
+// ✅ PHASE 3 FIX 2: Funkspruch senden
+function sendRadioMessage() {
+    const input = document.getElementById('radio-message-input');
+    if (!input) return;
+    
+    const message = input.value.trim();
+    if (!message) {
+        alert('⚠️ Bitte geben Sie eine Nachricht ein!');
+        return;
+    }
+    
+    // Sende als Leitstelle
+    addRadioMessage(message, 'dispatcher', '#17a2b8');
+    
+    // Leere Eingabefeld
+    input.value = '';
+    input.focus();
+    
+    console.log(`📻 Funkspruch gesendet: ${message}`);
+}
+
+// ✅ IMPROVED: Radio Messages mit Farben (Systemnachrichten blockiert)
 function addRadioMessage(message, sender = 'system', color = null) {
     const container = document.getElementById('radio-feed-full');
     if (!container) return;
 
-    // KEINE System-Meldungen!
+    // ✅ KEINE System-Meldungen!
     if (sender === 'system') {
         return; // Skip system messages
     }
 
-    const timestamp = IncidentNumbering.getCurrentTimestamp();
+    const timestamp = typeof IncidentNumbering !== 'undefined' && IncidentNumbering.getCurrentTimestamp ? 
+        IncidentNumbering.getCurrentTimestamp() : 
+        new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
     const senderIcons = {
         'dispatcher': '👨‍💻 Leitstelle',
-        'vehicle': '🚑'
+        'vehicle': '🚑',
+        'Leitstelle': '👨‍💻 Leitstelle'
     };
 
     const icon = senderIcons[sender] || '📻';
@@ -213,6 +240,7 @@ function addRadioMessage(message, sender = 'system', color = null) {
     container.appendChild(msgDiv);
     container.scrollTop = container.scrollHeight;
 
+    // Limitiere auf 100 Einträge
     while (container.children.length > 100) {
         container.removeChild(container.firstChild);
     }
@@ -221,4 +249,7 @@ function addRadioMessage(message, sender = 'system', color = null) {
 if (typeof window !== 'undefined') {
     window.UI = UI;
     window.addRadioMessage = addRadioMessage;
+    window.sendRadioMessage = sendRadioMessage;
+    
+    console.log('✅ UI v3.2 geladen - Radio Interface aktiviert');
 }
