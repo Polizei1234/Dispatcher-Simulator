@@ -171,6 +171,28 @@ function updateVehiclesOverview() {
     container.innerHTML = quickNavHtml + categoriesHtml;
 }
 
+// ✅ FIXED: Funktion getFMSStatusNumber hinzugefügt
+function getFMSStatusNumber(vehicle) {
+    const status = vehicle.currentStatus || 2;
+    
+    // FMS-Status Nummern: 1-9 sind numerisch, 0 und C sind Buchstaben
+    const statusMap = {
+        1: 1,    // Einsatzbereit auf Wache
+        2: 2,    // Einsatzbereit auf Wache
+        3: 3,    // Einsatz übernommen
+        4: 4,    // Am Einsatzort
+        5: 5,    // Sprechwunsch
+        6: 6,    // Nicht einsatzbereit
+        7: 7,    // Patient aufgenommen
+        8: 8,    // Am Zielort
+        9: 9,    // Bereit am Standort
+        0: '0',  // Notfall
+        'C': 'C' // Status C
+    };
+    
+    return statusMap[status] !== undefined ? statusMap[status] : status;
+}
+
 function createVehicleCard(vehicle) {
     const fms = getFMSStatus(vehicle);
     const fmsNumber = getFMSStatusNumber(vehicle);
@@ -286,7 +308,7 @@ setInterval(() => {
         updateVehiclesOverview();
     } else if (currentTab === 'incidents') {
         updateIncidentsOverview();
-    } else if (currentTab === 'radio') {
+    } else if (tabName === 'radio') {
         syncRadioFeed();
     }
 }, 3000);
