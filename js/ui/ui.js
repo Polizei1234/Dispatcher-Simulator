@@ -1,8 +1,10 @@
 // =========================
-// UI SYSTEM - Updated v3.3
+// UI SYSTEM - Updated v3.4
 // Fixed Radio Messages with Colors
 // + Incident Manager Integration
-// + ✅ Phase 3: Radio Interface + Vehicle Selection
+// + ✅ Phase 3: Radio Interface KOMPLETT NEU
+// + ✅ Fahrzeug-Dropdown mit Suche
+// + ✅ Intelligente Fahrzeugantworten
 // =========================
 
 const UI = {
@@ -114,13 +116,9 @@ const UI = {
         }
     },
 
-    /**
-     * ✅ PHASE 2 FIX 2: Nutzt jetzt IncidentManager für sicheren Abschluss
-     */
     closeIncident(incidentId) {
         console.log(`📋 UI: Einsatzabschluss angefordert für ${incidentId}`);
         
-        // ✅ Nutze den neuen IncidentManager mit Sicherheits-Dialog
         if (typeof IncidentManager !== 'undefined' && IncidentManager.showCompleteIncidentDialog) {
             IncidentManager.showCompleteIncidentDialog(incidentId);
         } else {
@@ -129,9 +127,6 @@ const UI = {
         }
     },
 
-    /**
-     * ⚠️ FALLBACK: Alte Methode (sollte nicht mehr benutzt werden)
-     */
     closeIncidentFallback(incidentId) {
         const index = GAME_DATA.incidents.findIndex(i => i.id === incidentId || i.nummer === incidentId);
         if (index === -1) return;
@@ -176,35 +171,148 @@ const UI = {
     }
 };
 
-// ✅ PHASE 3 FIX 2.2: Fahrzeug-Liste für Funkspruch-Auswahl
-function updateRadioVehicleList() {
-    const container = document.getElementById('radio-vehicle-list');
-    if (!container) return;
+// ✅ PHASE 3 FIX 2.3: Fahrzeug-Dropdown mit Suche (wie Stichwort-Dropdown)
+let selectedVehicleForRadio = null;
+
+function updateRadioVehicleDropdown() {
+    const dropdown = document.getElementById('radio-vehicle-dropdown');
+    if (!dropdown) return;
     
     const vehicles = GAME_DATA?.vehicles || [];
-    // Zeige nur Fahrzeuge, die NICHT Status 2 (Einsatzbereit auf Wache) haben
     const activeVehicles = vehicles.filter(v => v.owned && v.currentStatus !== 2);
     
-    if (activeVehicles.length === 0) {
-        container.innerHTML = '<p style="color: #a0aec0; font-style: italic; padding: 15px;">Alle Fahrzeuge sind verfügbar (Status 2) - keine anzufunken</p>';
+    dropdown.innerHTML = '<option value="">-- Fahrzeug wählen --</option>';
+    
+    activeVehicles.forEach(vehicle => {
+        const fms = UI.getFMSStatus(vehicle);
+        const option = document.createElement('option');
+        option.value = vehicle.id;
+        option.textContent = `${vehicle.callsign} - Status ${vehicle.currentStatus} (${fms.name})`;
+        option.dataset.fmsColor = fms.color;
+        dropdown.appendChild(option);
+    });
+}
+
+function selectVehicleFromDropdown() {
+    const dropdown = document.getElementById('radio-vehicle-dropdown');
+    if (!dropdown) return;
+    
+    const vehicleId = dropdown.value;
+    if (!vehicleId) {
+        selectedVehicleForRadio = null;
         return;
     }
     
-    container.innerHTML = activeVehicles.map(vehicle => {
-        const fms = UI.getFMSStatus(vehicle);
-        return `
-            <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #2d3748; border-radius: 6px; margin-bottom: 6px; border-left: 4px solid ${fms.color};">
-                <input type="checkbox" id="radio-vehicle-${vehicle.id}" value="${vehicle.id}" style="cursor: pointer;">
-                <label for="radio-vehicle-${vehicle.id}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.2em;">${fms.icon}</span>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #fff;">${vehicle.callsign}</div>
-                        <div style="font-size: 0.85em; color: ${fms.color};">Status ${vehicle.currentStatus} - ${fms.name}</div>
-                    </div>
-                </label>
-            </div>
-        `;
-    }).join('');
+    const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
+    if (vehicle) {
+        selectedVehicleForRadio = vehicle;
+        console.log(`📻 Fahrzeug ausgewählt: ${vehicle.callsign}`);
+    }
+}
+
+// ✅ PHASE 3 FIX 2.3: Funkspruch an ausgewähltes Fahrzeug mit intelligenter Antwort
+function sendRadioToVehicle() {
+    const input = document.getElementById('radio-vehicle-message-input');
+    if (!input) return;
+    
+    const message = input.value.trim();
+    if (!message) {
+        alert('⚠️ Bitte geben Sie eine Nachricht ein!');
+        return;
+    }
+    
+    if (!selectedVehicleForRadio) {
+        alert('⚠️ Bitte wählen Sie zuerst ein Fahrzeug aus!');
+        return;
+    }
+    
+    const vehicle = selectedVehicleForRadio;
+    const fms = UI.getFMSStatus(vehicle);
+    
+    // Sende Nachricht der Leitstelle
+    addRadioMessage(`${vehicle.callsign}: ${message}`, 'dispatcher', '#17a2b8');
+    
+    // ✅ INTELLIGENTE FAHRZEUG-ANTWORT
+    setTimeout(() => {
+        const response = generateIntelligentVehicleResponse(vehicle, message.toLowerCase());
+        addRadioMessage(`${vehicle.callsign}: ${response}`, 'vehicle', fms.color);
+    }, 1500 + Math.random() * 1000); // 1.5-2.5 Sekunden Verzögerung
+    
+    // Leere Eingabefeld
+    input.value = '';
+    input.focus();
+    
+    console.log(`📻 Funkspruch an ${vehicle.callsign} gesendet`);
+}
+
+// ✅ PHASE 3 FIX 2.3: Intelligente kontextabhängige Antworten
+function generateIntelligentVehicleResponse(vehicle, message) {
+    const fms = UI.getFMSStatus(vehicle);
+    
+    // Status-Abfrage
+    if (message.includes('status') || message.includes('melden')) {
+        return `Kommen, Status ${vehicle.currentStatus} - ${fms.name}`;
+    }
+    
+    // Position-Abfrage
+    if (message.includes('position') || message.includes('standort') || message.includes('wo')) {
+        if (vehicle.status === 'available') {
+            return `Kommen, auf der Wache ${vehicle.station}`;
+        } else if (vehicle.status === 'on-scene') {
+            return `Kommen, am Einsatzort`;
+        } else if (vehicle.status === 'transporting') {
+            return `Kommen, Fahrt zum Krankenhaus`;
+        } else if (vehicle.status === 'dispatched') {
+            return `Kommen, Anfahrt zum Einsatzort`;
+        } else {
+            return `Kommen, unterwegs`;
+        }
+    }
+    
+    // ETA-Abfrage
+    if (message.includes('eta') || message.includes('ankunft') || message.includes('wann')) {
+        if (vehicle.status === 'dispatched' || vehicle.status === 'transporting') {
+            const eta = Math.ceil(Math.random() * 8) + 2; // 2-10 Minuten
+            return `Kommen, ETA ${eta} Minuten`;
+        } else {
+            return `Kommen, bereits am Ziel`;
+        }
+    }
+    
+    // Bestätigung von Anweisungen
+    if (message.includes('fahren') || message.includes('kommen') || message.includes('anfahr')) {
+        return `Verstanden, sind unterwegs`;
+    }
+    
+    if (message.includes('warten') || message.includes('bleib')) {
+        return `Verstanden, warten ab`;
+    }
+    
+    if (message.includes('zurück') || message.includes('einrücken')) {
+        return `Verstanden, rücken ein`;
+    }
+    
+    // Patient-Status
+    if (message.includes('patient') || message.includes('verletzte')) {
+        if (vehicle.type === 'RTW') {
+            if (vehicle.status === 'on-scene') {
+                return `Kommen, Patient wird versorgt`;
+            } else if (vehicle.status === 'transporting') {
+                return `Kommen, Patient an Bord, Fahrt ins Krankenhaus`;
+            }
+        }
+        return `Verstanden`;
+    }
+    
+    // Allgemeine Bestätigung
+    const confirmations = [
+        'Verstanden',
+        'Kommen, verstanden',
+        'Alles klar',
+        'Roger'
+    ];
+    
+    return confirmations[Math.floor(Math.random() * confirmations.length)];
 }
 
 // ✅ PHASE 3 FIX 2: Funkspruch an Leitstelle senden
@@ -226,47 +334,6 @@ function sendRadioMessage() {
     input.focus();
     
     console.log(`📻 Funkspruch gesendet: ${message}`);
-}
-
-// ✅ PHASE 3 FIX 2.2: Funkspruch an ausgewählte Fahrzeuge senden
-function sendRadioToSelectedVehicles() {
-    const input = document.getElementById('radio-vehicle-message-input');
-    if (!input) return;
-    
-    const message = input.value.trim();
-    if (!message) {
-        alert('⚠️ Bitte geben Sie eine Nachricht ein!');
-        return;
-    }
-    
-    // Finde ausgewählte Fahrzeuge
-    const checkboxes = document.querySelectorAll('#radio-vehicle-list input[type="checkbox"]:checked');
-    if (checkboxes.length === 0) {
-        alert('⚠️ Bitte wählen Sie mindestens ein Fahrzeug aus!');
-        return;
-    }
-    
-    const selectedVehicleIds = Array.from(checkboxes).map(cb => cb.value);
-    const vehicles = GAME_DATA?.vehicles || [];
-    
-    // Sende an jedes ausgewählte Fahrzeug
-    selectedVehicleIds.forEach(vehicleId => {
-        const vehicle = vehicles.find(v => v.id === vehicleId);
-        if (vehicle) {
-            const fms = UI.getFMSStatus(vehicle);
-            addRadioMessage(`${vehicle.callsign}: ${message}`, 'dispatcher', fms.color);
-        }
-    });
-    
-    // Leere Eingabefeld
-    input.value = '';
-    
-    // Deselektiere alle Checkboxen
-    checkboxes.forEach(cb => cb.checked = false);
-    
-    input.focus();
-    
-    console.log(`📻 Funkspruch an ${selectedVehicleIds.length} Fahrzeug(e) gesendet`);
 }
 
 // ✅ IMPROVED: Radio Messages mit Farben (Systemnachrichten blockiert)
@@ -322,8 +389,10 @@ if (typeof window !== 'undefined') {
     window.UI = UI;
     window.addRadioMessage = addRadioMessage;
     window.sendRadioMessage = sendRadioMessage;
-    window.sendRadioToSelectedVehicles = sendRadioToSelectedVehicles;
-    window.updateRadioVehicleList = updateRadioVehicleList;
+    window.sendRadioToVehicle = sendRadioToVehicle;
+    window.updateRadioVehicleDropdown = updateRadioVehicleDropdown;
+    window.selectVehicleFromDropdown = selectVehicleFromDropdown;
+    window.generateIntelligentVehicleResponse = generateIntelligentVehicleResponse;
     
-    console.log('✅ UI v3.3 geladen - Radio Interface + Fahrzeugauswahl aktiviert');
+    console.log('✅ UI v3.4 geladen - Intelligente Fahrzeugantworten + Dropdown');
 }
