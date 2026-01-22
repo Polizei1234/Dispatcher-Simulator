@@ -1,5 +1,6 @@
 /* =========================
-   TAB NAVIGATION SYSTEM
+   TAB NAVIGATION SYSTEM v4.0
+   ✅ Phase 3 Fix 1: Nach Wachen gruppiert
    ========================= */
 
 .tab-navigation {
@@ -64,50 +65,220 @@
     }
 }
 
-/* QUICK NAVIGATION */
-.quick-nav {
+/* ✅ NEU: VEHICLES HEADER MIT STATISTIK */
+.vehicles-header {
     position: sticky;
     top: 0;
     z-index: 100;
     background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    padding: 15px 20px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
+    padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     border-bottom: 2px solid #3182ce;
-}
-
-.quick-nav-btn {
-    background: rgba(49, 130, 206, 0.2);
-    border: 2px solid #3182ce;
-    color: #63b3ed;
-    padding: 8px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9em;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
 }
 
-.quick-nav-btn:hover {
-    background: #3182ce;
-    color: white;
+.vehicles-header h2 {
+    margin: 0;
+    font-size: 1.8em;
+    color: #fff;
+}
+
+.vehicles-stats {
+    display: flex;
+    gap: 30px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2em;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8em;
+    color: #a0aec0;
+    margin-top: 5px;
+}
+
+/* ✅ NEU: STATIONS CONTAINER */
+.stations-container {
+    padding: 20px;
+}
+
+/* ✅ NEU: STATION GROUP DESIGN */
+.station-group-new {
+    background: #1a202c;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    border-left: 4px solid #3182ce;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.station-group-new:hover {
+    box-shadow: 0 4px 16px rgba(49, 130, 206, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+}
+
+/* ✅ NEU: STATION HEADER */
+.station-header-new {
+    background: #2d3748;
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s ease;
+}
+
+.station-header-new:hover {
+    background: #374151;
+}
+
+.station-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.station-icon {
+    font-size: 1.5em;
+}
+
+.station-name {
+    margin: 0;
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+}
+
+.station-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.vehicle-count {
+    font-weight: 700;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ✅ NEU: STATION VEHICLES */
+.station-vehicles-new {
+    padding: 15px;
+    display: none;
+    background: #16191f;
+}
+
+.station-vehicles-new.open {
+    display: block;
 }
 
 /* VEHICLES OVERVIEW - FULL WIDTH */
 .vehicles-overview {
-    padding: 20px;
     overflow-y: auto;
     height: calc(100vh - 180px);
     background: #0f1419;
 }
 
+/* VEHICLE CARD (Bleibt gleich) */
+.vehicle-card {
+    background: #1a202c;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid #4a5568;
+    transition: all 0.2s ease;
+}
+
+.vehicle-card:hover {
+    background: #252d3d;
+    transform: translateX(3px);
+}
+
+.vehicle-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.status-badge {
+    min-width: 50px;
+    max-width: 50px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85em;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.vehicle-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.vehicle-name {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #fff;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vehicle-type {
+    font-size: 0.75em;
+    color: #a0aec0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vehicle-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.vehicle-actions .btn {
+    font-size: 0.75em;
+    padding: 5px 10px;
+}
+
+.collapse-icon {
+    transition: transform 0.3s ease;
+    color: #a0aec0;
+}
+
+.collapse-icon.open {
+    transform: rotate(180deg);
+}
+
+/* ALTE KLASSEN (Für Kompatibilität) */
 .vehicle-category {
     margin-bottom: 30px;
     background: #1a202c;
@@ -143,7 +314,6 @@
     font-weight: 700;
 }
 
-/* STATION GRID - 2-3 COLUMNS */
 .stations-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
@@ -221,88 +391,6 @@
 
 .station-vehicles.open {
     display: block;
-}
-
-.vehicle-card {
-    background: #1a202c;
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-left: 4px solid #4a5568;
-    transition: all 0.2s ease;
-}
-
-.vehicle-card:hover {
-    background: #252d3d;
-    transform: translateX(3px);
-}
-
-.vehicle-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-}
-
-.status-badge {
-    min-width: 50px;
-    max-width: 50px;
-    padding: 5px 8px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.85em;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.vehicle-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.vehicle-name {
-    font-weight: 600;
-    font-size: 0.9em;
-    color: #fff;
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.vehicle-type {
-    font-size: 0.75em;
-    color: #a0aec0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.vehicle-actions {
-    display: flex;
-    gap: 5px;
-    flex-shrink: 0;
-}
-
-.vehicle-actions .btn {
-    font-size: 0.75em;
-    padding: 5px 10px;
-}
-
-.collapse-icon {
-    transition: transform 0.3s ease;
-}
-
-.collapse-icon.open {
-    transform: rotate(180deg);
 }
 
 /* INCIDENTS OVERVIEW */
