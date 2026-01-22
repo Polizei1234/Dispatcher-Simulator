@@ -1,8 +1,8 @@
 // =========================
-// UI SYSTEM - Updated v3.2
+// UI SYSTEM - Updated v3.3
 // Fixed Radio Messages with Colors
 // + Incident Manager Integration
-// + ✅ Phase 3: Radio Interface
+// + ✅ Phase 3: Radio Interface + Vehicle Selection
 // =========================
 
 const UI = {
@@ -176,7 +176,38 @@ const UI = {
     }
 };
 
-// ✅ PHASE 3 FIX 2: Funkspruch senden
+// ✅ PHASE 3 FIX 2.2: Fahrzeug-Liste für Funkspruch-Auswahl
+function updateRadioVehicleList() {
+    const container = document.getElementById('radio-vehicle-list');
+    if (!container) return;
+    
+    const vehicles = GAME_DATA?.vehicles || [];
+    // Zeige nur Fahrzeuge, die NICHT Status 2 (Einsatzbereit auf Wache) haben
+    const activeVehicles = vehicles.filter(v => v.owned && v.currentStatus !== 2);
+    
+    if (activeVehicles.length === 0) {
+        container.innerHTML = '<p style="color: #a0aec0; font-style: italic; padding: 15px;">Alle Fahrzeuge sind verfügbar (Status 2) - keine anzufunken</p>';
+        return;
+    }
+    
+    container.innerHTML = activeVehicles.map(vehicle => {
+        const fms = UI.getFMSStatus(vehicle);
+        return `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #2d3748; border-radius: 6px; margin-bottom: 6px; border-left: 4px solid ${fms.color};">
+                <input type="checkbox" id="radio-vehicle-${vehicle.id}" value="${vehicle.id}" style="cursor: pointer;">
+                <label for="radio-vehicle-${vehicle.id}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.2em;">${fms.icon}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #fff;">${vehicle.callsign}</div>
+                        <div style="font-size: 0.85em; color: ${fms.color};">Status ${vehicle.currentStatus} - ${fms.name}</div>
+                    </div>
+                </label>
+            </div>
+        `;
+    }).join('');
+}
+
+// ✅ PHASE 3 FIX 2: Funkspruch an Leitstelle senden
 function sendRadioMessage() {
     const input = document.getElementById('radio-message-input');
     if (!input) return;
@@ -195,6 +226,47 @@ function sendRadioMessage() {
     input.focus();
     
     console.log(`📻 Funkspruch gesendet: ${message}`);
+}
+
+// ✅ PHASE 3 FIX 2.2: Funkspruch an ausgewählte Fahrzeuge senden
+function sendRadioToSelectedVehicles() {
+    const input = document.getElementById('radio-vehicle-message-input');
+    if (!input) return;
+    
+    const message = input.value.trim();
+    if (!message) {
+        alert('⚠️ Bitte geben Sie eine Nachricht ein!');
+        return;
+    }
+    
+    // Finde ausgewählte Fahrzeuge
+    const checkboxes = document.querySelectorAll('#radio-vehicle-list input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        alert('⚠️ Bitte wählen Sie mindestens ein Fahrzeug aus!');
+        return;
+    }
+    
+    const selectedVehicleIds = Array.from(checkboxes).map(cb => cb.value);
+    const vehicles = GAME_DATA?.vehicles || [];
+    
+    // Sende an jedes ausgewählte Fahrzeug
+    selectedVehicleIds.forEach(vehicleId => {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (vehicle) {
+            const fms = UI.getFMSStatus(vehicle);
+            addRadioMessage(`${vehicle.callsign}: ${message}`, 'dispatcher', fms.color);
+        }
+    });
+    
+    // Leere Eingabefeld
+    input.value = '';
+    
+    // Deselektiere alle Checkboxen
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    input.focus();
+    
+    console.log(`📻 Funkspruch an ${selectedVehicleIds.length} Fahrzeug(e) gesendet`);
 }
 
 // ✅ IMPROVED: Radio Messages mit Farben (Systemnachrichten blockiert)
@@ -250,6 +322,8 @@ if (typeof window !== 'undefined') {
     window.UI = UI;
     window.addRadioMessage = addRadioMessage;
     window.sendRadioMessage = sendRadioMessage;
+    window.sendRadioToSelectedVehicles = sendRadioToSelectedVehicles;
+    window.updateRadioVehicleList = updateRadioVehicleList;
     
-    console.log('✅ UI v3.2 geladen - Radio Interface aktiviert');
+    console.log('✅ UI v3.3 geladen - Radio Interface + Fahrzeugauswahl aktiviert');
 }
