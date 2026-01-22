@@ -20,12 +20,13 @@ window.GameTime = {
     },
     
     reset: function() {
+        // ✅ FIXED: Starte mit aktueller Uhrzeit statt 08:00
         this.simulated = new Date();
-        this.simulated.setHours(8, 0, 0, 0); // Start um 08:00
         this.elapsed = 0;
         this.speed = CONFIG?.GAME_SPEED || 5;
         this.lastTick = Date.now();
-        console.log('⏰ Zeit zurückgesetzt auf 08:00:00');
+        const timeStr = this.simulated.toLocaleTimeString('de-DE');
+        console.log(`⏰ Zeit gestartet mit aktueller Uhrzeit: ${timeStr}`);
     },
     
     updateSpeed: function(newSpeed) {
@@ -407,7 +408,7 @@ function cycleGameSpeed() {
 }
 
 function openShop() {
-    alert('🛒️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
+    alert('🛍️ Shop - In Entwicklung!\n\nIm Freien Spiel sind bereits alle Fahrzeuge verfügbar.');
 }
 
 function startTutorial() {
