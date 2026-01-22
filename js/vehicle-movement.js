@@ -1,5 +1,6 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v6.0
+// VEHICLE MOVEMENT SYSTEM v6.1
+// + 10 Sekunden Ausrückzeit
 // + Routen verschwinden hinter Fahrzeugen
 // + NEF bleibt am Einsatzort, nur RTW fährt ins KH
 // + RTW ohne Wartezeit am Einsatzort
@@ -12,6 +13,7 @@ const VehicleMovement = {
     SPEED_KMH: 60,
     EMERGENCY_SPEED_MULTIPLIER: 1.3,
     UPDATE_INTERVAL_MS: 100,
+    DISPATCH_DELAY_MS: 10000, // ✅ NEU: 10 Sekunden Ausrückzeit
     lastStatusReports: {},
     arrivalReported: {},
     routingControls: {},
@@ -19,7 +21,8 @@ const VehicleMovement = {
     pendingMapUpdates: [],
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v6.0 initialisiert');
+        console.log('🚑 Vehicle Movement System v6.1 initialisiert');
+        console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
         console.log('✅ NEF bleibt am Einsatzort');
         console.log('✅ RTW ohne Wartezeit');
@@ -59,6 +62,29 @@ const VehicleMovement = {
             return;
         }
 
+        // ✅ NEU: Ausrückzeit nur bei to_scene
+        if (phase === 'to_scene') {
+            console.log(`⏱️ ${vehicle.callsign} - Ausrückzeit 10s...`);
+            vehicle.status = 'preparing'; // Neuer Status für Ausrückzeit
+            
+            setTimeout(() => {
+                this.startDriving(vehicleId, targetCoords, incidentId, options);
+            }, this.DISPATCH_DELAY_MS);
+        } else {
+            // Keine Verzögerung bei to_hospital oder returning
+            this.startDriving(vehicleId, targetCoords, incidentId, options);
+        }
+    },
+
+    async startDriving(vehicleId, targetCoords, incidentId, options = {}) {
+        const { skipRadio = false, phase = 'to_scene' } = options;
+        
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+
+        const station = STATIONS[vehicle.station];
+        if (!station) return;
+
         // ✅ NEU: Entferne alte Route komplett
         this.removeVehicleRoute(vehicleId);
 
@@ -66,7 +92,7 @@ const VehicleMovement = {
         const speedKmh = this.getSpeedForPhase(phase);
         const speedIcon = phase === 'returning' ? '🏠' : '🚨';
         
-        console.log(`${speedIcon} ${vehicle.callsign} fährt von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}] mit ${speedKmh} km/h`);
+        console.log(`${speedIcon} ${vehicle.callsign} fährt los von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}] mit ${speedKmh} km/h`);
 
         vehicle.status = phase === 'to_scene' ? 'dispatched' : phase === 'to_hospital' ? 'transporting' : 'returning';
         vehicle.incident = incidentId;
@@ -248,7 +274,6 @@ const VehicleMovement = {
                 const coord = movement.routeCoords[targetIndex];
                 vehicle.position = [coord.lat, coord.lon];
                 
-                // ✅ NEU: Entferne bereiste Route-Segmente
                 this.updateRouteBehindVehicle(vehicleId, targetIndex);
             }
             
@@ -281,20 +306,11 @@ const VehicleMovement = {
         }
     },
 
-    /**
-     * ✅ NEU: Aktualisiert Route so dass sie hinter Fahrzeug verschwindet
-     */
     updateRouteBehindVehicle(vehicleId, currentIndex) {
         const routingControl = this.routingControls[vehicleId];
         if (!routingControl) return;
-        
-        // Route wird bereits durch Leaflet Routing Machine gerendert
-        // Die alte Route wird automatisch entfernt wenn neues Routing stattfindet
     },
 
-    /**
-     * ✅ NEU: Entfernt Route eines Fahrzeugs komplett
-     */
     removeVehicleRoute(vehicleId) {
         if (this.routingControls[vehicleId]) {
             try {
@@ -341,13 +357,11 @@ const VehicleMovement = {
                 vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
-                // ✅ NEU: RTW sofort Transport, NEF bleibt
                 if (vehicle.type === 'RTW') {
                     console.log(`🚑 ${vehicle.callsign} startet sofort Transport (keine Wartezeit)`);
                     this.startTransport(vehicleId);
                 } else if (vehicle.type === 'NEF') {
                     console.log(`🚑 ${vehicle.callsign} (NEF) bleibt am Einsatzort`);
-                    // NEF bleibt vor Ort - nach 15 Min Status 2 + zurück zur Wache
                     setTimeout(() => {
                         this.returnToStation(vehicleId);
                     }, 15 * 60 * 1000);
@@ -389,7 +403,6 @@ const VehicleMovement = {
         this.setVehicleStatus(vehicle, 7, true);
         vehicle.status = 'transporting';
 
-        // ✅ NEU: Nutze HospitalService für nächstes Krankenhaus
         const hospitalCoords = this.findNearestHospital(vehicle.position);
         console.log(`🏥 ${vehicle.callsign} fährt ins Krankenhaus`);
 
@@ -418,15 +431,12 @@ const VehicleMovement = {
     },
 
     findNearestHospital(position) {
-        // Nutze HospitalService wenn verfügbar
         if (typeof HospitalService !== 'undefined' && typeof HOSPITALS !== 'undefined') {
             const service = new HospitalService();
             const nearest = service.selectNearestHospital(position);
             console.log(`🏥 Nächstes Krankenhaus: ${nearest.name}`);
             return nearest.position;
         }
-        
-        // Fallback: Winnenden
         return [48.8700, 9.3922];
     },
 
@@ -481,4 +491,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v6.0 geladen');
+console.log('✅ Vehicle Movement System v6.1 geladen');
