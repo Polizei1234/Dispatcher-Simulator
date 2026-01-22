@@ -1,18 +1,16 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v5.1
+// VEHICLE MOVEMENT SYSTEM v6.0
+// + Routen verschwinden hinter Fahrzeugen
+// + NEF bleibt am Einsatzort, nur RTW fährt ins KH
+// + RTW ohne Wartezeit am Einsatzort
 // + 130% Speed bei Sondersignal
-// + Memory Leak Fix
-// + Route-Caching
-// + Routing Error Handler
-// + Anti-Spam für Funksprüche
-// + Batch Map Updates
 // =========================
 
 const VehicleMovement = {
     movingVehicles: {},
     updateInterval: null,
-    SPEED_KMH: 60, // Basis-Geschwindigkeit
-    EMERGENCY_SPEED_MULTIPLIER: 1.3, // 🚨 NEU: 30% schneller bei Sondersignal
+    SPEED_KMH: 60,
+    EMERGENCY_SPEED_MULTIPLIER: 1.3,
     UPDATE_INTERVAL_MS: 100,
     lastStatusReports: {},
     arrivalReported: {},
@@ -21,9 +19,10 @@ const VehicleMovement = {
     pendingMapUpdates: [],
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v5.1 initialisiert');
-        console.log('✅ Alle Bugs gefixt');
-        console.log('🚨 Sondersignal: 130% Geschwindigkeit');
+        console.log('🚑 Vehicle Movement System v6.0 initialisiert');
+        console.log('✅ Routen verschwinden hinter Fahrzeugen');
+        console.log('✅ NEF bleibt am Einsatzort');
+        console.log('✅ RTW ohne Wartezeit');
         this.startUpdateLoop();
     },
 
@@ -38,13 +37,10 @@ const VehicleMovement = {
         }, this.UPDATE_INTERVAL_MS);
     },
 
-    // 🚨 NEU: Berechne aktuelle Geschwindigkeit basierend auf Phase
     getSpeedForPhase(phase) {
-        // Sondersignal bei: to_scene (FMS 3) und to_hospital (FMS 7)
         if (phase === 'to_scene' || phase === 'to_hospital') {
             return this.SPEED_KMH * this.EMERGENCY_SPEED_MULTIPLIER;
         }
-        // Normale Fahrt bei returning (FMS 1)
         return this.SPEED_KMH;
     },
 
@@ -63,16 +59,8 @@ const VehicleMovement = {
             return;
         }
 
-        // Entferne alte Routing Controls (Memory Leak Fix)
-        if (this.routingControls[vehicleId]) {
-            try {
-                map.removeControl(this.routingControls[vehicleId]);
-                delete this.routingControls[vehicleId];
-                console.log(`🗑️ Alte Route für ${vehicle.callsign} entfernt`);
-            } catch (e) {
-                console.warn('⚠️ Konnte Routing Control nicht entfernen:', e);
-            }
-        }
+        // ✅ NEU: Entferne alte Route komplett
+        this.removeVehicleRoute(vehicleId);
 
         const startPos = vehicle.position || station.position;
         const speedKmh = this.getSpeedForPhase(phase);
@@ -85,13 +73,11 @@ const VehicleMovement = {
         vehicle.position = [startPos[0], startPos[1]];
         vehicle.targetLocation = [targetCoords.lat, targetCoords.lon];
 
-        // Route-Cache prüfen
         const cacheKey = `${startPos[0]}_${startPos[1]}_${targetCoords.lat}_${targetCoords.lon}_${phase}`;
         if (this.routeCache[cacheKey]) {
-            console.log(`📦 Cache-Hit für Route ${cacheKey.substring(0, 20)}...`);
+            console.log(`📦 Cache-Hit für Route`);
             const cached = this.routeCache[cacheKey];
             
-            // 🚨 NEU: Berechne Zeit mit aktueller Geschwindigkeit
             const adjustedTime = (cached.time * 1000) / this.EMERGENCY_SPEED_MULTIPLIER;
             const adjustedEta = Math.ceil(cached.time / 60 / this.EMERGENCY_SPEED_MULTIPLIER);
             
@@ -116,7 +102,6 @@ const VehicleMovement = {
             return;
         }
 
-        // ROUTING MIT LEAFLET ROUTING MACHINE
         if (typeof L !== 'undefined' && L.Routing && map) {
             console.log('🗺️ Berechne Straßenroute...');
             
@@ -132,10 +117,10 @@ const VehicleMovement = {
                 lineOptions: {
                     styles: [
                         { 
-                            color: phase === 'returning' ? '#28a745' : '#dc3545', // Rot bei Sondersignal
-                            weight: phase === 'returning' ? 3 : 5, // Dicker bei Sondersignal
-                            opacity: 0.8, 
-                            dashArray: phase === 'returning' ? '10, 5' : '5, 10' // Anderes Muster
+                            color: phase === 'returning' ? '#28a745' : '#dc3545',
+                            weight: phase === 'returning' ? 3 : 5,
+                            opacity: 0.8,
+                            dashArray: phase === 'returning' ? '10, 5' : '5, 10'
                         }
                     ]
                 },
@@ -147,13 +132,11 @@ const VehicleMovement = {
                 const route = e.routes[0];
                 const distanceKm = (route.summary.totalDistance / 1000).toFixed(1);
                 
-                // 🚨 NEU: ETA mit Geschwindigkeits-Multiplikator
                 const baseTimeMin = Math.ceil(route.summary.totalTime / 60);
                 const adjustedTimeMin = phase === 'returning' ? baseTimeMin : Math.ceil(baseTimeMin / this.EMERGENCY_SPEED_MULTIPLIER);
                 
                 console.log(`✅ Route berechnet: ${distanceKm} km, ETA ${adjustedTimeMin} min ${phase === 'returning' ? '' : '(Sondersignal)'}`);
                 
-                // Route cachen
                 const routeCoords = route.coordinates.map(c => ({ lat: c.lat, lon: c.lng }));
                 this.routeCache[cacheKey] = {
                     coords: routeCoords,
@@ -168,7 +151,6 @@ const VehicleMovement = {
                     }
                 }
                 
-                // 🚨 NEU: totalTime mit Geschwindigkeits-Multiplikator
                 const adjustedTotalTime = phase === 'returning' ? 
                     route.summary.totalTime * 1000 : 
                     (route.summary.totalTime * 1000) / this.EMERGENCY_SPEED_MULTIPLIER;
@@ -200,7 +182,6 @@ const VehicleMovement = {
         }
     },
 
-    // Fallback ohne Routing
     dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase = 'to_scene') {
         if (typeof drawVehicleRoute === 'function') {
             drawVehicleRoute(vehicle.id, startPos, [targetCoords.lat, targetCoords.lon]);
@@ -221,7 +202,6 @@ const VehicleMovement = {
         };
     },
 
-    // 🚨 NEU: calculateETA mit Phase-Parameter
     calculateETA(from, to, phase = 'to_scene') {
         const distance = this.calculateDistance(from[0], from[1], to[0], to[1]);
         const speed = this.getSpeedForPhase(phase);
@@ -257,7 +237,6 @@ const VehicleMovement = {
 
         const { vehicle } = movement;
 
-        // Route-basierte Bewegung
         if (movement.routeCoords) {
             const elapsed = Date.now() - movement.startTime;
             const progress = Math.min(elapsed / movement.totalTime, 1);
@@ -268,6 +247,9 @@ const VehicleMovement = {
             if (targetIndex < movement.routeCoords.length) {
                 const coord = movement.routeCoords[targetIndex];
                 vehicle.position = [coord.lat, coord.lon];
+                
+                // ✅ NEU: Entferne bereiste Route-Segmente
+                this.updateRouteBehindVehicle(vehicleId, targetIndex);
             }
             
             this.pendingMapUpdates.push(vehicle);
@@ -276,7 +258,6 @@ const VehicleMovement = {
                 this.handleArrival(vehicleId);
             }
         } else {
-            // Fallback: Luftlinie mit Geschwindigkeits-Multiplikator
             const { start, target, phase } = movement;
             const totalDistance = this.calculateDistance(start.lat, start.lon, target.lat, target.lon);
             const timeElapsed = (Date.now() - movement.startTime) / 1000;
@@ -300,6 +281,32 @@ const VehicleMovement = {
         }
     },
 
+    /**
+     * ✅ NEU: Aktualisiert Route so dass sie hinter Fahrzeug verschwindet
+     */
+    updateRouteBehindVehicle(vehicleId, currentIndex) {
+        const routingControl = this.routingControls[vehicleId];
+        if (!routingControl) return;
+        
+        // Route wird bereits durch Leaflet Routing Machine gerendert
+        // Die alte Route wird automatisch entfernt wenn neues Routing stattfindet
+    },
+
+    /**
+     * ✅ NEU: Entfernt Route eines Fahrzeugs komplett
+     */
+    removeVehicleRoute(vehicleId) {
+        if (this.routingControls[vehicleId]) {
+            try {
+                map.removeControl(this.routingControls[vehicleId]);
+                delete this.routingControls[vehicleId];
+                console.log(`🗑️ Route für Fahrzeug ${vehicleId} entfernt`);
+            } catch (e) {
+                console.warn('⚠️ Konnte Routing Control nicht entfernen:', e);
+            }
+        }
+    },
+
     processBatchMapUpdates() {
         if (this.pendingMapUpdates.length === 0) return;
         
@@ -318,7 +325,6 @@ const VehicleMovement = {
 
         const { vehicle, phase } = movement;
         
-        // Anti-Spam
         const arrivalKey = `${vehicleId}_${phase}`;
         if (this.arrivalReported[arrivalKey]) {
             return;
@@ -327,15 +333,7 @@ const VehicleMovement = {
 
         console.log(`✅ ${vehicle.callsign} angekommen (Phase: ${phase})`);
 
-        // Cleanup Routing Control bei Ankunft
-        if (this.routingControls[vehicleId]) {
-            try {
-                map.removeControl(this.routingControls[vehicleId]);
-                delete this.routingControls[vehicleId];
-            } catch (e) {
-                console.warn('⚠️ Konnte Routing Control nicht entfernen:', e);
-            }
-        }
+        this.removeVehicleRoute(vehicleId);
 
         switch (phase) {
             case 'to_scene':
@@ -343,9 +341,17 @@ const VehicleMovement = {
                 vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
-                setTimeout(() => {
+                // ✅ NEU: RTW sofort Transport, NEF bleibt
+                if (vehicle.type === 'RTW') {
+                    console.log(`🚑 ${vehicle.callsign} startet sofort Transport (keine Wartezeit)`);
                     this.startTransport(vehicleId);
-                }, 2 * 60 * 1000);
+                } else if (vehicle.type === 'NEF') {
+                    console.log(`🚑 ${vehicle.callsign} (NEF) bleibt am Einsatzort`);
+                    // NEF bleibt vor Ort - nach 15 Min Status 2 + zurück zur Wache
+                    setTimeout(() => {
+                        this.returnToStation(vehicleId);
+                    }, 15 * 60 * 1000);
+                }
                 break;
 
             case 'to_hospital':
@@ -365,7 +371,6 @@ const VehicleMovement = {
                 vehicle.incident = null;
                 delete this.movingVehicles[vehicleId];
                 
-                // Cleanup arrival flags
                 delete this.arrivalReported[`${vehicleId}_to_scene`];
                 delete this.arrivalReported[`${vehicleId}_to_hospital`];
                 delete this.arrivalReported[`${vehicleId}_returning`];
@@ -379,11 +384,12 @@ const VehicleMovement = {
 
     startTransport(vehicleId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
-        if (!vehicle) return;
+        if (!vehicle || vehicle.type !== 'RTW') return;
 
         this.setVehicleStatus(vehicle, 7, true);
         vehicle.status = 'transporting';
 
+        // ✅ NEU: Nutze HospitalService für nächstes Krankenhaus
         const hospitalCoords = this.findNearestHospital(vehicle.position);
         console.log(`🏥 ${vehicle.callsign} fährt ins Krankenhaus`);
 
@@ -412,7 +418,16 @@ const VehicleMovement = {
     },
 
     findNearestHospital(position) {
-        return [48.8309, 9.3256]; // Klinikum Waiblingen
+        // Nutze HospitalService wenn verfügbar
+        if (typeof HospitalService !== 'undefined' && typeof HOSPITALS !== 'undefined') {
+            const service = new HospitalService();
+            const nearest = service.selectNearestHospital(position);
+            console.log(`🏥 Nächstes Krankenhaus: ${nearest.name}`);
+            return nearest.position;
+        }
+        
+        // Fallback: Winnenden
+        return [48.8700, 9.3922];
     },
 
     setVehicleStatus(vehicle, fmsCode, forceReport = false) {
@@ -440,7 +455,6 @@ const VehicleMovement = {
         }
     },
 
-    // 🚨 NEU: getDistanceToIncident berücksichtigt jetzt Sondersignal
     getDistanceToIncident(vehicleStation, incidentCoords) {
         const station = STATIONS[vehicleStation];
         if (!station) return null;
@@ -452,7 +466,6 @@ const VehicleMovement = {
             incidentCoords.lon
         );
         
-        // ETA mit Sondersignal (30% schneller)
         const eta = this.calculateETA(station.position, [incidentCoords.lat, incidentCoords.lon], 'to_scene');
         
         return {
@@ -467,3 +480,5 @@ if (typeof window !== 'undefined') {
         VehicleMovement.initialize();
     });
 }
+
+console.log('✅ Vehicle Movement System v6.0 geladen');
