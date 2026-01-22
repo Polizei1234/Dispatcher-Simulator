@@ -1,8 +1,8 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.3
+// EMERGENCY CALL SYSTEM v7.4
+// + FIX: Vordefinierte Fragen nutzen callData.antworten
+// + Custom Questions nutzen Groq AI
 // + RATE LIMITING für Groq API
-// + Retry Logic mit Exponential Backoff
-// + Fallback bei API-Fehlern
 // =========================
 
 const CallSystem = {
@@ -37,9 +37,10 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.3 initialisiert (Rate Limiting)');
-        console.log('✅ Nur Ort automatisch, alle anderen Fragen manuell!');
-        console.log('✅ User hat volle Kontrolle über Gesprächsverlauf');
+        console.log('📞 Call System v7.4 initialisiert');
+        console.log('✅ Vordefinierte Fragen = callData.antworten');
+        console.log('✅ Custom Questions = Groq AI');
+        console.log('✅ Rate Limiting aktiv');
         this.setupRingtone();
     },
 
@@ -104,7 +105,6 @@ const CallSystem = {
 
             const callData = await this.createCallWithGroq(location, realAddress);
             if (!callData) {
-                // Fallback: Generiere ohne AI
                 const fallbackData = this.createFallbackCall(location, realAddress);
                 this.showIncomingCallInSidebar(fallbackData);
                 console.groupEnd();
@@ -127,9 +127,6 @@ const CallSystem = {
         }
     },
 
-    /**
-     * 🆕 Fallback ohne AI
-     */
     createFallbackCall(location, address) {
         const scenarios = [
             {
@@ -264,7 +261,6 @@ const CallSystem = {
     },
 
     async createCallWithGroq(location, address) {
-        // 🆕 RATE LIMITING CHECK
         const now = Date.now();
         const timeSinceLastGroq = now - this.lastGroqRequest;
         
@@ -366,17 +362,16 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
 }`;
 
         try {
-            this.lastGroqRequest = Date.now(); // Update timestamp
+            this.lastGroqRequest = Date.now();
             const response = await this.callGroqAPI(prompt);
-            this.groqRetries = 0; // Reset counter bei Erfolg
+            this.groqRetries = 0;
             return response;
         } catch (error) {
             console.error('❌ Groq Fehler:', error);
             
-            // Retry Logic
             if (this.groqRetries < this.maxGroqRetries && error.message.includes('429')) {
                 this.groqRetries++;
-                const backoff = Math.pow(2, this.groqRetries) * 2000; // 2s, 4s, 8s
+                const backoff = Math.pow(2, this.groqRetries) * 2000;
                 console.warn(`🔄 Groq Retry ${this.groqRetries}/${this.maxGroqRetries} in ${backoff}ms`);
                 await new Promise(resolve => setTimeout(resolve, backoff));
                 return this.createCallWithGroq(location, address);
@@ -655,7 +650,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                     </div>
                     <div class="cat-questions">
                         ${cat.questions.map(q => `
-                            <button class="q-btn" onclick="CallSystem.askQuestion('${q.key}', '${q.text}')">
+                            <button class="q-btn" onclick="CallSystem.askPredefinedQuestion('${q.key}', '${q.text}')">
                                 ${q.text}
                             </button>
                         `).join('')}
@@ -665,12 +660,55 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         `;
     },
 
+    // ✅ FIX: Neue Funktion für vordefinierte Fragen
+    askPredefinedQuestion(key, text) {
+        console.log(`❓ Vordefinierte Frage: ${key}`);
+        
+        const container = document.getElementById('caller-messages');
+        
+        // Zeige Frage
+        const qDiv = document.createElement('div');
+        qDiv.className = 'msg-dispatcher';
+        qDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${text}`;
+        container.appendChild(qDiv);
+        container.scrollTop = container.scrollHeight;
+
+        // Markiere als gefragt
+        if (!this.askedQuestions.includes(key)) {
+            this.askedQuestions.push(key);
+        }
+
+        // ✅ NUTZE VORDEFINIERTE ANTWORT aus activeCall.antworten
+        setTimeout(() => {
+            const answer = this.activeCall.antworten[key] || 'Keine Angabe';
+            console.log(`✅ Antwort aus callData: ${answer}`);
+            
+            const aDiv = document.createElement('div');
+            aDiv.className = 'msg-caller';
+            aDiv.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
+            container.appendChild(aDiv);
+
+            this.typeText(aDiv.querySelector('.typing'), answer);
+            container.scrollTop = container.scrollHeight;
+
+            // Update Manual Incident Formular
+            if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
+                setTimeout(() => {
+                    ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
+                }, answer.length * 30 + 100);
+            }
+        }, 1000);
+    },
+
+    // ✅ Custom Questions nutzen GROQ AI
     async askCustomQuestion() {
         const input = document.getElementById('custom-question-input');
         if (!input || !input.value.trim()) return;
         
         const question = input.value.trim();
         input.value = '';
+        
+        console.log(`❓ Custom Question: ${question}`);
         
         const container = document.getElementById('caller-messages');
         
@@ -680,7 +718,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         container.appendChild(qDiv);
         container.scrollTop = container.scrollHeight;
         
-        // 🆕 RATE LIMITING
+        // Rate Limiting
         const now = Date.now();
         const timeSinceLastGroq = now - this.lastGroqRequest;
         if (timeSinceLastGroq < this.minGroqDelay) {
@@ -738,6 +776,7 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
             const data = await response.json();
             const answer = data.choices[0].message.content.replace(/"/g, '').trim();
             
+            console.log(`✅ Groq Antwort: ${answer}`);
             this.showCallerAnswer(answer, 'custom_question', question);
             
         } catch (error) {
@@ -764,36 +803,6 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
                 }, answer.length * 30 + 100);
             }
         }, 800);
-    },
-
-    askQuestion(key, text) {
-        const container = document.getElementById('caller-messages');
-        
-        const qDiv = document.createElement('div');
-        qDiv.className = 'msg-dispatcher';
-        qDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${text}`;
-        container.appendChild(qDiv);
-
-        if (!this.askedQuestions.includes(key)) {
-            this.askedQuestions.push(key);
-        }
-
-        setTimeout(() => {
-            const answer = this.activeCall.antworten[key] || 'Keine Angabe';
-            const aDiv = document.createElement('div');
-            aDiv.className = 'msg-caller';
-            aDiv.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
-            container.appendChild(aDiv);
-
-            this.typeText(aDiv.querySelector('.typing'), answer);
-            container.scrollTop = container.scrollHeight;
-
-            if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
-                setTimeout(() => {
-                    ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
-                }, answer.length * 30 + 100);
-            }
-        }, 1000);
     },
 
     hangUp() {
@@ -834,4 +843,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v7.3 geladen (Rate Limiting + Fallback)');
+console.log('✅ Call System v7.4 geladen - FIX: Vordefinierte Fragen nutzen callData');
