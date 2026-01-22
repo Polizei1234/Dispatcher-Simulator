@@ -1,171 +1,77 @@
-/* =================================
-   CALL SYSTEM SIDEBAR STYLES
-   ================================= */
+/* =========================
+   CALL SYSTEM STYLES v4.8.2
+   + Neue klappbare Abschnitte
+   + Fahrzeug-Modal Styles
+========================= */
 
-.incoming-call-card {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    animation: pulse 2s infinite;
+/* Call Tab Container */
+.call-tab-container {
+    height: calc(100vh - 150px);
+    overflow: hidden;
 }
 
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(220, 53, 69, 0.8); }
-    50% { box-shadow: 0 0 40px rgba(220, 53, 69, 1); }
-}
-
-.call-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.call-badge {
-    background: white;
-    color: #dc3545;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.btn-answer {
-    background: white;
-    color: #28a745;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-answer:hover {
-    background: #28a745;
-    color: white;
-    transform: scale(1.05);
-}
-
-.call-card-time {
-    color: white;
-    font-family: 'Courier New', monospace;
-    font-size: 16px;
-    text-align: center;
-}
-
-/* CALL INTERFACE */
-.call-interface {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.protocol-separator {
-    display: flex;
-    align-items: center;
-    margin: 20px 0;
-    color: #666;
-    font-size: 12px;
-}
-
-.protocol-separator hr {
-    flex: 1;
-    border: none;
-    border-top: 1px solid #333;
-    margin: 0 10px;
-}
-
-.protocol-separator span {
-    padding: 0 10px;
+/* Call Messages (Links) */
+#caller-messages {
     background: var(--panel-bg);
-}
-
-/* MESSAGES */
-.call-messages {
-    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
     padding: 15px;
-    border-radius: 8px;
-    max-height: 300px;
+    max-height: 500px;
     overflow-y: auto;
-    margin-bottom: 15px;
-}
-
-.msg-dispatcher, .msg-caller {
-    padding: 10px;
-    margin: 8px 0;
-    border-radius: 8px;
-    animation: slideIn 0.3s;
+    margin-bottom: 20px;
 }
 
 .msg-dispatcher {
-    background: rgba(0, 61, 122, 0.4);
-    border-left: 3px solid #17a2b8;
+    background: rgba(33, 150, 243, 0.2);
+    border-left: 3px solid #2196F3;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
 }
 
 .msg-caller {
-    background: rgba(200, 16, 46, 0.2);
-    border-left: 3px solid #ffc107;
+    background: rgba(76, 175, 80, 0.2);
+    border-left: 3px solid #4CAF50;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+/* Question Buttons */
+#question-buttons {
     display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
-.typing {
-    border-right: 2px solid #ffc107;
-    animation: blink 0.7s step-end infinite;
-}
-
-@keyframes blink {
-    50% { border-color: transparent; }
-}
-
-/* QUESTION PANEL */
-.question-panel {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-.question-panel h4 {
-    margin: 0 0 10px 0;
-    color: var(--text-primary);
-    font-size: 16px;
-}
-
 .question-cat {
-    background: var(--panel-bg);
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    border-radius: 8px;
     overflow: hidden;
 }
 
 .cat-header {
-    padding: 10px 15px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: 12px 15px;
+    background: var(--bg-secondary);
     cursor: pointer;
+    font-weight: bold;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-weight: 600;
-    transition: background 0.3s;
+    transition: background 0.2s;
 }
 
 .cat-header:hover {
-    background: linear-gradient(135deg, #16213e 0%, #003d7a 100%);
+    background: var(--border-color);
 }
 
 .cat-header .arrow {
     transition: transform 0.3s;
-    color: var(--primary-color);
 }
 
 .cat-questions {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease-out;
+    transition: max-height 0.3s ease;
 }
 
 .cat-questions.open {
@@ -176,242 +82,288 @@
 .q-btn {
     display: block;
     width: 100%;
-    padding: 8px 12px;
-    margin: 4px 0;
+    padding: 10px;
+    margin: 5px 0;
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-left: 3px solid var(--info-color);
-    color: var(--text-primary);
-    text-align: left;
+    border-radius: 5px;
+    color: var(--text-color);
     cursor: pointer;
-    border-radius: 4px;
+    text-align: left;
     transition: all 0.2s;
-    font-size: 13px;
 }
 
 .q-btn:hover {
-    background: var(--secondary-color);
-    border-left-color: var(--primary-color);
-    transform: translateX(5px);
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
 }
 
-/* PROTOCOL PANEL */
-.protocol-panel {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 15px;
-    border-radius: 8px;
+/* =========================
+   NEUE PROTOCOL SECTIONS
+========================= */
+
+.protocol-section {
     margin-bottom: 15px;
 }
 
-.protocol-panel h4 {
-    margin: 0 0 15px 0;
-    color: var(--text-primary);
-    font-size: 16px;
+.section-header {
+    cursor: pointer;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    transition: background 0.2s;
 }
 
+.section-header:hover {
+    background: var(--bg-secondary);
+}
+
+.section-header h4 {
+    margin: 0;
+    color: var(--accent-color);
+}
+
+.section-header i.fa-chevron-down,
+.section-header i.fa-chevron-right {
+    transition: transform 0.3s;
+    color: var(--text-secondary);
+}
+
+.section-content {
+    padding: 15px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Form Groups */
 .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 5px;
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--text-secondary);
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 0.9em;
 }
 
-.form-group label small {
-    color: var(--info-color);
-    font-weight: normal;
-}
-
-.form-group input,
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 8px;
+    padding: 8px 12px;
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-family: inherit;
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 0.95em;
 }
 
-.form-group input[readonly],
-.form-group textarea[readonly] {
-    background: rgba(0, 0, 0, 0.3);
+.form-group input:read-only {
+    background: var(--bg-secondary);
     cursor: not-allowed;
 }
 
-/* STICHWORT DROPDOWN */
-.stichwort-dropdown {
-    position: absolute;
-    background: var(--light-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    width: calc(100% - 30px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+.form-group textarea {
+    resize: vertical;
+    min-height: 60px;
 }
 
-.stichwort-item {
-    padding: 10px;
+.form-group input[type="checkbox"] {
+    margin-right: 5px;
     cursor: pointer;
-    transition: background 0.2s;
-    border-bottom: 1px solid var(--border-color);
 }
 
-.stichwort-item:hover {
-    background: var(--secondary-color);
-}
-
-.stichwort-item:last-child {
-    border-bottom: none;
-}
-
-/* INLINE VEHICLE SELECTION */
-#inline-vehicle-selection {
-    background: rgba(0, 61, 122, 0.1);
-    padding: 15px;
-    border-radius: 8px;
-    border: 2px solid var(--secondary-color);
-    margin-top: 15px;
-}
-
-#inline-vehicle-selection h5 {
-    margin: 0 0 15px 0;
-    color: var(--text-primary);
-    font-size: 16px;
-}
-
-.vehicle-type-section {
-    margin-bottom: 20px;
-}
-
-.vehicle-type-section h6 {
-    margin: 0 0 10px 0;
-    color: var(--warning-color);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.vehicle-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-}
-
-.vehicle-card {
-    background: var(--panel-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-}
-
-.vehicle-card:hover {
-    border-color: var(--info-color);
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
-}
-
-.vehicle-card.selected {
-    border-color: var(--success-color);
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%);
-    box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
-}
-
-.vehicle-card.selected::after {
-    content: '\2713';
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: var(--success-color);
-    color: white;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 12px;
-}
-
-.vehicle-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
-}
-
-.vehicle-name {
-    font-weight: 600;
-    margin-bottom: 5px;
-    font-size: 12px;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.vehicle-eta {
-    font-size: 11px;
+.form-group small {
+    display: block;
+    margin-top: 3px;
     color: var(--text-secondary);
-    background: rgba(0, 0, 0, 0.3);
-    padding: 3px 8px;
-    border-radius: 10px;
-    display: inline-block;
+    font-size: 0.85em;
 }
 
-#alarm-btn {
+/* =========================
+   FAHRZEUG-MODAL STYLES
+========================= */
+
+#vehicle-selection-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    margin-top: 15px;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
 }
 
-#alarm-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+#vehicle-selection-modal.active {
+    display: flex;
 }
 
-/* CALL ENDED */
-.call-ended {
-    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-    color: white;
-    font-weight: bold;
-    animation: fadeIn 0.5s;
+#vehicle-selection-modal .modal-content {
+    background: var(--panel-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+    max-width: 1000px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* RESPONSIVE */
-@media (max-width: 1200px) {
-    .vehicle-cards {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
+#vehicle-selection-modal .modal-header {
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+}
+
+#vehicle-selection-modal .modal-header h2 {
+    margin: 0;
+    color: var(--accent-color);
+}
+
+#vehicle-selection-modal .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+#vehicle-selection-modal .modal-footer {
+    padding: 20px;
+    border-top: 2px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+}
+
+/* Vehicle Modal Cards */
+.vehicle-modal-card {
+    position: relative;
+    padding: 15px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vehicle-modal-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.vehicle-modal-card.selected {
+    border-color: var(--accent-color);
+    background: rgba(33, 150, 243, 0.1);
+}
+
+.vehicle-modal-card.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.vehicle-modal-card.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Vehicle Cards (Inline Selected Display) */
+#inline-selected-vehicles {
+    padding: 10px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    min-height: 40px;
+}
+
+/* Close Button */
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff0000;
+}
+
+/* Blinking Animation für Notruf-Tab */
+@keyframes blink {
+    0%, 49% { background: var(--bg-secondary); }
+    50%, 100% { background: #dc3545; }
+}
+
+.tab-btn.blinking {
+    animation: blink 1s infinite;
+}
+
+/* Pulse Animation für eingehende Anrufe */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .vehicle-cards {
-        grid-template-columns: repeat(2, 1fr);
+    #vehicle-selection-modal .modal-content {
+        max-width: 95%;
+        height: 95vh;
+    }
+    
+    .vehicle-modal-card {
+        padding: 10px;
+    }
+    
+    .section-content {
+        padding: 10px;
     }
 }
