@@ -1,5 +1,6 @@
 // =========================
-// KARTENLOGIK v4.7
+// KARTENLOGIK v4.8
+// + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge anklickbar mit Details
 // + Fahrzeuge in Wache unsichtbar
 // + Popups schließbar
@@ -387,8 +388,9 @@ function removeIncidentFromMap(incidentId) {
 function updateVehicleOnMap(vehicle) {
     if (!map || !vehicle.position) return;
 
-    // Verstecke Fahrzeug wenn auf Wache (Status 2)
-    if (vehicle.currentStatus === 2 || vehicle.status === 'available') {
+    // ✅ FIXED: Verstecke Fahrzeug NUR wenn Status 2 (auf Wache) UND status='available'
+    // Fahrzeuge mit status='preparing' sollen sichtbar bleiben!
+    if (vehicle.currentStatus === 2 && vehicle.status === 'available') {
         if (vehicleMarkers[vehicle.id]) {
             map.removeLayer(vehicleMarkers[vehicle.id]);
             delete vehicleMarkers[vehicle.id];
