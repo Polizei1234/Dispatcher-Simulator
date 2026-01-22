@@ -1,11 +1,12 @@
 // =========================
-// EMERGENCY CALL SYSTEM v6.0
+// EMERGENCY CALL SYSTEM v6.1
 // + Freitextfeld für eigene Fragen!
 // + Integriert ManualIncident.showInline() im Notruf-Tab!
 // + Anruf-Chat links, Manual Incident Formular rechts
 // + Random Telefonnummern
 // + Hotspot-System
 // + Geocoding Cache
+// + ✅ PHASE 2: Tracking beantworteter Fragen für Meldebild
 // =========================
 
 const CallSystem = {
@@ -34,9 +35,10 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v6.0 initialisiert');
+        console.log('📞 Call System v6.1 initialisiert (Phase 2)');
         console.log('✅ Nutzt ManualIncident.showInline() im Notruf-Tab!');
         console.log('✅ Freitextfeld für eigene Fragen aktiviert!');
+        console.log('✅ Tracking beantworteter Fragen für Meldebild');
         this.setupRingtone();
     },
 
@@ -406,6 +408,13 @@ ANTWORTE NUR als JSON:
             messagesContainer.appendChild(msgDiv);
 
             this.typeText(msgDiv.querySelector('.typing'), this.activeCall.antworten.ort);
+            
+            // ✅ NEU: Ort-Frage als beantwortet markieren
+            setTimeout(() => {
+                if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
+                    ManualIncident.updateFromCallAnswer('ort', this.activeCall.antworten.ort, this.activeCall);
+                }
+            }, 1500);
         }, 1000);
 
         this.initQuestionButtons(questionsContainer);
@@ -583,15 +592,15 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
             const data = await response.json();
             const answer = data.choices[0].message.content.replace(/"/g, '').trim();
             
-            this.showCallerAnswer(answer);
+            this.showCallerAnswer(answer, 'custom_question', question);
             
         } catch (error) {
             console.error('❌ Fehler bei Custom Question:', error);
-            this.showCallerAnswer('Äh... was haben Sie gesagt? Ich bin gerade etwas verwirrt...');
+            this.showCallerAnswer('Äh... was haben Sie gesagt? Ich bin gerade etwas verwirrt...', 'custom_question', question);
         }
     },
 
-    showCallerAnswer(answer) {
+    showCallerAnswer(answer, key = null, question = null) {
         const container = document.getElementById('caller-messages');
         
         setTimeout(() => {
@@ -602,6 +611,13 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
 
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
+            
+            // ✅ NEU: Update ManualIncident auch bei Custom Questions
+            if (key && typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
+                setTimeout(() => {
+                    ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
+                }, answer.length * 30 + 100);
+            }
         }, 800);
     },
 
@@ -627,9 +643,11 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
 
-            // 🚀 NEU: Update ManualIncident-Formular
+            // ✅ NEU: Update ManualIncident-Formular NACH dem Typing
             if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
-                ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
+                setTimeout(() => {
+                    ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
+                }, answer.length * 30 + 100); // Warte bis Text fertig getippt ist
             }
         }, 1000);
     },
@@ -673,4 +691,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v6.0 geladen (mit Freitextfeld)');
+console.log('✅ Call System v6.1 geladen (Phase 2 - Meldebild-Tracking)');
