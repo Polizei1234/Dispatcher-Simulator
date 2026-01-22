@@ -1,10 +1,11 @@
 // =========================
-// UI SYSTEM - Updated v3.4
+// UI SYSTEM - Updated v3.5
 // Fixed Radio Messages with Colors
 // + Incident Manager Integration
 // + ✅ Phase 3: Radio Interface KOMPLETT NEU
 // + ✅ Fahrzeug-Dropdown mit Suche
 // + ✅ Intelligente Fahrzeugantworten
+// + ✅ Phase 3.1: Dropdown behält Auswahl bei Update
 // =========================
 
 const UI = {
@@ -74,7 +75,7 @@ const UI = {
                 </div>
 
                 <div class="detail-section">
-                    <h4>📝 Meldebild</h4>
+                    <h4>📍d Meldebild</h4>
                     <p>${incident.meldebild}</p>
                 </div>
 
@@ -178,6 +179,9 @@ function updateRadioVehicleDropdown() {
     const dropdown = document.getElementById('radio-vehicle-dropdown');
     if (!dropdown) return;
     
+    // ✅ PHASE 3.1 FIX: Behalte aktuelle Auswahl!
+    const currentValue = dropdown.value;
+    
     const vehicles = GAME_DATA?.vehicles || [];
     const activeVehicles = vehicles.filter(v => v.owned && v.currentStatus !== 2);
     
@@ -191,6 +195,20 @@ function updateRadioVehicleDropdown() {
         option.dataset.fmsColor = fms.color;
         dropdown.appendChild(option);
     });
+    
+    // ✅ PHASE 3.1 FIX: Setze Auswahl zurück wenn noch vorhanden
+    if (currentValue && activeVehicles.find(v => v.id === currentValue)) {
+        dropdown.value = currentValue;
+        // Aktualisiere auch das selectedVehicleForRadio Objekt
+        const vehicle = GAME_DATA.vehicles.find(v => v.id === currentValue);
+        if (vehicle) {
+            selectedVehicleForRadio = vehicle;
+        }
+    } else if (currentValue) {
+        // Fahrzeug ist nicht mehr aktiv (z.B. Status 2 erreicht)
+        selectedVehicleForRadio = null;
+        dropdown.value = '';
+    }
 }
 
 function selectVehicleFromDropdown() {
@@ -230,7 +248,7 @@ function sendRadioToVehicle() {
     const fms = UI.getFMSStatus(vehicle);
     
     // Sende Nachricht der Leitstelle
-    addRadioMessage(`${vehicle.callsign}: ${message}`, 'dispatcher', '#17a2b8');
+    addRadioMessage(`Leitstelle → ${vehicle.callsign}: ${message}`, 'dispatcher', '#17a2b8');
     
     // ✅ INTELLIGENTE FAHRZEUG-ANTWORT
     setTimeout(() => {
@@ -394,5 +412,5 @@ if (typeof window !== 'undefined') {
     window.selectVehicleFromDropdown = selectVehicleFromDropdown;
     window.generateIntelligentVehicleResponse = generateIntelligentVehicleResponse;
     
-    console.log('✅ UI v3.4 geladen - Intelligente Fahrzeugantworten + Dropdown');
+    console.log('✅ UI v3.5 geladen - Dropdown behält Auswahl + Leitstelle im Funkspruch');
 }
