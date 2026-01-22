@@ -225,14 +225,41 @@
             </div>
         </div>
 
-        <!-- TAB: FUNKVERKEHR -->
+        <!-- TAB: FUNKVERKEHR ✅ PHASE 3 FIX 2: Funkspruch-Interface -->
         <div id="tab-radio" class="tab-content">
             <div class="radio-overview">
-                <div class="panel" style="height: calc(100vh - 200px);">
+                <div class="panel" style="height: calc(100vh - 320px);">
                     <div class="panel-header">
                         <h3><i class="fas fa-walkie-talkie"></i> Funkverkehr</h3>
                     </div>
-                    <div class="panel-content radio-log" id="radio-feed-full" style="height: calc(100% - 50px);"></div>
+                    <div class="panel-content radio-log" id="radio-feed-full" style="height: calc(100% - 50px); overflow-y: auto;"></div>
+                </div>
+                <!-- ✅ NEU: Funkspruch-Interface -->
+                <div class="panel" style="margin-top: 15px;">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-microphone"></i> Funkspruch senden</h3>
+                    </div>
+                    <div class="panel-content">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input 
+                                type="text" 
+                                id="radio-message-input" 
+                                placeholder="Funkspruch eingeben..." 
+                                style="flex: 1; padding: 12px; background: #2d3748; border: 2px solid #3182ce; border-radius: 8px; color: #fff; font-size: 1em;"
+                                onkeypress="if(event.key === 'Enter') sendRadioMessage()"
+                            />
+                            <button 
+                                class="btn btn-primary" 
+                                onclick="sendRadioMessage()" 
+                                style="padding: 12px 30px; font-size: 1em; font-weight: bold;"
+                            >
+                                <i class="fas fa-paper-plane"></i> Senden
+                            </button>
+                        </div>
+                        <small style="display: block; margin-top: 10px; color: #a0aec0;">
+                            <i class="fas fa-info-circle"></i> Drücke <strong>Enter</strong> oder klicke <strong>Senden</strong>, um einen Funkspruch als Leitstelle zu senden.
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
