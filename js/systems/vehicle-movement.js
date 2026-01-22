@@ -1,12 +1,12 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v6.4
+// VEHICLE MOVEMENT SYSTEM v6.5
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
 // + NEF bleibt am Einsatzort, nur RTW fährt ins KH
 // + RTW ohne Wartezeit am Einsatzort
 // + 130% Speed bei Sondersignal
-// + ✅ PHASE 3 FIX 2.3: Status-Änderungen mit FMS-Farben
+// + ✅ PHASE 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt
 // =========================
 
 const VehicleMovement = {
@@ -24,13 +24,13 @@ const VehicleMovement = {
     activeRouteLines: {}, // ✅ NEU: Speichert die Polylines
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v6.4 initialisiert');
+        console.log('🚑 Vehicle Movement System v6.5 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
         console.log('✅ NEF bleibt am Einsatzort');
         console.log('✅ RTW ohne Wartezeit');
-        console.log('✅ Status-Änderungen mit FMS-Farben im Funk');
+        console.log('✅ Phase 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt');
         this.startUpdateLoop();
     },
 
@@ -71,6 +71,9 @@ const VehicleMovement = {
         if (phase === 'to_scene') {
             console.log(`⏱️ ${vehicle.callsign} - Ausrückzeit 10s...`);
             vehicle.status = 'preparing';
+            
+            // ✅ PHASE 3.1 FIX: Status 3 bei Alarmierung
+            this.setVehicleStatus(vehicle, 3);
             
             setTimeout(() => {
                 this.startDriving(vehicleId, targetCoords, incidentId, options);
@@ -126,12 +129,13 @@ const VehicleMovement = {
             // ✅ NEU: Erstelle initiale Route-Linie
             this.createInitialRouteLine(vehicleId, cached.coords, phase);
             
-            if (!skipRadio && phase === 'to_scene') {
-                const message = `${vehicle.callsign} alarmiert - ${cached.distance} km, ETA ${adjustedEta} min (Sondersignal)`;
-                if (typeof addRadioMessage === 'function') {
-                    addRadioMessage(message, 'dispatcher', '#17a2b8');
-                }
-            }
+            // ✅ PHASE 3.1 FIX: KEINE Alarmierungs-Meldung mehr!
+            // if (!skipRadio && phase === 'to_scene') {
+            //     const message = `${vehicle.callsign} alarmiert - ${cached.distance} km, ETA ${adjustedEta} min (Sondersignal)`;
+            //     if (typeof addRadioMessage === 'function') {
+            //         addRadioMessage(message, 'dispatcher', '#17a2b8');
+            //     }
+            // }
             return;
         }
 
@@ -171,12 +175,13 @@ const VehicleMovement = {
                     time: route.summary.totalTime
                 };
                 
-                if (!skipRadio && phase === 'to_scene') {
-                    const message = `${vehicle.callsign} alarmiert - ${distanceKm} km, ETA ${adjustedTimeMin} min (Sondersignal)`;
-                    if (typeof addRadioMessage === 'function') {
-                        addRadioMessage(message, 'dispatcher', '#17a2b8');
-                    }
-                }
+                // ✅ PHASE 3.1 FIX: KEINE Alarmierungs-Meldung mehr!
+                // if (!skipRadio && phase === 'to_scene') {
+                //     const message = `${vehicle.callsign} alarmiert - ${distanceKm} km, ETA ${adjustedTimeMin} min (Sondersignal)`;
+                //     if (typeof addRadioMessage === 'function') {
+                //         addRadioMessage(message, 'dispatcher', '#17a2b8');
+                //     }
+                // }
                 
                 const adjustedTotalTime = phase === 'returning' ? 
                     route.summary.totalTime * 1000 : 
@@ -514,7 +519,7 @@ const VehicleMovement = {
         return [48.8700, 9.3922];
     },
 
-    // ✅ PHASE 3 FIX 2.3: Status-Änderungen mit FMS-Farben
+    // ✅ PHASE 3.1 FIX: Status-Änderungen mit FMS-Farben
     setVehicleStatus(vehicle, fmsCode) {
         const oldStatus = vehicle.currentStatus;
         vehicle.currentStatus = fmsCode;
@@ -532,7 +537,7 @@ const VehicleMovement = {
 
         console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
 
-        // ✅ PHASE 3 FIX 2.3: Sende mit FMS-Farbe!
+        // ✅ PHASE 3.1 FIX: Sende mit FMS-Farbe!
         const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
         if (typeof addRadioMessage === 'function') {
             addRadioMessage(message, 'vehicle', fmsInfo.color);
@@ -570,4 +575,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v6.4 geladen - Status-Änderungen mit FMS-Farben!');
+console.log('✅ Vehicle Movement System v6.5 geladen - Phase 3.1 komplett!');
