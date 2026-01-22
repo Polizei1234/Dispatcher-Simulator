@@ -1,14 +1,14 @@
 // =========================
-// VERSION MANAGER v1.0
+// VERSION MANAGER v1.1
 // Automatisches Cache-Management bei neuen Versionen
 // =========================
 
 const VersionManager = {
-    CURRENT_VERSION: '4.8.3',
+    CURRENT_VERSION: '4.9.0', // ✅ AKTUALISIERT!
     STORAGE_KEY: 'ils_waiblingen_version',
 
     initialize() {
-        console.log('🔄 Version Manager initialisiert');
+        console.log('🔄 Version Manager v1.1 initialisiert');
         this.checkVersion();
     },
 
@@ -101,17 +101,19 @@ const VersionManager = {
 
         banner.innerHTML = `
             <div style="display: flex; align-items: start; gap: 15px;">
-                <div style="font-size: 32px;">🎉</div>
+                <div style="font-size: 32px;">🆕</div>
                 <div style="flex: 1;">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">
-                        Update erfolgreich!
+                        Update auf v${newVersion}!
                     </h3>
                     <p style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.9;">
                         Version <strong>${oldVersion}</strong> → <strong>${newVersion}</strong>
                     </p>
                     <p style="margin: 0; font-size: 13px; opacity: 0.8;">
-                        ✅ Cache wurde automatisch geleert<br>
-                        ✅ Alle Dateien neu geladen
+                        ✅ Fahrzeuge fahren jetzt los!<br>
+                        ✅ NEF bleibt am Einsatzort<br>
+                        ✅ RTW ohne Wartezeit<br>
+                        ✅ Krankenhäuser auf Karte
                     </p>
                     <button onclick="VersionManager.closeNotification()" style="
                         margin-top: 12px;
@@ -173,10 +175,10 @@ const VersionManager = {
 
         document.body.appendChild(banner);
 
-        // Auto-Close nach 10 Sekunden
+        // Auto-Close nach 12 Sekunden
         setTimeout(() => {
             this.closeNotification();
-        }, 10000);
+        }, 12000);
 
         console.log('📢 Update-Benachrichtigung angezeigt');
     },
@@ -227,3 +229,5 @@ if (typeof window !== 'undefined') {
     console.log('%cVersionManager.getInfo()     - Zeigt Version-Informationen', 'color: #666;');
     console.log('%cVersionManager.forceUpdate() - Erzwingt Cache-Leerung & Reload', 'color: #666;');
 }
+
+console.log('✅ Version Manager v1.1 geladen - Aktuelle Version: 4.9.0');
