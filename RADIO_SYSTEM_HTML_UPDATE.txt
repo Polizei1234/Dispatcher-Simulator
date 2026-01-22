@@ -1,0 +1,155 @@
+==============================================
+HTML UPDATE FÜR RADIO-SYSTEM
+==============================================
+
+Füge diese Zeilen in deine index.html ein:
+
+
+1. IN DER SCRIPTS-SEKTION (🔴 SYSTEMS)
+----------------------------------------------
+
+Suche nach dieser Zeile:
+    <script src="js/systems/call-system.js?v=5.0.0"></script>
+
+Füge DANACH ein:
+    <script src="js/systems/radio-system.js?v=5.0.0"></script>
+
+
+2. IN DER SCRIPTS-SEKTION (🟡 UI)
+----------------------------------------------
+
+Suche nach dieser Zeile:
+    <script src="js/ui/ui-helpers.js?v=5.0.0"></script>
+
+Füge DANACH ein:
+    <script src="js/ui/ui-radio.js?v=5.0.0"></script>
+
+
+3. KOMPLETTE SCRIPTS-SEKTION (ZUM VERGLEICH)
+----------------------------------------------
+
+<!-- 📞 SKRIPTE v5.0.0 - NEUE ORDNERSTRUKTUR -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+<!-- 🔵 CORE -->
+<script src="js/core/config.js?v=5.0.0"></script>
+<script src="js/core/incident-manager.js?v=5.0.0"></script>
+
+<!-- 🟪a UTILS -->
+<script src="js/utils/location-generator.js?v=5.0.0"></script>
+<script src="js/utils/incident-numbering.js?v=5.0.0"></script>
+<script src="js/utils/vehicle-analyzer.js?v=5.0.0"></script>
+<script src="js/utils/address-service.js?v=5.0.0"></script>
+<script src="js/utils/notification-system.js?v=5.0.0"></script>
+<script src="js/utils/scoring-system.js?v=5.0.0"></script>
+<script src="js/utils/tutorial.js?v=5.0.0"></script>
+
+<!-- 🟢 DATA -->
+<script src="js/data/hospitals.js?v=5.0.0"></script>
+<script src="js/data/incidents.js?v=5.0.0"></script>
+<script src="js/data/data.js?v=5.0.0"></script>
+
+<!-- 🔴 SYSTEMS -->
+<script src="js/systems/weather-system.js?v=5.0.0"></script>
+<script src="js/systems/ai-incident-generator.js?v=5.0.0"></script>
+<script src="js/systems/mission-timer.js?v=5.0.0"></script>
+<script src="js/systems/escalation-system.js?v=5.0.0"></script>
+<script src="js/systems/groq-validator.js?v=5.0.0"></script>
+<script src="js/systems/call-system.js?v=5.0.0"></script>
+<script src="js/systems/radio-system.js?v=5.0.0"></script>  <!-- ⭐⭐⭐ NEU ⭐⭐⭐ -->
+<script src="js/systems/vehicle-movement.js?v=5.0.0"></script>
+
+<!-- 🟡 UI -->
+<script src="js/ui/ui-helpers.js?v=5.0.0"></script>
+<script src="js/ui/ui-radio.js?v=5.0.0"></script>  <!-- ⭐⭐⭐ NEU ⭐⭐⭐ -->
+<script src="js/ui/keywords-dropdown.js?v=5.0.0"></script>
+<script src="js/ui/protocol-form.js?v=5.0.0"></script>
+<script src="js/ui/assignment-ui.js?v=5.0.0"></script>
+<script src="js/ui/manual-incident.js?v=5.0.0"></script>
+<script src="js/ui/tabs.js?v=5.0.0"></script>
+<script src="js/ui/ui.js?v=5.0.0"></script>
+<script src="js/ui/draggable.js?v=5.0.0"></script>
+
+<!-- 🗺️ MAP & AI (bleiben in js/) -->
+<script src="js/map.js?v=5.0.0"></script>
+<script src="js/ai.js?v=5.0.0"></script>
+
+<!-- 🔵 CORE INIT (ZULETZT) -->
+<script src="js/core/game.js?v=5.0.0"></script>
+<script src="js/core/main.js?v=5.0.0"></script>
+<script src="js/core/bridge.js?v=5.0.0"></script>
+
+
+4. OPTIONAL: UPDATE IN js/core/main.js
+----------------------------------------------
+
+Im Game-Loop (Funktion gameLoop oder ähnlich) hinzufügen:
+
+```javascript
+function gameLoop() {
+    if (game.isPaused) return;
+    
+    // Bestehender Code...
+    updateTime();
+    updateVehicles();
+    updateIncidents();
+    
+    // NEU: Radio-Dropdown aktualisieren
+    if (typeof updateRadioVehicleDropdown === 'function') {
+        updateRadioVehicleDropdown();
+    }
+    
+    // Rest des Codes...
+}
+```
+
+
+5. OPTIONAL: AUTO-UPDATES BEI STATUSÄNDERUNG
+----------------------------------------------
+
+In js/systems/vehicle-movement.js oder wo Fahrzeugstatus geändert wird:
+
+```javascript
+function changeVehicleStatus(vehicleId, newStatus) {
+    const vehicle = game.vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return;
+    
+    const oldStatus = vehicle.status;
+    vehicle.status = newStatus;
+    
+    // NEU: Automatische Funkmeldung
+    if (typeof radioSystem !== 'undefined' && oldStatus !== newStatus) {
+        const incident = game.incidents.find(i => 
+            i.assignedVehicles && i.assignedVehicles.includes(vehicleId)
+        );
+        radioSystem.sendAutoStatusUpdate(vehicle, newStatus, incident);
+    }
+    
+    // Karte aktualisieren etc...
+}
+```
+
+
+==============================================
+TEST-CHECKLISTE
+==============================================
+
+[ ] Seite neu laden
+[ ] Console auf Fehler prüfen
+[ ] Sollte sehen: "✅ UI Radio System v2.0 geladen"
+[ ] Zum Funkverkehr-Tab wechseln
+[ ] Fahrzeug-Dropdown sollte funktionieren
+[ ] Fahrzeug auswählen
+[ ] Nachricht eingeben: "Status melden"
+[ ] Senden
+[ ] Nach 1-2 Sekunden sollte Fahrzeug antworten
+
+
+==============================================
+FERTIG!
+==============================================
+
+Das Radio-System ist nun vollständig integriert.
+
+Bei Fragen siehe: RADIO_SYSTEM_INTEGRATION.md
