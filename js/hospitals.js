@@ -1,6 +1,8 @@
 // =========================
-// HOSPITALS v1.0
+// HOSPITALS v2.0
 // Krankenhäuser im Rems-Murr-Kreis
+// + Korrekte Koordinaten
+// + Karten-Symbole
 // =========================
 
 const HOSPITALS = {
@@ -9,7 +11,7 @@ const HOSPITALS = {
         name: 'Rems-Murr-Klinikum Winnenden',
         shortName: 'Winnenden',
         address: 'Am Jakobsweg 1, 71364 Winnenden',
-        position: [48.8740, 9.3985],
+        position: [48.8700, 9.3922], // ✅ KORRIGIERT: 48°52'12"N, 9°23'32"E
         departments: [
             'Notaufnahme',
             'Innere Medizin',
@@ -28,10 +30,10 @@ const HOSPITALS = {
     },
     SCHORNDORF: {
         id: 'kh_schorndorf',
-        name: 'Rems-Murr-Klinikum Schorndorf',
+        name: 'Rems-Murr-Klinik Schorndorf',
         shortName: 'Schorndorf',
         address: 'Schlichtener Straße 105, 73614 Schorndorf',
-        position: [48.8045, 9.5285],
+        position: [48.8042, 9.5352], // ✅ KORRIGIERT
         departments: [
             'Notaufnahme',
             'Innere Medizin',
@@ -52,6 +54,7 @@ const HOSPITALS = {
 class HospitalService {
     constructor() {
         this.hospitals = HOSPITALS;
+        this.markers = {};
     }
     
     /**
@@ -127,10 +130,75 @@ class HospitalService {
         }
         return null;
     }
+    
+    /**
+     * 🆕 NEU: Zeigt Krankenhäuser auf der Karte
+     */
+    showOnMap() {
+        if (typeof map === 'undefined' || !map) {
+            console.warn('⚠️ Karte nicht verfügbar');
+            return;
+        }
+        
+        console.group('🏥 ZEIGE KRANKENHÄUSER AUF KARTE');
+        
+        // Custom Icon für Krankenhäuser
+        const hospitalIcon = L.divIcon({
+            className: 'hospital-marker',
+            html: `<div style="
+                background: #e74c3c;
+                border: 3px solid #fff;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+            ">🏥</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+        
+        for (const hospital of Object.values(this.hospitals)) {
+            const marker = L.marker(
+                hospital.position,
+                { icon: hospitalIcon, zIndexOffset: 1000 }
+            ).addTo(map);
+            
+            marker.bindPopup(`
+                <div style="min-width: 220px;">
+                    <h3 style="margin: 0 0 10px 0; color: #e74c3c;">🏥 ${hospital.name}</h3>
+                    <p style="margin: 5px 0; font-size: 0.9em;"><strong>📍 Adresse:</strong><br>${hospital.address}</p>
+                    <p style="margin: 5px 0; font-size: 0.9em;"><strong>🏥 Abteilungen:</strong><br>${hospital.departments.slice(0, 3).join('<br>')}</p>
+                </div>
+            `);
+            
+            this.markers[hospital.id] = marker;
+            console.log(`✅ ${hospital.name} platziert bei [${hospital.position[0]}, ${hospital.position[1]}]`);
+        }
+        
+        console.groupEnd();
+    }
 }
 
 // Globale Instanz
 window.HospitalService = HospitalService;
 window.HOSPITALS = HOSPITALS;
 
-console.log('🏥 Hospital Service initialisiert: Winnenden & Schorndorf');
+// Automatisch auf Karte anzeigen wenn verfügbar
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            if (typeof map !== 'undefined' && map) {
+                const service = new HospitalService();
+                service.showOnMap();
+            }
+        }, 2500); // Warte bis Karte initialisiert
+    });
+}
+
+console.log('✅ Hospital Service v2.0 initialisiert: Winnenden & Schorndorf (mit Karten-Symbolen)');
+console.log('🏥 Winnenden: [48.8700, 9.3922]');
+console.log('🏥 Schorndorf: [48.8042, 9.5352]');
