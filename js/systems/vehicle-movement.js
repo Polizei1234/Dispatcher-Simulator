@@ -1,8 +1,8 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v6.2
+// VEHICLE MOVEMENT SYSTEM v6.3
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
-// + Routen verschwinden hinter Fahrzeugen
+// + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
 // + NEF bleibt am Einsatzort, nur RTW fährt ins KH
 // + RTW ohne Wartezeit am Einsatzort
 // + 130% Speed bei Sondersignal
@@ -20,9 +20,10 @@ const VehicleMovement = {
     routingControls: {},
     routeCache: {},
     pendingMapUpdates: [],
+    activeRouteLines: {}, // ✅ NEU: Speichert die Polylines
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v6.2 initialisiert');
+        console.log('🚑 Vehicle Movement System v6.3 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -111,7 +112,6 @@ const VehicleMovement = {
                 vehicle: vehicle,
                 routeCoords: cached.coords,
                 currentIndex: 0,
-                // ✅ NEU: Smooth Interpolation
                 currentSegmentProgress: 0,
                 incidentId: incidentId,
                 phase: phase,
@@ -120,6 +120,9 @@ const VehicleMovement = {
                 distanceKm: cached.distance,
                 eta: phase === 'returning' ? Math.ceil(cached.time / 60) : adjustedEta
             };
+            
+            // ✅ NEU: Erstelle initiale Route-Linie
+            this.createInitialRouteLine(vehicleId, cached.coords, phase);
             
             if (!skipRadio && phase === 'to_scene') {
                 const message = `${vehicle.callsign} alarmiert - ${cached.distance} km, ETA ${adjustedEta} min (Sondersignal)`;
@@ -143,18 +146,11 @@ const VehicleMovement = {
                 show: false,
                 createMarker: () => null,
                 lineOptions: {
-                    styles: [
-                        { 
-                            color: phase === 'returning' ? '#28a745' : '#dc3545',
-                            weight: phase === 'returning' ? 3 : 5,
-                            opacity: 0.8,
-                            dashArray: phase === 'returning' ? '10, 5' : '5, 10'
-                        }
-                    ]
+                    styles: []
                 },
                 router: L.Routing.osrmv1({
                     serviceUrl: 'https://router.project-osrm.org/route/v1',
-                    timeout: 30000 // ✅ FIX #3: 30 Sekunden Timeout
+                    timeout: 30000
                 })
             })
             .on('routesfound', (e) => {
@@ -188,7 +184,6 @@ const VehicleMovement = {
                     vehicle: vehicle,
                     routeCoords: routeCoords,
                     currentIndex: 0,
-                    // ✅ NEU: Smooth Interpolation
                     currentSegmentProgress: 0,
                     incidentId: incidentId,
                     phase: phase,
@@ -197,13 +192,15 @@ const VehicleMovement = {
                     distanceKm: distanceKm,
                     eta: adjustedTimeMin
                 };
+                
+                // ✅ NEU: Erstelle initiale Route-Linie
+                this.createInitialRouteLine(vehicleId, routeCoords, phase);
             })
             .on('routingerror', (e) => {
                 console.error('❌ Routing Error:', e.error);
                 console.log('🔄 Fallback zu Luftlinie');
                 this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
             })
-            // ✅ FIX #3: Timeout Handler
             .on('routingerror', (e) => {
                 if (e.error && e.error.message && e.error.message.includes('timeout')) {
                     console.error('❌ Routing Timeout - Fallback zu Luftlinie');
@@ -214,7 +211,6 @@ const VehicleMovement = {
             
             this.routingControls[vehicleId] = routingControl;
             
-            // ✅ FIX #3: Manueller Timeout nach 30s
             setTimeout(() => {
                 if (!this.movingVehicles[vehicleId]) {
                     console.error('❌ Routing dauert zu lange - Fallback');
@@ -227,6 +223,26 @@ const VehicleMovement = {
             console.warn('⚠️ Leaflet Routing Machine nicht verfügbar, nutze Luftlinie');
             this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
         }
+    },
+
+    // ✅ NEU: Erstelle initiale sichtbare Route-Linie
+    createInitialRouteLine(vehicleId, routeCoords, phase) {
+        if (!map || !routeCoords || routeCoords.length === 0) return;
+        
+        const color = phase === 'returning' ? '#28a745' : '#dc3545';
+        const dashArray = phase === 'returning' ? '10, 5' : '5, 10';
+        
+        const latLngs = routeCoords.map(c => [c.lat, c.lon]);
+        
+        const routeLine = L.polyline(latLngs, {
+            color: color,
+            weight: 4,
+            opacity: 0.7,
+            dashArray: dashArray
+        }).addTo(map);
+        
+        this.activeRouteLines[vehicleId] = routeLine;
+        console.log(`✅ Route-Linie für ${vehicleId} erstellt`);
     },
 
     dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase = 'to_scene') {
@@ -278,7 +294,6 @@ const VehicleMovement = {
         });
     },
 
-    // ✅ FIX #2: KOMPLETT NEU - Smooth Interpolation zwischen Wegpunkten
     updateVehiclePosition(vehicleId) {
         const movement = this.movingVehicles[vehicleId];
         if (!movement) return;
@@ -289,12 +304,9 @@ const VehicleMovement = {
             const elapsed = Date.now() - movement.startTime;
             const totalProgress = Math.min(elapsed / movement.totalTime, 1);
             
-            // Berechne welches Segment wir ansteuern sollten
             const targetIndex = Math.floor(totalProgress * (movement.routeCoords.length - 1));
             
-            // ✅ NEU: Smooth Interpolation zwischen aktuellem und nächstem Wegpunkt
             if (targetIndex >= movement.routeCoords.length - 1) {
-                // Wir sind am Ziel
                 const lastCoord = movement.routeCoords[movement.routeCoords.length - 1];
                 vehicle.position = [lastCoord.lat, lastCoord.lon];
                 this.pendingMapUpdates.push(vehicle);
@@ -302,13 +314,11 @@ const VehicleMovement = {
                 return;
             }
             
-            // Berechne wie weit wir im aktuellen Segment sind
             const segmentProgress = (totalProgress * (movement.routeCoords.length - 1)) - targetIndex;
             
             const currentCoord = movement.routeCoords[targetIndex];
             const nextCoord = movement.routeCoords[targetIndex + 1];
             
-            // ✅ INTERPOLIERE zwischen currentCoord und nextCoord
             const interpolatedLat = currentCoord.lat + (nextCoord.lat - currentCoord.lat) * segmentProgress;
             const interpolatedLon = currentCoord.lon + (nextCoord.lon - currentCoord.lon) * segmentProgress;
             
@@ -316,11 +326,11 @@ const VehicleMovement = {
             movement.currentIndex = targetIndex;
             movement.currentSegmentProgress = segmentProgress;
             
+            // ✅ FIXED: Update Route hinter Fahrzeug
             this.updateRouteBehindVehicle(vehicleId, targetIndex);
             this.pendingMapUpdates.push(vehicle);
             
         } else {
-            // Fallback: Luftlinie (bereits smooth)
             const { start, target, phase } = movement;
             const totalDistance = this.calculateDistance(start.lat, start.lon, target.lat, target.lon);
             const timeElapsed = (Date.now() - movement.startTime) / 1000;
@@ -344,19 +354,43 @@ const VehicleMovement = {
         }
     },
 
+    // ✅ FIXED: Route wird jetzt dynamisch aktualisiert
     updateRouteBehindVehicle(vehicleId, currentIndex) {
-        const routingControl = this.routingControls[vehicleId];
-        if (!routingControl) return;
+        const routeLine = this.activeRouteLines[vehicleId];
+        const movement = this.movingVehicles[vehicleId];
+        
+        if (!routeLine || !movement || !movement.routeCoords) return;
+        
+        // Erstelle neue Route nur vom aktuellen Index bis zum Ende
+        const remainingCoords = movement.routeCoords.slice(currentIndex);
+        
+        if (remainingCoords.length < 2) return;
+        
+        const latLngs = remainingCoords.map(c => [c.lat, c.lon]);
+        
+        // Update die Polyline mit den verbleibenden Koordinaten
+        routeLine.setLatLngs(latLngs);
     },
 
     removeVehicleRoute(vehicleId) {
+        // ✅ Lösche Routing Control
         if (this.routingControls[vehicleId]) {
             try {
                 map.removeControl(this.routingControls[vehicleId]);
                 delete this.routingControls[vehicleId];
-                console.log(`🗑️ Route für Fahrzeug ${vehicleId} entfernt`);
             } catch (e) {
                 console.warn('⚠️ Konnte Routing Control nicht entfernen:', e);
+            }
+        }
+        
+        // ✅ Lösche aktive Route-Linie
+        if (this.activeRouteLines[vehicleId]) {
+            try {
+                map.removeLayer(this.activeRouteLines[vehicleId]);
+                delete this.activeRouteLines[vehicleId];
+                console.log(`🗑️ Route-Linie für ${vehicleId} entfernt`);
+            } catch (e) {
+                console.warn('⚠️ Konnte Route-Linie nicht entfernen:', e);
             }
         }
     },
@@ -530,4 +564,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v6.2 geladen');
+console.log('✅ Vehicle Movement System v6.3 geladen - Route verschwindet hinter Fahrzeug!');
