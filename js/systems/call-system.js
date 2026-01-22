@@ -1,5 +1,5 @@
 // =========================
-// EMERGENCY CALL SYSTEM v6.1
+// EMERGENCY CALL SYSTEM v7.0
 // + Freitextfeld für eigene Fragen!
 // + Integriert ManualIncident.showInline() im Notruf-Tab!
 // + Anruf-Chat links, Manual Incident Formular rechts
@@ -7,6 +7,7 @@
 // + Hotspot-System
 // + Geocoding Cache
 // + ✅ PHASE 2: Tracking beantworteter Fragen für Meldebild
+// + ✅ PHASE 3.3: Natürlicher Gesprächsfluss mit automatischen Rückfragen
 // =========================
 
 const CallSystem = {
@@ -18,6 +19,7 @@ const CallSystem = {
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
+    conversationState: 0, // ✅ NEU: Track Gesprächsfortschritt
 
     HOTSPOT_ZONES: [
         { lat: 48.8309, lon: 9.3165, radius: 0.01, weight: 3, name: "Waiblingen Zentrum" },
@@ -35,10 +37,9 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v6.1 initialisiert (Phase 2)');
-        console.log('✅ Nutzt ManualIncident.showInline() im Notruf-Tab!');
-        console.log('✅ Freitextfeld für eigene Fragen aktiviert!');
-        console.log('✅ Tracking beantworteter Fragen für Meldebild');
+        console.log('📞 Call System v7.0 initialisiert (Phase 3.3)');
+        console.log('✅ Natürlicher Gesprächsfluss mit automatischen Rückfragen!');
+        console.log('✅ Realistischer Dialog wie echtes Notrufgespräch');
         this.setupRingtone();
     },
 
@@ -202,20 +203,41 @@ Uhrzeit: ${currentTime} (${timeOfDay})
 Ort: ${address || location.hotspot}
 SZENARIEN: ${scenarios.join(', ')}
 
-WICHTIG FÜR ANRUFER-ANTWORTEN:
-- Länge: 5-15 Wörter pro Antwort
-- Umgangssprache und Dialekt erlaubt
-- Emotionen zeigen (Panik, Sorge, Nervosität)
-- Realistische Sätze wie:
-  * "Ich weiß es nicht genau, aber..."
-  * "Also... äh... ich glaub schon"
-  * "Moment, ich schau nochmal... ja!"
-  * "Kann ich nicht sagen, ich seh das nicht"
-  * "Er sagt, es tut wahnsinnig weh"
-  * "Die blutet ganz stark am Kopf"
-- KEINE medizinischen Fachbegriffe!
-- Bei Unsicherheit: vage bleiben
-- Realistisch stocken/wiederholen
+✅ WICHTIG - REALISTISCHE ANTWORTEN:
+
+1. ERSTE ANTWORT (was_passiert):
+   - 8-15 Wörter, SEHR grob und emotional
+   - Nur das Offensichtlichste
+   - Beispiele:
+     * "Mein Vater! Der hat plötzlich Brustschmerzen bekommen und sieht ganz blass aus!"
+     * "Oh Gott, mein Mann ist die Treppe runtergefallen! Der liegt jetzt unten und bewegt sich kaum!"
+     * "Meine Frau kriegt keine Luft mehr! Die ringt nach Atem und wird ganz blau!"
+     * "Hier war ein Unfall! Die Autos sind zusammengestoßen und einer blutet am Kopf!"
+
+2. DETAILFRAGEN (bewusstsein, atmung, etc.):
+   - 5-12 Wörter
+   - Oft unsicher oder vage
+   - Beispiele:
+     * "Äh... ja, er macht die Augen auf, aber redet irgendwie wirr"
+     * "Also atmen tut er schon, aber ganz schnell und flach irgendwie"
+     * "Moment, ich schau... ja, am Kopf blutet es ganz stark!"
+     * "Weiß ich nicht genau, ich kenn den nicht"
+
+3. MEDIZINISCHE FRAGEN:
+   - Oft "Weiß ich nicht" oder "Glaub schon"
+   - Beispiele:
+     * "Keine Ahnung ehrlich, ich weiß das nicht"
+     * "Der hat irgendwas am Herzen, glaub ich... oder war das Diabetes?"
+     * "Moment, ich frag ihn... ja, er nimmt Blutdrucktabletten"
+
+4. UNFALLDETAILS:
+   - Konkrete Angaben wenn beobachtet
+   - Beispiele:
+     * "Von der Leiter, vielleicht so 3-4 Meter hoch"
+     * "Die ganze Treppe runter, bestimmt 15 Stufen"
+     * "Mit voller Wucht gegen den Baum, der Airbag ist raus"
+
+KEINE Fachbegriffe! Umgangssprache! Emotionen!
 
 ANTWORTE NUR als JSON:
 {
@@ -226,32 +248,32 @@ ANTWORTE NUR als JSON:
   },
   "antworten": {
     "ort": "${address || location.hotspot}",
-    "was_passiert": "Längere emotionale Beschreibung (8-15 Wörter)",
+    "was_passiert": "8-15 Wörter, SEHR emotional und grob",
     "wie_viele": "Eine Person" / "Zwei Leute" / "Drei oder vier, weiß nicht genau",
-    "bewusstsein": "Ja, wach" / "Nein, reagiert nicht" / "Also... er macht die Augen auf, aber antwortet nicht richtig",
-    "atmung": "Ja, atmet normal" / "Weiß nicht genau... scheint schwach zu sein" / "Ja, aber ganz schnell und flach",
-    "blutung": "Ja, ganz stark am Kopf!" / "Ein bisschen, aber nicht viel" / "Nein, sehe keine",
-    "schmerzen": "Sagt er hat wahnsinnige Schmerzen in der Brust" / "Am ganzen Körper" / "Weiß nicht, kann nicht sprechen",
-    "vorerkrankungen": "Keine Ahnung, ich kenn den nicht" / "Der hat was am Herzen, glaub ich" / "Weiß ich nicht genau",
-    "medikamente": "Keine Ahnung ehrlich" / "Ja, irgendwelche Pillen, weiß aber nicht was" / "Weiß nicht",
-    "allergien": "Weiß ich nicht" / "Glaub nicht, aber sicher bin ich nicht" / "Keine, hat er gesagt",
-    "schwangerschaft": "Nein" / "Weiß ich nicht" / "Glaub nicht",
-    "diabetes": "Moment... ja, der ist Diabetiker!" / "Weiß nicht" / "Glaub schon, ja",
-    "epilepsie": "Nein, glaub nicht" / "Weiß ich nicht",
-    "herzerkrankung": "Ja, der hatte schon mal einen Infarkt!" / "Weiß nicht" / "Kann sein, bin nicht sicher",
-    "sturz_hoehe": "Von der Leiter, vielleicht 3 Meter" / "Die ganze Treppe runter" / "Weiß nicht genau",
-    "aufprall": "Mit dem Kopf auf den Boden" / "Auf die Seite" / "Weiß nicht, hab's nicht gesehen",
-    "eingeklemmt": "Ja, zwischen den Autos!" / "Nein",
-    "airbag": "Ja, ist raus" / "Nein" / "Weiß nicht",
-    "feuer": "Nein" / "Ja, es raucht ganz stark!" / "Nein, kein Feuer",
-    "gefahrstoffe": "Nein" / "Weiß nicht",
+    "bewusstsein": "5-12 Wörter, oft unsicher",
+    "atmung": "5-12 Wörter, Beschreibung",
+    "blutung": "5-12 Wörter",
+    "schmerzen": "5-12 Wörter",
+    "vorerkrankungen": "Oft \"Weiß ich nicht\" oder vage Angabe",
+    "medikamente": "Oft unsicher",
+    "allergien": "Meist \"Weiß nicht\"",
+    "schwangerschaft": "Nein" / "Weiß ich nicht" / "Ja, im 7. Monat",
+    "diabetes": "Glaub schon" / "Weiß nicht" / "Ja, der spritzt Insulin",
+    "epilepsie": "Nein" / "Weiß nicht" / "Ja, hatte schon öfter Anfälle",
+    "herzerkrankung": "Weiß nicht genau" / "Ja, hatte schon mal Infarkt",
+    "sturz_hoehe": "Konkrete Angabe wenn Unfall",
+    "aufprall": "Wo aufgeprallt",
+    "eingeklemmt": "Ja/Nein",
+    "airbag": "Ja/Nein bei Unfall",
+    "feuer": "Nein" / "Ja, es raucht!",
+    "gefahrstoffe": "Nein",
     "waffe": "Nein",
-    "gewalt": "Nein" / "Weiß ich nicht",
-    "erreichbarkeit": "Ganz normal von der Straße" / "Im Hinterhof, durch das Tor" / "Im 3. Stock, Aufzug geht",
-    "stockwerk": "Erdgeschoss" / "4. Stock, links" / "Weiß nicht genau"
+    "gewalt": "Nein",
+    "erreichbarkeit": "Von der Straße" / "Im Hof",
+    "stockwerk": "Erdgeschoss" / "3. Stock"
   },
   "einsatz": {
-    "stichwort": "Passendes Stichwort (Herzinfarkt/Unfall/Sturz/etc.)",
+    "stichwort": "Passend",
     "koordinaten": {"lat": ${location.lat}, "lon": ${location.lon}},
     "ort": "${address || location.hotspot}"
   },
@@ -361,6 +383,7 @@ ANTWORTE NUR als JSON:
         console.log('📞 Anruf angenommen - Wechsle zu Tab "Notruf"');
         this.stopRingtone();
         this.askedQuestions = [];
+        this.conversationState = 0; // ✅ NEU: Reset conversation state
 
         const callList = document.getElementById('call-list');
         if (callList) {
@@ -395,35 +418,122 @@ ANTWORTE NUR als JSON:
 
         if (!messagesContainer || !questionsContainer) return;
 
-        messagesContainer.innerHTML = `
-            <div class="msg-dispatcher">
-                <strong>👨‍💻 Sie:</strong> Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?
-            </div>
-        `;
+        messagesContainer.innerHTML = '';
 
-        setTimeout(() => {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'msg-caller';
-            msgDiv.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
-            messagesContainer.appendChild(msgDiv);
-
-            this.typeText(msgDiv.querySelector('.typing'), this.activeCall.antworten.ort);
-            
-            // ✅ NEU: Ort-Frage als beantwortet markieren
-            setTimeout(() => {
-                if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
-                    ManualIncident.updateFromCallAnswer('ort', this.activeCall.antworten.ort, this.activeCall);
-                }
-            }, 1500);
-        }, 1000);
+        // ✅ PHASE 3.3: Starte natürliches Gespräch
+        this.startNaturalConversation(messagesContainer);
 
         this.initQuestionButtons(questionsContainer);
         
-        // 🚀 NEU: Zeige ManualIncident inline rechts
+        // 🚀 Zeige ManualIncident inline rechts
         if (typeof ManualIncident !== 'undefined' && ManualIncident.showInline) {
             ManualIncident.showInline(this.activeCall);
         } else {
             console.error('❌ ManualIncident.showInline() nicht gefunden!');
+        }
+    },
+
+    // ✅ PHASE 3.3: Natürliches Gespräch mit automatischen Rückfragen
+    startNaturalConversation(container) {
+        const steps = [
+            // 1. Begrüßung und Ortsfrage
+            {
+                delay: 0,
+                type: 'dispatcher',
+                text: 'Notruf Feuerwehr und Rettungsdienst, wo ist der Notfallort?'
+            },
+            // 2. Anrufer nennt Ort
+            {
+                delay: 1000,
+                type: 'caller',
+                text: this.activeCall.antworten.ort,
+                updateKey: 'ort'
+            },
+            // 3. Was-ist-passiert Frage
+            {
+                delay: 1500,
+                type: 'dispatcher',
+                text: 'Was ist genau passiert?'
+            },
+            // 4. Anrufer beschreibt grob
+            {
+                delay: 1000,
+                type: 'caller',
+                text: this.activeCall.antworten.was_passiert,
+                updateKey: 'was_passiert'
+            },
+            // 5. Bewusstseinsfrage
+            {
+                delay: 1500,
+                type: 'dispatcher',
+                text: 'Ist die Person bei Bewusstsein? Reagiert sie auf Ansprache?'
+            },
+            // 6. Bewusstseinsantwort
+            {
+                delay: 1200,
+                type: 'caller',
+                text: this.activeCall.antworten.bewusstsein,
+                updateKey: 'bewusstsein'
+            },
+            // 7. Atmungsfrage
+            {
+                delay: 1500,
+                type: 'dispatcher',
+                text: 'Atmet die Person normal?'
+            },
+            // 8. Atmungsantwort
+            {
+                delay: 1000,
+                type: 'caller',
+                text: this.activeCall.antworten.atmung,
+                updateKey: 'atmung'
+            }
+        ];
+
+        let totalDelay = 0;
+        steps.forEach((step, index) => {
+            totalDelay += step.delay;
+            
+            setTimeout(() => {
+                if (step.type === 'dispatcher') {
+                    this.addDispatcherMessage(container, step.text);
+                } else {
+                    this.addCallerMessage(container, step.text, step.updateKey);
+                }
+                
+                // Nach letztem Schritt: Buttons freigeben
+                if (index === steps.length - 1) {
+                    setTimeout(() => {
+                        this.conversationState = 1; // Basis-Infos erhalten
+                        console.log('✅ Basis-Gespräch abgeschlossen - Buttons aktiv');
+                    }, 1500);
+                }
+            }, totalDelay);
+        });
+    },
+
+    addDispatcherMessage(container, text) {
+        const div = document.createElement('div');
+        div.className = 'msg-dispatcher';
+        div.innerHTML = `<strong>👨‍💻 Sie:</strong> ${text}`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    },
+
+    addCallerMessage(container, text, updateKey = null) {
+        const div = document.createElement('div');
+        div.className = 'msg-caller';
+        div.innerHTML = `${this.getEmotionIcon()} <span class="typing"></span>`;
+        container.appendChild(div);
+
+        this.typeText(div.querySelector('.typing'), text);
+        container.scrollTop = container.scrollHeight;
+        
+        // Update ManualIncident
+        if (updateKey && typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
+            setTimeout(() => {
+                ManualIncident.updateFromCallAnswer(updateKey, text, this.activeCall);
+            }, text.length * 30 + 100);
         }
     },
 
@@ -447,51 +557,48 @@ ANTWORTE NUR als JSON:
     initQuestionButtons(container) {
         const categories = [
             {
-                name: '🚨 Situation',
-                questions: [
-                    { key: 'was_passiert', text: 'Was ist genau passiert?' },
-                    { key: 'wie_viele', text: 'Wie viele Personen betroffen?' },
-                    { key: 'gefahrstoffe', text: 'Gefahrstoffe/Chemikalien?' },
-                    { key: 'feuer', text: 'Feuer oder Rauch vorhanden?' },
-                    { key: 'gewalt', text: 'Gewalteinwirkung?' },
-                    { key: 'waffe', text: 'Waffen im Spiel?' }
-                ]
-            },
-            {
                 name: '🩺 Patient',
                 questions: [
-                    { key: 'bewusstsein', text: 'Bei Bewusstsein?' },
-                    { key: 'atmung', text: 'Normale Atmung?' },
-                    { key: 'blutung', text: 'Blutungen?' },
-                    { key: 'schmerzen', text: 'Wo Schmerzen?' }
+                    { key: 'wie_viele', text: 'Wie viele Personen betroffen?' },
+                    { key: 'blutung', text: 'Blutungen vorhanden?' },
+                    { key: 'schmerzen', text: 'Wo hat der Patient Schmerzen?' }
                 ]
             },
             {
                 name: '💊 Medizinisch',
                 questions: [
-                    { key: 'vorerkrankungen', text: 'Vorerkrankungen?' },
-                    { key: 'medikamente', text: 'Medikamente?' },
-                    { key: 'allergien', text: 'Allergien?' },
-                    { key: 'diabetes', text: 'Diabetes?' },
-                    { key: 'epilepsie', text: 'Epilepsie?' },
-                    { key: 'herzerkrankung', text: 'Herzerkrankung?' },
-                    { key: 'schwangerschaft', text: 'Schwanger?' }
+                    { key: 'vorerkrankungen', text: 'Bekannte Vorerkrankungen?' },
+                    { key: 'medikamente', text: 'Nimmt der Patient Medikamente?' },
+                    { key: 'allergien', text: 'Bekannte Allergien?' },
+                    { key: 'diabetes', text: 'Ist der Patient Diabetiker?' },
+                    { key: 'epilepsie', text: 'Bekannte Epilepsie?' },
+                    { key: 'herzerkrankung', text: 'Herzerkrankung bekannt?' },
+                    { key: 'schwangerschaft', text: 'Ist die Patientin schwanger?' }
                 ]
             },
             {
                 name: '🚗 Unfall',
                 questions: [
-                    { key: 'sturz_hoehe', text: 'Sturzhöhe?' },
-                    { key: 'aufprall', text: 'Wo aufgeprallt?' },
-                    { key: 'eingeklemmt', text: 'Eingeklemmt?' },
-                    { key: 'airbag', text: 'Airbag ausgelöst?' }
+                    { key: 'sturz_hoehe', text: 'Aus welcher Höhe gestürzt?' },
+                    { key: 'aufprall', text: 'Wo ist der Patient aufgeprallt?' },
+                    { key: 'eingeklemmt', text: 'Ist jemand eingeklemmt?' },
+                    { key: 'airbag', text: 'Wurde der Airbag ausgelöst?' }
+                ]
+            },
+            {
+                name: '🚨 Situation',
+                questions: [
+                    { key: 'feuer', text: 'Ist Feuer oder Rauch vorhanden?' },
+                    { key: 'gefahrstoffe', text: 'Gefahrstoffe beteiligt?' },
+                    { key: 'gewalt', text: 'War Gewalt im Spiel?' },
+                    { key: 'waffe', text: 'Sind Waffen vorhanden?' }
                 ]
             },
             {
                 name: '📍 Einsatzstelle',
                 questions: [
-                    { key: 'erreichbarkeit', text: 'Wie erreichen?' },
-                    { key: 'stockwerk', text: 'Stockwerk/Aufzug?' }
+                    { key: 'erreichbarkeit', text: 'Wie ist die Einsatzstelle erreichbar?' },
+                    { key: 'stockwerk', text: 'In welchem Stockwerk?' }
                 ]
             }
         ];
@@ -531,26 +638,21 @@ ANTWORTE NUR als JSON:
         `;
     },
 
-    /**
-     * 🆕 NEUE FUNKTION: Stelle eigene Frage
-     */
     async askCustomQuestion() {
         const input = document.getElementById('custom-question-input');
         if (!input || !input.value.trim()) return;
         
         const question = input.value.trim();
-        input.value = ''; // Clear input
+        input.value = '';
         
         const container = document.getElementById('caller-messages');
         
-        // Zeige Frage
         const qDiv = document.createElement('div');
         qDiv.className = 'msg-dispatcher';
         qDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${question}`;
         container.appendChild(qDiv);
         container.scrollTop = container.scrollHeight;
         
-        // Generiere Antwort mit Groq AI
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
         if (!apiKey) {
             this.showCallerAnswer('Tut mir leid, ich habe Sie nicht verstanden.');
@@ -612,7 +714,6 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
             
-            // ✅ NEU: Update ManualIncident auch bei Custom Questions
             if (key && typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
                 setTimeout(() => {
                     ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
@@ -643,11 +744,10 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
 
-            // ✅ NEU: Update ManualIncident-Formular NACH dem Typing
             if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
                 setTimeout(() => {
                     ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
-                }, answer.length * 30 + 100); // Warte bis Text fertig getippt ist
+                }, answer.length * 30 + 100);
             }
         }, 1000);
     },
@@ -662,6 +762,7 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
         
         this.activeCall = null;
         this.askedQuestions = [];
+        this.conversationState = 0;
         
         const noActive = document.getElementById('call-no-active');
         const active = document.getElementById('call-active');
@@ -674,7 +775,6 @@ Antworte realistisch in 5-15 Wörtern mit Umgangssprache, Emotionen und eventuel
             callList.innerHTML = '<p class="no-data">Keine eingehenden Anrufe</p>';
         }
 
-        // 🚀 NEU: Clear ManualIncident inline
         if (typeof ManualIncident !== 'undefined' && ManualIncident.clearInline) {
             ManualIncident.clearInline();
         }
@@ -691,4 +791,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v6.1 geladen (Phase 2 - Meldebild-Tracking)');
+console.log('✅ Call System v7.0 geladen (Phase 3.3 - Natürlicher Gesprächsfluss)');
