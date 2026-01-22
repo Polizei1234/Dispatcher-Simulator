@@ -101,8 +101,9 @@ function startNewGame(mode) {
     console.log('🔄 Starte Game Loop...');
     startGameLoop();
     
-    addRadioMessage('System', `🚑 ILS Waiblingen - ${mode === 'free' ? 'Freies Spiel' : 'Karrieremodus'} gestartet`);
-    addRadioMessage('System', '🤖 Einsätze werden jetzt mit KI generiert');
+    // ✅ PHASE 3 FIX 2.1: System-Nachrichten ENTFERNT!
+    // KEINE Radio-Nachrichten mehr beim Start!
+    console.log('✅ Spiel gestartet - Funkverkehr bereit');
 }
 
 // 🆕 NEUE SYSTEME INITIALISIEREN
@@ -415,36 +416,9 @@ function startTutorial() {
     alert('🎓 Tutorial - In Entwicklung!\n\nStarte das Freie Spiel und probiere es einfach aus!');
 }
 
-// RADIO FEED - KORRIGIERT!
-function addRadioMessage(sender, message) {
-    // Suche beide möglichen IDs
-    let feed = document.getElementById('radio-feed-full');
-    if (!feed) feed = document.getElementById('radio-feed');
-    if (!feed) {
-        console.warn('⚠️ Radio Feed Element nicht gefunden');
-        return;
-    }
-    
-    const time = GameTime.simulated ? 
-        GameTime.simulated.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'}) :
-        new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-    
-    const entry = document.createElement('div');
-    entry.className = 'radio-message';
-    entry.innerHTML = `
-        <span style="color: #666; font-size: 0.85em;">[${time}]</span>
-        <strong style="margin: 0 5px;">${sender}:</strong>
-        <span>${message}</span>
-    `;
-    
-    feed.appendChild(entry);
-    feed.scrollTop = feed.scrollHeight;
-    
-    // Limitiere auf 100 Einträge
-    while (feed.children.length > 100) {
-        feed.removeChild(feed.firstChild);
-    }
-}
+// ✅ PHASE 3 FIX 2.1: addRadioMessage ENTFERNT
+// Keine globale addRadioMessage Funktion mehr hier
+// Alle Radio-Nachrichten gehen durch ui.js addRadioMessage(message, sender, color)
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
