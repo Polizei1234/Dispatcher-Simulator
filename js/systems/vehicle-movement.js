@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.0
+// VEHICLE MOVEMENT SYSTEM v7.1
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -8,6 +8,7 @@
 // + 130% Speed bei Sondersignal
 // + ✅ PHASE 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt
 // + ✅ PHASE 3.2: Automatischer FMS-Wechsel nach Einsatzende
+// + ✅ PHASE 3.2.1: Intelligente Maßnahmendauer je Einsatztyp
 // =========================
 
 const VehicleMovement = {
@@ -34,8 +35,53 @@ const VehicleMovement = {
         'GW-San': { min: 180, max: 360 }    // 3-6 Minuten
     },
 
+    // ✅ PHASE 3.2.1: Einsatztyp-spezifische Zeiten (in Sekunden)
+    INCIDENT_TREATMENT_TIMES: {
+        // Herz-Kreislauf
+        'herzinfarkt': { min: 480, max: 900 },          // 8-15 Min (kritisch!)
+        'herz': { min: 420, max: 780 },                 // 7-13 Min
+        'cardiac': { min: 480, max: 900 },              // 8-15 Min
+        'reanimation': { min: 900, max: 1800 },         // 15-30 Min (sehr lang)
+        'bewusstlos': { min: 360, max: 720 },           // 6-12 Min
+        
+        // Neurologisch
+        'schlaganfall': { min: 360, max: 720 },         // 6-12 Min (Zeit = Gehirn!)
+        'stroke': { min: 360, max: 720 },               // 6-12 Min
+        'krampfanfall': { min: 300, max: 600 },         // 5-10 Min
+        
+        // Trauma
+        'verkehrsunfall': { min: 300, max: 600 },       // 5-10 Min
+        'vu p': { min: 900, max: 1500 },                // 15-25 Min (Rettung!)
+        'eingeklemmt': { min: 900, max: 1500 },         // 15-25 Min
+        'sturz': { min: 240, max: 480 },                // 4-8 Min
+        'fraktur': { min: 300, max: 540 },              // 5-9 Min
+        'verletzung': { min: 240, max: 420 },           // 4-7 Min
+        
+        // Atemwege
+        'atemnot': { min: 300, max: 600 },              // 5-10 Min
+        'asthma': { min: 240, max: 480 },               // 4-8 Min
+        'erstickung': { min: 420, max: 780 },           // 7-13 Min
+        
+        // Internistisch
+        'bauchschmerzen': { min: 180, max: 420 },       // 3-7 Min
+        'übelkeit': { min: 120, max: 300 },             // 2-5 Min
+        'fieber': { min: 180, max: 360 },               // 3-6 Min
+        'diabetes': { min: 240, max: 480 },             // 4-8 Min
+        
+        // Sonstige
+        'vergiftung': { min: 300, max: 600 },           // 5-10 Min
+        'verbrennung': { min: 360, max: 660 },          // 6-11 Min
+        'blutung': { min: 300, max: 540 },              // 5-9 Min
+        
+        // Keywords (Baden-Württemberg)
+        'rd 1': { min: 180, max: 420 },                 // 3-7 Min
+        'rd 2': { min: 360, max: 720 },                 // 6-12 Min (schwer)
+        'rd 3': { min: 480, max: 900 },                 // 8-15 Min (lebensbedrohlich)
+        'vu': { min: 300, max: 600 },                   // 5-10 Min
+    },
+
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.0 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.1 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -43,6 +89,7 @@ const VehicleMovement = {
         console.log('✅ RTW ohne Wartezeit');
         console.log('✅ Phase 3.1: Alarmierungs-Meldungen entfernt, FMS-Updates gefixt');
         console.log('✅ Phase 3.2: Automatischer FMS-Wechsel nach Einsatzende');
+        console.log('✅ Phase 3.2.1: Intelligente Maßnahmendauer je Einsatztyp');
         this.startUpdateLoop();
     },
 
@@ -138,16 +185,7 @@ const VehicleMovement = {
                 eta: phase === 'returning' ? Math.ceil(cached.time / 60) : adjustedEta
             };
             
-            // ✅ NEU: Erstelle initiale Route-Linie
             this.createInitialRouteLine(vehicleId, cached.coords, phase);
-            
-            // ✅ PHASE 3.1 FIX: KEINE Alarmierungs-Meldung mehr!
-            // if (!skipRadio && phase === 'to_scene') {
-            //     const message = `${vehicle.callsign} alarmiert - ${cached.distance} km, ETA ${adjustedEta} min (Sondersignal)`;
-            //     if (typeof addRadioMessage === 'function') {
-            //         addRadioMessage(message, 'dispatcher', '#17a2b8');
-            //     }
-            // }
             return;
         }
 
@@ -187,14 +225,6 @@ const VehicleMovement = {
                     time: route.summary.totalTime
                 };
                 
-                // ✅ PHASE 3.1 FIX: KEINE Alarmierungs-Meldung mehr!
-                // if (!skipRadio && phase === 'to_scene') {
-                //     const message = `${vehicle.callsign} alarmiert - ${distanceKm} km, ETA ${adjustedTimeMin} min (Sondersignal)`;
-                //     if (typeof addRadioMessage === 'function') {
-                //         addRadioMessage(message, 'dispatcher', '#17a2b8');
-                //     }
-                // }
-                
                 const adjustedTotalTime = phase === 'returning' ? 
                     route.summary.totalTime * 1000 : 
                     (route.summary.totalTime * 1000) / this.EMERGENCY_SPEED_MULTIPLIER;
@@ -212,19 +242,12 @@ const VehicleMovement = {
                     eta: adjustedTimeMin
                 };
                 
-                // ✅ NEU: Erstelle initiale Route-Linie
                 this.createInitialRouteLine(vehicleId, routeCoords, phase);
             })
             .on('routingerror', (e) => {
                 console.error('❌ Routing Error:', e.error);
                 console.log('🔄 Fallback zu Luftlinie');
                 this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
-            })
-            .on('routingerror', (e) => {
-                if (e.error && e.error.message && e.error.message.includes('timeout')) {
-                    console.error('❌ Routing Timeout - Fallback zu Luftlinie');
-                    this.dispatchVehicleFallback(vehicle, startPos, targetCoords, incidentId, phase);
-                }
             })
             .addTo(map);
             
@@ -244,7 +267,6 @@ const VehicleMovement = {
         }
     },
 
-    // ✅ NEU: Erstelle initiale sichtbare Route-Linie
     createInitialRouteLine(vehicleId, routeCoords, phase) {
         if (!map || !routeCoords || routeCoords.length === 0) return;
         
@@ -345,7 +367,6 @@ const VehicleMovement = {
             movement.currentIndex = targetIndex;
             movement.currentSegmentProgress = segmentProgress;
             
-            // ✅ FIXED: Update Route hinter Fahrzeug
             this.updateRouteBehindVehicle(vehicleId, targetIndex);
             this.pendingMapUpdates.push(vehicle);
             
@@ -373,26 +394,21 @@ const VehicleMovement = {
         }
     },
 
-    // ✅ FIXED: Route wird jetzt dynamisch aktualisiert
     updateRouteBehindVehicle(vehicleId, currentIndex) {
         const routeLine = this.activeRouteLines[vehicleId];
         const movement = this.movingVehicles[vehicleId];
         
         if (!routeLine || !movement || !movement.routeCoords) return;
         
-        // Erstelle neue Route nur vom aktuellen Index bis zum Ende
         const remainingCoords = movement.routeCoords.slice(currentIndex);
         
         if (remainingCoords.length < 2) return;
         
         const latLngs = remainingCoords.map(c => [c.lat, c.lon]);
-        
-        // Update die Polyline mit den verbleibenden Koordinaten
         routeLine.setLatLngs(latLngs);
     },
 
     removeVehicleRoute(vehicleId) {
-        // ✅ Lösche Routing Control
         if (this.routingControls[vehicleId]) {
             try {
                 map.removeControl(this.routingControls[vehicleId]);
@@ -402,7 +418,6 @@ const VehicleMovement = {
             }
         }
         
-        // ✅ Lösche aktive Route-Linie
         if (this.activeRouteLines[vehicleId]) {
             try {
                 map.removeLayer(this.activeRouteLines[vehicleId]);
@@ -448,7 +463,7 @@ const VehicleMovement = {
                 vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
-                // ✅ PHASE 3.2: Automatische Maßnahmen-Timer
+                // ✅ PHASE 3.2.1: Intelligenter Timer basierend auf Einsatztyp
                 this.startTreatmentTimer(vehicleId);
                 break;
 
@@ -480,13 +495,58 @@ const VehicleMovement = {
         }
     },
 
-    // ✅ PHASE 3.2: Starte automatischen Maßnahmen-Timer
+    // ✅ PHASE 3.2.1: Intelligente Maßnahmendauer basierend auf Einsatztyp
     startTreatmentTimer(vehicleId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
 
-        // Hole Maßnahmenzeit für Fahrzeugtyp
-        const treatmentTime = this.TREATMENT_TIMES[vehicle.type] || this.TREATMENT_TIMES['RTW'];
+        // Finde Einsatz
+        const incident = GAME_DATA.incidents.find(i => 
+            (i.assignedVehicles && i.assignedVehicles.includes(vehicleId)) ||
+            (i.vehicles && i.vehicles.includes(vehicleId))
+        );
+
+        let treatmentTime = this.TREATMENT_TIMES[vehicle.type] || this.TREATMENT_TIMES['RTW'];
+        let timeSource = `Fahrzeugtyp ${vehicle.type}`;
+
+        // ✅ PHASE 3.2.1: Prüfe Einsatztyp für spezifische Zeiten
+        if (incident) {
+            const keyword = (incident.stichwort || incident.keyword || '').toLowerCase();
+            const description = (incident.meldebild || incident.description || '').toLowerCase();
+            const combined = `${keyword} ${description}`;
+
+            console.log(`🔍 Analysiere Einsatztyp: "${combined}"`);
+
+            // Suche nach passenden Keywords
+            for (const [key, times] of Object.entries(this.INCIDENT_TREATMENT_TIMES)) {
+                if (combined.includes(key)) {
+                    treatmentTime = times;
+                    timeSource = `Einsatztyp "${key}"`;
+                    console.log(`✅ Match gefunden: ${key} → ${times.min/60}-${times.max/60} Min`);
+                    break;
+                }
+            }
+
+            // ✅ Schweregrad-Multiplikator
+            if (incident.schweregrad) {
+                const severity = incident.schweregrad.toLowerCase();
+                if (severity === 'schwer' || severity === 'kritisch') {
+                    treatmentTime = {
+                        min: Math.floor(treatmentTime.min * 1.3),
+                        max: Math.floor(treatmentTime.max * 1.3)
+                    };
+                    timeSource += ` (${severity} +30%)`;
+                    console.log(`⚠️ Schweregrad ${severity} → Zeit erhöht`);
+                } else if (severity === 'leicht') {
+                    treatmentTime = {
+                        min: Math.floor(treatmentTime.min * 0.7),
+                        max: Math.floor(treatmentTime.max * 0.7)
+                    };
+                    timeSource += ` (${severity} -30%)`;
+                    console.log(`✅ Schweregrad ${severity} → Zeit reduziert`);
+                }
+            }
+        }
         
         // Zufällige Zeit im Bereich
         const randomTime = Math.floor(
@@ -495,7 +555,7 @@ const VehicleMovement = {
         
         const timeInMinutes = (randomTime / 60).toFixed(1);
         
-        console.log(`⏱️ ${vehicle.callsign} - Maßnahmen starten (${timeInMinutes} Min.)`);
+        console.log(`⏱️ ${vehicle.callsign} - Maßnahmen: ${timeInMinutes} Min (${timeSource})`);
         
         // Timer speichern
         this.onSceneTimers[vehicleId] = setTimeout(() => {
@@ -503,7 +563,6 @@ const VehicleMovement = {
         }, randomTime * 1000);
     },
 
-    // ✅ PHASE 3.2: Maßnahmen abgeschlossen
     completeTreatment(vehicleId) {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
@@ -512,13 +571,10 @@ const VehicleMovement = {
         
         delete this.onSceneTimers[vehicleId];
 
-        // Entscheide basierend auf Fahrzeugtyp
         if (vehicle.type === 'RTW') {
-            // RTW fährt mit Patient ins Krankenhaus
             console.log(`🏥 ${vehicle.callsign} (RTW) - Transport ins Krankenhaus`);
             this.startTransport(vehicleId);
         } else {
-            // NEF, KTW, Kdow, etc. kehren zur Wache zurück
             console.log(`🏠 ${vehicle.callsign} (${vehicle.type}) - Rückfahrt zur Wache`);
             this.returnToStation(vehicleId);
         }
@@ -568,12 +624,10 @@ const VehicleMovement = {
         return [48.8700, 9.3922];
     },
 
-    // ✅ PHASE 3.1 FIX: Status-Änderungen mit FMS-Farben
     setVehicleStatus(vehicle, fmsCode) {
         const oldStatus = vehicle.currentStatus;
         vehicle.currentStatus = fmsCode;
 
-        // Nur senden wenn Status sich geändert hat
         if (oldStatus === fmsCode) {
             return;
         }
@@ -586,7 +640,6 @@ const VehicleMovement = {
 
         console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
 
-        // ✅ PHASE 3.1 FIX: Sende mit FMS-Farbe!
         const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
         if (typeof addRadioMessage === 'function') {
             addRadioMessage(message, 'vehicle', fmsInfo.color);
@@ -624,4 +677,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v7.0 geladen - Phase 3.2 komplett!');
+console.log('✅ Vehicle Movement System v7.1 geladen - Phase 3.2.1 komplett!');
