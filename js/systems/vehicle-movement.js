@@ -1,11 +1,12 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v6.3
+// VEHICLE MOVEMENT SYSTEM v6.4
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
 // + NEF bleibt am Einsatzort, nur RTW fährt ins KH
 // + RTW ohne Wartezeit am Einsatzort
 // + 130% Speed bei Sondersignal
+// + ✅ PHASE 3 FIX 2.3: Status-Änderungen mit FMS-Farben
 // =========================
 
 const VehicleMovement = {
@@ -23,12 +24,13 @@ const VehicleMovement = {
     activeRouteLines: {}, // ✅ NEU: Speichert die Polylines
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v6.3 initialisiert');
+        console.log('🚑 Vehicle Movement System v6.4 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
         console.log('✅ NEF bleibt am Einsatzort');
         console.log('✅ RTW ohne Wartezeit');
+        console.log('✅ Status-Änderungen mit FMS-Farben im Funk');
         this.startUpdateLoop();
     },
 
@@ -425,7 +427,7 @@ const VehicleMovement = {
 
         switch (phase) {
             case 'to_scene':
-                this.setVehicleStatus(vehicle, 4, true);
+                this.setVehicleStatus(vehicle, 4);
                 vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
@@ -441,7 +443,7 @@ const VehicleMovement = {
                 break;
 
             case 'to_hospital':
-                this.setVehicleStatus(vehicle, 8, true);
+                this.setVehicleStatus(vehicle, 8);
                 vehicle.status = 'at-hospital';
                 delete this.movingVehicles[vehicleId];
 
@@ -451,7 +453,7 @@ const VehicleMovement = {
                 break;
 
             case 'returning':
-                this.setVehicleStatus(vehicle, 2, true);
+                this.setVehicleStatus(vehicle, 2);
                 vehicle.status = 'available';
                 vehicle.targetLocation = null;
                 vehicle.incident = null;
@@ -472,7 +474,7 @@ const VehicleMovement = {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle || vehicle.type !== 'RTW') return;
 
-        this.setVehicleStatus(vehicle, 7, true);
+        this.setVehicleStatus(vehicle, 7);
         vehicle.status = 'transporting';
 
         const hospitalCoords = this.findNearestHospital(vehicle.position);
@@ -488,7 +490,7 @@ const VehicleMovement = {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
 
-        this.setVehicleStatus(vehicle, 1, true);
+        this.setVehicleStatus(vehicle, 1);
         vehicle.status = 'returning';
 
         const station = STATIONS[vehicle.station];
@@ -512,21 +514,25 @@ const VehicleMovement = {
         return [48.8700, 9.3922];
     },
 
-    setVehicleStatus(vehicle, fmsCode, forceReport = false) {
+    // ✅ PHASE 3 FIX 2.3: Status-Änderungen mit FMS-Farben
+    setVehicleStatus(vehicle, fmsCode) {
+        const oldStatus = vehicle.currentStatus;
         vehicle.currentStatus = fmsCode;
 
-        const lastStatus = this.lastStatusReports[vehicle.id];
-        if (!forceReport && lastStatus === fmsCode) {
+        // Nur senden wenn Status sich geändert hat
+        if (oldStatus === fmsCode) {
             return;
         }
 
-        this.lastStatusReports[vehicle.id] = fmsCode;
-
         const fmsInfo = CONFIG.FMS_STATUS[fmsCode];
-        if (!fmsInfo) return;
+        if (!fmsInfo) {
+            console.warn(`⚠️ Unbekannter FMS-Status: ${fmsCode}`);
+            return;
+        }
 
         console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
 
+        // ✅ PHASE 3 FIX 2.3: Sende mit FMS-Farbe!
         const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
         if (typeof addRadioMessage === 'function') {
             addRadioMessage(message, 'vehicle', fmsInfo.color);
@@ -564,4 +570,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v6.3 geladen - Route verschwindet hinter Fahrzeug!');
+console.log('✅ Vehicle Movement System v6.4 geladen - Status-Änderungen mit FMS-Farben!');
