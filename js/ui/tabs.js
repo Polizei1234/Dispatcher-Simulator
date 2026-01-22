@@ -1,7 +1,7 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v4.1
+// TAB NAVIGATION & VEHICLE OVERVIEW v4.2
 // ✅ Phase 3 Fix 1: Fahrzeuge nach Wachen gruppiert
-// ✅ Phase 3 Fix 2.2: Radio-Tab mit Fahrzeugliste
+// ✅ Phase 3 Fix 2.3: Radio-Tab mit Dropdown
 // =========================
 
 let currentTab = 'map';
@@ -35,9 +35,9 @@ function switchTab(tabName) {
         updateIncidentsOverview();
     } else if (tabName === 'radio') {
         syncRadioFeed();
-        // ✅ PHASE 3 FIX 2.2: Aktualisiere Fahrzeugliste
-        if (typeof updateRadioVehicleList === 'function') {
-            updateRadioVehicleList();
+        // ✅ PHASE 3 FIX 2.3: Aktualisiere Dropdown
+        if (typeof updateRadioVehicleDropdown === 'function') {
+            updateRadioVehicleDropdown();
         }
     }
 }
@@ -316,11 +316,11 @@ setInterval(() => {
         updateIncidentsOverview();
     } else if (currentTab === 'radio') {
         syncRadioFeed();
-        // ✅ PHASE 3 FIX 2.2: Aktualisiere Fahrzeugliste
-        if (typeof updateRadioVehicleList === 'function') {
-            updateRadioVehicleList();
+        // ✅ PHASE 3 FIX 2.3: Aktualisiere Dropdown
+        if (typeof updateRadioVehicleDropdown === 'function') {
+            updateRadioVehicleDropdown();
         }
     }
 }, 3000);
 
-console.log('✅ Tabs v4.1 geladen - Fahrzeuge nach Wachen gruppiert + Radio-Fahrzeugliste');
+console.log('✅ Tabs v4.2 geladen - Fahrzeuge nach Wachen gruppiert + Radio-Dropdown');
