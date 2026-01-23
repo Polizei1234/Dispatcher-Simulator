@@ -1,8 +1,8 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.4
-// + FIX: Vordefinierte Fragen nutzen callData.antworten
-// + Custom Questions nutzen Groq AI
-// + RATE LIMITING für Groq API
+// EMERGENCY CALL SYSTEM v7.5
+// + FIX: Abbruch-Logik bei mehrfachen Anrufen
+// + Verhindert Überschreibung aktiver Calls
+// + Verbesserte Queue-Verwaltung
 // =========================
 
 const CallSystem = {
@@ -14,6 +14,7 @@ const CallSystem = {
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
+    pendingGeneration: null, // ✅ NEU: AbortController für Anruf-Generierung
     
     // 🆕 RATE LIMITING
     lastGroqRequest: 0,
@@ -37,10 +38,11 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.4 initialisiert');
+        console.log('📞 Call System v7.5 initialisiert');
         console.log('✅ Vordefinierte Fragen = callData.antworten');
         console.log('✅ Custom Questions = Groq AI');
         console.log('✅ Rate Limiting aktiv');
+        console.log('✅ Abbruch-Logik für Überlappung aktiviert');
         this.setupRingtone();
     },
 
@@ -84,18 +86,40 @@ const CallSystem = {
     },
 
     async generateIncomingCall() {
+        // ✅ FIX: Prüfe ob bereits ein Anruf aktiv ist oder gerade generiert wird
         if (this.activeCall || this.isGenerating) {
-            console.log('⚠️ Anruf wird übersprungen - Leitung besetzt');
+            console.warn('⚠️ Anruf wird übersprungen - Leitung besetzt oder Generierung läuft');
             return;
         }
+
+        // ✅ FIX: Breche vorherige Generierung ab falls noch laufend
+        if (this.pendingGeneration) {
+            console.log('🛑 Breche vorherige Anruf-Generierung ab');
+            this.pendingGeneration.abort();
+            this.pendingGeneration = null;
+        }
+
+        // Erstelle neuen AbortController
+        this.pendingGeneration = new AbortController();
+        const signal = this.pendingGeneration.signal;
 
         this.isGenerating = true;
         console.group('📞 GENERATING CALL WITH GEOCODING');
 
         try {
+            // Prüfe ob abgebrochen
+            if (signal.aborted) {
+                throw new Error('Generation aborted');
+            }
+
             const location = this.generateRandomLocation();
             console.log('🗺️ Hole echte Adresse für Koordinaten:', location);
             const realAddress = await this.reverseGeocode(location.lat, location.lon);
+            
+            // Prüfe erneut ob abgebrochen
+            if (signal.aborted) {
+                throw new Error('Generation aborted after geocode');
+            }
             
             if (realAddress) {
                 console.log('✅ Echte Adresse:', realAddress);
@@ -103,12 +127,17 @@ const CallSystem = {
                 console.warn('⚠️ Geocoding fehlgeschlagen, nutze Hotspot-Name');
             }
 
-            const callData = await this.createCallWithGroq(location, realAddress);
+            const callData = await this.createCallWithGroq(location, realAddress, signal);
+            
+            // Finale Prüfung vor Anzeige
+            if (signal.aborted) {
+                throw new Error('Generation aborted after call creation');
+            }
+            
             if (!callData) {
                 const fallbackData = this.createFallbackCall(location, realAddress);
                 this.showIncomingCallInSidebar(fallbackData);
                 console.groupEnd();
-                this.isGenerating = false;
                 return;
             }
 
@@ -120,10 +149,15 @@ const CallSystem = {
             this.showIncomingCallInSidebar(callData);
             console.groupEnd();
         } catch (error) {
-            console.error('❌ Fehler:', error);
+            if (error.message === 'Generation aborted' || error.message.includes('aborted')) {
+                console.log('⚠️ Anruf-Generierung wurde abgebrochen');
+            } else {
+                console.error('❌ Fehler:', error);
+            }
             console.groupEnd();
         } finally {
             this.isGenerating = false;
+            this.pendingGeneration = null;
         }
     },
 
@@ -260,7 +294,7 @@ const CallSystem = {
         }
     },
 
-    async createCallWithGroq(location, address) {
+    async createCallWithGroq(location, address, signal = null) {
         const now = Date.now();
         const timeSinceLastGroq = now - this.lastGroqRequest;
         
@@ -268,6 +302,11 @@ const CallSystem = {
             const waitTime = this.minGroqDelay - timeSinceLastGroq;
             console.log(`⏳ Groq Rate Limiting: Warte ${waitTime}ms`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+
+        // ✅ FIX: Prüfe Abort-Signal
+        if (signal && signal.aborted) {
+            throw new Error('Call creation aborted');
         }
 
         const currentTime = IncidentNumbering.getCurrentTimestamp();
@@ -363,10 +402,15 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
 
         try {
             this.lastGroqRequest = Date.now();
-            const response = await this.callGroqAPI(prompt);
+            const response = await this.callGroqAPI(prompt, signal);
             this.groqRetries = 0;
             return response;
         } catch (error) {
+            // ✅ FIX: Unterscheide Abort von echtem Fehler
+            if (error.message === 'Call creation aborted') {
+                throw error; // Propagiere Abort nach oben
+            }
+            
             console.error('❌ Groq Fehler:', error);
             
             if (this.groqRetries < this.maxGroqRetries && error.message.includes('429')) {
@@ -374,7 +418,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                 const backoff = Math.pow(2, this.groqRetries) * 2000;
                 console.warn(`🔄 Groq Retry ${this.groqRetries}/${this.maxGroqRetries} in ${backoff}ms`);
                 await new Promise(resolve => setTimeout(resolve, backoff));
-                return this.createCallWithGroq(location, address);
+                return this.createCallWithGroq(location, address, signal);
             }
             
             this.groqRetries = 0;
@@ -391,7 +435,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         return all.sort(() => 0.5 - Math.random()).slice(0, 3);
     },
 
-    async callGroqAPI(prompt) {
+    async callGroqAPI(prompt, signal = null) {
         const apiKey = CONFIG.GROQ_API_KEY || localStorage.getItem('groq_api_key') || localStorage.getItem('groqApiKey');
         if (!apiKey) {
             console.error('❌ Kein Groq API Key gefunden');
@@ -412,7 +456,8 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                 ],
                 temperature: 1.3,
                 response_format: { type: 'json_object' }
-            })
+            }),
+            signal: signal // ✅ FIX: Nutze Signal zum Abbrechen
         });
 
         if (!response.ok) {
@@ -424,6 +469,12 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
     },
 
     showIncomingCallInSidebar(callData) {
+        // ✅ FIX: Doppelte Prüfung ob bereits ein Anruf aktiv ist
+        if (this.activeCall) {
+            console.warn('⚠️ Ignoriere neuen Anruf - bereits ein Anruf aktiv');
+            return;
+        }
+
         this.activeCall = callData;
         
         const callList = document.getElementById('call-list');
@@ -809,6 +860,12 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
         console.log('📞 Gespräch beendet');
         this.stopRingtone();
         
+        // ✅ FIX: Breche aktive Generierung ab falls vorhanden
+        if (this.pendingGeneration) {
+            this.pendingGeneration.abort();
+            this.pendingGeneration = null;
+        }
+        
         if (this.activeCall) {
             this.callHistory.push(this.activeCall);
         }
@@ -834,6 +891,16 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
         if (typeof switchTab === 'function') {
             switchTab('map');
         }
+    },
+
+    // ✅ NEU: Cleanup-Methode
+    cleanup() {
+        if (this.pendingGeneration) {
+            this.pendingGeneration.abort();
+            this.pendingGeneration = null;
+        }
+        this.stopRingtone();
+        console.log('🧹 Call System cleanup ausgeführt');
     }
 };
 
@@ -841,6 +908,11 @@ if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
         CallSystem.initialize();
     });
+    
+    // Cleanup bei Seitenwechsel
+    window.addEventListener('beforeunload', () => {
+        if (CallSystem) CallSystem.cleanup();
+    });
 }
 
-console.log('✅ Call System v7.4 geladen - FIX: Vordefinierte Fragen nutzen callData');
+console.log('✅ Call System v7.5 geladen - FIX: Abbruch-Logik für mehrfache Anrufe');
