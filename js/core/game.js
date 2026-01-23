@@ -16,10 +16,14 @@ class Game {
         // Initialisiere Fahrzeuge
         this.vehicles.forEach(v => {
             if (!v.currentStatus) {
-                v.currentStatus = 2; // Status 2: Auf Wache
+                v.currentStatus = 1; // ✅ FIX: Status 1 = Einsatzbereit auf Wache (nicht Status 2 = Sprechwunsch)
             }
             if (!v.position && STATIONS[v.station]) {
                 v.position = STATIONS[v.station].position;
+            }
+            // ✅ FIX: Initialisiere status Property für Kompatibilität
+            if (!v.status) {
+                v.status = v.currentStatus;
             }
         });
         
@@ -68,8 +72,13 @@ class Game {
                 const reward = this.calculateReward(incident.keyword || incident.stichwort);
                 this.money += reward;
                 incident.rewarded = true;
-                addRadioMessage('System', `€ ${reward} für ${incident.keyword || incident.stichwort} erhalten`);
-                document.getElementById('credits').textContent = this.money.toLocaleString();
+                if (typeof addRadioMessage !== 'undefined') {
+                    addRadioMessage('System', `€ ${reward} für ${incident.keyword || incident.stichwort} erhalten`, 'system');
+                }
+                const creditsEl = document.getElementById('credits');
+                if (creditsEl) {
+                    creditsEl.textContent = this.money.toLocaleString();
+                }
             });
         }
     }
@@ -90,10 +99,19 @@ class Game {
         const vehicle = this.vehicles.find(v => v.id === vehicleId);
         const incident = this.incidents.find(i => i.id === incidentId);
         
-        if (!vehicle || !incident || vehicle.status !== 'available') return;
+        if (!vehicle || !incident) {
+            console.warn('⚠️ dispatchVehicle: Fahrzeug oder Einsatz nicht gefunden');
+            return;
+        }
         
-        vehicle.status = 'dispatched';
-        vehicle.currentStatus = 3; // FMS 3
+        // ✅ FIX: Prüfe ob Fahrzeug verfügbar (Status 1 oder 3)
+        if (vehicle.status !== 1 && vehicle.status !== 3) {
+            console.warn(`⚠️ ${vehicle.callsign} nicht verfügbar (Status ${vehicle.status})`);
+            return;
+        }
+        
+        vehicle.status = 4; // FMS 4: Anfahrt
+        vehicle.currentStatus = 4;
         vehicle.targetIncident = incidentId;
         
         if (!incident.assignedVehicles) incident.assignedVehicles = [];
