@@ -13,19 +13,8 @@ class Game {
         this.reputation = 100;
         this.apiKey = null;
         
-        // Initialisiere Fahrzeuge
-        this.vehicles.forEach(v => {
-            if (!v.currentStatus) {
-                v.currentStatus = 1; // ✅ FIX: Status 1 = Einsatzbereit auf Wache (nicht Status 2 = Sprechwunsch)
-            }
-            if (!v.position && STATIONS[v.station]) {
-                v.position = STATIONS[v.station].position;
-            }
-            // ✅ FIX: Initialisiere status Property für Kompatibilität
-            if (!v.status) {
-                v.status = v.currentStatus;
-            }
-        });
+        // Initialisiere Fahrzeuge mit korrektem Status
+        this.initializeVehicles();
         
         // Nächster Anruf (nutzt GameTime.elapsed)
         this.nextIncidentGameTime = this.getRandomIncidentInterval();
@@ -33,10 +22,86 @@ class Game {
         console.log(`🎮 Game initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
     }
     
+    /**
+     * Initialisiert alle Fahrzeuge mit korrektem Status basierend auf Position
+     */
+    initializeVehicles() {
+        this.vehicles.forEach(v => {
+            // Setze Position auf Wache wenn nicht vorhanden
+            if (!v.position && v.station && STATIONS[v.station]) {
+                v.position = STATIONS[v.station].position;
+            }
+            
+            // Prüfe ob Fahrzeug auf Wache steht
+            const isOnStation = this.isVehicleOnStation(v);
+            
+            if (!v.status && !v.currentStatus) {
+                // ✅ Korrekte Status-Initialisierung
+                if (isOnStation) {
+                    v.status = 2; // Status 2: Sprechwunsch auf Wache (Einsatzbereit)
+                    v.currentStatus = 2;
+                    console.log(`🚑 ${v.callsign}: Status 2 (auf Wache ${v.station})`);
+                } else {
+                    v.status = 3; // Status 3: Einsatzbereit außerhalb
+                    v.currentStatus = 3;
+                    console.log(`🚑 ${v.callsign}: Status 3 (außerhalb Wache)`);
+                }
+            }
+            
+            // Sync status und currentStatus
+            if (v.status && !v.currentStatus) {
+                v.currentStatus = v.status;
+            } else if (v.currentStatus && !v.status) {
+                v.status = v.currentStatus;
+            }
+        });
+        
+        console.log(`✅ ${this.vehicles.length} Fahrzeuge initialisiert`);
+    }
+    
+    /**
+     * Prüft ob Fahrzeug auf seiner Wache steht
+     */
+    isVehicleOnStation(vehicle) {
+        if (!vehicle.station || !vehicle.position) return false;
+        
+        const station = STATIONS[vehicle.station];
+        if (!station || !station.position) return false;
+        
+        // Prüfe ob Position identisch ist (oder sehr nah)
+        const distance = this.calculateDistance(
+            vehicle.position[0], vehicle.position[1],
+            station.position[0], station.position[1]
+        );
+        
+        // Weniger als 100m = auf Wache
+        return distance < 0.1; // ~100m in km
+    }
+    
+    /**
+     * Berechnet Entfernung zwischen zwei Punkten (Haversine)
+     */
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Erdradius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    
     getRandomIncidentInterval() {
-        // Neuer Einsatz alle 60-180 Sekunden SPIELZEIT
-        const minTime = 60000; // 60 Sekunden
-        const maxTime = 180000; // 180 Sekunden (3 Minuten)
+        // Nutze Settings Manager für Einsatzfrequenz
+        let incidentFrequency = 120; // Default: 2 Minuten
+        if (typeof SettingsManager !== 'undefined') {
+            incidentFrequency = SettingsManager.get('incidentFrequency') || 120;
+        }
+        
+        const minTime = incidentFrequency * 0.75 * 1000; // -25%
+        const maxTime = incidentFrequency * 1.25 * 1000; // +25%
         const interval = minTime + Math.random() * (maxTime - minTime);
         
         console.log(`⏱️ Nächster Einsatz in ${Math.round(interval/1000)}s Spielzeit`);
@@ -53,7 +118,11 @@ class Game {
             
             // NEUE METHODE: Nutze CallSystem
             if (typeof CallSystem !== 'undefined') {
-                await CallSystem.generateIncomingCall();
+                try {
+                    await CallSystem.generateIncomingCall();
+                } catch (error) {
+                    console.error('❌ Fehler bei Anruf-Generierung:', error);
+                }
             } else {
                 console.warn('⚠️ CallSystem nicht gefunden');
             }
@@ -104,8 +173,8 @@ class Game {
             return;
         }
         
-        // ✅ FIX: Prüfe ob Fahrzeug verfügbar (Status 1 oder 3)
-        if (vehicle.status !== 1 && vehicle.status !== 3) {
+        // ✅ FIX: Prüfe ob Fahrzeug verfügbar (Status 2 = auf Wache oder Status 3 = außerhalb)
+        if (vehicle.status !== 2 && vehicle.status !== 3) {
             console.warn(`⚠️ ${vehicle.callsign} nicht verfügbar (Status ${vehicle.status})`);
             return;
         }
@@ -118,6 +187,11 @@ class Game {
         incident.assignedVehicles.push(vehicleId);
         
         console.log(`🚑 ${vehicle.callsign} disponiert zu ${incidentId}`);
+        
+        // Sende Auto-Status Update über Radio
+        if (typeof radioSystem !== 'undefined' && radioSystem.sendAutoStatusUpdate) {
+            radioSystem.sendAutoStatusUpdate(vehicle, 4, incident);
+        }
     }
 }
 
