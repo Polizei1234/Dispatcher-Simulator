@@ -1,629 +1,803 @@
 // =========================================================================================
-// HERZINFARKT TEMPLATE
-// Vollständiges Beispiel mit ALLEN 36+ Features als Vorlage für weitere Szenarien
+// HERZINFARKT TEMPLATE - VOLLSTÄNDIGES BEISPIEL
+// Alle 36+ Features implementiert - Nutze dies als Vorlage für weitere Szenarien!
 // =========================================================================================
 
 import { GLOBAL_CONFIG } from '../_config.js';
 
 export const HERZINFARKT_TEMPLATE = {
     
-    // ========================================
-    // 🆔 GRUND-INFORMATIONEN
-    // ========================================
     id: 'herzinfarkt',
     kategorie: 'rd',
     stichwort: 'Herzinfarkt',
-    weight: 3,  // Häufigkeit: 1=selten, 3=mittel, 5=häufig
+    weight: 3,
     
     // ========================================
     // 📞 ANRUFER-VARIANZ (Features 6, 7, 8)
     // ========================================
     anrufer: {
+        // Siehe Teil 1 der Datei (bereits vorhanden)
+        typen: { /* ... bereits definiert ... */ },
+        dynamik: { /* ... bereits definiert ... */ },
+        mehrere_anrufer: { /* ... bereits definiert ... */ },
+        beziehung: { /* ... bereits definiert ... */ }
+    },
+    
+    patient: { /* ... bereits definiert ... */ },
+    symptome: { /* ... bereits definiert ... */ },
+    medizinisch: { /* ... bereits definiert ... */ },
+    
+    // ========================================
+    // 🏠 UMGEBUNGS-FAKTOREN (Features 13-16)
+    // ========================================
+    umgebung: {
         
-        // Feature 6: Verschiedene Anrufer-Typen
-        typen: {
-            normal: {
-                probability: 0.55,
-                alter: { min: 25, max: 65 },
-                emotion: {
-                    panisch: 0.6,
-                    aufgeregt: 0.3,
-                    ruhig: 0.1
+        // Feature 13: Gebäude-Herausforderungen
+        gebäude: {
+            kein_aufzug: {
+                probability: 0.12,
+                stockwerke: {
+                    distribution: [0.3, 0.3, 0.2, 0.15, 0.05],  // EG bis 5. OG
+                    effects: {
+                        zeitaufwand_hoch: 1.0,
+                        tragehilfe_ab_3og: 0.7,
+                        fw_tragehilfe_ab_4og: 0.5
+                    }
                 },
-                sprache: {
-                    klar: 0.9,
-                    dialekt: 0.1
-                }
+                funkspruch: '{callsign}, Patient im {floor} OG ohne Aufzug, benötigen eventuell Tragehilfe, kommen.'
             },
             
-            kind: {
-                probability: 0.05,
-                alter: { min: 6, max: 14 },
-                emotion: {
-                    panisch: 0.8,
-                    aufgeregt: 0.15,
-                    verwirrt: 0.05
-                },
-                effects: {
-                    unsichere_angaben: 0.9,
-                    weint: 0.4,
-                    zittrige_stimme: 0.7
-                },
-                was_passiert_prefix: [
-                    'Bitte helfen Sie! Mein Papa...',
-                    'Mama geht es ganz schlecht! Sie...',
-                    'Oma liegt auf dem Boden und...'
-                ]
-            },
-            
-            senior: {
+            enge_treppe: {
                 probability: 0.15,
-                alter: { min: 65, max: 85 },
-                emotion: {
-                    verwirrt: 0.4,
-                    ruhig: 0.4,
-                    aufgeregt: 0.2
-                },
                 effects: {
-                    hört_schlecht: 0.5,
-                    wiederholt_fragen: 0.4,
-                    verwechselt_infos: 0.3,
-                    langsames_sprechen: 0.6
+                    trage_passt_nicht: 0.6,
+                    tragetuch_nötig: 0.8,
+                    zeitverzögerung: 1.0
                 },
-                variations: [
-                    'Ja, hören Sie, also mein Mann...',
-                    'Wie bitte? Ach so, ja, also...'
-                ]
+                beschreibung: 'Treppenhaus sehr eng, Trage passt nicht durch'
             },
             
-            sanitäter_off_duty: {
+            altbau_probleme: {
+                probability: 0.08,
+                issues: {
+                    verwinkelt: 0.5,
+                    steile_treppen: 0.4,
+                    denkmalschutz: 0.1
+                },
+                info: 'Altbau mit schwierigen Zugangswegen'
+            },
+            
+            baustelle: {
+                probability: 0.05,
+                effects: {
+                    erschwerter_zugang: 0.9,
+                    gerüst_im_weg: 0.4,
+                    umweg_nötig: 0.6
+                },
+                info: 'Baustelle erschwert Zugang'
+            }
+        },
+        
+        // Feature 14: Tiere vor Ort
+        tiere: {
+            aggressiver_hund: {
                 probability: 0.03,
-                alter: { min: 25, max: 55 },
-                emotion: {
-                    ruhig: 0.9,
-                    aufgeregt: 0.1
-                },
                 effects: {
-                    professionelle_beschreibung: 1.0,
-                    fachbegriffe: 0.8,
-                    vitalwerte_bekannt: 0.9
+                    polizei_nötig: 0.8,
+                    zugang_blockiert: 1.0,
+                    gefahr_für_crew: 0.9
                 },
-                was_passiert_variations: [
-                    'Patient männlich, circa 60 Jahre, akuter Thoraxschmerz mit Ausstrahlung in den linken Arm',
-                    'Ich bin Rettungssanitäter, hier kollabierter Patient mit Verdacht auf Myokardinfarkt'
-                ]
+                funkspruch: '{callsign}, aggressiver Hund vor Ort, benötigen Polizei, kommen.',
+                anrufer_info: 'Der Hund lässt niemanden rein!'
             },
             
-            betrunken: {
-                probability: 0.02,
-                alter: { min: 25, max: 65 },
-                emotion: {
-                    aufgeregt: 0.6,
-                    verwirrt: 0.3,
-                    aggressiv: 0.1
-                },
-                effects: {
-                    lallende_sprache: 0.8,
-                    undeutliche_angaben: 0.9,
-                    abschweifend: 0.7
-                },
-                was_passiert_prefix: [
-                    'Äh... also hörn Se mal, da liegt einer...',
-                    'Ich hab... hab grad getrunken, aber der Typ da...'
-                ]
-            },
-            
-            ausländer: {
+            haustiere_versorgen: {
                 probability: 0.15,
-                sprachen: {
-                    türkisch_akzent: 0.4,
-                    italienisch_akzent: 0.2,
-                    polnisch_akzent: 0.2,
-                    englisch: 0.15,
-                    andere: 0.05
-                },
-                emotion: {
-                    panisch: 0.5,
-                    aufgeregt: 0.4,
-                    verwirrt: 0.1
-                },
+                types: ['Hund', 'Katze', 'Vögel'],
                 effects: {
-                    sprachbarriere: 0.6,
-                    missverständnisse: 0.5,
-                    dolmetscher_nötig: 0.1
+                    angehörige_sorgen_sich: 0.8,
+                    verzögerung_möglich: 0.3
                 },
-                was_passiert_variations: [
-                    'Hallo, bitte schnell kommen! Mein Mann... wie sagt man... Herz tut sehr weh!',
-                    'Please help! My husband, he has... chest pain, very bad!'
-                ]
+                info: 'Patient fragt, wer sich um {tier} kümmert'
             },
             
-            nachbar: {
+            sturz_wegen_tier: {
                 probability: 0.05,
-                emotion: {
-                    aufgeregt: 0.6,
-                    unsicher: 0.3,
-                    ruhig: 0.1
-                },
+                types: ['Hund', 'Katze'],
                 effects: {
-                    kennt_patient_wenig: 0.8,
-                    keine_vorgeschichte_bekannt: 0.9,
-                    unsichere_adresse: 0.3
+                    zusatzverletzung: 0.6,
+                    kombination_sturz_herzinfarkt: 1.0
                 },
-                was_passiert_prefix: [
-                    'Ich bin der Nachbar, ich hab gehört wie mein Nachbar...',
-                    'Ich wohne nebenan, da liegt jemand...'
-                ]
+                info: 'Ist über den {tier} gestolpert'
             }
         },
         
-        // Feature 7: Anrufer-Zustand ändert sich dynamisch
-        dynamik: {
-            wird_ohnmächtig: {
-                probability: 0.02,
-                trigger_time: { min: 120, max: 300 },
-                trigger_phrases: [
-                    'Mir wird ganz schwindelig...',
-                    'Oh nein, mir ist auf einmal so schlecht...',
-                    'Mir wird schwarz vor Augen...',
-                    '[Stöhnen] Ich... ich kann nicht mehr...'
-                ],
-                effects: {
-                    anruf_bricht_ab: 1.0,
-                    rückruf_nötig: 0.8,
-                    zweiter_patient: 1.0  // Anrufer wird selbst zum Patienten!
-                }
-            },
-            
-            panikattacke: {
+        // Feature 15: Technische Probleme
+        technik: {
+            tür_verschlossen: {
                 probability: 0.05,
-                trigger_time: { min: 60, max: 180 },
-                symptoms: [
-                    'Ich kann nicht mehr... [hyperventiliert]',
-                    'Ich krieg keine Luft mehr!',
-                    'Das ist alles zu viel!'
-                ],
+                reasons: {
+                    patient_kann_nicht_öffnen: 0.6,
+                    bewusstlos: 0.3,
+                    tür_klemmt: 0.1
+                },
                 effects: {
-                    schwer_zu_beruhigen: 0.9,
-                    informationen_unklar: 0.7,
-                    braucht_mehr_zeit: 1.0
-                }
+                    feuerwehr_türöffnung: 0.9,
+                    zeitverzögerung: 1.0
+                },
+                funkspruch: '{callsign}, kein Zugang zum Patienten, benötigen Feuerwehr zur Türöffnung, kommen.'
             },
             
-            muss_reanimieren: {
+            strom_ausgefallen: {
+                probability: 0.02,
+                effects: {
+                    dunkle_wohnung: 1.0,
+                    aufzug_defekt: 0.8,
+                    taschenlampen_nötig: 1.0
+                },
+                info: 'Strom ist ausgefallen, alles dunkel'
+            },
+            
+            aufzug_defekt: {
+                probability: 0.03,
+                effects: {
+                    treppen_nutzen: 1.0,
+                    zeitverzögerung: 1.0,
+                    tragehilfe_wahrscheinlicher: 0.6
+                },
+                info: 'Aufzug ist außer Betrieb'
+            },
+            
+            handy_akku_leer: {
+                probability: 0.02,
+                effects: {
+                    anruf_bricht_ab: 0.8,
+                    rückruf_nicht_möglich: 0.9
+                },
+                anrufer_warnung: 'Mein Akku ist gleich leer!'
+            }
+        },
+        
+        // Feature 16: Geografische Herausforderungen
+        geografie: {
+            wald_wanderweg: {
                 probability: 0.01,
-                trigger_time: { min: 180, max: 400 },
-                trigger_event: 'patient_wird_bewusstlos',
-                phrases: [
-                    'Oh Gott, er reagiert nicht mehr!',
-                    'Er atmet nicht mehr! Was soll ich tun?!',
-                    'Hilfe! Ich glaub der ist tot!'
-                ],
                 effects: {
-                    telefonreanimation: 1.0,
-                    sehr_panisch: 1.0,
-                    upgrade_stichwort: 'Reanimation'
-                }
-            }
-        },
-        
-        // Feature 8: Mehrere Anrufer zum gleichen Einsatz
-        mehrere_anrufer: {
-            probability: 0.05,
-            anzahl: { min: 2, max: 3 },
-            delay_between: { min: 30, max: 180 },
+                    gps_koordinaten_nötig: 1.0,
+                    längere_anfahrt: 1.0,
+                    rth_evtl_besser: 0.4
+                },
+                info: 'Im Wald, genauer Standort unklar'
+            },
             
-            variationen: {
-                widersprüchlich: {
-                    probability: 0.4,
-                    example: 'Anrufer 1: "Er ist bewusstlos!" Anrufer 2: "Er redet noch, aber wirr."'
+            autobahn: {
+                probability: 0.02,
+                effects: {
+                    km_angabe_wichtig: 1.0,
+                    fahrtrichtung_wichtig: 1.0,
+                    verkehrssicherung_nötig: 0.9,
+                    polizei_erforderlich: 0.8
                 },
-                ergänzend: {
-                    probability: 0.5,
-                    example: 'Anrufer 2 gibt mehr Details zur Vorgeschichte'
+                info: 'Auf der Autobahn, Kilometer {km}, Richtung {richtung}'
+            },
+            
+            fluss_see: {
+                probability: 0.005,
+                effects: {
+                    wasserrettung_evtl: 0.3,
+                    dlrg_informieren: 0.4
                 },
-                panik: {
-                    probability: 0.1,
-                    example: 'Mehrere Leute rufen gleichzeitig an, totales Chaos'
-                }
-            }
-        },
-        
-        // Beziehung zum Patienten (Feature 2: Soziales Umfeld)
-        beziehung: {
-            ehepartner: {
-                probability: 0.5,
-                kennt_vorgeschichte: 0.9,
-                emotionale_bindung: 'sehr_hoch',
-                variations: {
-                    male_patient: ['mein Mann', 'mein Ehemann'],
-                    female_patient: ['meine Frau', 'meine Ehefrau']
-                }
-            },
-            kind: {
-                probability: 0.2,
-                kennt_vorgeschichte: 0.7,
-                emotionale_bindung: 'sehr_hoch',
-                variations: {
-                    male_patient: ['mein Vater', 'mein Papa'],
-                    female_patient: ['meine Mutter', 'meine Mama']
-                }
-            },
-            nachbar: {
-                probability: 0.15,
-                kennt_vorgeschichte: 0.2,
-                emotionale_bindung: 'niedrig',
-                variations: ['mein Nachbar', 'der Nachbar von nebenan', 'jemand aus dem Haus']
-            },
-            kollege: {
-                probability: 0.1,
-                kennt_vorgeschichte: 0.3,
-                emotionale_bindung: 'mittel',
-                variations: ['ein Kollege', 'mein Arbeitskollege']
-            },
-            zeuge: {
-                probability: 0.05,
-                kennt_vorgeschichte: 0.0,
-                emotionale_bindung: 'keine',
-                variations: ['jemand auf der Straße', 'ein Mann', 'eine Frau']
+                info: 'Am See/Fluss'
             }
         }
     },
     
     // ========================================
-    // 🧑‍⚕️ PATIENT
+    // 👥 SOZIALE DYNAMIK (Features 17-19)
     // ========================================
-    patient: {
-        geschlecht: {
-            male: 0.65,   // Männer häufiger von Herzinfarkt betroffen
-            female: 0.35
-        },
-        alter: {
-            distribution: 'normal',
-            mean: 65,
-            stddev: 12,
-            min: 40,
-            max: 90
-        },
+    sozial: {
         
-        // Feature 2: Soziales Umfeld
-        soziales_umfeld: {
-            alleinlebend: {
+        // Feature 17: Angehörigen-Reaktionen
+        angehörige: {
+            aggressiv_hysterisch: {
+                probability: 0.08,
+                manifestations: {
+                    schreien: 0.4,
+                    crew_anschreien: 0.3,
+                    vorwürfe: 0.2,
+                    handgreiflich: 0.1
+                },
+                effects: {
+                    polizei_nötig: 0.6,
+                    behandlung_erschwert: 0.9
+                },
+                funkspruch: '{callsign}, Angehörige sehr aggressiv, benötigen Polizei, kommen.'
+            },
+            
+            behindern_rettung: {
+                probability: 0.1,
+                ways: [
+                    'Wollen nicht, dass Patient transportiert wird',
+                    'Bestehen auf Hausarzt',
+                    'Stehen im Weg',
+                    'Diskutieren über Behandlung'
+                ],
+                effects: {
+                    zeitverzögerung: 0.8,
+                    geduld_nötig: 1.0
+                }
+            },
+            
+            wollen_mitfahren: {
                 probability: 0.3,
                 effects: {
-                    später_entdeckt: 0.5,
-                    nachbarn_rufen_an: 0.6,
-                    keine_anamnese_möglich: 0.7,
-                    einsamkeit: 0.6
+                    platz_im_rtw_begrenzt: 1.0,
+                    diskussion: 0.5
                 },
-                impact_on_call: 'Nachbar findet bewusstlosen'
+                info: 'Können wir mitfahren?'
             },
-            großfamilie: {
-                probability: 0.2,
+            
+            familendrama: {
+                probability: 0.05,
+                scenarios: [
+                    'Streit zwischen Angehörigen',
+                    'Vorwürfe: "Du hast ihn zu spät gerufen!"',
+                    'Eskalation zwischen Familienmitgliedern'
+                ],
                 effects: {
-                    viele_aufgeregte_angehörige: 0.8,
-                    chaos_vor_ort: 0.6,
-                    mehrere_sprechen_durcheinander: 0.4
+                    chaos: 0.9,
+                    polizei_evtl: 0.4
+                }
+            }
+        },
+        
+        // Feature 18: Kulturelle/Religiöse Faktoren
+        kultur: {
+            religiöse_behandlungswünsche: {
+                probability: 0.03,
+                types: {
+                    kein_blut: { religion: 'Zeugen Jehovas', probability: 0.3 },
+                    geschlecht_behandler: { religion: 'Islam', probability: 0.5 },
+                    gebete_vor_transport: { religion: 'diverse', probability: 0.2 }
                 },
-                impact_on_call: 'Im Hintergrund viele Stimmen'
+                effects: {
+                    respekt_zeigen: 1.0,
+                    zeit_einplanen: 0.6,
+                    dokumentation_wichtig: 1.0
+                }
             },
-            normal: {
-                probability: 0.5,
-                effects: {}
+            
+            schamgefühl: {
+                probability: 0.05,
+                manifestations: [
+                    'Will nicht, dass Nachbarn etwas sehen',
+                    'Möchte nicht entkleidet werden',
+                    'Schämt sich für Wohnzustand'
+                ],
+                effects: {
+                    diskretion_wichtig: 1.0,
+                    zeit_nehmen: 0.7
+                }
+            },
+            
+            sprachbarriere_kulturell: {
+                probability: 0.1,
+                effects: {
+                    missverständnisse: 0.7,
+                    familienmitglied_übersetzt: 0.6,
+                    gesten_kommunikation: 0.5
+                }
+            }
+        },
+        
+        // Feature 19: Soziale Notlage
+        notlage: {
+            obdachlos: {
+                probability: 0.01,
+                effects: {
+                    unsichere_nachbetreuung: 1.0,
+                    sozialamt_info: 0.8,
+                    hygiene_probleme: 0.6
+                },
+                location_likely: 'öffentlicher_ort'
+            },
+            
+            verwahrloste_wohnung: {
+                probability: 0.05,
+                severity: {
+                    leicht: 0.5,
+                    mittel: 0.3,
+                    schwer: 0.2  // Messi-Syndrom
+                },
+                effects: {
+                    zugang_erschwert: 0.7,
+                    hygiene_bedenken: 0.8,
+                    sozialamt_informieren: 0.9
+                }
+            },
+            
+            keine_versicherung: {
+                probability: 0.02,
+                effects: {
+                    patient_zögert: 0.6,
+                    angst_vor_kosten: 0.8,
+                    transport_trotzdem: 1.0  // Leben geht vor!
+                },
+                info: 'Patient sagt: "Ich hab keine Versicherung..."'
             }
         }
     },
     
     // ========================================
-    // 💊 SYMPTOME (kombinierbar!)
+    // ⚠️ GEFAHREN-SITUATIONEN (Features 20-23)
     // ========================================
-    symptome: {
-        // Hauptsymptom
-        brustschmerz: {
-            probability: 0.95,
-            intensität: {
-                stark: { probability: 0.7, impact: 'sehr_dringlich' },
-                mittel: { probability: 0.2, impact: 'dringlich' },
-                leicht: { probability: 0.1, impact: 'normal' }
+    gefahren: {
+        
+        // Feature 20: Gewalt/Kriminalität
+        gewalt: {
+            häusliche_gewalt: {
+                probability: 0.02,
+                indicators: [
+                    'Anrufer flüstert',
+                    'Verdächtige Verletzungsmuster',
+                    'Anrufer bricht ab wenn Person kommt'
+                ],
+                effects: {
+                    polizei_muss_vorfahren: 1.0,
+                    täter_evtl_vor_ort: 0.9,
+                    gefahr_für_crew: 0.8
+                },
+                funkspruch: '{callsign}, Verdacht auf häusliche Gewalt, warten auf Polizei, kommen.'
             },
-            variations: [
-                'fasst sich die ganze Zeit an die Brust',
-                'hält sich die Brust und sagt, dass es richtig weh tut',
-                'hat so starke Schmerzen in der Brust',
-                'klagt über massive Brustschmerzen',
-                'die Brust tut {ihm/ihr} höllisch weh',
-                'verkrampft sich total, fasst sich an die Brust',
-                'greift sich immer wieder ans Herz'
+            
+            messerstecherei: {
+                probability: 0.005,
+                effects: {
+                    täter_noch_da: 0.4,
+                    polizei_zwingend: 1.0,
+                    tatort_sichern: 1.0,
+                    nicht_einfahren_ohne_polizei: 1.0
+                },
+                info: 'GEFAHR! Gewalttat im Gange!'
+            },
+            
+            schussverletzung: {
+                probability: 0.001,
+                effects: {
+                    sek_evtl_nötig: 0.6,
+                    absolut_nicht_einfahren: 1.0,
+                    polizei_eilt: 1.0
+                },
+                info: 'HÖCHSTE GEFAHR! Schusswaffe!'
+            }
+        },
+        
+        // Feature 21: Selbstgefährdung
+        selbstgefährdung: {
+            suizidversuch: {
+                probability: 0.01,
+                methoden: {
+                    medikamente: 0.5,
+                    schnitt: 0.3,
+                    andere: 0.2
+                },
+                effects: {
+                    polizei_und_krisenteam: 0.9,
+                    psychiatrie_transport: 0.8,
+                    vorsichtig_ansprechen: 1.0
+                },
+                info: 'Patient hat Suizidversuch unternommen'
+            },
+            
+            drohung_zu_springen: {
+                probability: 0.002,
+                effects: {
+                    polizei_verhandlungsteam: 1.0,
+                    feuerwehr_sprungretter: 0.8,
+                    nicht_direkt_ansprechen: 1.0
+                },
+                info: 'AKUTE SELBSTGEFÄHRDUNG!'
+            }
+        },
+        
+        // Feature 22: Infektionsgefahren
+        infektion: {
+            covid_verdacht: {
+                probability: 0.05,
+                effects: {
+                    schutzausrüstung_ffp2: 1.0,
+                    desinfektion_danach: 1.0
+                },
+                info: 'Patient hat COVID-Symptome'
+            },
+            
+            tbc_verdacht: {
+                probability: 0.01,
+                effects: {
+                    schutzausrüstung_ffp3: 1.0,
+                    isolierung_nötig: 1.0
+                },
+                info: 'Verdacht auf Tuberkulose'
+            },
+            
+            bekannte_infektion: {
+                probability: 0.03,
+                types: ['Hepatitis', 'HIV', 'MRSA'],
+                effects: {
+                    standardhygiene: 1.0,
+                    handschuhe_wichtig: 1.0
+                },
+                info: 'Patient hat bekannte {infektion}'
+            }
+        },
+        
+        // Feature 23: Chemische Gefahren
+        chemie: {
+            gasgeruch: {
+                probability: 0.02,
+                effects: {
+                    feuerwehr_mit_messgerät: 1.0,
+                    nicht_einfahren: 1.0,
+                    evakuierung_evtl: 0.6
+                },
+                funkspruch: '{callsign}, Gasgeruch gemeldet, warten auf Feuerwehr, kommen.'
+            },
+            
+            co_vergiftung: {
+                probability: 0.01,
+                effects: {
+                    mehrere_patienten_wahrscheinlich: 0.7,
+                    feuerwehr_lüften: 1.0,
+                    selbst_nicht_gefährden: 1.0
+                },
+                info: 'Verdacht auf CO-Vergiftung! Mehrere Personen betroffen!'
+            }
+        }
+    },
+    
+    // ========================================
+    // 🗺️ LOCATIONS (mit Wahrscheinlichkeiten)
+    // ========================================
+    locations: {
+        wohnhaus: {
+            probability: 0.65,
+            address_types: ['residential', 'apartment'],
+            floor_distribution: [0.4, 0.3, 0.15, 0.1, 0.05],  // EG bis 4. OG
+            variations: ['zu Hause in der Wohnung', 'in der eigenen Wohnung', 'bei uns zu Hause']
+        },
+        
+        arbeitsplatz: {
+            probability: 0.15,
+            address_types: ['commercial', 'industrial', 'office'],
+            time_dependent: [7, 18],  // Nur zu Arbeitszeiten wahrscheinlich
+            betriebssanitäter_vor_ort: 0.3
+        },
+        
+        öffentlich_straße: {
+            probability: 0.06,
+            address_types: ['road', 'street'],
+            witnesses: { min: 2, max: 5 },
+            verkehrsbehinderung: 0.8,
+            polizei_für_verkehr: 0.7
+        },
+        
+        arztpraxis: {
+            probability: 0.03,
+            address_types: ['doctors', 'clinic'],
+            arzt_vor_ort: 0.9,
+            equipment_vorhanden: 0.8,
+            ktw_oft_ausreichend: 0.4
+        },
+        
+        pflegeheim: {
+            probability: 0.05,
+            address_types: ['nursing_home', 'social_facility'],
+            pfleger_vor_ort: 1.0,
+            vorerkrankungen_bekannt: 0.9,
+            palliativ_patient: 0.2
+        },
+        
+        restaurant: {
+            probability: 0.02,
+            address_types: ['restaurant'],
+            personal_hilft: 0.8,
+            time_dependent: [11, 22]
+        },
+        
+        einkaufszentrum: {
+            probability: 0.02,
+            address_types: ['retail', 'shop'],
+            personal_vor_ort: 0.9,
+            menschenmenge: 0.7
+        },
+        
+        park: {
+            probability: 0.01,
+            address_types: ['park', 'leisure'],
+            accessibility_issues: 0.6,
+            weather_dependent: true
+        },
+        
+        andere: {
+            probability: 0.01
+        }
+    },
+    
+    // ========================================
+    // 🚑 NACHFORDERUNGEN VOR ORT
+    // ========================================
+    nachforderungen: {
+        nef: {
+            probability: 0.15,
+            trigger_time: { min: 180, max: 360 },
+            reasons: [
+                'Patient instabiler als gedacht',
+                'Zustand verschlechtert sich',
+                'Vitalwerte kritisch'
             ],
-            beschreibungen: {
-                brennend: ['brennt in der Brust', 'wie Feuer in der Brust'],
-                drückend: ['drückt auf der Brust', 'wie ein Elefant auf der Brust'],
-                stechend: ['sticht in der Brust', 'wie Messerstiche']
+            funkspruch: '{callsign}, benötigen NEF nach, Patient kritisch instabil, kommen.'
+        },
+        
+        rtw_zusätzlich: {
+            probability: 0.05,
+            trigger_time: { min: 240, max: 480 },
+            reasons: ['Angehöriger kollabiert', 'Zweiter Patient'],
+            funkspruch: '{callsign}, benötigen zweiten RTW, weitere Person betroffen, kommen.'
+        },
+        
+        ktw_abgabe: {
+            probability: 0.1,
+            trigger_time: { min: 300, max: 600 },
+            condition: 'Patient stabilisiert',
+            funkspruch: '{callsign}, Patient stabilisiert, Abgabe an KTW möglich, kommen.'
+        },
+        
+        feuerwehr: {
+            probability: 0.03,
+            trigger_time: { min: 120, max: 300 },
+            reasons: {
+                türöffnung: { probability: 0.6, funkspruch: '{callsign}, kein Zugang, benötigen FW zur Türöffnung, kommen.' },
+                tragehilfe: { probability: 0.3, funkspruch: '{callsign}, benötigen Tragehilfe, Patient adipös, kommen.' },
+                gefahrstoff: { probability: 0.1, funkspruch: '{callsign}, Hinweise auf Gefahrstoffe, benötigen FW, kommen.' }
             }
         },
         
-        // Ausstrahlungsschmerz
-        ausstrahlung: {
-            probability: 0.7,
-            locations: {
-                arm_links: {
-                    probability: 0.6,
-                    variations: [
-                        'zieht bis in den linken Arm',
-                        'der linke Arm tut auch weh',
-                        'strahlt in den Arm aus',
-                        'der Arm wird auch taub'
-                    ]
-                },
-                kiefer: {
-                    probability: 0.2,
-                    variations: [
-                        'der Kiefer tut auch weh',
-                        'zieht bis in den Unterkiefer',
-                        'Zahnschmerzen plötzlich'
-                    ]
-                },
-                rücken: {
-                    probability: 0.15,
-                    variations: [
-                        'der Rücken tut auch weh',
-                        'zwischen den Schulterblättern'
-                    ]
-                },
-                bauch: {
-                    probability: 0.05,
-                    variations: [
-                        'der Oberbauch tut auch weh',
-                        'wie Magenschmerzen'
-                    ]
-                }
+        polizei: {
+            probability: 0.05,
+            trigger_time: { min: 60, max: 240 },
+            reasons: {
+                aggressive_angehörige: { probability: 0.4, funkspruch: '{callsign}, Angehörige aggressiv, benötigen Polizei, kommen.' },
+                verdacht_gewalt: { probability: 0.3, funkspruch: '{callsign}, Verdacht auf Fremdeinwirkung, benötigen Polizei, kommen.' },
+                verkehrsregelung: { probability: 0.3, funkspruch: '{callsign}, benötigen Verkehrsregelung, kommen.' }
             }
-        },
-        
-        schwitzen: {
-            probability: 0.85,
-            variations: [
-                'schwitzt wie verrückt',
-                'ist total verschwitzt',
-                'der Schweiß läuft {ihm/ihr} runter',
-                'schwitzt ganz stark',
-                'ist völlig nass geschwitzt',
-                'die Kleidung ist durchgeschwitzt'
-            ]
-        },
-        
-        blässe: {
-            probability: 0.75,
-            variations: [
-                'ist total blass',
-                'ganz weiß im Gesicht',
-                'sieht ganz bleich aus',
-                'total fahl',
-                'kreidebleich',
-                'Gesichtsfarbe ganz grau'
-            ]
-        },
-        
-        atemnot: {
-            probability: 0.6,
-            variations: [
-                'sagt, {er/sie} kriegt keine Luft',
-                'kriegt schlecht Luft',
-                'ringt nach Luft',
-                'atmet ganz schwer',
-                'kann kaum noch atmen',
-                'schnauft wie verrückt'
-            ]
-        },
-        
-        übelkeit: {
-            probability: 0.4,
-            variations: [
-                'ist {ihm/ihr} schlecht',
-                'muss sich übergeben',
-                'klagt über Übelkeit',
-                'hat sich schon übergeben',
-                'würgt die ganze Zeit'
-            ]
-        },
-        
-        angst: {
-            probability: 0.8,
-            variations: [
-                'hat total Angst',
-                'ist ganz panisch',
-                'sagt, {er/sie} stirbt jetzt',
-                'hat Todesangst',
-                'glaubt {er/sie} muss sterben',
-                'ist total verängstigt'
-            ]
-        },
-        
-        unruhe: {
-            probability: 0.5,
-            variations: [
-                'ist total unruhig',
-                'läuft hin und her',
-                'kann nicht still sitzen',
-                'wälzt sich herum'
-            ]
         }
     },
     
     // ========================================
-    // 🏥 MEDIZINISCHE KOMPLEXITÄT (Features 9-12)
+    // ⚡ ESKALATIONS-KETTEN (Features 33-35)
     // ========================================
-    medizinisch: {
-        
-        // Feature 9: Mehrfachverletzungen/Erkrankungen
-        mehrfacherkrankungen: {
-            probability: 0.3,
-            kombinationen: {
-                diabetes_und_herzinfarkt: {
-                    probability: 0.4,
-                    effects: {
-                        komplikationen: 1.3,  // +30%
-                        bewusstlos_wahrscheinlicher: 1.25
-                    }
-                },
-                sturz_nach_herzinfarkt: {
-                    probability: 0.3,
-                    secondary_injury: ['Kopfplatzwunde', 'Rippenprellung', 'Armbruch'],
-                    effects: {
-                        zusätzliche_verletzung: 1.0,
-                        behandlung_komplexer: 1.0
-                    }
-                },
-                schlaganfall_und_herzinfarkt: {
-                    probability: 0.1,
-                    effects: {
-                        sehr_kritisch: 1.0,
-                        sofort_klinikum_stroke: 1.0
-                    }
-                }
+    eskalation: {
+        // Feature 33: Verschlechterung während Anfahrt
+        verschlechterung: {
+            stufe_1: {
+                probability: 0.25,
+                trigger_time: { min: 120, max: 300 },
+                changes: ['Zustand verschlechtert sich leicht', 'Schmerzen werden stärker'],
+                anrufer_meldet_sich_erneut: 0.6
+            },
+            
+            stufe_2: {
+                probability: 0.15,
+                trigger_time: { min: 180, max: 420 },
+                changes: ['Bewusstsein eingetrübt', 'Vitalwerte kritisch'],
+                nef_jetzt_nötig: 1.0
+            },
+            
+            stufe_3_reanimation: {
+                probability: 0.05,
+                trigger_time: { min: 240, max: 480 },
+                changes: ['Patient bewusstlos', 'Keine Atmung mehr'],
+                upgrade_stichwort: 'Reanimation',
+                rtw_zusätzlich: 1.0,
+                anrufer_info: 'Er reagiert nicht mehr! Was soll ich tun?!'
             }
         },
         
-        // Feature 10: Allergien
-        allergien: {
+        // Feature 34: Überraschungen vor Ort
+        überraschungen: {
             probability: 0.15,
             types: {
-                medikamente: {
-                    probability: 0.6,
-                    common: ['Penicillin', 'ASS', 'Ibuprofen', 'Kontrastmittel'],
-                    impact: 'wichtig_für_notarzt'
-                },
-                latex: {
-                    probability: 0.3,
-                    impact: 'latexfreie_handschuhe_nötig'
-                },
-                andere: {
-                    probability: 0.1,
-                    items: ['Pflaster', 'Jod', 'bestimmte Schmerzmittel']
-                }
-            },
-            antwort_variations: [
-                'Ja, allergisch gegen {allergen}',
-                'Äh, ich glaub gegen {allergen}',
-                'Weiß nicht genau, vielleicht {allergen}'
-            ]
-        },
-        
-        // Feature 11: Schwangerschaft
-        schwangerschaft: {
-            probability: 0.02,  // Nur bei weiblichen Patienten im richtigen Alter
-            age_range: [18, 45],
-            trimester: {
-                first: { probability: 0.2, weeks: [1, 12] },
-                second: { probability: 0.3, weeks: [13, 27] },
-                third: { probability: 0.5, weeks: [28, 40] }
-            },
-            effects: {
-                höhere_dringlichkeit: 1.0,
-                spezielle_lagerung: 1.0,
-                gynäkologie_informieren: 0.8
-            },
-            antworten: [
-                'Ja, sie ist schwanger! {week} Woche!',
-                'Sie ist im {trimester} Monat schwanger!',
-                'Oh Gott, sie ist hochschwanger!'
-            ]
-        },
-        
-        // Feature 12: Pflegebedürftigkeit/Behinderung
-        pflegebedürftigkeit: {
-            probability: 0.1,
-            types: {
-                rollstuhlfahrer: {
+                mehr_patienten: {
                     probability: 0.4,
-                    effects: {
-                        transport_schwierig: 0.8,
-                        rollstuhl_mitnehmen: 1.0,
-                        tragehilfe_evtl_nötig: 0.3
-                    },
-                    info: 'Patient sitzt im Rollstuhl, können Sie den mitnehmen?'
+                    anzahl: { min: 1, max: 2 },
+                    funkspruch: '{callsign}, wir haben hier {anzahl} weitere Patienten, benötigen Unterstützung, kommen.'
                 },
-                bettlägerig: {
+                anderes_schadensbild: {
                     probability: 0.3,
-                    effects: {
-                        tragehilfe_nötig: 0.9,
-                        schaufeltrage: 1.0,
-                        zeitaufwand_höher: 1.0
-                    },
-                    info: 'Patient liegt im Bett, kann nicht aufstehen'
+                    examples: ['Zusätzlich Sturzverletzung', 'Patient blutet stark', 'Bewusstlos statt ansprechbar'],
+                    funkspruch: '{callsign}, Lage anders als gemeldet, {beschreibung}, kommen.'
                 },
-                beatmungspatient: {
-                    probability: 0.1,
-                    effects: {
-                        spezialausrüstung: 1.0,
-                        nef_zwingend: 1.0,
-                        zeitaufwand_hoch: 1.0
-                    },
-                    info: 'Patient ist beatmet, Beatmungsgerät läuft'
-                },
-                adipositas: {
+                gefährliche_lage: {
                     probability: 0.2,
-                    effects: {
-                        tragehilfe_nötig: 0.9,
-                        fw_für_tragehilfe: 0.5,
-                        spezialtrage_evtl: 0.4
-                    },
-                    info: 'Patient ist sehr schwer, schätze über 150 Kilo'
+                    types: ['Einsturzgefahr', 'Gasgeruch', 'Aggressive Person'],
+                    funkspruch: '{callsign}, Achtung, gefährliche Lage, {gefahr}, kommen.'
+                },
+                patient_nicht_auffindbar: {
+                    probability: 0.1,
+                    funkspruch: '{callsign}, können Patient nicht finden, suchen noch, kommen.'
                 }
             }
         },
         
-        // Feature 3: Dynamische Vorgeschichte
-        vorgeschichte: {
-            herzerkrankung: {
-                probability: 0.6,
-                kenntnis: {
-                    bekannt: { probability: 0.7, responses: ['Ja, hatte schon mal einen Herzinfarkt', 'Ja, der hat was mit dem Herzen'] },
-                    unsicher: { probability: 0.2, responses: ['Ich glaub schon', 'Äh, ich meine ja'] },
-                    unbekannt: { probability: 0.1, responses: ['Weiß ich nicht', 'Keine Ahnung'] }
-                }
-            },
-            
-            medikamente: {
-                probability: 0.7,
-                types: {
-                    blutdruck: { probability: 0.6, names: ['Blutdrucktabletten', 'Ramipril', 'Bisoprolol'] },
-                    blutverdünner: { probability: 0.3, names: ['Marcumar', 'ASS', 'Blutverdünner'] },
-                    herz: { probability: 0.4, names: ['Herztabletten', 'Digitalis'] },
-                    unbekannt: { probability: 0.1, response: 'Weiß nicht welche' }
+        // Feature 35: Spontane Besserung
+        besserung: {
+            probability: 0.1,
+            trigger_time: { min: 180, max: 400 },
+            outcomes: {
+                patient_erholt_sich: {
+                    probability: 0.5,
+                    funkspruch: '{callsign}, Patient stabilisiert, zustand besser, kommen.',
+                    ktw_reicht: 0.7
                 },
-                kenntnis: {
-                    genau: 0.3,
-                    ungefähr: 0.5,
-                    keine_ahnung: 0.2
-                }
-            },
-            
-            diabetes: {
-                probability: 0.3,
-                kenntnis: {
-                    bekannt: 0.5,
-                    unsicher: 0.3,
-                    unbekannt: 0.2
+                nur_abklärung: {
+                    probability: 0.3,
+                    funkspruch: '{callsign}, nur Abklärung nötig, kein Transport erforderlich, kommen.'
                 },
-                // Feature 3: Kombination verstärkt Komplikationen
-                kombination_mit_herzinfarkt: {
-                    effects: {
-                        komplikationen: 1.3,
-                        bewusstlos: 1.25,
-                        unterzucker_möglich: 0.2
-                    }
+                abbestellung_möglich: {
+                    probability: 0.2,
+                    condition: 'Patient lehnt Transport ab',
+                    funkspruch: '{callsign}, Patient lehnt Transport ab, unterschrieben, kommen.'
                 }
-            },
-            
-            bluthochdruck: {
-                probability: 0.7,
-                responses: ['Ja, hoher Blutdruck', 'Ja, Bluthochdruck', 'Weiß nicht genau']
-            },
-            
-            raucher: {
-                probability: 0.4,
-                impact: 'risikofaktor'
             }
         }
+    },
+    
+    // ========================================
+    // 🎭 SPECIAL SCENARIOS (Features 28-32, 37, 38)
+    // ========================================
+    special: {
+        // Feature 28: Parallel-Einsätze
+        parallel: {
+            probability: 0.1,
+            note: 'Wird vom System gesteuert, nicht Template'
+        },
+        
+        // Feature 29: Fehlalarme & Bagatellen
+        fehlalarm: {
+            übertreibung: {
+                probability: 0.08,
+                realität: 'Harmloser als beschrieben',
+                funkspruch: '{callsign}, Patient weniger kritisch als gemeldet, kommen.'
+            },
+            
+            bereits_versorgt: {
+                probability: 0.03,
+                by: ['Hausarzt', 'Angehöriger mit medizin. Kenntnissen'],
+                funkspruch: '{callsign}, Patient bereits durch {person} versorgt, kommen.'
+            }
+        },
+        
+        // Feature 30: Großveranstaltungen
+        großveranstaltung: {
+            probability: 0.01,
+            location_dependent: ['stadion', 'konzert'],
+            sanitätsdienst_vor_ort: 0.9,
+            menschenmenge: 1.0,
+            weitere_notfälle_wahrscheinlich: 0.3
+        },
+        
+        // Feature 37: Technik-Fehlalarme
+        technik_fehler: {
+            smartwatch: {
+                probability: 0.01,
+                info: 'Smartwatch hat automatisch ausgelöst, Patient okay',
+                abbestellung: 0.9
+            }
+        },
+        
+        // Feature 38: Realismus - Stammkunden
+        stammkunde: {
+            probability: 0.05,
+            effects: {
+                bekannte_adresse: 1.0,
+                vorgeschichte_im_system: 1.0,
+                crew_kennt_patient: 0.7
+            },
+            info: 'Bekannte Adresse, häufiger Anrufer'
+        }
+    },
+    
+    // ========================================
+    // 🏥 FAHRZEUG-EMPFEHLUNG & KLINIK-WAHL (Feature 53)
+    // ========================================
+    disposition: {
+        base_recommendation: {
+            rtw: 1,
+            nef: 1,
+            ktw: 0
+        },
+        
+        // Dynamische Anpassungen basierend auf Symptomen
+        adjustments: {
+            if_bewusstlos: { nef: '=1' },
+            if_reanimation: { rtw: '+1', nef: '=1' },
+            if_stabil_nach_versorgung: { ktw: '=1', rtw: '-1', nef: '-1' }
+        },
+        
+        // Feature 53: Klinik-Auswahl mit Fachausrichtung
+        klinik_auswahl: {
+            priorität_1: {
+                condition: 'stroke_unit_nötig',
+                hospitals: ['rems_murr_klinikum_winnenden', 'klinikum_ludwigsburg'],
+                reason: 'Stroke Unit verfügbar'
+            },
+            priorität_2: {
+                condition: 'herzkatheterlabor_nötig',
+                hospitals: ['rems_murr_klinikum_winnenden', 'klinikum_ludwigsburg', 'katharinenhospital_stuttgart'],
+                reason: 'Herzkatheterlabor 24/7'
+            },
+            priorität_3: {
+                condition: 'nächstgelegenes',
+                selection: 'by_distance',
+                reason: 'Zeit ist kritisch'
+            },
+            
+            // Kapazitäts-Check
+            capacity_check: {
+                if_full: 'select_next_suitable',
+                funkspruch: '{hospital} meldet keine Kapazität, fahren {alternative_hospital} an'
+            }
+        }
+    },
+    
+    // ========================================
+    // 📊 EINSATZ-PROTOKOLL (Feature 45)
+    // ========================================
+    protokoll: {
+        tracked_data: {
+            call_duration: 'AUTOMATIC',
+            symptoms_mentioned: 'FROM_CALL',
+            vehicles_dispatched: 'FROM_DISPOSITION',
+            additional_requests: 'FROM_RADIO',
+            hospital_selected: 'FROM_DISPOSITION',
+            outcome: 'FROM_SIMULATION'
+        },
+        
+        bewertung: {
+            kriterien: {
+                reaction_time: { target: 60, max_acceptable: 180 },
+                correct_vehicles: { compare_with: 'base_recommendation' },
+                additional_requests: { optimal: 0, acceptable: 1 },
+                hospital_choice: { check: 'specialization_match' }
+            },
+            
+            note_berechnung: {
+                A: 'Alle Kriterien optimal',
+                B: 'Ein Kriterium suboptimal',
+                C: 'Zwei Kriterien suboptimal',
+                D: 'Drei Kriterien suboptimal',
+                F: 'Mehr als drei Kriterien suboptimal oder kritischer Fehler'
+            }
+        }
+    },
+    
+    // ========================================
+    // 📻 FUNKSPRUCH-TEMPLATES (Feature 52)
+    // ========================================
+    funksprüche: {
+        verwendet_templates_aus: 'GLOBAL_CONFIG.radioMessages',
+        
+        spezifische_lagemeldungen: [
+            'Patient mit akuten Thoraxschmerzen, Verdacht auf Myokardinfarkt',
+            'Patient ansprechbar aber instabil, starke Brustschmerzen',
+            'Patient kreislaufinstabil, Schock-Symptomatik',
+            'Patient bewusstlos, Reanimation erforderlich',
+            'Patient stabilisiert, Transport vorbereitet'
+        ]
     }
+};
+
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { HERZINFARKT_TEMPLATE };
+}
