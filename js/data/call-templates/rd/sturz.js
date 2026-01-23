@@ -1,5 +1,5 @@
 // =========================================================================================
-// STURZ TEMPLATE - Häufigster RD-Einsatz, besonders bei Senioren
+// STURZ TEMPLATE - Häufigster Notfall, besonders bei Senioren
 // =========================================================================================
 
 import { GLOBAL_CONFIG } from '../_config.js';
@@ -9,90 +9,96 @@ export const STURZ_TEMPLATE = {
     id: 'sturz',
     kategorie: 'rd',
     stichwort: 'Sturz',
-    weight: 4,
+    weight: 4,  // Sehr häufig!
     
+    // ========================================
+    // 📞 ANRUFER-VARIANZ
+    // ========================================
     anrufer: {
         typen: {
-            angehöriger: {
+            angehöriger_besorgt: {
                 probability: 0.45,
                 speech_pattern: 'besorgt',
                 variations: [
                     'Meine Mutter ist gestürzt!',
-                    'Er ist hingefallen und kommt nicht mehr hoch!',
-                    'Sie ist ausgerutscht!',
-                    'Ist im Badezimmer ausgerutscht!'
+                    'Mein Vater ist hingefallen!',
+                    'Oma ist gestürzt und kommt nicht mehr hoch!',
+                    'Sie ist ausgerutscht!'
                 ]
             },
             
             patient_selbst: {
                 probability: 0.25,
-                speech_pattern: 'schmerzhaft, gestresst',
+                speech_pattern: 'schmerzen, manchmal schwach',
                 variations: [
-                    'Ich bin gestürzt, ich kann nicht aufstehen',
-                    'Bin hingefallen, meine Hüfte tut so weh',
-                    'Ich liege auf dem Boden, komme nicht hoch'
+                    'Ich bin gefallen... ich komme nicht mehr hoch',
+                    'Bin gestürzt, kann nicht aufstehen',
+                    'Mir ist schwindelig geworden und dann... bin ich gefallen'
                 ],
-                effects: {
-                    allein_zuhause: 0.8,
-                    hilflos: 0.9
-                }
+                alter_meist_höher: 0.8
             },
             
-            nachbar: {
+            nachbar_hat_gehört: {
                 probability: 0.15,
-                speech_pattern: 'unsicher, hat geklopft gehört',
+                speech_pattern: 'unsicher, zweite hand info',
                 variations: [
-                    'Mein Nachbar hat um Hilfe gerufen, ist wohl gestürzt',
-                    'Höre Hilferufe von nebenan',
-                    'Nachbarin liegt am Boden, sehe es durchs Fenster'
+                    'Ich hab einen lauten Knall gehört, meine Nachbarin antwortet nicht',
+                    'Hab sie fallen gehört, sie ruft um Hilfe',
+                    'Sie liegt am Boden, ich seh sie durchs Fenster'
                 ],
                 effects: {
-                    zugang_evtl_problem: 0.6
+                    genaue_infos_fehlen: 0.8,
+                    tür_eventuell_verschlossen: 0.6
                 }
             },
             
             pflegepersonal: {
-                probability: 0.12,
+                probability: 0.1,
                 speech_pattern: 'professionell',
                 variations: [
-                    'Bewohnerin ist gestürzt, Verdacht auf Hüftfraktur',
-                    'Patient nach Sturz, kann Bein nicht bewegen'
+                    'Bewohnerin gestürzt, Verdacht auf Schenkelhalsfraktur',
+                    'Patient nach Sturz, Hüftverletzung',
+                    'Sturz im Badezimmer'
                 ],
                 location: 'pflegeheim'
             },
             
-            zeuge: {
-                probability: 0.03,
-                speech_pattern: 'aufgeregt',
+            hausnotruf: {
+                probability: 0.05,
+                speech_pattern: 'zentrale, hat patient am telefon',
                 variations: [
-                    'Jemand ist gestürzt!',
-                    'Eine ältere Dame ist hingefallen!',
-                    'Hier ist jemand die Treppe runtergestürzt!'
+                    'Hausnotruf ausgelöst, Patient gestürzt',
+                    'Notrufsystem aktiviert, Sturz gemeldet'
                 ],
-                location: 'öffentlich'
+                info: 'Meist ältere Alleinlebende'
             }
         },
         
         dynamik: {
-            schmerzen_werden_schlimmer: {
+            schmerzen_werden_stärker: {
                 probability: 0.2,
-                trigger_time: { min: 180, max: 360 },
+                trigger_time: { min: 60, max: 180 },
                 change: 'Die Schmerzen werden immer schlimmer!'
+            },
+            
+            patient_wird_schwächer: {
+                probability: 0.15,
+                trigger_time: { min: 120, max: 300 },
+                change: 'Patient wird kreislaufschwach',
+                effects: {
+                    schock_möglich: 0.4
+                }
             }
-        },
-        
-        zeitfaktor: {
-            gerade_eben: { probability: 0.4, variations: ['ist gerade eben passiert', 'vor 5 Minuten'] },
-            vor_stunden: { probability: 0.35, variations: ['liegt schon seit Stunden da', 'weiß nicht genau wann'] },
-            über_nacht: { probability: 0.15, variations: ['liegt wohl schon die ganze Nacht da'], hypothermie_risiko: 0.7 },
-            vor_tagen: { probability: 0.1, variations: ['ist vor ein paar Tagen passiert, geht aber nicht mehr'], bagatell: 0.4 }
         }
     },
     
+    // ========================================
+    // 🧑 PATIENT
+    // ========================================
     patient: {
         geschlecht: {
             male: 0.35,
-            female: 0.65  // Frauen häufiger, besonders ältere
+            female: 0.65  // Frauen häufiger, besonders im Alter
         },
         
         alter: {
@@ -100,428 +106,714 @@ export const STURZ_TEMPLATE = {
             mean: 78,
             stddev: 12,
             min: 20,
-            max: 102,
+            max: 98,
             peak_age: 82
         },
         
-        mobilität: {
-            selbstständig: { probability: 0.4 },
-            mit_gehhilfe: { probability: 0.35, types: ['Rollator', 'Gehstock', 'Geh gestell'] },
-            rollstuhl: { probability: 0.15 },
-            bettlägerig: { probability: 0.1, sturz_aus_bett: 1.0 }
+        risikofaktoren: {
+            gangstörung: { probability: 0.5 },
+            sehschwäche: { probability: 0.4 },
+            schwindel_anamnese: { probability: 0.35 },
+            medikamente_viele: { probability: 0.6 },
+            frühere_stürze: { probability: 0.4 }
         }
     },
     
+    // ========================================
+    // 💥 STURZ-MECHANISMUS
+    // ========================================
     sturz_mechanismus: {
         gestolpert: {
-            probability: 0.4,
+            probability: 0.35,
             variations: [
-                'ist über Teppich gestolpert',
-                'ist über eigene Füße gefallen',
-                'über Kabel gestolpert',
-                'über Schwelle gestolpert'
+                'über Teppich gestolpert',
+                'über Kabel gefallen',
+                'hat sich in etwas verheddert',
+                'über die Türschwelle gestolpert'
             ],
-            ursachen: ['Teppichkante', 'Kabel', 'Schuhe', 'Haustier']
+            objekte: ['Teppichkante', 'Kabel', 'Schuhe', 'Türschwelle', 'Haustier']
         },
         
         ausgerutscht: {
             probability: 0.25,
             variations: [
                 'im Badezimmer ausgerutscht',
-                'auf nasser Fliese ausgerutscht',
-                'im Treppenhaus ausgerutscht'
+                'auf nassem Boden ausgerutscht',
+                'in der Dusche gestürzt',
+                'auf Wasser ausgerutscht'
             ],
-            locations: ['Badezimmer', 'Küche', 'Treppenhaus'],
-            schlimmer: 0.6
+            location_meist: 'badezimmer',
+            verletzungen_oft_schwerer: 0.6
         },
         
         schwindel_kollaps: {
-            probability: 0.15,
+            probability: 0.2,
             variations: [
-                'wurde schwindelig und ist umgekippt',
-                'einfach umgekippt',
-                'Beine haben nachgegeben'
+                'wurde schwindelig und dann gestürzt',
+                'ist einfach umgekippt',
+                'wurde schwarz vor Augen',
+                'Kreislauf wurde schwach'
             ],
-            differentialdiagnose: ['Synkope', 'Schlaganfall', 'Herzrhythmusstörung'],
+            ursachen: {
+                orthostatische_dysregulation: 0.4,
+                herzrhythmusstörung: 0.2,
+                unterzucker: 0.15,
+                medikamente: 0.15,
+                schlaganfall: 0.1
+            },
             abklärung_wichtig: 1.0
         },
         
+        kraft_nachgegeben: {
+            probability: 0.15,
+            variations: [
+                'Beine haben einfach nachgegeben',
+                'war zu schwach',
+                'konnte sich nicht halten'
+            ],
+            hinweis: 'Muskelschwäche, Alter'
+        },
+        
+        von_leiter_stuhl: {
+            probability: 0.03,
+            variations: [
+                'von der Leiter gefallen',
+                'vom Stuhl gestürzt',
+                'wollte was aus dem Schrank holen'
+            ],
+            höhe: { mean: 1.5, max: 3 },
+            verletzungen_schwerer: 0.8
+        },
+        
         treppe: {
-            probability: 0.12,
+            probability: 0.02,
             variations: [
                 'die Treppe runtergestürzt',
-                'Treppe runtergefallen',
-                'mehrere Stufen runter'
+                'mehrere Stufen gefallen'
             ],
-            schwere_verletzungen_wahrscheinlich: 0.7
-        },
-        
-        aus_bett: {
-            probability: 0.05,
-            variations: ['aus dem Bett gefallen', 'beim Aufstehen aus Bett gestürzt'],
-            nachts: 0.8
-        },
-        
-        leiter: {
-            probability: 0.02,
-            variations: ['von Leiter gefallen', 'von Stuhl gefallen'],
-            höhe: { min: 1, max: 3 },
-            schwerer: 0.8
-        },
-        
-        unklarer_mechanismus: {
-            probability: 0.01,
-            variations: ['weiß nicht mehr wie', 'kann sich nicht erinnern'],
-            bewusstseinsverlust_möglich: 0.7
+            stufen: { min: 3, max: 15 },
+            verletzungen_oft_multipel: 0.9,
+            kopfverletzung_wahrscheinlich: 0.6
         }
     },
     
+    // ========================================
+    // 🩹 VERLETZUNGEN
+    // ========================================
     verletzungen: {
-        hüftfraktur: {
-            probability: 0.25,
-            variations: [
-                'Hüfte tut höllisch weh',
-                'kann das Bein nicht bewegen',
-                'Bein liegt komisch',
-                'Hüfte ist total schmerzhaft'
-            ],
-            severity: 'schwer',
-            op_nötig: 0.95,
-            alte_menschen: 0.9
-        },
-        
-        armfraktur: {
+        keine_sichtbar: {
             probability: 0.15,
-            types: {
-                handgelenk: { probability: 0.5, variations: ['Handgelenk gebrochen'] },
-                unterarm: { probability: 0.3 },
-                oberarm: { probability: 0.2 }
-            },
-            variations: ['Arm tut weh', 'hat sich abgestützt', 'Arm ist geschwollen']
+            variations: [
+                'sieht nichts Schlimmes',
+                'keine offenen Wunden',
+                'äußerlich okay'
+            ],
+            aber_schmerzen: 0.8
         },
         
-        kopfverletzung: {
+        hüfte: {
+            probability: 0.35,
+            severity: {
+                prellung: {
+                    probability: 0.3,
+                    variations: ['Hüfte tut weh', 'schmerzt an der Hüfte']
+                },
+                schenkelhalsfraktur: {
+                    probability: 0.7,
+                    variations: [
+                        'kann das Bein nicht bewegen',
+                        'Bein steht komisch',
+                        'extreme Schmerzen in der Hüfte',
+                        'Bein ist verkürzt und verdreht'
+                    ],
+                    klassisch: {
+                        außenrotation: 0.9,
+                        verkürzung: 0.8,
+                        bewegung_unmöglich: 1.0
+                    },
+                    transport_schwierig: 0.9,
+                    op_erforderlich: 0.95,
+                    info: 'Klassische Seniorenverletzung'
+                }
+            }
+        },
+        
+        kopf: {
+            probability: 0.25,
+            types: {
+                platzwunde: {
+                    probability: 0.5,
+                    variations: [
+                        'blutet am Kopf',
+                        'Platzwunde an der Stirn',
+                        'Kopf blutet stark'
+                    ],
+                    blutet_stark: 0.7
+                },
+                beule: {
+                    probability: 0.3,
+                    variations: ['dicke Beule', 'Schwellung am Kopf']
+                },
+                gehirnerschütterung: {
+                    probability: 0.2,
+                    indicators: [
+                        'kurz bewusstlos gewesen',
+                        'verwirrt',
+                        'erinnert sich nicht',
+                        'übel'
+                    ],
+                    beobachtung_nötig: 1.0
+                }
+            }
+        },
+        
+        arm_hand: {
             probability: 0.2,
             types: {
-                platzwunde: { probability: 0.6, variations: ['Kopf blutet', 'Platzwunde am Kopf'] },
-                schädel_hirn_trauma: { probability: 0.3, bewusstlosigkeit: 0.5 },
-                gehirnerschütterung: { probability: 0.1 }
+                prellung: { probability: 0.4 },
+                fraktur: {
+                    probability: 0.6,
+                    locations: {
+                        handgelenk: 0.5,  // Colles-Fraktur
+                        unterarm: 0.3,
+                        oberarm: 0.2
+                    },
+                    variations: [
+                        'Arm tut extrem weh',
+                        'kann Arm nicht bewegen',
+                        'Arm ist geschwollen',
+                        'sieht komisch aus'
+                    ]
+                }
             },
-            blutverdünner_kritisch: 0.8
+            abfangen_typisch: 0.9
         },
         
-        rippenfraktur: {
-            probability: 0.1,
-            variations: ['Rippen tun weh beim Atmen', 'Brustkorb schmerzt'],
-            atmung_schmerzhaft: 1.0
-        },
-        
-        wirbelsäule: {
-            probability: 0.05,
-            types: {
-                wirbelkörperfraktur: { probability: 0.7 },
-                bandscheibenvorfall: { probability: 0.3 }
-            },
-            variations: ['Rücken tut extrem weh', 'kann sich nicht bewegen'],
-            immobilisation_wichtig: 1.0
-        },
-        
-        prellungen_schmerzen: {
-            probability: 0.4,
+        rippen: {
+            probability: 0.12,
             variations: [
-                'hat Schmerzen aber nichts gebrochen',
-                'alles tut weh',
-                'blaue Flecken überall',
-                'verprellt'
+                'Schmerzen beim Atmen',
+                'Rippen tun weh',
+                'Brust schmerzt'
             ],
-            bagatell_potential: 0.5
+            rippenfraktur_wahrscheinlich: 0.6,
+            ältere_patienten_häufiger: 0.9
         },
         
-        keine_sichtbare: {
+        bein_fuß: {
             probability: 0.15,
-            variations: ['scheint nichts gebrochen', 'kommt nur nicht hoch'],
-            kann_trotzdem_schwer_sein: 0.3
-        }
-    },
-    
-    komplikationen: {
-        kann_nicht_aufstehen: {
-            probability: 0.7,
-            variations: [
-                'kommt nicht mehr hoch',
-                'kann nicht aufstehen',
-                'liegt am Boden',
-                'ist zu schwach zum Aufstehen'
-            ],
-            gründe: ['Schmerzen', 'Schwäche', 'Angst', 'Fraktur']
+            types: {
+                prellung: { probability: 0.5 },
+                fraktur: {
+                    probability: 0.4,
+                    locations: ['Unterschenkel', 'Knöchel', 'Fuß']
+                },
+                verstauchung: { probability: 0.1 }
+            }
         },
         
-        lange_gelegen: {
-            probability: 0.25,
-            dauer: { min: 3, max: 24, unit: 'Stunden' },
-            effects: {
-                unterkühlung: 0.6,
-                dehydrierung: 0.7,
-                druckstellen: 0.4,
-                verwirrtheit: 0.5
-            },
-            variations: ['liegt schon Stunden da', 'konnte niemanden erreichen']
+        rücken: {
+            probability: 0.18,
+            types: {
+                prellung: { probability: 0.6 },
+                wirbelkörperfraktur: {
+                    probability: 0.3,
+                    besonders_bei: 'Osteoporose',
+                    vorsicht_wirbelsäule: 1.0
+                },
+                schmerzen: { probability: 0.1 }
+            }
         },
         
-        blutverdünner: {
+        schürfwunden: {
             probability: 0.4,
-            types: ['Marcumar', 'Eliquis', 'Xarelto', 'ASS'],
-            effects: {
-                blutungsrisiko_erhöht: 1.0,
-                kopfverletzung_kritischer: 0.9,
-                ct_kontrolle_wichtig: 0.8
-            },
-            info: 'Nimmt Blutverdünner!'
+            variations: [
+                'aufgeschürft',
+                'Haut ist ab',
+                'Schürfwunden an Armen'
+            ],
+            meist_harmlos: 0.9
         },
         
-        hypothermie: {
-            probability: 0.1,
-            condition: 'lange_gelegen',
-            variations: ['ist ganz kalt', 'zittert am ganzen Körper', 'unterkühlt'],
-            kritisch: 0.7
+        hämatome: {
+            probability: 0.5,
+            variations: [
+                'hat blaue Flecken',
+                'wird schon blau',
+                'große Blutergüsse'
+            ],
+            bei_blutverdünner_ausgeprägt: 0.8
         }
     },
     
+    // ========================================
+    // 📍 STURZ-ORT
+    // ========================================
+    sturz_ort: {
+        badezimmer: {
+            probability: 0.35,
+            variations: [
+                'im Badezimmer',
+                'in der Dusche',
+                'vor dem Waschbecken',
+                'auf der Toilette'
+            ],
+            probleme: {
+                nass: 0.6,
+                eng: 0.8,
+                patient_nackt_teilweise: 0.4
+            },
+            schamgefühl: 0.6
+        },
+        
+        schlafzimmer: {
+            probability: 0.25,
+            variations: [
+                'neben dem Bett',
+                'beim Aufstehen aus dem Bett',
+                'im Schlafzimmer'
+            ],
+            zeit_meist: 'nachts oder morgens'
+        },
+        
+        wohnzimmer: {
+            probability: 0.2,
+            variations: ['im Wohnzimmer', 'vor dem Sofa']
+        },
+        
+        küche: {
+            probability: 0.1,
+            variations: ['in der Küche']
+        },
+        
+        flur: {
+            probability: 0.08,
+            variations: ['im Flur', 'Gang']
+        },
+        
+        treppe: {
+            probability: 0.02,
+            siehe: 'sturz_mechanismus.treppe'
+        }
+    },
+    
+    // ========================================
+    // ⏱️ LIEGEZEIT
+    // ========================================
+    liegezeit: {
+        sofort_entdeckt: {
+            probability: 0.4,
+            dauer: '< 5 Minuten',
+            angehöriger_dabei: 0.9
+        },
+        
+        kurz: {
+            probability: 0.3,
+            dauer: '5-30 Minuten',
+            patient_konnte_anrufen: 0.7
+        },
+        
+        mittel: {
+            probability: 0.2,
+            dauer: '30 Minuten - 2 Stunden',
+            probleme: {
+                unterkühlung_möglich: 0.3,
+                dekubitus_beginn: 0.2,
+                dehydrierung: 0.4
+            }
+        },
+        
+        lang: {
+            probability: 0.1,
+            dauer: '> 2 Stunden',
+            variations: [
+                'liegt seit Stunden',
+                'die ganze Nacht gelegen',
+                'seit gestern'
+            ],
+            komplikationen: {
+                unterkühlung: 0.7,
+                dekubitus: 0.5,
+                dehydrierung: 0.8,
+                nierenversagen_risiko: 0.3,
+                verwirrtheit: 0.6
+            },
+            kritischer: 0.8,
+            info: 'Lange Liegezeit = hohes Risiko!'
+        }
+    },
+    
+    // ========================================
+    // 🏥 MEDIZINISCH
+    // ========================================
     medizinisch: {
         vorerkrankungen: {
-            probability: 0.9,
+            probability: 0.85,
             types: {
-                osteoporose: { probability: 0.5, frakturrisiko_erhöht: 1.0 },
-                demenz: { probability: 0.3, sturzrisiko: 1.0 },
-                parkinson: { probability: 0.15, sturzrisiko: 1.0 },
-                schlaganfall_früher: { probability: 0.2, gehbehinderung: 0.8 },
-                herzrhythmusstörungen: { probability: 0.25, synkopen: 0.6 },
-                diabetes: { probability: 0.35, schwindel: 0.5 },
-                sehschwäche: { probability: 0.6, sturzrisiko: 0.8 }
+                osteoporose: { probability: 0.5, info: 'Knochenbrüche wahrscheinlicher' },
+                herz_kreislauf: { probability: 0.6 },
+                diabetes: { probability: 0.3 },
+                parkinson: { probability: 0.1, sturzrisiko_hoch: 1.0 },
+                demenz: { probability: 0.2, sturzrisiko_hoch: 1.0 },
+                sehstörungen: { probability: 0.4 }
             }
         },
         
         medikamente: {
-            blutverdünner: { probability: 0.4 },
-            blutdrucksenker: { probability: 0.6, schwindel_risiko: 0.5 },
-            schlafmittel: { probability: 0.2, sturzrisiko: 0.7 },
-            beruhigungsmittel: { probability: 0.15, sturzrisiko: 0.7 }
+            blutverdünner: {
+                probability: 0.4,
+                types: ['Marcumar', 'Eliquis', 'Xarelto', 'ASS'],
+                effects: {
+                    blutung_wahrscheinlicher: 0.9,
+                    hämatome_größer: 0.9,
+                    kopfverletzung_kritischer: 1.0
+                },
+                info: 'Bei Kopfverletzung besonders gefährlich!'
+            },
+            
+            blutdrucksenker: {
+                probability: 0.6,
+                kann_schwindel_verursachen: 0.5
+            },
+            
+            beruhigungsmittel: {
+                probability: 0.2,
+                sturzrisiko_erhöht: 0.8
+            }
+        },
+        
+        vitalparameter: {
+            meist_stabil: {
+                probability: 0.7,
+                info: 'Patient ansprechbar, Kreislauf okay'
+            },
+            
+            schock: {
+                probability: 0.15,
+                ursachen: ['Blutverlust', 'Schmerz', 'Schreck'],
+                info: 'Bei schweren Verletzungen'
+            },
+            
+            bewusstlos: {
+                probability: 0.05,
+                upgrade_stichwort: 'Bewusstlosigkeit',
+                abklärung_schlaganfall: 1.0
+            }
         }
     },
     
+    // ========================================
+    // 🏠 UMGEBUNG
+    // ========================================
     umgebung: {
         gebäude: {
             kein_aufzug: {
                 probability: 0.2,
                 effects: {
-                    tragehilfe_fast_immer: 0.95,
-                    feuerwehr_nötig: 0.7
+                    patient_kann_nicht_laufen: 0.9,
+                    tragehilfe_fast_immer: 0.95
                 },
-                funkspruch: '{callsign}, Patient nach Sturz im {floor} OG, kann nicht laufen, FW Tragehilfe, kommen.'
+                funkspruch: '{callsign}, Sturz mit Hüftverletzung, {floor} OG ohne Aufzug, FW Tragehilfe erforderlich!'
             },
             
-            sehr_enge_wohnung: {
-                probability: 0.2,
-                variations: ['liegt zwischen Möbeln', 'sehr enge Wohnung', 'schwieriger Zugang'],
+            enge_verhältnisse: {
+                probability: 0.3,
+                variations: [
+                    'sehr enge Wohnung',
+                    'vollgestellt',
+                    'schmale Gänge'
+                ],
                 effects: {
-                    lagerung_schwierig: 0.8
+                    bergen_schwierig: 0.8,
+                    schaufeltrage_nötig: 0.6
                 }
             }
         },
         
         technik: {
             tür_verschlossen: {
-                probability: 0.2,
-                reasons: {
-                    patient_kann_nicht_zur_tür: 0.9,
-                    bewusstlos: 0.1
-                },
-                effects: {
-                    feuerwehr_sofort: 1.0
-                },
-                funkspruch: '{callsign}, Patient nach Sturz, kann Tür nicht öffnen, FW zur Türöffnung, kommen.'
-            },
-            
-            hausnotruf: {
                 probability: 0.15,
-                info: 'Hat Hausnotruf gedrückt',
-                schnellere_alarmierung: 1.0
-            }
-        }
-    },
-    
-    sozial: {
-        angehörige: {
-            sehr_besorgt: {
-                probability: 0.6,
-                manifestations: ['macht sich Sorgen', 'hat Angst um Mutter/Vater']
-            },
-            
-            schuldgefühle: {
-                probability: 0.2,
-                variations: [
-                    'Hätte ich doch besser aufgepasst',
-                    'Ich hab {ihn/sie} allein gelassen',
-                    'Das ist meine Schuld'
-                ]
-            },
-            
-            überfordert: {
-                probability: 0.3,
-                info: 'Weiß nicht mehr weiter, passiert ständig',
-                pflege_überfordert: 0.7
+                reasons: {
+                    patient_kommt_nicht_ran: 0.7,
+                    nachbar_sieht_nur_durchs_fenster: 0.3
+                },
+                funkspruch: '{callsign}, kein Zugang, Patient liegt am Boden, FW zur Türöffnung!'
             }
         },
         
-        soziale_situation: {
-            allein_lebend: {
-                probability: 0.5,
-                effects: {
-                    lange_gelegen_wahrscheinlicher: 0.8,
-                    nachversorgung_problem: 0.6
-                }
+        zustand_wohnung: {
+            normal: { probability: 0.6 },
+            
+            unordentlich: {
+                probability: 0.25,
+                info: 'Viele Stolperfallen'
             },
             
-            keine_angehörigen: {
+            verwahrlost: {
                 probability: 0.15,
+                indicators: [
+                    'sehr unordentlich',
+                    'unhygienisch',
+                    'viele Hindernisse'
+                ],
                 effects: {
-                    sozialamt_evtl: 0.6,
-                    pflegeheim_überlegung: 0.4
+                    sozialamt_info: 0.7,
+                    selbstversorgung_fraglich: 0.8
                 }
             }
         }
     },
     
+    // ========================================
+    // 👥 SOZIALE DYNAMIK
+    // ========================================
+    sozial: {
+        wohnsituation: {
+            alleinlebend: {
+                probability: 0.5,
+                effects: {
+                    liegezeit_oft_länger: 0.7,
+                    nachbetreuung_problem: 0.8
+                }
+            },
+            
+            mit_angehörigen: {
+                probability: 0.35,
+                sofort_gefunden: 0.9
+            },
+            
+            pflegeheim: {
+                probability: 0.15,
+                siehe: 'locations.pflegeheim'
+            }
+        },
+        
+        angehörige: {
+            sehr_besorgt: {
+                probability: 0.6,
+                variations: [
+                    'hat große Angst',
+                    'macht sich Sorgen',
+                    'weint'
+                ]
+            },
+            
+            schuldgefühle: {
+                probability: 0.25,
+                variations: [
+                    'Ich hätte aufpassen müssen!',
+                    'Das ist meine Schuld!',
+                    'Ich war nur kurz weg!'
+                ]
+            },
+            
+            wollen_mitfahren: {
+                probability: 0.7,
+                info: 'Können wir mit ins Krankenhaus?'
+            }
+        },
+        
+        schamgefühl: {
+            patient_schämt_sich: {
+                probability: 0.3,
+                reasons: [
+                    'Im Badezimmer gestürzt (nackt)',
+                    'Schämt sich für Wohnzustand',
+                    'Will nicht als hilfsbedürftig gelten'
+                ]
+            }
+        }
+    },
+    
+    // ========================================
+    // 🗺️ LOCATIONS
+    // ========================================
     locations: {
         wohnhaus: {
             probability: 0.75,
             address_types: ['residential', 'apartment'],
-            räume: {
-                badezimmer: 0.35,
-                schlafzimmer: 0.2,
-                wohnzimmer: 0.2,
-                flur: 0.15,
-                küche: 0.1
-            }
+            siehe: 'sturz_ort'
         },
         
         pflegeheim: {
             probability: 0.15,
             address_types: ['nursing_home'],
             pfleger_vor_ort: 1.0,
-            dokumentation_vorhanden: 0.9
+            sturzprotokoll_vorhanden: 0.9,
+            vorerkrankungen_bekannt: 1.0
+        },
+        
+        betreutes_wohnen: {
+            probability: 0.08,
+            address_types: ['residential'],
+            hausnotruf_oft: 0.7
         },
         
         öffentlich: {
-            probability: 0.07,
-            address_types: ['street', 'park', 'supermarket'],
-            zeugen: { min: 1, max: 5 }
-        },
-        
-        treppenhaus: {
-            probability: 0.03,
-            address_types: ['stairwell'],
-            schwerer: 0.7
+            probability: 0.02,
+            address_types: ['street', 'pedestrian'],
+            zeugen: { min: 1, max: 3 },
+            siehe_auch: 'sturz_öffentlich_template'
         }
     },
     
+    // ========================================
+    // 🚑 NACHFORDERUNGEN
+    // ========================================
     nachforderungen: {
         feuerwehr: {
-            probability: 0.5,
+            probability: 0.45,
             trigger_time: { min: 0, max: 120 },
             reasons: {
-                tragehilfe: { probability: 0.7, funkspruch: '{callsign}, Patient kann nicht laufen, benötigen FW Tragehilfe, kommen.' },
-                türöffnung: { probability: 0.25, funkspruch: '{callsign}, kein Zugang, FW zur Türöffnung, kommen.' },
-                patientenlift: { probability: 0.05, funkspruch: '{callsign}, adipöser Patient, benötigen FW mit Patientenlift, kommen.' }
+                tragehilfe: {
+                    probability: 0.8,
+                    funkspruch: '{callsign}, Patient kann nicht laufen, {floor} OG, benötigen FW Tragehilfe, kommen.'
+                },
+                türöffnung: {
+                    probability: 0.2,
+                    funkspruch: '{callsign}, kein Zugang, Patient am Boden, FW zur Türöffnung, kommen.'
+                }
             }
         },
         
         nef: {
-            probability: 0.08,
+            probability: 0.05,
             trigger_time: { min: 120, max: 300 },
-            reasons: ['Bewusstlosigkeit', 'Vitalwerte kritisch', 'Polytrauma'],
-            funkspruch: '{callsign}, Patient kritischer als gedacht, benötigen NEF, kommen.'
+            reasons: [
+                'Patient instabil',
+                'Schwere Kopfverletzung',
+                'Bewusstseinsstörung'
+            ]
         }
     },
     
+    // ========================================
+    // ⚡ ESKALATION
+    // ========================================
     eskalation: {
         verschlechterung: {
-            verborgene_verletzungen: {
+            schock: {
                 probability: 0.1,
-                trigger_time: { min: 180, max: 360 },
-                types: ['innere Blutung', 'Milzriss', 'Leberruptur'],
-                funkspruch: '{callsign}, Patient verschlechtert sich, Verdacht innere Verletzung, kommen.'
+                trigger_time: { min: 120, max: 300 },
+                changes: ['Patient wird kreislaufschwach', 'Blutdruck fällt'],
+                ursachen: ['Innere Blutung', 'Schmerz']
+            }
+        },
+        
+        überraschungen: {
+            schwerer_als_gedacht: {
+                probability: 0.2,
+                funkspruch: '{callsign}, Verletzungen schwerer als gemeldet, {details}, kommen.'
+            },
+            
+            war_schlaganfall: {
+                probability: 0.08,
+                info: 'Sturz war Folge eines Schlaganfalls',
+                upgrade_stichwort: 'Schlaganfall',
+                neurologische_ausfälle: 0.9
+            },
+            
+            war_herzinfarkt: {
+                probability: 0.03,
+                info: 'Sturz durch Herzinfarkt verursacht',
+                upgrade_stichwort: 'Herzinfarkt'
             }
         },
         
         besserung: {
-            kann_doch_aufstehen: {
+            nur_prellung: {
                 probability: 0.15,
-                trigger_time: { min: 120, max: 300 },
-                info: 'Mit Hilfe kann Patient aufstehen',
-                transport_vereinfacht: 1.0
-            },
-            
-            lehnt_transport_ab: {
-                probability: 0.1,
-                condition: 'keine_schwere_verletzung',
-                info: 'Patient will nicht ins Krankenhaus',
-                unterschrift_nötig: 1.0
+                funkspruch: '{callsign}, Patient stabilisiert, keine schweren Verletzungen, kommen.',
+                transport_trotzdem: 0.9
             }
         }
     },
     
+    // ========================================
+    // 🏥 DISPOSITION
+    // ========================================
     disposition: {
         base_recommendation: {
             rtw: 1,
-            nef: 0.08,
+            nef: 0.05,
             ktw: 0
         },
         
         klinik_auswahl: {
             priorität_1: {
-                condition: 'hüftfraktur',
+                condition: 'schenkelhalsfraktur',
                 hospitals: ['rems_murr_klinikum_winnenden', 'klinikum_ludwigsburg'],
-                reason: 'Unfallchirurgie, OP-Möglichkeit'
+                reason: 'Unfallchirurgie mit OP-Bereitschaft'
             },
             
             priorität_2: {
-                condition: 'kopfverletzung_blutverdünner',
+                condition: 'kopfverletzung_mit_blutverdünner',
                 hospitals: ['klinikum_ludwigsburg', 'katharinenhospital_stuttgart'],
-                reason: 'CT, Neurochirurgie'
+                reason: 'CT verfügbar, Neurochirurgie'
             },
             
             priorität_3: {
-                condition: 'leicht_verletzt',
+                condition: 'leichte_verletzung',
                 hospitals: ['nächstgelegenes'],
-                reason: 'Standardversorgung'
+                reason: 'Abklärung und Schmerztherapie'
             }
+        },
+        
+        voranmeldung: {
+            bei_op_indikation: 0.8,
+            infos: [
+                'Sturzhergang',
+                'Verdachtsdiagnose',
+                'Blutverdünner ja/nein',
+                'Vitalparameter'
+            ]
         }
     },
     
+    // ========================================
+    // 📻 FUNKSPRÜCHE
+    // ========================================
     funksprüche: {
         lagemeldungen: [
-            'Patient nach häuslichem Sturz',
-            'Sturz mit Verdacht auf Hüftfraktur',
-            'Sturz, Patient liegt seit Stunden am Boden',
-            'Sturz mit Kopfverletzung, Patient nimmt Blutverdünner',
-            'Patient nach Sturz, kann nicht aufstehen'
+            'Patient nach Sturz, Verdacht auf {Verletzung}',
+            'Sturz häuslich, Patient kann nicht aufstehen',
+            'Sturz mit Hüftverletzung, Tragehilfe erforderlich',
+            'Patient gestürzt, {Alter} Jahre, multiple Prellungen',
+            'Sturz im Bad, Platzwunde am Kopf'
         ]
     },
     
+    // ========================================
+    // 📊 SPECIAL
+    // ========================================
     special: {
+        nachbetreuung: {
+            problem: {
+                probability: 0.4,
+                variations: [
+                    'Patient lebt allein, kann nicht allein bleiben',
+                    'Wer kümmert sich nach Entlassung?',
+                    'Wohnung nicht barrierefrei'
+                ],
+                sozialamt_kontakt: 0.6
+            }
+        },
+        
         häufigkeit: {
-            info: 'Häufigster RD-Einsatz bei älteren Menschen',
-            wiederholungsgefahr: 0.6
+            erstmaliger_sturz: { probability: 0.6 },
+            wiederholter_sturz: { probability: 0.4, sturzrisiko_assessment: 1.0 }
         },
         
         prävention: {
-            stolperfallen: ['Teppiche', 'Kabel', 'schlechte Beleuchtung'],
-            empfehlungen: ['Hausnotruf', 'Gehhilfe', 'Wohnung anpassen']
+            stolperfallen: {
+                probability: 0.5,
+                examples: ['Teppiche', 'Kabel', 'schlechte Beleuchtung']
+            }
         }
     }
 };
 
+// Export
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { STURZ_TEMPLATE };
 }
