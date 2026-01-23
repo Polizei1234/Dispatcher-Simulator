@@ -1,8 +1,9 @@
 // =========================
-// FAHRZEUG-FUNKSYSTEM MIT GROQ v1.0
+// FAHRZEUG-FUNKSYSTEM MIT GROQ v1.1
 // + Intelligente Fahrzeugantworten
 // + Kontextabhängige Reaktionen
 // + Automatische Status-Updates
+// + Timeout & Error Handling
 // =========================
 
 class RadioSystem {
@@ -10,6 +11,7 @@ class RadioSystem {
         this.conversationHistory = new Map(); // vehicleId -> [{role, content}]
         this.lastRadioCallTime = Date.now();
         this.selectedVehicleId = null;
+        this.pendingRequests = new Map(); // vehicleId -> AbortController
     }
 
     /**
@@ -29,42 +31,60 @@ class RadioSystem {
      */
     async sendRadioToVehicle(message) {
         if (!this.selectedVehicleId) {
-            addRadioMessage('System', 'Bitte wählen Sie zuerst ein Fahrzeug aus.', 'error');
+            if (typeof addRadioMessage !== 'undefined') {
+                addRadioMessage('System', 'Bitte wählen Sie zuerst ein Fahrzeug aus.', 'error');
+            }
             return;
         }
 
         const vehicle = game.vehicles.find(v => v.id === this.selectedVehicleId);
         if (!vehicle) {
-            addRadioMessage('System', 'Fahrzeug nicht gefunden.', 'error');
+            if (typeof addRadioMessage !== 'undefined') {
+                addRadioMessage('System', 'Fahrzeug nicht gefunden.', 'error');
+            }
             return;
         }
 
-        // Prüfe ob Fahrzeug funkbereit ist (nicht Status 2)
-        if (vehicle.status === 2) {
-            addRadioMessage('System', `${vehicle.callsign} ist nicht erreichbar (Status 2 - Sprechwunsch).`, 'error');
+        // ✅ FIX: Prüfe Status genauer - Status 2 bedeutet "nicht erreichbar"
+        // Aber nur wenn Fahrzeug wirklich Status 2 hat (nicht 1, 3, 4, etc.)
+        if (vehicle.status === 2 || vehicle.currentStatus === 2) {
+            if (typeof addRadioMessage !== 'undefined') {
+                addRadioMessage('System', `${vehicle.callsign} ist derzeit nicht erreichbar (Status 2 - Sprechwunsch). Versuchen Sie es später erneut.`, 'error');
+            }
             return;
         }
 
         // Zeige Disponent-Nachricht
-        addRadioMessage('Leitstelle', `An ${vehicle.callsign}: ${message}`, 'dispatcher');
+        if (typeof addRadioMessage !== 'undefined') {
+            addRadioMessage('Leitstelle', `An ${vehicle.callsign}: ${message}`, 'dispatcher');
+        }
 
         // Speichere in History
         const history = this.conversationHistory.get(this.selectedVehicleId);
         history.push({ role: 'assistant', content: message });
 
         // Generiere intelligente Antwort
-        const response = await this.generateVehicleResponse(message, vehicle);
+        try {
+            const response = await this.generateVehicleResponse(message, vehicle);
 
-        // Zeige Fahrzeugantwort nach kurzer Verzögerung
-        setTimeout(() => {
-            addRadioMessage(vehicle.callsign, response, 'vehicle');
-            history.push({ role: 'user', content: response });
-            
-            // Begrenze History auf letzte 10 Nachrichten
-            if (history.length > 10) {
-                history.splice(0, history.length - 10);
+            // Zeige Fahrzeugantwort nach kurzer Verzögerung
+            setTimeout(() => {
+                if (typeof addRadioMessage !== 'undefined') {
+                    addRadioMessage(vehicle.callsign, response, 'vehicle');
+                }
+                history.push({ role: 'user', content: response });
+                
+                // Begrenze History auf letzte 10 Nachrichten
+                if (history.length > 10) {
+                    history.splice(0, history.length - 10);
+                }
+            }, 800 + Math.random() * 600); // 0.8-1.4s Verzögerung
+        } catch (error) {
+            console.error('❌ Fehler bei Fahrzeugantwort:', error);
+            if (typeof addRadioMessage !== 'undefined') {
+                addRadioMessage('System', `Kommunikationsfehler mit ${vehicle.callsign}`, 'error');
             }
-        }, 800 + Math.random() * 600); // 0.8-1.4s Verzögerung
+        }
     }
 
     /**
@@ -95,6 +115,7 @@ class RadioSystem {
         if (message.includes('status') || message.includes('rückmeldung')) {
             const statusTexts = {
                 1: 'Einsatzbereit auf Wache',
+                2: 'Sprechwunsch',
                 3: 'Einsatzbereit außerhalb',
                 4: `Anfahrt zu ${incident ? incident.location : 'Einsatzort'}`,
                 5: `Sprechwunsch - ${incident ? incident.location : 'Einsatzort'}`,
@@ -157,12 +178,21 @@ class RadioSystem {
     }
 
     /**
-     * KI-generierte Antwort für komplexe Anfragen
+     * KI-generierte Antwort für komplexe Anfragen mit Timeout
      */
     async generateAIResponse(message, vehicle) {
         if (!game || !game.apiKey) {
             return this.getFallbackResponse(vehicle);
         }
+
+        // Abbrechen wenn bereits Request läuft
+        if (this.pendingRequests.has(vehicle.id)) {
+            const controller = this.pendingRequests.get(vehicle.id);
+            controller.abort();
+        }
+
+        const controller = new AbortController();
+        this.pendingRequests.set(vehicle.id, controller);
 
         try {
             const incident = game.incidents.find(i => 
@@ -201,6 +231,9 @@ BEISPIELE:
 
             const history = this.conversationHistory.get(vehicle.id) || [];
 
+            // ✅ FIX: Timeout nach 10 Sekunden
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
             const response = await fetch(CONFIG.GROQ_API_URL, {
                 method: 'POST',
                 headers: {
@@ -216,10 +249,23 @@ BEISPIELE:
                     ],
                     temperature: 0.7,
                     max_tokens: 80
-                })
+                }),
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
+            this.pendingRequests.delete(vehicle.id);
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
             const data = await response.json();
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                throw new Error('Invalid API response structure');
+            }
+
             let reply = data.choices[0].message.content.trim();
 
             // Stelle sicher, dass Antwort mit "kommen" endet
@@ -229,7 +275,14 @@ BEISPIELE:
 
             return reply;
         } catch (error) {
-            console.error('Groq API Fehler:', error);
+            this.pendingRequests.delete(vehicle.id);
+            
+            if (error.name === 'AbortError') {
+                console.warn(`⏱️ Groq API Timeout für ${vehicle.callsign}`);
+            } else {
+                console.error('❌ Groq API Fehler:', error);
+            }
+            
             return this.getFallbackResponse(vehicle);
         }
     }
@@ -270,21 +323,40 @@ BEISPIELE:
      */
     sendAutoStatusUpdate(vehicle, newStatus, incident = null) {
         const messages = {
-            4: `${vehicle.callsign}, ausgerückt, fahren zu ${incident ? incident.location : 'Einsatzort'}, kommen.`,
+            4: `${vehicle.callsign}, ausrücken zu ${incident ? incident.location : 'Einsatzort'}, kommen.`,
             6: `${vehicle.callsign}, vor Ort, beginnen mit Versorgung, kommen.`,
             7: `${vehicle.callsign}, Patient aufgenommen, fahren ins ${vehicle.targetHospital || 'Krankenhaus'}, kommen.`,
             1: `${vehicle.callsign}, zurück auf Wache, einsatzbereit, kommen.`,
+            2: `${vehicle.callsign}, auf Wache, Sprechwunsch, kommen.`,
             3: `${vehicle.callsign}, einsatzbereit außerhalb, kommen.`
         };
 
         const message = messages[newStatus];
-        if (message) {
+        if (message && typeof addRadioMessage !== 'undefined') {
             setTimeout(() => {
                 addRadioMessage(vehicle.callsign, message, 'vehicle-auto');
             }, 500);
         }
     }
+
+    /**
+     * Bereinigt ausstehende Requests
+     */
+    cleanup() {
+        for (const [vehicleId, controller] of this.pendingRequests.entries()) {
+            controller.abort();
+        }
+        this.pendingRequests.clear();
+        console.log('🧹 Radio System cleanup ausgeführt');
+    }
 }
 
 // Globale Radio-System Instanz
 const radioSystem = new RadioSystem();
+
+// Cleanup bei Seitenwechsel
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+        if (radioSystem) radioSystem.cleanup();
+    });
+}
