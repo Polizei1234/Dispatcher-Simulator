@@ -1,5 +1,5 @@
 // =========================================================================================
-// ATEMNOT TEMPLATE - Unklare Genese, vielfältige Ursachen
+// ATEMNOT TEMPLATE - Häufiger Notfall mit vielen möglichen Ursachen
 // =========================================================================================
 
 import { GLOBAL_CONFIG } from '../_config.js';
@@ -9,102 +9,168 @@ export const ATEMNOT_TEMPLATE = {
     id: 'atemnot',
     kategorie: 'rd',
     stichwort: 'Atemnot',
-    weight: 4,
+    weight: 4,  // Sehr häufig!
     
+    // ========================================
+    // 📞 ANRUFER-VARIANZ
+    // ========================================
     anrufer: {
         typen: {
-            angehöriger_besorgt: {
-                probability: 0.5,
-                speech_pattern: 'besorgt, aufgeregt',
-                variations: [
-                    'Er bekommt keine Luft mehr!',
-                    'Sie kann nicht mehr atmen!',
-                    'Hilfe, {er/sie} kriegt keine Luft!',
-                    '{Er/Sie} schnappt nach Luft!'
-                ]
-            },
-            
             patient_selbst: {
                 probability: 0.35,
                 speech_pattern: 'kurzatmig, spricht in kurzen Sätzen',
                 variations: [
                     'Ich... bekomme... keine Luft...',
-                    'Kann... nicht... atmen...',
-                    'Hilfe... Atemnot...'
+                    'Hilfe... ich... kann nicht... atmen...',
+                    'Luft... bitte... schnell...'
                 ],
                 effects: {
-                    atemnot_hörbar: 1.0,
-                    kritischer: 0.6
+                    hörbare_atemnot: 1.0,
+                    angst_deutlich: 0.9,
+                    sätze_unterbrochen: 1.0
                 }
             },
             
-            nachbar: {
-                probability: 0.08,
-                speech_pattern: 'unsicher',
+            angehöriger_besorgt: {
+                probability: 0.45,
+                speech_pattern: 'besorgt, manchmal panisch',
                 variations: [
-                    'Mein Nachbar hat angerufen, er bekommt keine Luft',
-                    'Höre jemanden röcheln'
+                    'Mein Mann bekommt keine Luft mehr!',
+                    'Sie ringt nach Luft!',
+                    'Er kriegt keine Luft, wird ganz blau!',
+                    'Sie atmet so schwer!'
                 ]
             },
             
+            angehöriger_gewohnt: {
+                probability: 0.1,
+                speech_pattern: 'ruhig, kennt Situation',
+                variations: [
+                    'Die Atemnot ist wieder schlimmer geworden',
+                    'Er braucht wieder Sauerstoff',
+                    'Wie immer bei {ihm/ihr}, aber diesmal schlimmer'
+                ],
+                info: 'Chronische Erkrankung bekannt'
+            },
+            
             pflegepersonal: {
-                probability: 0.07,
+                probability: 0.08,
                 speech_pattern: 'professionell',
                 variations: [
                     'Bewohner mit akuter Dyspnoe',
-                    'Patient hat Atemnot, Sauerstoffsättigung abgefallen'
+                    'Patient zunehmend dyspnoisch',
+                    'SpO2 abfallend, Dyspnoe'
                 ],
                 location: 'pflegeheim'
+            },
+            
+            zeuge: {
+                probability: 0.02,
+                speech_pattern: 'unsicher',
+                variations: [
+                    'Hier bekommt jemand keine Luft!',
+                    'Die Person da atmet komisch!'
+                ],
+                location: 'öffentlich'
             }
         },
         
         dynamik: {
-            wird_schlechter: {
-                probability: 0.3,
+            patient_spricht_nicht_mehr: {
+                probability: 0.2,
                 trigger_time: { min: 60, max: 180 },
-                change: 'Atemnot wird schlimmer! {Er/Sie} kriegt kaum noch Luft!'
+                change: 'Patient kann nicht mehr sprechen, nur noch nach Luft ringen',
+                effects: {
+                    kritischer: 1.0,
+                    nef_wahrscheinlicher: 0.7
+                }
             },
             
-            kann_nicht_mehr_sprechen: {
-                probability: 0.15,
-                trigger_time: { min: 90, max: 240 },
-                change: '{Er/Sie} kann nicht mehr sprechen, nur noch röcheln!',
-                upgrade_stichwort: 'Bewusstlosigkeit'
+            wird_panischer: {
+                probability: 0.3,
+                trigger_time: { min: 30, max: 120 },
+                change: 'Atemnot wird schlimmer! {Er/Sie} bekommt gar keine Luft mehr!'
             }
         }
     },
     
+    // ========================================
+    // 🧑 PATIENT
+    // ========================================
     patient: {
         geschlecht: {
-            male: 0.52,
-            female: 0.48
+            male: 0.48,
+            female: 0.52
         },
         
         alter: {
-            distribution: 'normal',
-            mean: 65,
-            stddev: 18,
-            min: 20,
+            distribution: 'bimodal',
+            peak1: { mean: 68, stddev: 12, weight: 0.65 },  // Ältere (COPD, Herzinsuffizienz)
+            peak2: { mean: 45, stddev: 15, weight: 0.35 },  // Jüngere (Asthma, Lungenembolie)
+            min: 18,
             max: 95
+        },
+        
+        körperbau: {
+            adipositas: {
+                probability: 0.35,
+                effects: {
+                    atemnot_verstärkt: 0.8,
+                    transport_erschwert: 0.6
+                }
+            }
         }
     },
     
+    // ========================================
+    // 🫁 SYMPTOME
+    // ========================================
     symptome: {
-        atemnot: {
+        hauptsymptom_atemnot: {
             probability: 1.0,
             severity: {
                 leicht: {
                     probability: 0.2,
-                    variations: ['etwas kurzatmig', 'Luftnot bei Belastung']
+                    variations: ['atmet etwas schwer', 'leichte Atemnot']
                 },
                 mittel: {
                     probability: 0.5,
-                    variations: ['hat Atemnot', 'bekommt schlecht Luft', 'ringt nach Luft']
+                    variations: [
+                        'bekommt schlecht Luft',
+                        'ringt nach Luft',
+                        'atmet sehr schwer'
+                    ]
                 },
                 schwer: {
                     probability: 0.3,
-                    variations: ['schnappt nach Luft', 'kriegt gar keine Luft mehr', 'erstickt fast'],
-                    nef_wahrscheinlich: 0.7
+                    variations: [
+                        'bekommt fast keine Luft mehr',
+                        'kann kaum noch atmen',
+                        'schnappt nach Luft',
+                        'kämpft um jeden Atemzug'
+                    ],
+                    nef_wahrscheinlich: 0.6
+                }
+            },
+            
+            beginn: {
+                plötzlich: {
+                    probability: 0.4,
+                    variations: [
+                        'kam ganz plötzlich',
+                        'auf einmal keine Luft mehr',
+                        'von jetzt auf gleich'
+                    ],
+                    ursachen_wahrscheinlich: ['Lungenembolie', 'Pneumothorax', 'allergische Reaktion']
+                },
+                schleichend: {
+                    probability: 0.6,
+                    variations: [
+                        'wurde immer schlimmer',
+                        'seit heute morgen schlechter',
+                        'die letzten Stunden zugenommen'
+                    ],
+                    ursachen_wahrscheinlich: ['COPD-Exazerbation', 'Herzinsuffizienz', 'Pneumonie']
                 }
             }
         },
@@ -112,334 +178,552 @@ export const ATEMNOT_TEMPLATE = {
         atemgeräusche: {
             giemen_pfeifen: {
                 probability: 0.4,
-                variations: ['pfeift beim Atmen', 'man hört ein Giemen'],
-                hinweis: 'Asthma/COPD wahrscheinlich'
+                variations: [
+                    'pfeift beim Atmen',
+                    'die Lunge pfeift',
+                    'macht komische Atemgeräusche'
+                ],
+                hinweis: 'Asthma oder COPD wahrscheinlich'
             },
             
             rasseln_brodeln: {
                 probability: 0.25,
-                variations: ['rasselt beim Atmen', 'hört sich feucht an', 'brodelt in der Lunge'],
-                hinweis: 'Lungenödem/Pneumonie'
+                variations: [
+                    'rasselt in der Brust',
+                    'brodelt beim Atmen',
+                    'klingt als hätte {er/sie} Wasser in der Lunge'
+                ],
+                hinweis: 'Lungenödem wahrscheinlich'
             },
             
             stridor: {
                 probability: 0.05,
-                variations: ['macht komische Geräusche beim Einatmen'],
-                hinweis: 'Verlegung obere Atemwege'
+                variations: [
+                    'zieht die Luft mit Geräusch ein',
+                    'komisches Einatmungsgeräusch'
+                ],
+                hinweis: 'Verlegung der oberen Atemwege'
             }
         },
         
         husten: {
             probability: 0.5,
             types: {
-                trocken: { probability: 0.4 },
-                produktiv: { probability: 0.4 },
-                blutig: { probability: 0.2, kritisch: 1.0 }
-            },
-            variations: ['hustet stark', 'muss ständig husten', 'hustet Blut']
+                trocken: {
+                    probability: 0.4,
+                    variations: ['hustet trocken', 'trockener Reizhusten']
+                },
+                produktiv: {
+                    probability: 0.4,
+                    variations: ['hustet Schleim', 'hustet gelb-grün'],
+                    hinweis: 'Infekt wahrscheinlich'
+                },
+                blutig: {
+                    probability: 0.2,
+                    variations: ['hustet Blut', 'blutiger Auswurf'],
+                    hinweis: 'Lungenembolie oder Tumor möglich',
+                    kritisch: 1.0
+                }
+            }
         },
         
         brustschmerzen: {
-            probability: 0.3,
-            variations: ['hat auch Schmerzen in der Brust', 'Brust tut weh'],
-            differentialdiagnose: ['Herzinfarkt', 'Lungenembolie', 'Pneumothorax']
+            probability: 0.35,
+            types: {
+                stechend: {
+                    probability: 0.5,
+                    variations: [
+                        'stechende Schmerzen in der Brust',
+                        'sticht beim Atmen'
+                    ],
+                    hinweis: 'Lungenembolie oder Pneumothorax möglich'
+                },
+                druck: {
+                    probability: 0.3,
+                    variations: ['Druckgefühl auf der Brust', 'Enge in der Brust'],
+                    hinweis: 'Herzinfarkt ausschließen!'
+                },
+                atemabhängig: {
+                    probability: 0.2,
+                    variations: ['Schmerzen beim Einatmen'],
+                    hinweis: 'Rippenfellentzündung möglich'
+                }
+            }
         },
         
         zyanose: {
-            probability: 0.25,
-            variations: ['Lippen sind blau', 'wird ganz blau im Gesicht', 'Finger sind blau'],
-            severity: 'kritisch'
+            probability: 0.3,
+            variations: [
+                'wird ganz blau',
+                'Lippen sind blau',
+                'läuft blau an',
+                'sieht ganz blau aus'
+            ],
+            effects: {
+                kritisch: 1.0,
+                nef_wahrscheinlich: 0.8
+            }
         },
         
         angst_panik: {
-            probability: 0.6,
+            probability: 0.7,
             variations: [
                 'hat total Angst',
                 'ist in Panik',
-                'denkt {er/sie} stirbt',
-                'hat Todesangst'
-            ]
+                '{Er/Sie} denkt {er/sie} stirbt jetzt',
+                'schreit vor Angst'
+            ],
+            todesangst: {
+                probability: 0.3,
+                info: 'Klassisches Zeichen bei Lungenembolie'
+            }
         },
         
         schwitzen: {
-            probability: 0.4,
-            variations: ['schwitzt stark', 'ist nass geschwitzt']
+            probability: 0.5,
+            variations: [
+                'schwitzt stark',
+                'ist schweißgebadet',
+                'Schweiß läuft {ihm/ihr} runter'
+            ]
         },
         
-        schwindel: {
-            probability: 0.3,
-            variations: ['ist schwindelig', 'alles dreht sich']
+        erschöpfung: {
+            probability: 0.6,
+            variations: [
+                'ist völlig erschöpft',
+                'kann nicht mehr',
+                'hat keine Kraft mehr zum Atmen'
+            ],
+            effects: {
+                intubation_wahrscheinlicher: 0.4
+            }
         },
         
         bewusstseinsstörung: {
             probability: 0.15,
             levels: {
-                verwirrt: { probability: 0.6, variations: ['ist verwirrt', 'redet wirr'] },
-                somnolent: { probability: 0.3, variations: ['wird schläfrig', 'reagiert kaum'] },
-                bewusstlos: { probability: 0.1, variations: ['ist bewusstlos'], upgrade: 'Bewusstlosigkeit' }
+                verwirrt: {
+                    probability: 0.6,
+                    variations: ['ist ganz verwirrt', 'redet wirr']
+                },
+                somnolent: {
+                    probability: 0.3,
+                    variations: ['wird schläfrig', 'kaum ansprechbar'],
+                    kritisch: 1.0
+                },
+                bewusstlos: {
+                    probability: 0.1,
+                    upgrade_stichwort: 'Bewusstlosigkeit',
+                    nef_zwingend: 1.0
+                }
             }
-        }
-    },
-    
-    ursachen: {
-        asthma_anfall: {
+        },
+        
+        orthopnoe: {
+            probability: 0.4,
+            variations: [
+                'kann nur noch sitzen',
+                'muss aufrecht sitzen',
+                'geht nur im Sitzen'
+            ],
+            hinweis: 'Herzinsuffizienz wahrscheinlich'
+        },
+        
+        beinödeme: {
             probability: 0.25,
-            indicators: ['giemen', 'bekannter Asthmatiker', 'Spray hilft nicht'],
-            medikamente: ['Salbutamol', 'Cortison']
-        },
-        
-        copd_exazerbation: {
-            probability: 0.2,
-            indicators: ['bekannter COPD', 'älterer Patient', 'Raucher'],
-            vorerkrankung: 1.0
-        },
-        
-        herzinsuffizienz_lungenödem: {
-            probability: 0.15,
-            indicators: ['rasselnde Atmung', 'Herzerkrankung bekannt', 'Beinschweißung'],
-            kritisch: 0.7
-        },
-        
-        pneumonie: {
-            probability: 0.15,
-            indicators: ['Fieber', 'Husten', 'Auswurf'],
-            dauer: 'mehrere Tage'
-        },
-        
-        lungenembolie: {
-            probability: 0.05,
-            indicators: ['plötzliche Atemnot', 'Brustschmerz', 'nach OP/Flug'],
-            kritisch: 0.9,
-            nef_zwingend: 0.8
-        },
-        
-        pneumothorax: {
-            probability: 0.03,
-            indicators: ['plötzlicher stechender Schmerz', 'einseitig'],
-            kritisch: 0.8
-        },
-        
-        hyperventilation_panik: {
-            probability: 0.1,
-            indicators: ['sehr aufgeregt', 'Kribbeln in Händen', 'Angst'],
-            bagatell_potential: 0.6
-        },
-        
-        aspiration: {
-            probability: 0.03,
-            indicators: ['beim Essen passiert', 'verschluckt'],
-            akut: 1.0
-        },
-        
-        anaphylaxie: {
-            probability: 0.02,
-            indicators: ['nach Insektenstich', 'nach Essen', 'Schwellung'],
-            kritisch: 0.9,
-            adrenalin_nötig: 1.0
-        },
-        
-        herzinfarkt: {
-            probability: 0.02,
-            indicators: ['Brustschmerz', 'Übelkeit', 'Schwitzen'],
-            kritisch: 0.9
+            variations: [
+                'hat geschwollene Beine',
+                'dicke Beine',
+                'Wasser in den Beinen'
+            ],
+            hinweis: 'Herzinsuffizienz'
         }
     },
     
+    // ========================================
+    // 🏥 MEDIZINISCH - MÖGLICHE URSACHEN
+    // ========================================
     medizinisch: {
+        wahrscheinliche_ursache: {
+            copd_exazerbation: {
+                probability: 0.25,
+                indicators: ['Raucher', 'bekannte COPD', 'Giemen', 'langsamer Beginn'],
+                medikamente: ['Inhalator', 'Cortison'],
+                info: 'Häufigste Ursache bei Rauchern >60'
+            },
+            
+            asthma_anfall: {
+                probability: 0.15,
+                indicators: ['jünger', 'bekanntes Asthma', 'Giemen', 'plötzlicher Beginn'],
+                auslöser: ['Anstrengung', 'Allergen', 'Infekt'],
+                medikamente: ['Spray vergessen', 'Spray hilft nicht']
+            },
+            
+            herzinsuffizienz: {
+                probability: 0.2,
+                indicators: ['Orthopnoe', 'Beinödeme', 'Rasseln', 'bekannte Herzschwäche'],
+                info: 'Linksherzinsuffizienz mit Lungenödem'
+            },
+            
+            pneumonie: {
+                probability: 0.15,
+                indicators: ['Fieber', 'Husten produktiv', 'Schüttelfrost'],
+                info: 'Lungenentzündung'
+            },
+            
+            lungenembolie: {
+                probability: 0.08,
+                indicators: [
+                    'plötzlicher Beginn',
+                    'Todesangst',
+                    'Brustschmerzen stechend',
+                    'nach OP/langer Reise'
+                ],
+                risikofaktoren: ['Thrombose', 'OP kürzlich', 'lange Flugreise'],
+                kritisch: 1.0,
+                info: 'Lebensbedrohlich!'
+            },
+            
+            pneumothorax: {
+                probability: 0.03,
+                indicators: [
+                    'plötzlicher Beginn',
+                    'einseitige Schmerzen',
+                    'nach Trauma/spontan'
+                ],
+                info: 'Lunge kollabiert'
+            },
+            
+            allergische_reaktion: {
+                probability: 0.05,
+                indicators: [
+                    'plötzlicher Beginn',
+                    'nach Essen/Medikament',
+                    'Schwellung',
+                    'Hautausschlag'
+                ],
+                kann_zu_anaphylaxie: 0.4
+            },
+            
+            panikattacke: {
+                probability: 0.05,
+                indicators: [
+                    'jünger',
+                    'extreme Angst',
+                    'Kribbeln',
+                    'keine objektiven Zeichen'
+                ],
+                info: 'Hyperventilation, oft Fehlalarm'
+            },
+            
+            herzinfarkt: {
+                probability: 0.04,
+                indicators: [
+                    'Brustschmerzen',
+                    'Risikofaktoren',
+                    'Schwitzen'
+                ],
+                info: 'Atemnot kann Hauptsymptom sein!',
+                kritisch: 1.0
+            }
+        },
+        
         vorerkrankungen: {
             probability: 0.85,
             types: {
-                asthma: { probability: 0.3 },
-                copd: { probability: 0.25 },
-                herzinsuffizienz: { probability: 0.2 },
+                copd: { probability: 0.35, info: 'Chronisch obstruktive Lungenerkrankung' },
+                asthma: { probability: 0.2 },
+                herzinsuffizienz: { probability: 0.25 },
                 koronare_herzkrankheit: { probability: 0.15 },
-                lungenfibrose: { probability: 0.05 },
-                lungenkrebs: { probability: 0.05 }
+                diabetes: { probability: 0.3 },
+                raucher: { probability: 0.5 }
             }
         },
         
         medikamente: {
             atemwegs_medikamente: {
-                probability: 0.5,
-                types: ['Salbutamol-Spray', 'Cortison-Spray', 'Theophyllin']
+                probability: 0.6,
+                types: {
+                    inhalator: { probability: 0.7, variations: ['Spray', 'Dosieraerosol'] },
+                    cortison: { probability: 0.4 },
+                    sauerstoff_zuhause: { probability: 0.2 }
+                }
             },
-            herzmedikamente: { probability: 0.4 },
-            sauerstoff_zuhause: { probability: 0.15 }
+            
+            herz_medikamente: {
+                probability: 0.5,
+                types: {
+                    wassertabletten: { probability: 0.6 },
+                    betablocker: { probability: 0.4 }
+                }
+            },
+            
+            medikament_vergessen: {
+                probability: 0.15,
+                info: 'Hat Medikamente nicht genommen'
+            }
         },
         
-        auslöser: {
-            infektion: { probability: 0.35, info: 'Erkältung/Grippe' },
-            allergie: { probability: 0.1, info: 'Pollen/Staub/Tiere' },
-            anstrengung: { probability: 0.15, info: 'Körperliche Belastung' },
-            stress: { probability: 0.1, info: 'Psychische Belastung' },
-            spontan: { probability: 0.3, info: 'Ohne erkennbaren Auslöser' }
+        sauerstoffsättigung: {
+            gut: {
+                probability: 0.2,
+                wert: '>94%',
+                info: 'Trotz Atemnot okay'
+            },
+            mittel: {
+                probability: 0.5,
+                wert: '85-94%',
+                info: 'Sauerstoff erforderlich'
+            },
+            kritisch: {
+                probability: 0.3,
+                wert: '<85%',
+                info: 'Kritisch niedrig',
+                nef_wahrscheinlich: 0.7
+            }
         }
     },
     
+    // ========================================
+    // 🏠 UMGEBUNG
+    // ========================================
     umgebung: {
         gebäude: {
             kein_aufzug: {
-                probability: 0.12,
+                probability: 0.15,
                 effects: {
-                    patient_kann_nicht_laufen: 0.8,
-                    tragehilfe_nötig: 0.6
-                }
+                    patient_kann_nicht_laufen: 0.9,
+                    tragehilfe_wahrscheinlich: 0.7
+                },
+                funkspruch: '{callsign}, Patient mit Atemnot, kann nicht laufen, eventuell Tragehilfe nötig.'
             }
         },
         
-        luft_qualität: {
-            stickig_schlecht: {
+        luft: {
+            stickig: {
                 probability: 0.2,
-                variations: ['Luft ist sehr stickig', 'riecht nach Rauch', 'keine Fenster offen'],
-                verbesserung_nach_lüften: 0.3
+                variations: [
+                    'Wohnung sehr stickig',
+                    'keine frische Luft',
+                    'fenster alle zu'
+                ],
+                info: 'Lüften verbessert oft Situation'
             },
             
-            raucher_wohnung: {
-                probability: 0.3,
-                info: 'Starker Zigarettengeruch',
-                verschlechterungsfaktor: 1.0
+            rauchig: {
+                probability: 0.05,
+                variations: ['stark verrauchte Wohnung'],
+                hinweis: 'Starker Raucher'
             }
         }
     },
     
+    // ========================================
+    // 👥 SOZIALE DYNAMIK
+    // ========================================
     sozial: {
         angehörige: {
             sehr_besorgt: {
-                probability: 0.7,
-                manifestations: ['macht sich große Sorgen', 'hat Angst', 'weint']
+                probability: 0.6,
+                variations: [
+                    'hat große Angst',
+                    'macht sich Sorgen',
+                    'befürchtet das Schlimmste'
+                ]
             },
             
-            kennen_erkrankung: {
-                probability: 0.6,
-                info: 'Wissen von Vorerkrankung, haben Medikamente gegeben'
+            gewohnt: {
+                probability: 0.2,
+                info: 'Kennt die Situation, passiert öfter',
+                variations: [
+                    'Das hatte {er/sie} schon öfter',
+                    'Ist wie das letzte Mal'
+                ]
             }
         }
     },
     
+    // ========================================
+    // 🗺️ LOCATIONS
+    // ========================================
     locations: {
         wohnhaus: {
             probability: 0.75,
-            address_types: ['residential', 'apartment']
+            address_types: ['residential', 'apartment'],
+            räume: {
+                schlafzimmer: 0.35,
+                wohnzimmer: 0.4,
+                badezimmer: 0.15,
+                küche: 0.1
+            }
         },
         
         pflegeheim: {
             probability: 0.12,
             address_types: ['nursing_home'],
-            sauerstoff_vorhanden: 0.8
+            pfleger_vor_ort: 1.0,
+            sauerstoff_meist_verfügbar: 0.9
         },
         
         arbeitsplatz: {
-            probability: 0.06,
-            address_types: ['commercial', 'office']
+            probability: 0.08,
+            address_types: ['commercial', 'office'],
+            time_dependent: [7, 18]
         },
         
         öffentlich: {
-            probability: 0.05,
-            address_types: ['street', 'park']
+            probability: 0.03,
+            address_types: ['street', 'park'],
+            zeugen: { min: 1, max: 4 }
         },
         
         arztpraxis: {
             probability: 0.02,
             address_types: ['doctors'],
-            erstversorgung_läuft: 0.9
+            erstversorgung_läuft: 0.8
         }
     },
     
+    // ========================================
+    // 🚑 NACHFORDERUNGEN
+    // ========================================
     nachforderungen: {
         nef: {
-            probability: 0.3,
+            probability: 0.2,
             trigger_time: { min: 120, max: 300 },
-            reasons: ['Patient kritisch instabil', 'Intubation erforderlich', 'Sauerstoffsättigung kritisch'],
-            funkspruch: '{callsign}, Patient mit schwerer Atemnot, benötigen NEF, kommen.'
+            reasons: [
+                'Patient kritisch dyspnoisch',
+                'SpO2 trotz Sauerstoff niedrig',
+                'Intubation eventuell erforderlich',
+                'Bewusstseinstrübung'
+            ],
+            funkspruch: '{callsign}, Patient zunehmend erschöpft, benötigen NEF, kommen.'
         },
         
         feuerwehr: {
-            probability: 0.04,
+            probability: 0.08,
             reasons: {
-                tragehilfe: { probability: 0.8 },
-                türöffnung: { probability: 0.2 }
+                tragehilfe: { probability: 0.9 },
+                türöffnung: { probability: 0.1 }
             }
         }
     },
     
+    // ========================================
+    // ⚡ ESKALATION
+    // ========================================
     eskalation: {
         verschlechterung: {
             stufe_1: {
                 probability: 0.25,
                 trigger_time: { min: 120, max: 300 },
-                changes: ['Atemnot wird schlimmer', 'Sauerstoffsättigung fällt']
+                changes: ['Atemnot wird schlimmer', 'Patient immer erschöpfter'],
+                nef_anforderung: 0.7
             },
             
             stufe_2_bewusstlos: {
-                probability: 0.1,
+                probability: 0.05,
                 trigger_time: { min: 180, max: 420 },
-                changes: ['Patient bewusstlos', 'Keine ausreichende Atmung'],
+                changes: ['Patient bewusstlos', 'Atemstillstand droht'],
                 nef_sofort: 1.0,
                 upgrade_stichwort: 'Bewusstlosigkeit'
-            },
-            
-            stufe_3_reanimation: {
-                probability: 0.03,
-                trigger_time: { min: 240, max: 480 },
-                changes: ['Atemstillstand', 'Keine Reaktion'],
-                upgrade_stichwort: 'Reanimation'
             }
         },
         
         besserung: {
-            medikamente_wirken: {
+            spray_hilft: {
+                probability: 0.15,
+                trigger_time: { min: 120, max: 300 },
+                info: 'Nach Spray-Gabe deutlich besser',
+                funkspruch: '{callsign}, Patient stabilisiert, Spray hat geholfen, kommen.',
+                transport_trotzdem: 0.9
+            },
+            
+            sauerstoff_hilft: {
                 probability: 0.2,
                 trigger_time: { min: 180, max: 360 },
-                info: 'Spray/Sauerstoff wirkt, Atemnot bessert sich',
-                funkspruch: '{callsign}, Patient stabilisiert sich, Atemnot rückläufig, kommen.'
+                info: 'Unter Sauerstoff gebessert'
             }
         }
     },
     
+    // ========================================
+    // 🏥 DISPOSITION
+    // ========================================
     disposition: {
         base_recommendation: {
             rtw: 1,
-            nef: 0.3,
+            nef: 0.2,
             ktw: 0
         },
         
         klinik_auswahl: {
             priorität_1: {
-                condition: 'kritische_atemnot',
-                hospitals: ['klinikum_ludwigsburg', 'rems_murr_klinikum_winnenden'],
-                reason: 'Pneumologie/Intensivstation'
+                condition: 'kritisch_oder_lungenembolie',
+                hospitals: ['klinikum_ludwigsburg', 'rems_murr_klinikum_winnenden', 'katharinenhospital_stuttgart'],
+                reason: 'Intensivstation erforderlich'
             },
             
             priorität_2: {
                 condition: 'stabil',
                 hospitals: ['nächstgelegenes'],
-                reason: 'Standard-Versorgung ausreichend'
+                reason: 'Standardversorgung ausreichend'
             }
+        },
+        
+        voranmeldung: {
+            bei_kritik: 0.8,
+            infos: [
+                'Atemnot',
+                'SpO2-Wert',
+                'Vermutete Ursache',
+                'Vitalparameter'
+            ]
         }
     },
     
+    // ========================================
+    // 📻 FUNKSPRÜCHE
+    // ========================================
     funksprüche: {
         lagemeldungen: [
-            'Patient mit akuter Dyspnoe',
-            'Atemnot bei bekanntem Asthma/COPD',
-            'Patient ringt nach Luft, Sauerstoffgabe',
-            'Schwere Atemnot, Patient zyanotisch',
-            'Atemnot gebessert nach Medikamentengabe'
+            'Patient mit schwerer Dyspnoe',
+            'Atemnot unklarer Genese, SpO2 niedrig',
+            'Patient erschöpft, massive Atemnot',
+            'Verdacht auf {Ursache}, Patient dyspnoisch',
+            'Patient stabilisiert unter Sauerstoff'
         ]
     },
     
+    // ========================================
+    // 📊 SPECIAL
+    // ========================================
     special: {
-        differentialdiagnosen: {
-            wichtig: [
-                'Herzinfarkt ausschließen',
-                'Lungenembolie bei Risikofaktoren',
-                'Pneumothorax bei plötzlichem Beginn',
-                'Anaphylaxie bei Allergiehinweisen'
-            ]
+        verwechslungen: {
+            mit_herzinfarkt: {
+                probability: 0.15,
+                info: 'Atemnot kann Hauptsymptom bei Herzinfarkt sein!'
+            },
+            
+            mit_panikattacke: {
+                probability: 0.08,
+                info: 'Hyperventilation vs echte Atemnot schwer unterscheidbar',
+                bagatell_potential: 0.5
+            }
+        },
+        
+        realismus: {
+            chroniker: {
+                probability: 0.4,
+                info: 'Viele Patienten haben chronische Atemwegserkrankungen',
+                wiederkehrer: 0.3
+            }
         }
     }
 };
 
+// Export
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { ATEMNOT_TEMPLATE };
 }
