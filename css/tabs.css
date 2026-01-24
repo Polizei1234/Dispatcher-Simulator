@@ -1,511 +1,134 @@
 /* =====================================================
-   TAB NAVIGATION SYSTEM v6.0.0 - PROFESSIONAL EDITION
-   Clean, functional tab navigation for dispatch interface
+   TAB NAVIGATION v6.0.0 - PROFESSIONAL EDITION
+   Clean underline style for realistic dispatch interface
    ===================================================== */
 
 .tab-navigation {
-    display: flex;
     background: var(--panel-header);
-    border-bottom: 1px solid var(--border-medium);
+    display: flex;
     padding: 0;
-    margin: 0;
-    box-shadow: var(--shadow-sm);
-    height: 48px;
+    gap: 0;
+    border-bottom: 2px solid var(--border-light);
+    flex-shrink: 0;
+    height: 50px;
+    align-items: stretch;
 }
 
-.tab-navigation .tab-btn {
+.tab-btn {
     flex: 1;
-    background: transparent;
+    padding: 0 24px;
     border: none;
-    padding: 0 20px;
+    background: transparent;
     color: var(--text-secondary);
-    font-size: 0.9em;
-    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 0.95em;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
     position: relative;
+    border-bottom: 3px solid transparent;
+    letter-spacing: 0.3px;
 }
 
-.tab-navigation .tab-btn:hover {
+.tab-btn i {
+    font-size: 1.1em;
+}
+
+.tab-btn:hover {
     background: rgba(255, 255, 255, 0.03);
     color: var(--text-primary);
 }
 
-.tab-navigation .tab-btn.active {
-    background: transparent;
-    color: var(--text-primary);
+.tab-btn.active {
+    color: var(--primary-red);
     border-bottom-color: var(--primary-red);
-    font-weight: 600;
+    background: rgba(211, 47, 47, 0.05);
 }
 
-.tab-navigation .tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--primary-red);
-    box-shadow: 0 0 8px rgba(211, 47, 47, 0.5);
-}
-
-.tab-navigation .tab-btn i {
-    font-size: 1.1em;
-}
-
-/* Professional blinking for urgent notifications */
-.tab-navigation .tab-btn.blinking {
+/* Blinking effect for incoming calls */
+.tab-btn.blinking {
     animation: tab-pulse 2s infinite;
 }
 
 @keyframes tab-pulse {
     0%, 100% {
-        background: rgba(211, 47, 47, 0.15);
-        color: var(--danger-red);
+        background: rgba(211, 47, 47, 0.2);
+        color: var(--primary-red);
     }
     50% {
-        background: rgba(211, 47, 47, 0.25);
-        color: var(--text-primary);
+        background: rgba(211, 47, 47, 0.4);
+        color: white;
     }
 }
 
-/* =====================================================
-   TAB CONTENT
-   ===================================================== */
-
+/* Tab Content */
 .tab-content {
     display: none;
-    animation: fadeInContent 0.2s ease;
+    flex: 1;
+    overflow: hidden;
 }
 
 .tab-content.active {
-    display: block;
-}
-
-@keyframes fadeInContent {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* =====================================================
-   VEHICLES TAB - Professional Header
-   ===================================================== */
-
-.vehicles-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: var(--panel-header);
-    padding: 16px 20px;
-    box-shadow: var(--shadow-md);
-    border-bottom: 1px solid var(--border-medium);
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
 }
 
-.vehicles-header h2 {
-    margin: 0;
-    font-size: 1.4em;
-    font-weight: 600;
-    color: var(--text-primary);
+/* Map Tab Specific */
+#tab-map {
+    height: 100%;
 }
 
-.vehicles-stats {
-    display: flex;
-    gap: 24px;
+/* Vehicles Tab */
+#tab-vehicles {
+    padding: 0;
+    overflow-y: auto;
 }
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-value {
-    display: block;
-    font-size: 1.6em;
-    font-weight: 600;
-    line-height: 1;
-    font-family: 'Consolas', 'Courier New', monospace;
-}
-
-.stat-label {
-    display: block;
-    font-size: 0.75em;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-weight: 500;
-}
-
-/* =====================================================
-   STATIONS CONTAINER
-   ===================================================== */
-
-.stations-container {
-    padding: 16px;
-}
-
-/* =====================================================
-   STATION GROUP - Professional Design
-   ===================================================== */
-
-.station-group-new {
-    background: var(--panel-bg);
-    border-radius: var(--radius-md);
-    margin-bottom: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-    border-left-width: 3px;
-    border-left-color: var(--secondary-blue);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s ease;
-}
-
-.station-group-new:hover {
-    border-left-color: var(--info-cyan);
-    box-shadow: var(--shadow-md);
-}
-
-/* Station Header */
-.station-header-new {
-    background: var(--panel-header);
-    padding: 12px 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: background 0.15s ease;
-}
-
-.station-header-new:hover {
-    background: var(--bg-dark);
-}
-
-.station-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.station-icon {
-    font-size: 1.3em;
-    color: var(--info-cyan);
-}
-
-.station-name {
-    margin: 0;
-    font-size: 1em;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-}
-
-.station-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.vehicle-count {
-    font-weight: 600;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-secondary);
-    font-family: 'Consolas', 'Courier New', monospace;
-}
-
-/* Station Vehicles Container */
-.station-vehicles-new {
-    padding: 12px;
-    display: none;
-    background: var(--input-bg);
-}
-
-.station-vehicles-new.open {
-    display: block;
-}
-
-/* =====================================================
-   VEHICLES OVERVIEW
-   ===================================================== */
 
 .vehicles-overview {
-    overflow-y: auto;
-    height: calc(100vh - 180px);
-    background: var(--bg-darkest);
-}
-
-/* =====================================================
-   VEHICLE CARD - Compact & Professional
-   ===================================================== */
-
-.vehicle-card {
-    background: var(--panel-bg);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid var(--border-light);
-    border-left-width: 3px;
-    border-left-color: var(--border-medium);
-    transition: all 0.15s ease;
-}
-
-.vehicle-card:hover {
-    background: var(--bg-dark);
-    border-left-color: var(--info-cyan);
-    transform: translateX(2px);
-}
-
-.vehicle-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-}
-
-.status-badge {
-    min-width: 45px;
-    max-width: 45px;
-    padding: 4px 6px;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    font-size: 0.8em;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-family: 'Consolas', 'Courier New', monospace;
-}
-
-.vehicle-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.vehicle-name {
-    font-weight: 600;
-    font-size: 0.9em;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: 'Consolas', 'Courier New', monospace;
-    letter-spacing: 0.3px;
-}
-
-.vehicle-type {
-    font-size: 0.75em;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.vehicle-actions {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-}
-
-.vehicle-actions .btn {
-    font-size: 0.75em;
-    padding: 5px 10px;
-}
-
-.collapse-icon {
-    transition: transform 0.2s ease;
-    color: var(--text-secondary);
-    font-size: 0.85em;
-}
-
-.collapse-icon.open {
-    transform: rotate(180deg);
-}
-
-/* =====================================================
-   OLD CLASSES (Compatibility)
-   ===================================================== */
-
-.vehicle-category {
-    margin-bottom: 24px;
-    background: var(--panel-bg);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-light);
-}
-
-.category-header {
-    background: var(--panel-header);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.category-header h2 {
-    margin: 0;
-    font-size: 1.2em;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.category-badge {
-    background: var(--secondary-blue);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: 600;
-}
-
-.stations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-    gap: 16px;
     padding: 16px;
+    overflow-y: auto;
+    height: 100%;
 }
 
-@media (min-width: 1600px) {
-    .stations-grid {
-        grid-template-columns: repeat(3, 1fr);
+/* Call Tab */
+#tab-call {
+    overflow: hidden;
+}
+
+/* Radio Tab */
+#tab-radio {
+    overflow: hidden;
+}
+
+.radio-overview {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .tab-btn span {
+        display: none;
     }
-}
-
-@media (max-width: 1200px) {
-    .stations-grid {
-        grid-template-columns: repeat(2, 1fr);
+    
+    .tab-btn {
+        padding: 0 16px;
+    }
+    
+    .tab-btn i {
+        font-size: 1.3em;
     }
 }
 
 @media (max-width: 768px) {
-    .stations-grid {
-        grid-template-columns: 1fr;
+    .tab-navigation {
+        height: 45px;
     }
-}
-
-.station-group {
-    border-left: 3px solid var(--secondary-blue);
-    background: var(--panel-bg);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-light);
-    border-left-width: 3px;
-    overflow: hidden;
-    transition: all 0.2s ease;
-}
-
-.station-group:hover {
-    box-shadow: var(--shadow-md);
-    border-left-color: var(--info-cyan);
-}
-
-.station-header {
-    background: var(--panel-header);
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.station-header:hover {
-    background: var(--bg-dark);
-}
-
-.station-header h3 {
-    margin: 0;
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.station-badge {
-    background: rgba(25, 118, 210, 0.15);
-    color: var(--info-cyan);
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 0.75em;
-    font-weight: 600;
-}
-
-.station-vehicles {
-    padding: 10px;
-    display: none;
-    background: var(--input-bg);
-}
-
-.station-vehicles.open {
-    display: block;
-}
-
-/* =====================================================
-   INCIDENTS OVERVIEW
-   ===================================================== */
-
-.incidents-overview {
-    padding: 16px;
-    max-width: 1200px;
-    margin: 0 auto;
-    overflow-y: auto;
-    height: calc(100vh - 180px);
-}
-
-/* =====================================================
-   RADIO OVERVIEW
-   ===================================================== */
-
-.radio-overview {
-    padding: 16px;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-/* =====================================================
-   SCROLLBAR STYLING
-   ===================================================== */
-
-.vehicles-overview::-webkit-scrollbar,
-.incidents-overview::-webkit-scrollbar {
-    width: 8px;
-}
-
-.vehicles-overview::-webkit-scrollbar-track,
-.incidents-overview::-webkit-scrollbar-track {
-    background: var(--panel-header);
-}
-
-.vehicles-overview::-webkit-scrollbar-thumb,
-.incidents-overview::-webkit-scrollbar-thumb {
-    background: var(--border-medium);
-    border-radius: 4px;
-}
-
-.vehicles-overview::-webkit-scrollbar-thumb:hover,
-.incidents-overview::-webkit-scrollbar-thumb:hover {
-    background: var(--border-strong);
+    
+    .tab-btn {
+        padding: 0 12px;
+    }
 }
