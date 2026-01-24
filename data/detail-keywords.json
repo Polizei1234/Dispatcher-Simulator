@@ -1,0 +1,170 @@
+[
+  {
+    "keyword": "Herzinfarkt",
+    "details": [
+      "Thoraxschmerz",
+      "Ausstrahlung in linken Arm",
+      "Atemnot",
+      "Kaltschweißigkeit",
+      "Übelkeit",
+      "Todesangst",
+      "Vernichtungsschmerz",
+      "Engegefühl in der Brust"
+    ]
+  },
+  {
+    "keyword": "Schlaganfall",
+    "details": [
+      "Halbseitenlähmung",
+      "Hängende Mundwinkel",
+      "Sprachstörung",
+      "Sehstörung",
+      "Verwirrtheit",
+      "Schwindel",
+      "Kopfschmerzen plötzlich stark",
+      "Bewusstseinsstörung"
+    ]
+  },
+  {
+    "keyword": "Reanimation",
+    "details": [
+      "Keine Atmung",
+      "Kein Puls",
+      "Bewusstlos",
+      "Keine Reaktion",
+      "Zyanose",
+      "Schnappatmung",
+      "Zusammengebrochen"
+    ]
+  },
+  {
+    "keyword": "Krampfanfall",
+    "details": [
+      "Zuckungen",
+      "Bewusstlos",
+      "Schaum vor dem Mund",
+      "Zungenbiss",
+      "Urin-/Stuhlabgang",
+      "Zyanose",
+      "Nachher verwirrt",
+      "Bekannte Epilepsie"
+    ]
+  },
+  {
+    "keyword": "Atemnot",
+    "details": [
+      "Kann nicht mehr sprechen",
+      "Pfeifende Atmung",
+      "Brustenge",
+      "Zyanose",
+      "Unruhe",
+      "Angst",
+      "Bekanntes Asthma",
+      "Hustenreiz"
+    ]
+  },
+  {
+    "keyword": "Verkehrsunfall",
+    "details": [
+      "Eingeklemmt",
+      "PKW gegen Baum",
+      "Auffahrunfall",
+      "Motorrad",
+      "Fußgänger erfasst",
+      "Mehrere Verletzte",
+      "Frontalzusammenstoß",
+      "Fahrzeugüberschlag"
+    ]
+  },
+  {
+    "keyword": "Sturz",
+    "details": [
+      "Aus großer Höhe",
+      "Von Leiter",
+      "Von Treppe",
+      "Auf Kopf",
+      "Kann nicht aufstehen",
+      "Schmerzen Hüfte",
+      "Bewusstlos nach Sturz",
+      "Gerüst"
+    ]
+  },
+  {
+    "keyword": "Verbrennung",
+    "details": [
+      "Großflächig",
+      "Gesicht/Hals",
+      "Hände",
+      "Flamme",
+      "Heiße Flüssigkeit",
+      "Explosion",
+      "Starke Schmerzen",
+      "Blasenbildung"
+    ]
+  },
+  {
+    "keyword": "Anaphylaxie",
+    "details": [
+      "Schwellung im Gesicht",
+      "Atemnot",
+      "Ausschlag",
+      "Kreislaufprobleme",
+      "Insektenstich",
+      "Nahrungsmittel",
+      "Medikament",
+      "Juckreiz"
+    ]
+  },
+  {
+    "keyword": "Geburt",
+    "details": [
+      "Wehen im Abstand",
+      "Fruchtblase geplatzt",
+      "Kopf sichtbar",
+      "Pressdrang",
+      "Mehrere Kinder bekannt",
+      "Schwangerschaftswoche",
+      "Blutung",
+      "Erstgebärende"
+    ]
+  },
+  {
+    "keyword": "Vergiftung",
+    "details": [
+      "Tabletten eingenommen",
+      "Alkohol",
+      "Drogen",
+      "Chemikalien",
+      "Bewusstseinsstörung",
+      "Erbrechen",
+      "Verwirrtheit",
+      "Leere Verpackungen vorhanden"
+    ]
+  },
+  {
+    "keyword": "Blutung",
+    "details": [
+      "Stark",
+      "Pulsierend",
+      "Aus Wunde",
+      "Nasenbluten massiv",
+      "Erbrechen von Blut",
+      "Blut im Stuhl",
+      "Nicht zu stillen",
+      "Große Menge verloren"
+    ]
+  },
+  {
+    "keyword": "Psychiatrischer Notfall",
+    "details": [
+      "Suizidandrohung",
+      "Aggressiv",
+      "Selbstverletzung",
+      "Verwirrtheit",
+      "Wahnvorstellungen",
+      "Halluzinationen",
+      "Gefährdung Dritter",
+      "Bekannte psychische Erkrankung"
+    ]
+  }
+]
