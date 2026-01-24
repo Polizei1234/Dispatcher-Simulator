@@ -1,11 +1,12 @@
 // =========================
-// UI SYSTEM - Updated v3.5
+// UI SYSTEM - Updated v3.6
 // Fixed Radio Messages with Colors
 // + Incident Manager Integration
 // + ✅ Phase 3: Radio Interface KOMPLETT NEU
 // + ✅ Fahrzeug-Dropdown mit Suche
 // + ✅ Intelligente Fahrzeugantworten
 // + ✅ Phase 3.1: Dropdown behält Auswahl bei Update
+// + ✅ v3.6: Verstärkung anfordern Button
 // =========================
 
 const UI = {
@@ -104,8 +105,11 @@ const UI = {
                     </div>
                 </div>
 
-                <div class="detail-actions">
-                    <button class="btn btn-danger" onclick="UI.closeIncident('${incident.id || incident.nummer}')">
+                <div class="detail-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="UI.requestReinforcement('${incident.id || incident.nummer}')" style="flex: 1;">
+                        <i class="fas fa-plus-circle"></i> Verstärkung anfordern
+                    </button>
+                    <button class="btn btn-danger" onclick="UI.closeIncident('${incident.id || incident.nummer}')" style="flex: 1;">
                         <i class="fas fa-flag-checkered"></i> Einsatz abschließen
                     </button>
                 </div>
@@ -114,6 +118,24 @@ const UI = {
 
         if (typeof map !== 'undefined' && incident.koordinaten) {
             map.setView([incident.koordinaten.lat, incident.koordinaten.lon], 15);
+        }
+    },
+
+    // ✅ NEU: Verstärkung anfordern
+    requestReinforcement(incidentId) {
+        const incident = GAME_DATA.incidents.find(i => i.id === incidentId || i.nummer === incidentId);
+        if (!incident) {
+            console.error('❌ Einsatz nicht gefunden:', incidentId);
+            return;
+        }
+
+        console.log(`🚑 Verstärkung angefordert für Einsatz: ${incidentId}`);
+
+        // ✅ Öffne Vehicle Modal mit Kontext
+        if (typeof ManualIncident !== 'undefined' && ManualIncident.openVehicleModalForReinforcement) {
+            ManualIncident.openVehicleModalForReinforcement(incident);
+        } else {
+            console.error('❌ ManualIncident.openVehicleModalForReinforcement nicht verfügbar');
         }
     },
 
@@ -412,5 +434,5 @@ if (typeof window !== 'undefined') {
     window.selectVehicleFromDropdown = selectVehicleFromDropdown;
     window.generateIntelligentVehicleResponse = generateIntelligentVehicleResponse;
     
-    console.log('✅ UI v3.5 geladen - Dropdown behält Auswahl + Leitstelle im Funkspruch');
+    console.log('✅ UI v3.6 geladen - Verstärkung anfordern + Dropdown behält Auswahl');
 }
