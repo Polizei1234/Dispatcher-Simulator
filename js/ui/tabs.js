@@ -1,12 +1,72 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v4.3
-// ✅ Phase 3 Fix 1: Fahrzeuge nach Wachen gruppiert
-// ✅ Phase 3 Fix 2.3: Radio-Tab mit Dropdown
-// ✅ FIX: FMS Status Anzeige korrekt
+// TAB NAVIGATION & VEHICLE OVERVIEW v5.0
+// ✅ Phase 4: Kompakte UI mit Shortcuts
+// ✅ Keyboard Shortcuts für Navigation
+// ✅ Quick Filter für Fahrzeuge
+// ✅ Kompakte Card-Darstellung
 // =========================
 
 let currentTab = 'map';
 let collapsedStations = new Set();
+let vehicleFilter = 'all'; // 'all', 'available', 'inuse'
+
+// ✅ KEYBOARD SHORTCUTS
+document.addEventListener('keydown', (e) => {
+    // Nur wenn kein Input-Feld fokussiert ist
+    if (document.activeElement.tagName === 'INPUT' || 
+        document.activeElement.tagName === 'TEXTAREA') {
+        return;
+    }
+    
+    // Tab-Shortcuts (1-5)
+    const tabMap = {
+        '1': 'map',
+        '2': 'vehicles',
+        '3': 'incidents',
+        '4': 'radio',
+        '5': 'stats'
+    };
+    
+    if (tabMap[e.key]) {
+        e.preventDefault();
+        switchTab(tabMap[e.key]);
+        return;
+    }
+    
+    // Filter-Shortcuts (nur im Fahrzeuge-Tab)
+    if (currentTab === 'vehicles') {
+        if (e.key === 'f' || e.key === 'F') {
+            e.preventDefault();
+            cycleFilter();
+        } else if (e.key === 'c' || e.key === 'C') {
+            e.preventDefault();
+            toggleAllStations();
+        }
+    }
+});
+
+// ✅ Filter durchschalten
+function cycleFilter() {
+    const filters = ['all', 'available', 'inuse'];
+    const currentIndex = filters.indexOf(vehicleFilter);
+    vehicleFilter = filters[(currentIndex + 1) % filters.length];
+    updateVehiclesOverview();
+}
+
+// ✅ Alle Wachen auf-/zuklappen
+function toggleAllStations() {
+    if (collapsedStations.size > 0) {
+        // Alle öffnen
+        collapsedStations.clear();
+    } else {
+        // Alle schließen
+        if (game && game.vehicles) {
+            const stationIds = new Set(game.vehicles.filter(v => v.owned).map(v => v.station));
+            collapsedStations = new Set(stationIds);
+        }
+    }
+    updateVehiclesOverview();
+}
 
 // Tab wechseln
 function switchTab(tabName) {
@@ -36,7 +96,6 @@ function switchTab(tabName) {
         updateIncidentsOverview();
     } else if (tabName === 'radio') {
         syncRadioFeed();
-        // ✅ PHASE 3 FIX 2.3: Aktualisiere Dropdown
         if (typeof updateRadioVehicleDropdown === 'function') {
             updateRadioVehicleDropdown();
         }
@@ -74,7 +133,7 @@ function getFMSStatus(vehicle) {
     };
 }
 
-// ✅ PHASE 3 FIX 1: Fahrzeuge direkt nach Wachen gruppiert
+// ✅ KOMPAKTE FAHRZEUG-ÜBERSICHT
 function updateVehiclesOverview() {
     if (!game) return;
     
@@ -94,10 +153,24 @@ function updateVehiclesOverview() {
         return;
     }
     
-    // ✅ NEU: Gruppiere Fahrzeuge direkt nach Wachen
+    // ✅ Filter anwenden
+    let filteredVehicles = ownedVehicles;
+    if (vehicleFilter === 'available') {
+        filteredVehicles = ownedVehicles.filter(v => {
+            const status = v.currentStatus || v.status || 2;
+            return status === 1 || status === 2;
+        });
+    } else if (vehicleFilter === 'inuse') {
+        filteredVehicles = ownedVehicles.filter(v => {
+            const status = v.currentStatus || v.status || 2;
+            return status !== 1 && status !== 2;
+        });
+    }
+    
+    // Gruppiere Fahrzeuge nach Wachen
     const stationGroups = {};
     
-    ownedVehicles.forEach(vehicle => {
+    filteredVehicles.forEach(vehicle => {
         const stationId = vehicle.station;
         if (!stationGroups[stationId]) {
             stationGroups[stationId] = [];
@@ -105,22 +178,20 @@ function updateVehiclesOverview() {
         stationGroups[stationId].push(vehicle);
     });
     
-    // Sortiere Wachen: Hauptamtliche zuerst, dann Ortsvereine
+    // Sortiere Wachen
     const sortedStations = Object.keys(stationGroups).sort((a, b) => {
         const stationA = STATIONS[a];
         const stationB = STATIONS[b];
         
         if (!stationA || !stationB) return 0;
         
-        // Hauptamtliche Wachen zuerst
         const isOvA = stationA.category === 'ortsverein';
         const isOvB = stationB.category === 'ortsverein';
         
         if (isOvA !== isOvB) {
-            return isOvA ? 1 : -1; // Hauptamtliche (false) vor Ortsvereinen (true)
+            return isOvA ? 1 : -1;
         }
         
-        // Innerhalb Kategorie alphabetisch
         return stationA.name.localeCompare(stationB.name);
     });
     
@@ -128,32 +199,47 @@ function updateVehiclesOverview() {
     const totalVehicles = ownedVehicles.length;
     const availableVehicles = ownedVehicles.filter(v => {
         const status = v.currentStatus || v.status || 2;
-        return status === 2 || status === 1; // Status 1 oder 2 = Einsatzbereit
+        return status === 2 || status === 1;
     }).length;
     
-    // Header mit Statistik
+    // ✅ KOMPAKTER HEADER mit Filter-Buttons
     let html = `
-        <div class="vehicles-header">
-            <h2>🚑 Alle Fahrzeuge</h2>
-            <div class="vehicles-stats">
-                <div class="stat-item">
-                    <span class="stat-value">${totalVehicles}</span>
-                    <span class="stat-label">Gesamt</span>
+        <div class="vehicles-header-compact">
+            <div class="header-row">
+                <h2>🚑 Fahrzeuge</h2>
+                <div class="quick-stats">
+                    <span class="stat" style="color: #28a745;">🟢 ${availableVehicles}</span>
+                    <span class="stat" style="color: #dc3545;">🔴 ${totalVehicles - availableVehicles}</span>
+                    <span class="stat" style="color: #6c757d;">📦 ${totalVehicles}</span>
                 </div>
-                <div class="stat-item" style="color: #28a745;">
-                    <span class="stat-value">${availableVehicles}</span>
-                    <span class="stat-label">Verfügbar</span>
+            </div>
+            <div class="filter-row">
+                <div class="filter-buttons">
+                    <button class="filter-btn ${vehicleFilter === 'all' ? 'active' : ''}" onclick="setVehicleFilter('all')">
+                        <i class="fas fa-list"></i> Alle
+                    </button>
+                    <button class="filter-btn ${vehicleFilter === 'available' ? 'active' : ''}" onclick="setVehicleFilter('available')">
+                        <i class="fas fa-check-circle"></i> Verfügbar
+                    </button>
+                    <button class="filter-btn ${vehicleFilter === 'inuse' ? 'active' : ''}" onclick="setVehicleFilter('inuse')">
+                        <i class="fas fa-clock"></i> Im Einsatz
+                    </button>
                 </div>
-                <div class="stat-item" style="color: #dc3545;">
-                    <span class="stat-value">${totalVehicles - availableVehicles}</span>
-                    <span class="stat-label">Im Einsatz</span>
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="toggleAllStations()" title="Alle auf-/zuklappen (C)">
+                        <i class="fas fa-${collapsedStations.size > 0 ? 'expand' : 'compress'}-alt"></i>
+                    </button>
                 </div>
+            </div>
+            <div class="shortcuts-hint">
+                <i class="fas fa-keyboard"></i> 
+                <span>Shortcuts: <kbd>1-5</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
             </div>
         </div>
     `;
     
     // Erstelle Wachen-Gruppen
-    html += '<div class="stations-container">';
+    html += '<div class="stations-container-compact">';
     
     sortedStations.forEach(stationId => {
         const station = STATIONS[stationId];
@@ -162,18 +248,12 @@ function updateVehiclesOverview() {
         const vehicles = stationGroups[stationId];
         const isCollapsed = collapsedStations.has(stationId);
         
-        // Icon basierend auf Kategorie
+        // Kompaktes Station Icon
         let stationIcon = '🏥';
-        let categoryBadge = '';
-        
         if (station.category === 'ortsverein') {
-            stationIcon = '🔴'; // Roter Kreis für OV
-            categoryBadge = '<span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px;">OV</span>';
+            stationIcon = '🔴';
         } else if (station.category === 'notarztwache') {
-            stationIcon = '⚠️'; // Warnung für NEF-Wache
-            categoryBadge = '<span style="background: #dc3545; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px;">NEF</span>';
-        } else {
-            categoryBadge = '<span style="background: #17a2b8; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px;">RW</span>';
+            stationIcon = '⚠️';
         }
         
         // Zähle verfügbare Fahrzeuge dieser Wache
@@ -185,25 +265,17 @@ function updateVehiclesOverview() {
                                   stationAvailable > 0 ? '#ffc107' : '#dc3545';
         
         html += `
-            <div class="station-group-new">
-                <div class="station-header-new" onclick="toggleStation('${stationId}')">
-                    <div class="station-info">
-                        <span class="station-icon">${stationIcon}</span>
-                        <h3 class="station-name">
-                            ${station.name}
-                            ${categoryBadge}
-                        </h3>
-                    </div>
-                    <div class="station-meta">
-                        <span class="vehicle-count" style="color: ${availabilityColor};">
-                            <i class="fas fa-ambulance"></i>
-                            ${stationAvailable}/${vehicles.length}
-                        </span>
-                        <i class="fas fa-chevron-down collapse-icon ${isCollapsed ? '' : 'open'}" id="icon-${stationId}"></i>
-                    </div>
+            <div class="station-group-compact">
+                <div class="station-header-compact" onclick="toggleStation('${stationId}')">
+                    <span class="station-icon-compact">${stationIcon}</span>
+                    <span class="station-name-compact">${station.name}</span>
+                    <span class="station-count" style="color: ${availabilityColor};">
+                        ${stationAvailable}/${vehicles.length}
+                    </span>
+                    <i class="fas fa-chevron-down collapse-icon-compact ${isCollapsed ? '' : 'open'}" id="icon-${stationId}"></i>
                 </div>
-                <div class="station-vehicles-new ${isCollapsed ? '' : 'open'}" id="station-${stationId}">
-                    ${vehicles.map(v => createVehicleCard(v)).join('')}
+                <div class="station-vehicles-compact ${isCollapsed ? '' : 'open'}" id="station-${stationId}">
+                    ${vehicles.map(v => createCompactVehicleCard(v)).join('')}
                 </div>
             </div>
         `;
@@ -214,63 +286,48 @@ function updateVehiclesOverview() {
     container.innerHTML = html;
 }
 
-// ✅ FIXED: Funktion getFMSStatusNumber hinzugefügt
-function getFMSStatusNumber(vehicle) {
-    const status = vehicle.currentStatus || vehicle.status || 2;
-    
-    // FMS-Status Nummern: 1-9 sind numerisch, 0 und C sind Buchstaben
-    const statusMap = {
-        1: 1,    // Einsatzbereit über Funk
-        2: 2,    // Einsatzbereit auf Wache
-        3: 3,    // Einsatz übernommen
-        4: 4,    // Anfahrt Einsatzstelle
-        5: 5,    // Am Einsatzort
-        6: 6,    // Sprechwunsch
-        7: 7,    // Patient aufgenommen
-        8: 8,    // Anfahrt Krankenhaus
-        9: 9,    // Ankunft Krankenhaus
-        0: '0',  // Notruf
-        'C': 'C' // Status C
-    };
-    
-    return statusMap[status] !== undefined ? statusMap[status] : status;
-}
-
-function createVehicleCard(vehicle) {
+// ✅ KOMPAKTE FAHRZEUG-KARTE (40% weniger Höhe!)
+function createCompactVehicleCard(vehicle) {
     const fms = getFMSStatus(vehicle);
     const fmsNumber = getFMSStatusNumber(vehicle);
     
-    // Status Badge mit Zahl/Buchstabe
     const statusDisplay = typeof fmsNumber === 'number' ? fmsNumber : fmsNumber;
     
-    // Prüfe ob verfügbar (Status 1 oder 2)
     const isAvailable = (vehicle.currentStatus === 1 || vehicle.currentStatus === 2 || 
                          vehicle.status === 1 || vehicle.status === 2);
     
+    // Kompaktes Icon
+    const icon = getVehicleIconCompact(vehicle.type);
+    
     return `
-        <div class="vehicle-card" style="border-left-color: ${fms.color};">
-            <div class="vehicle-info">
-                <div class="status-badge" style="background: ${fms.color}; color: ${['#ffc107', '#fd7e14', '#28a745', '#1e7e34'].includes(fms.color) ? '#000' : '#fff'};">
-                    <strong>${statusDisplay}</strong>
-                </div>
-                <div class="vehicle-details">
-                    <div class="vehicle-name" title="${vehicle.callsign}">${getVehicleIcon(vehicle.type)} ${vehicle.callsign}</div>
-                    <div class="vehicle-type" title="${fms.name}">${fms.name}</div>
+        <div class="vehicle-card-compact" style="border-left: 3px solid ${fms.color};">
+            <div class="vehicle-info-compact">
+                <span class="vehicle-icon-compact">${icon}</span>
+                <div class="vehicle-text">
+                    <span class="vehicle-callsign">${vehicle.callsign}</span>
+                    <span class="vehicle-status-text" style="color: ${fms.color};">
+                        Status ${statusDisplay}
+                    </span>
                 </div>
             </div>
-            <div class="vehicle-actions">
+            <div class="vehicle-actions-compact">
                 ${isAvailable ? `
-                    <button class="btn btn-small btn-primary" onclick="selectVehicleForIncident('${vehicle.id}')" title="Alarmieren">
+                    <button class="btn-icon-compact btn-primary" onclick="selectVehicleForIncident('${vehicle.id}')" title="Alarmieren">
                         <i class="fas fa-bell"></i>
                     </button>
                 ` : `
-                    <button class="btn btn-small" disabled style="opacity: 0.5;" title="Im Einsatz">
+                    <button class="btn-icon-compact" disabled style="opacity: 0.3;" title="Im Einsatz">
                         <i class="fas fa-clock"></i>
                     </button>
                 `}
             </div>
         </div>
     `;
+}
+
+function setVehicleFilter(filter) {
+    vehicleFilter = filter;
+    updateVehiclesOverview();
 }
 
 function toggleStation(stationId) {
@@ -288,6 +345,18 @@ function toggleStation(stationId) {
         vehiclesDiv.classList.remove('open');
         icon.classList.remove('open');
     }
+}
+
+function getFMSStatusNumber(vehicle) {
+    const status = vehicle.currentStatus || vehicle.status || 2;
+    
+    const statusMap = {
+        1: 1, 2: 2, 3: 3, 4: 4, 5: 5,
+        6: 6, 7: 7, 8: 8, 9: 9,
+        0: '0', 'C': 'C'
+    };
+    
+    return statusMap[status] !== undefined ? statusMap[status] : status;
 }
 
 // Einsätze-Übersicht
@@ -349,7 +418,6 @@ function syncRadioFeed() {
     }
 }
 
-// ✅ FIXED: tabName → currentTab
 // Auto-Update wenn Tab aktiv
 setInterval(() => {
     if (currentTab === 'vehicles') {
@@ -358,14 +426,13 @@ setInterval(() => {
         updateIncidentsOverview();
     } else if (currentTab === 'radio') {
         syncRadioFeed();
-        // ✅ PHASE 3 FIX 2.3: Aktualisiere Dropdown
         if (typeof updateRadioVehicleDropdown === 'function') {
             updateRadioVehicleDropdown();
         }
     }
 }, 3000);
 
-console.log('✅ Tabs v4.3 geladen - FMS Status Display Fix');
+console.log('✅ Tabs v5.0 geladen - Kompakte UI mit Shortcuts');
 
 // Helper functions
 function getVehicleIcon(type) {
@@ -374,6 +441,17 @@ function getVehicleIcon(type) {
         'NEF': '🚑',
         'KTW': '🚐',
         'Kdow': '🚗',
+        'GW-San': '🚚'
+    };
+    return icons[type] || '🚑';
+}
+
+function getVehicleIconCompact(type) {
+    const icons = {
+        'RTW': '🚑',
+        'NEF': '⚕️',
+        'KTW': '🚐',
+        'Kdow': '🚨',
         'GW-San': '🚚'
     };
     return icons[type] || '🚑';
