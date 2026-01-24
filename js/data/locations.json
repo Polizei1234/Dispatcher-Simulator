@@ -1,0 +1,146 @@
+[
+    {
+        "name": "Kindergarten",
+        "category": "Bildungseinrichtung",
+        "icon": "🏫",
+        "description": "Betreuungseinrichtung für Kinder"
+    },
+    {
+        "name": "Schule",
+        "category": "Bildungseinrichtung",
+        "icon": "🏫",
+        "description": "Bildungseinrichtung"
+    },
+    {
+        "name": "Pflegeheim",
+        "category": "Gesundheitswesen",
+        "icon": "🏥",
+        "description": "Einrichtung zur Altenpflege"
+    },
+    {
+        "name": "Krankenhaus",
+        "category": "Gesundheitswesen",
+        "icon": "🏥",
+        "description": "Medizinische Einrichtung"
+    },
+    {
+        "name": "Klinik",
+        "category": "Gesundheitswesen",
+        "icon": "🏥",
+        "description": "Medizinische Einrichtung"
+    },
+    {
+        "name": "Arztpraxis",
+        "category": "Gesundheitswesen",
+        "icon": "👨‍⚕️",
+        "description": "Niedergelassene Arztpraxis"
+    },
+    {
+        "name": "Industrieanlage",
+        "category": "Industrie",
+        "icon": "🏭",
+        "description": "Industrielle Produktionsstätte"
+    },
+    {
+        "name": "Fabrik",
+        "category": "Industrie",
+        "icon": "🏭",
+        "description": "Produktionsstätte"
+    },
+    {
+        "name": "Bürogebäude",
+        "category": "Gewerbe",
+        "icon": "🏢",
+        "description": "Bürokomplex"
+    },
+    {
+        "name": "Einkaufszentrum",
+        "category": "Gewerbe",
+        "icon": "🛍️",
+        "description": "Shopping-Center"
+    },
+    {
+        "name": "Bahnhof",
+        "category": "Verkehr",
+        "icon": "🚆",
+        "description": "Bahnstation"
+    },
+    {
+        "name": "Flughafen",
+        "category": "Verkehr",
+        "icon": "✈️",
+        "description": "Flughafen"
+    },
+    {
+        "name": "Autobahn",
+        "category": "Verkehr",
+        "icon": "🛣️",
+        "description": "Autobahnabschnitt"
+    },
+    {
+        "name": "Landstraße",
+        "category": "Verkehr",
+        "icon": "🛣️",
+        "description": "Außerortsstraße"
+    },
+    {
+        "name": "Sportanlage",
+        "category": "Freizeit",
+        "icon": "⚽",
+        "description": "Sportkomplex"
+    },
+    {
+        "name": "Schwimmbad",
+        "category": "Freizeit",
+        "icon": "🏊",
+        "description": "Frei- oder Hallenbad"
+    },
+    {
+        "name": "Restaurant",
+        "category": "Gastronomie",
+        "icon": "🍴",
+        "description": "Gaststätte"
+    },
+    {
+        "name": "Hotel",
+        "category": "Gastronomie",
+        "icon": "🏨",
+        "description": "Beherbergungsbetrieb"
+    },
+    {
+        "name": "Parkhaus",
+        "category": "Verkehr",
+        "icon": "🅿️",
+        "description": "Parkgebäude"
+    },
+    {
+        "name": "Baustelle",
+        "category": "Bauwesen",
+        "icon": "🚧",
+        "description": "Baustellenbereich"
+    },
+    {
+        "name": "Wald",
+        "category": "Natur",
+        "icon": "🌲",
+        "description": "Waldgebiet"
+    },
+    {
+        "name": "Park",
+        "category": "Natur",
+        "icon": "🌳",
+        "description": "Grünanlage"
+    },
+    {
+        "name": "Gewässer",
+        "category": "Natur",
+        "icon": "🌊",
+        "description": "Fluss, See oder Teich"
+    },
+    {
+        "name": "Öffentliches Gebäude",
+        "category": "Verwaltung",
+        "icon": "🏛️",
+        "description": "Rathaus, Behörde etc."
+    }
+]
