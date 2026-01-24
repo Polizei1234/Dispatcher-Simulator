@@ -1,12 +1,13 @@
 // =========================
-// UI SYSTEM - Updated v3.6
-// Fixed Radio Messages with Colors
+// UI SYSTEM - Updated v3.7
+// Fixed Radio Vehicle Dropdown + Prettier Design
 // + Incident Manager Integration
 // + ✅ Phase 3: Radio Interface KOMPLETT NEU
 // + ✅ Fahrzeug-Dropdown mit Suche
 // + ✅ Intelligente Fahrzeugantworten
 // + ✅ Phase 3.1: Dropdown behält Auswahl bei Update
 // + ✅ v3.6: Verstärkung anfordern Button
+// + ✅ v3.7: Fixed Status Display + Prettier Radio UI
 // =========================
 
 const UI = {
@@ -207,14 +208,22 @@ function updateRadioVehicleDropdown() {
     const vehicles = GAME_DATA?.vehicles || [];
     const activeVehicles = vehicles.filter(v => v.owned && v.currentStatus !== 2);
     
-    dropdown.innerHTML = '<option value="">-- Fahrzeug wählen --</option>';
+    // ✅ v3.7: Prettier Dropdown with vehicle count
+    dropdown.innerHTML = `<option value="">-- ${activeVehicles.length} Fahrzeug(e) verfügbar --</option>`;
     
     activeVehicles.forEach(vehicle => {
         const fms = UI.getFMSStatus(vehicle);
         const option = document.createElement('option');
         option.value = vehicle.id;
-        option.textContent = `${vehicle.callsign} - Status ${vehicle.currentStatus} (${fms.name})`;
+        
+        // ✅ FIX: Sichere Status-Anzeige
+        const statusCode = vehicle.currentStatus || vehicle.status || 2;
+        const statusName = fms.name || 'Unbekannt';
+        
+        // ✅ v3.7: Prettier format with icon
+        option.textContent = `${fms.icon} ${vehicle.callsign} | FMS ${statusCode} - ${statusName}`;
         option.dataset.fmsColor = fms.color;
+        option.dataset.statusCode = statusCode;
         dropdown.appendChild(option);
     });
     
@@ -225,11 +234,14 @@ function updateRadioVehicleDropdown() {
         const vehicle = GAME_DATA.vehicles.find(v => v.id === currentValue);
         if (vehicle) {
             selectedVehicleForRadio = vehicle;
+            // ✅ v3.7: Update selected vehicle display
+            updateSelectedVehicleDisplay(vehicle);
         }
     } else if (currentValue) {
         // Fahrzeug ist nicht mehr aktiv (z.B. Status 2 erreicht)
         selectedVehicleForRadio = null;
         dropdown.value = '';
+        clearSelectedVehicleDisplay();
     }
 }
 
@@ -240,6 +252,7 @@ function selectVehicleFromDropdown() {
     const vehicleId = dropdown.value;
     if (!vehicleId) {
         selectedVehicleForRadio = null;
+        clearSelectedVehicleDisplay();
         return;
     }
     
@@ -247,6 +260,44 @@ function selectVehicleFromDropdown() {
     if (vehicle) {
         selectedVehicleForRadio = vehicle;
         console.log(`📻 Fahrzeug ausgewählt: ${vehicle.callsign}`);
+        
+        // ✅ v3.7: Show selected vehicle info
+        updateSelectedVehicleDisplay(vehicle);
+    }
+}
+
+// ✅ v3.7: NEW - Show selected vehicle info
+function updateSelectedVehicleDisplay(vehicle) {
+    const container = document.getElementById('selected-vehicle-info');
+    if (!container) return;
+    
+    const fms = UI.getFMSStatus(vehicle);
+    const statusCode = vehicle.currentStatus || vehicle.status || 2;
+    
+    container.innerHTML = `
+        <div style="padding: 12px; background: ${fms.color}15; border: 2px solid ${fms.color}; border-radius: 8px; margin-top: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="font-size: 1.5em;">${fms.icon}</span>
+                <div>
+                    <div style="font-weight: bold; color: #fff; font-size: 1.1em;">${vehicle.callsign}</div>
+                    <div style="color: #a0aec0; font-size: 0.85em;">${vehicle.name}</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: ${fms.color}25; border-radius: 6px;">
+                <span style="font-weight: bold; color: ${fms.color};">FMS ${statusCode}</span>
+                <span style="color: #a0aec0;">•</span>
+                <span style="color: ${fms.color};">${fms.name}</span>
+            </div>
+        </div>
+    `;
+    container.style.display = 'block';
+}
+
+function clearSelectedVehicleDisplay() {
+    const container = document.getElementById('selected-vehicle-info');
+    if (container) {
+        container.innerHTML = '';
+        container.style.display = 'none';
     }
 }
 
@@ -291,7 +342,7 @@ function generateIntelligentVehicleResponse(vehicle, message) {
     
     // Status-Abfrage
     if (message.includes('status') || message.includes('melden')) {
-        return `Kommen, Status ${vehicle.currentStatus} - ${fms.name}`;
+        return `Kommen, Status ${vehicle.currentStatus || 2} - ${fms.name}`;
     }
     
     // Position-Abfrage
@@ -433,6 +484,8 @@ if (typeof window !== 'undefined') {
     window.updateRadioVehicleDropdown = updateRadioVehicleDropdown;
     window.selectVehicleFromDropdown = selectVehicleFromDropdown;
     window.generateIntelligentVehicleResponse = generateIntelligentVehicleResponse;
+    window.updateSelectedVehicleDisplay = updateSelectedVehicleDisplay;
+    window.clearSelectedVehicleDisplay = clearSelectedVehicleDisplay;
     
-    console.log('✅ UI v3.6 geladen - Verstärkung anfordern + Dropdown behält Auswahl');
+    console.log('✅ UI v3.7 geladen - Fixed Status Display + Prettier Radio Interface');
 }
