@@ -1,11 +1,12 @@
 // =========================
-// MANUAL INCIDENT CREATION v4.3
+// MANUAL INCIDENT CREATION v4.4
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
 // + Vollständiges Formular mit allen Feldern
 // + ✅ PHASE 2 FIX: Meldebild NUR aus gestellten Fragen
 // + ✅ PHASE 3.1: Gespräch bleibt offen, vollständiges Protokoll
+// + ✅ v4.4: Custom Input für Stadtteil & Besondere Örtlichkeit
 // =========================
 
 const ManualIncident = {
@@ -20,7 +21,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v4.3 initialisiert (Phase 3.1)');
+        console.log('📝 Manual Incident System v4.4 initialisiert (Custom Input)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -141,14 +142,29 @@ const ManualIncident = {
                         </div>
                         <div class="form-group">
                             <label>Stadtteil/Ortsteil:</label>
-                            <select id="inline-stadtteil">
-                                <option value="">Bitte wählen</option>
+                            <input type="text" id="inline-stadtteil" list="stadtteil-options" placeholder="Tippen oder auswählen..." autocomplete="off">
+                            <datalist id="stadtteil-options">
                                 <option value="Waiblingen">Waiblingen</option>
                                 <option value="Fellbach">Fellbach</option>
                                 <option value="Schorndorf">Schorndorf</option>
                                 <option value="Winnenden">Winnenden</option>
                                 <option value="Backnang">Backnang</option>
-                            </select>
+                                <option value="Weinstadt">Weinstadt</option>
+                                <option value="Korb">Korb</option>
+                                <option value="Kernen">Kernen</option>
+                                <option value="Schwaikheim">Schwaikheim</option>
+                                <option value="Remshalden">Remshalden</option>
+                                <option value="Urbach">Urbach</option>
+                                <option value="Plüderhausen">Plüderhausen</option>
+                                <option value="Rudersberg">Rudersberg</option>
+                                <option value="Berglen">Berglen</option>
+                                <option value="Leutenbach">Leutenbach</option>
+                                <option value="Affalterbach">Affalterbach</option>
+                                <option value="Burgstetten">Burgstetten</option>
+                                <option value="Oppenweiler">Oppenweiler</option>
+                                <option value="Murrhardt">Murrhardt</option>
+                                <option value="Welzheim">Welzheim</option>
+                            </datalist>
                         </div>
                         <div class="form-group">
                             <label>Stockwerk/Lage:</label>
@@ -156,15 +172,33 @@ const ManualIncident = {
                         </div>
                         <div class="form-group">
                             <label>Besondere Örtlichkeit:</label>
-                            <select id="inline-oertlichkeit">
-                                <option value="">Keine Angabe</option>
+                            <input type="text" id="inline-oertlichkeit" list="oertlichkeit-options" placeholder="Tippen oder auswählen..." autocomplete="off">
+                            <datalist id="oertlichkeit-options">
                                 <option value="Kindergarten">Kindergarten</option>
                                 <option value="Schule">Schule</option>
                                 <option value="Pflegeheim">Pflegeheim</option>
                                 <option value="Krankenhaus">Krankenhaus</option>
+                                <option value="Klinik">Klinik</option>
+                                <option value="Arztpraxis">Arztpraxis</option>
                                 <option value="Industrieanlage">Industrieanlage</option>
+                                <option value="Fabrik">Fabrik</option>
+                                <option value="Bürogebäude">Bürogebäude</option>
+                                <option value="Einkaufszentrum">Einkaufszentrum</option>
+                                <option value="Bahnhof">Bahnhof</option>
+                                <option value="Flughafen">Flughafen</option>
+                                <option value="Sportanlage">Sportanlage</option>
+                                <option value="Schwimmbad">Schwimmbad</option>
+                                <option value="Restaurant">Restaurant</option>
+                                <option value="Hotel">Hotel</option>
+                                <option value="Parkhaus">Parkhaus</option>
+                                <option value="Baustelle">Baustelle</option>
+                                <option value="Autobahn">Autobahn</option>
+                                <option value="Landstraße">Landstraße</option>
+                                <option value="Wald">Wald</option>
+                                <option value="Park">Park</option>
+                                <option value="Gewässer">Gewässer</option>
                                 <option value="Öffentliches Gebäude">Öffentliches Gebäude</option>
-                            </select>
+                            </datalist>
                         </div>
                         <div class="form-group">
                             <label>Zufahrt/Erreichbarkeit:</label>
@@ -428,7 +462,7 @@ const ManualIncident = {
             this.initializeKeywordsDropdownsInline();
         }, 100);
 
-        console.log('✅ Manual Incident Inline v4.3 angezeigt - Vollständiges Protokoll');
+        console.log('✅ Manual Incident Inline v4.4 angezeigt - Custom Input für Ort & Örtlichkeit');
     },
 
     toggleSection(sectionName) {
@@ -857,4 +891,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v4.3 geladen (Phase 3.1 - Vollständiges Protokoll)');
+console.log('✅ Manual Incident System v4.4 geladen (Custom Input für Stadtteil & Örtlichkeit)');
