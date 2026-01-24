@@ -291,6 +291,15 @@ const VersionManager = {
      */
     getChangelog(oldVersion, newVersion) {
         const changelogs = {
+            '5.0.8': `
+                <ul>
+                    <li>🚨 Status 0: Notfall - Fahrzeuge können Hilfe anfordern</li>
+                    <li>📡 Status 5: Sprechwunsch - Klinikzuweisung, Verstärkung, Infos, Material</li>
+                    <li>✅ Fahrzeuge funken automatisch bei Bedarf an</li>
+                    <li>🧹 "Allgemeiner Funkspruch" entfernt (unnötig)</li>
+                    <li>🎯 Cleaner Funk-Interface nur mit Fahrzeug-Kommunikation</li>
+                </ul>
+            `,
             '5.0.7': `
                 <ul>
                     <li>✅ Verstärkung anfordern: Zusätzliche Fahrzeuge zu laufenden Einsätzen schicken</li>
