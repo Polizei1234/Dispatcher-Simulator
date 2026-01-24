@@ -1,12 +1,12 @@
 // =========================
-// MANUAL INCIDENT CREATION v4.4
+// MANUAL INCIDENT CREATION v5.0
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
 // + Vollständiges Formular mit allen Feldern
 // + ✅ PHASE 2 FIX: Meldebild NUR aus gestellten Fragen
 // + ✅ PHASE 3.1: Gespräch bleibt offen, vollständiges Protokoll
-// + ✅ v4.4: Custom Input für Stadtteil & Besondere Örtlichkeit
+// + ✅ v5.0: Keyword-Dropdowns für Stadtteil & Örtlichkeit (wie Stichwörter)
 // =========================
 
 const ManualIncident = {
@@ -21,7 +21,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v4.4 initialisiert (Custom Input)');
+        console.log('📝 Manual Incident System v5.0 initialisiert (Keywords-Dropdowns)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -141,64 +141,16 @@ const ManualIncident = {
                             <input type="text" id="inline-ort" value="${callData?.einsatz?.ort || ''}" readonly>
                         </div>
                         <div class="form-group">
-                            <label>Stadtteil/Ortsteil:</label>
-                            <input type="text" id="inline-stadtteil" list="stadtteil-options" placeholder="Tippen oder auswählen..." autocomplete="off">
-                            <datalist id="stadtteil-options">
-                                <option value="Waiblingen">Waiblingen</option>
-                                <option value="Fellbach">Fellbach</option>
-                                <option value="Schorndorf">Schorndorf</option>
-                                <option value="Winnenden">Winnenden</option>
-                                <option value="Backnang">Backnang</option>
-                                <option value="Weinstadt">Weinstadt</option>
-                                <option value="Korb">Korb</option>
-                                <option value="Kernen">Kernen</option>
-                                <option value="Schwaikheim">Schwaikheim</option>
-                                <option value="Remshalden">Remshalden</option>
-                                <option value="Urbach">Urbach</option>
-                                <option value="Plüderhausen">Plüderhausen</option>
-                                <option value="Rudersberg">Rudersberg</option>
-                                <option value="Berglen">Berglen</option>
-                                <option value="Leutenbach">Leutenbach</option>
-                                <option value="Affalterbach">Affalterbach</option>
-                                <option value="Burgstetten">Burgstetten</option>
-                                <option value="Oppenweiler">Oppenweiler</option>
-                                <option value="Murrhardt">Murrhardt</option>
-                                <option value="Welzheim">Welzheim</option>
-                            </datalist>
+                            <label>🏛️ Stadtteil/Ortsteil:</label>
+                            <input type="text" id="inline-stadtteil" placeholder="z.B. Waiblingen, Fellbach" autocomplete="off">
                         </div>
                         <div class="form-group">
                             <label>Stockwerk/Lage:</label>
                             <input type="text" id="inline-stockwerk" placeholder="z.B. 3. OG links">
                         </div>
                         <div class="form-group">
-                            <label>Besondere Örtlichkeit:</label>
-                            <input type="text" id="inline-oertlichkeit" list="oertlichkeit-options" placeholder="Tippen oder auswählen..." autocomplete="off">
-                            <datalist id="oertlichkeit-options">
-                                <option value="Kindergarten">Kindergarten</option>
-                                <option value="Schule">Schule</option>
-                                <option value="Pflegeheim">Pflegeheim</option>
-                                <option value="Krankenhaus">Krankenhaus</option>
-                                <option value="Klinik">Klinik</option>
-                                <option value="Arztpraxis">Arztpraxis</option>
-                                <option value="Industrieanlage">Industrieanlage</option>
-                                <option value="Fabrik">Fabrik</option>
-                                <option value="Bürogebäude">Bürogebäude</option>
-                                <option value="Einkaufszentrum">Einkaufszentrum</option>
-                                <option value="Bahnhof">Bahnhof</option>
-                                <option value="Flughafen">Flughafen</option>
-                                <option value="Sportanlage">Sportanlage</option>
-                                <option value="Schwimmbad">Schwimmbad</option>
-                                <option value="Restaurant">Restaurant</option>
-                                <option value="Hotel">Hotel</option>
-                                <option value="Parkhaus">Parkhaus</option>
-                                <option value="Baustelle">Baustelle</option>
-                                <option value="Autobahn">Autobahn</option>
-                                <option value="Landstraße">Landstraße</option>
-                                <option value="Wald">Wald</option>
-                                <option value="Park">Park</option>
-                                <option value="Gewässer">Gewässer</option>
-                                <option value="Öffentliches Gebäude">Öffentliches Gebäude</option>
-                            </datalist>
+                            <label>🏥 Besondere Örtlichkeit:</label>
+                            <input type="text" id="inline-oertlichkeit" placeholder="z.B. Schule, Krankenhaus" autocomplete="off">
                         </div>
                         <div class="form-group">
                             <label>Zufahrt/Erreichbarkeit:</label>
@@ -457,12 +409,12 @@ const ManualIncident = {
             </div>
         `;
 
-        // Initialisiere Keywords-Dropdowns
+        // ✅ Initialisiere Keyword-Dropdowns (inkl. Stadtteil & Örtlichkeit)
         setTimeout(() => {
             this.initializeKeywordsDropdownsInline();
         }, 100);
 
-        console.log('✅ Manual Incident Inline v4.4 angezeigt - Custom Input für Ort & Örtlichkeit');
+        console.log('✅ Manual Incident Inline v5.0 angezeigt - Keywords-Dropdowns für alle Felder');
     },
 
     toggleSection(sectionName) {
@@ -764,12 +716,14 @@ const ManualIncident = {
         console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
+    // ✅ INITIALISIERE ALLE KEYWORD-DROPDOWNS
     initializeKeywordsDropdownsInline() {
         if (typeof KeywordsDropdown === 'undefined') {
             console.error('❌ KeywordsDropdown nicht geladen!');
             return;
         }
 
+        // Priorität & Detail (wie bisher)
         KeywordsDropdown.initializePriorityDropdown('inline-priority', (keywordData) => {
             this.selectedPriorityKeyword = keywordData;
             console.log('✅ Priorität ausgewählt:', keywordData.keyword);
@@ -779,6 +733,17 @@ const ManualIncident = {
             this.selectedDetailKeyword = keywordData;
             console.log('✅ Detail-Stichwort ausgewählt:', keywordData.keyword);
         });
+
+        // 🆕 NEU: Stadtteil & Örtlichkeit
+        KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtData) => {
+            console.log('✅ Stadtteil ausgewählt:', districtData.name, '-', districtData.category);
+        });
+
+        KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (locationData) => {
+            console.log('✅ Örtlichkeit ausgewählt:', locationData.name, '-', locationData.category);
+        });
+
+        console.log('✅ Alle Keyword-Dropdowns initialisiert (Stichwörter + Stadtteil + Örtlichkeit)');
     },
 
     updateUIInline() {
@@ -891,4 +856,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v4.4 geladen (Custom Input für Stadtteil & Örtlichkeit)');
+console.log('✅ Manual Incident System v5.0 geladen (Keywords-Dropdowns für Stadtteil & Örtlichkeit)');
