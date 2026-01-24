@@ -6,21 +6,21 @@
     <title>ILS Waiblingen - Leitstellensimulator Rems-Murr-Kreis</title>
     
     <!-- 🔥 VERSION MANAGER - MUSS ZUERST GELADEN WERDEN! -->
-    <script src="js/utils/version-manager.js?v=5.0.7"></script>
+    <script src="js/utils/version-manager.js?v=5.0.8"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=5.0.7">
+    <link rel="stylesheet" href="css/style.css?v=5.0.8">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- ✅ LEAFLET ROUTING MACHINE CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     
-    <link rel="stylesheet" href="css/map-icons.css?v=5.0.7">
-    <link rel="stylesheet" href="css/draggable.css?v=5.0.7">
-    <link rel="stylesheet" href="css/tabs.css?v=5.0.7">
-    <link rel="stylesheet" href="css/call-system.css?v=5.0.7">
+    <link rel="stylesheet" href="css/map-icons.css?v=5.0.8">
+    <link rel="stylesheet" href="css/draggable.css?v=5.0.8">
+    <link rel="stylesheet" href="css/tabs.css?v=5.0.8">
+    <link rel="stylesheet" href="css/call-system.css?v=5.0.8">
     
     <!-- 🆕 KEYWORDS DROPDOWN CSS -->
-    <link rel="stylesheet" href="css/keywords-dropdown.css?v=5.0.7">
+    <link rel="stylesheet" href="css/keywords-dropdown.css?v=5.0.8">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
@@ -57,11 +57,11 @@
             
             <!-- 🆕 VERSIONSANZEIGE -->
             <div style="position: absolute; bottom: 15px; right: 20px; padding: 8px 15px; background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); border-radius: 20px; font-size: 0.85em; color: #4CAF50;">
-                <i class="fas fa-code-branch"></i> <strong>Version 5.0.7</strong>
+                <i class="fas fa-code-branch"></i> <strong>Version 5.0.8</strong>
                 <span style="margin-left: 8px; padding: 2px 8px; background: rgba(76, 175, 80, 0.3); border-radius: 10px; font-size: 0.8em;">✨ Funk</span>
             </div>
             <div style="position: absolute; bottom: 15px; left: 20px; font-size: 0.75em; color: #888;">
-                <i class="fas fa-calendar-alt"></i> Build: 24.01.2026
+                <i class="fas fa-calendar-alt"></i> Build: 25.01.2026
             </div>
         </div>
     </div>
@@ -286,7 +286,7 @@
             </div>
         </div>
 
-        <!-- TAB: FUNKVERKEHR ✅ CLEANED UP: Nur noch Fahrzeug anfunken -->
+        <!-- TAB: FUNKVERKEHR ✅ PRETTIER UI v2 -->
         <div id="tab-radio" class="tab-content">
             <div class="radio-overview" style="display: flex; gap: 20px; padding: 20px; height: calc(100vh - 200px);">
                 <!-- Linke Seite: Funkverkehr (volle Höhe) -->
@@ -303,36 +303,43 @@
                 <!-- Rechte Seite: Fahrzeug anfunken -->
                 <div style="flex: 1;">
                     <div class="panel">
-                        <div class="panel-header">
+                        <div class="panel-header" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); border-bottom: 2px solid #2c5282;">
                             <h3><i class="fas fa-broadcast-tower"></i> Fahrzeug anfunken</h3>
-                            <small style="font-weight: normal; opacity: 0.8;">(außer Status 2)</small>
+                            <small style="font-weight: normal; opacity: 0.9;">(außer Status 2 - Auf Wache)</small>
                         </div>
-                        <div class="panel-content">
+                        <div class="panel-content" style="padding: 20px;">
                             <!-- Dropdown für Fahrzeugauswahl -->
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 8px; color: #a0aec0; font-weight: 600;">
-                                    <i class="fas fa-ambulance"></i> Fahrzeug wählen:
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 10px; color: #e2e8f0; font-weight: 600; font-size: 0.95em;">
+                                    <i class="fas fa-ambulance" style="color: #3182ce;"></i> Fahrzeug wählen:
                                 </label>
                                 <select 
                                     id="radio-vehicle-dropdown" 
                                     onchange="selectVehicleFromDropdown()" 
-                                    style="width: 100%; padding: 12px; background: #2d3748; border: 2px solid #3182ce; border-radius: 8px; color: #fff; font-size: 1em; cursor: pointer;"
+                                    style="width: 100%; padding: 14px; background: linear-gradient(to bottom, #2d3748 0%, #1a202c 100%); border: 2px solid #3182ce; border-radius: 10px; color: #fff; font-size: 1em; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                                    onfocus="this.style.borderColor='#4299e1'; this.style.boxShadow='0 0 0 3px rgba(66,153,225,0.3)'"
+                                    onblur="this.style.borderColor='#3182ce'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)'"
                                 >
                                     <option value="">-- Fahrzeug wählen --</option>
                                     <!-- Wird von updateRadioVehicleDropdown() gefüllt -->
                                 </select>
                             </div>
                             
+                            <!-- ✨ NEU: Selected Vehicle Display -->
+                            <div id="selected-vehicle-info" style="display: none;"></div>
+                            
                             <!-- Funkspruch-Eingabe -->
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 8px; color: #a0aec0; font-weight: 600;">
-                                    <i class="fas fa-comment"></i> Nachricht:
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 10px; color: #e2e8f0; font-weight: 600; font-size: 0.95em;">
+                                    <i class="fas fa-comment" style="color: #48bb78;"></i> Nachricht:
                                 </label>
                                 <input 
                                     type="text" 
                                     id="radio-vehicle-message-input" 
-                                    placeholder="Nachricht an Fahrzeug..." 
-                                    style="width: 100%; padding: 12px; background: #2d3748; border: 2px solid #3182ce; border-radius: 8px; color: #fff; font-size: 1em;"
+                                    placeholder="Nachricht an Fahrzeug eingeben..." 
+                                    style="width: 100%; padding: 14px; background: linear-gradient(to bottom, #2d3748 0%, #1a202c 100%); border: 2px solid #48bb78; border-radius: 10px; color: #fff; font-size: 1em; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                                    onfocus="this.style.borderColor='#68d391'; this.style.boxShadow='0 0 0 3px rgba(72,187,120,0.3)'"
+                                    onblur="this.style.borderColor='#48bb78'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)'"
                                     onkeypress="if(event.key === 'Enter') sendRadioToVehicle()"
                                 />
                             </div>
@@ -341,31 +348,42 @@
                             <button 
                                 class="btn btn-primary" 
                                 onclick="sendRadioToVehicle()" 
-                                style="width: 100%; padding: 12px; font-size: 1em; font-weight: bold;"
+                                style="width: 100%; padding: 14px; font-size: 1.05em; font-weight: bold; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); border: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(72,187,120,0.4); transition: all 0.2s;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(72,187,120,0.5)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(72,187,120,0.4)'"
                             >
                                 <i class="fas fa-paper-plane"></i> Funkspruch senden
                             </button>
                             
-                            <small style="display: block; margin-top: 12px; color: #a0aec0; font-style: italic;">
-                                <i class="fas fa-info-circle"></i> Fahrzeug antwortet automatisch und kontextabhängig
-                            </small>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 15px; padding: 10px; background: rgba(66,153,225,0.1); border-left: 3px solid #4299e1; border-radius: 6px;">
+                                <i class="fas fa-info-circle" style="color: #4299e1; font-size: 1.1em;"></i>
+                                <small style="color: #cbd5e0; font-style: italic; line-height: 1.4;">
+                                    Fahrzeug antwortet automatisch und kontextabhängig auf Ihre Nachricht
+                                </small>
+                            </div>
                             
                             <!-- Info-Box für Status 0 & 5 -->
-                            <div style="margin-top: 20px; padding: 15px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px;">
-                                <h4 style="margin: 0 0 10px 0; color: #ffc107; font-size: 1em;">
-                                    <i class="fas fa-exclamation-triangle"></i> Fahrzeug-initiierte Funkrufe
+                            <div style="margin-top: 25px; padding: 18px; background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%); border: 2px solid rgba(255, 193, 7, 0.4); border-radius: 12px; box-shadow: 0 4px 12px rgba(255,193,7,0.2);">
+                                <h4 style="margin: 0 0 12px 0; color: #ffc107; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-exclamation-triangle" style="font-size: 1.2em;"></i>
+                                    <span>Fahrzeug-initiierte Funkrufe</span>
                                 </h4>
-                                <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; color: #a0aec0;">
-                                    <li><strong>Status 0:</strong> Notfall - Crew in Gefahr</li>
-                                    <li><strong>Status 5:</strong> Sprechwunsch - Anfragen:
-                                        <ul style="margin-top: 5px;">
-                                            <li>Klinikzuweisung bei Transport</li>
-                                            <li>Verstärkung anfordern</li>
-                                            <li>Zusätzliche Einsatzinfos</li>
-                                            <li>Material nachfordern</li>
-                                        </ul>
-                                    </li>
-                                </ul>
+                                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; color: #cbd5e0; line-height: 1.8;">
+                                        <li style="margin-bottom: 8px;">
+                                            <strong style="color: #fc8181;">Status 0:</strong> <span style="color: #feb2b2;">Notfall - Crew in Gefahr</span>
+                                        </li>
+                                        <li>
+                                            <strong style="color: #63b3ed;">Status 5:</strong> <span style="color: #90cdf4;">Sprechwunsch - Anfragen:</span>
+                                            <ul style="margin-top: 6px; font-size: 0.95em;">
+                                                <li style="margin: 4px 0;">• Klinikzuweisung bei Transport</li>
+                                                <li style="margin: 4px 0;">• Verstärkung anfordern</li>
+                                                <li style="margin: 4px 0;">• Zusätzliche Einsatzinfos</li>
+                                                <li style="margin: 4px 0;">• Material nachfordern</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -374,67 +392,67 @@
         </div>
     </div>
 
-    <!-- 📦 SKRIPTE v5.0.7 - NEUE ORDNERSTRUKTUR -->
+    <!-- 📦 SKRIPTE v5.0.8 - NEUE ORDNERSTRUKTUR -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- ✅ LEAFLET ROUTING MACHINE JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     
     <!-- 🔵 CORE -->
-    <script src="js/core/config.js?v=5.0.7"></script>
-    <script src="js/core/incident-manager.js?v=5.0.7"></script>
+    <script src="js/core/config.js?v=5.0.8"></script>
+    <script src="js/core/incident-manager.js?v=5.0.8"></script>
     
     <!-- 🟪 UTILS (Settings Manager ZUERST!) -->
-    <script src="js/utils/settings-manager.js?v=5.0.7"></script>
-    <script src="js/utils/location-generator.js?v=5.0.7"></script>
-    <script src="js/utils/incident-numbering.js?v=5.0.7"></script>
-    <script src="js/utils/vehicle-analyzer.js?v=5.0.7"></script>
-    <script src="js/utils/address-service.js?v=5.0.7"></script>
-    <script src="js/utils/notification-system.js?v=5.0.7"></script>
-    <script src="js/utils/scoring-system.js?v=5.0.7"></script>
-    <script src="js/utils/tutorial.js?v=5.0.7"></script>
+    <script src="js/utils/settings-manager.js?v=5.0.8"></script>
+    <script src="js/utils/location-generator.js?v=5.0.8"></script>
+    <script src="js/utils/incident-numbering.js?v=5.0.8"></script>
+    <script src="js/utils/vehicle-analyzer.js?v=5.0.8"></script>
+    <script src="js/utils/address-service.js?v=5.0.8"></script>
+    <script src="js/utils/notification-system.js?v=5.0.8"></script>
+    <script src="js/utils/scoring-system.js?v=5.0.8"></script>
+    <script src="js/utils/tutorial.js?v=5.0.8"></script>
     
     <!-- 🟨 DATA -->
-    <script src="js/data/hospitals.js?v=5.0.7"></script>
-    <script src="js/data/incidents.js?v=5.0.7"></script>
-    <script src="js/data/data.js?v=5.0.7"></script>
+    <script src="js/data/hospitals.js?v=5.0.8"></script>
+    <script src="js/data/incidents.js?v=5.0.8"></script>
+    <script src="js/data/data.js?v=5.0.8"></script>
     
     <!-- 🔴 SYSTEMS -->
-    <script src="js/systems/weather-system.js?v=5.0.7"></script>
-    <script src="js/systems/ai-incident-generator.js?v=5.0.7"></script>
-    <script src="js/systems/mission-timer.js?v=5.0.7"></script>
-    <script src="js/systems/escalation-system.js?v=5.0.7"></script>
-    <script src="js/systems/groq-validator.js?v=5.0.7"></script>
-    <script src="js/systems/call-system.js?v=5.0.7"></script>
-    <script src="js/systems/vehicle-movement.js?v=5.0.7"></script>
+    <script src="js/systems/weather-system.js?v=5.0.8"></script>
+    <script src="js/systems/ai-incident-generator.js?v=5.0.8"></script>
+    <script src="js/systems/mission-timer.js?v=5.0.8"></script>
+    <script src="js/systems/escalation-system.js?v=5.0.8"></script>
+    <script src="js/systems/groq-validator.js?v=5.0.8"></script>
+    <script src="js/systems/call-system.js?v=5.0.8"></script>
+    <script src="js/systems/vehicle-movement.js?v=5.0.8"></script>
     
     <!-- 🆕 RADIO SYSTEMS -->
-    <script src="js/systems/radio-system.js?v=5.0.7"></script>
-    <script src="js/systems/vehicle-radio-requests.js?v=5.0.7"></script>
+    <script src="js/systems/radio-system.js?v=5.0.8"></script>
+    <script src="js/systems/vehicle-radio-requests.js?v=5.0.8"></script>
     
     <!-- 🟡 UI -->
-    <script src="js/ui/ui-helpers.js?v=5.0.7"></script>
-    <script src="js/ui/keywords-dropdown.js?v=5.0.7"></script>
-    <script src="js/ui/protocol-form.js?v=5.0.7"></script>
-    <script src="js/ui/assignment-ui.js?v=5.0.7"></script>
-    <script src="js/ui/manual-incident.js?v=5.0.7"></script>
-    <script src="js/ui/tabs.js?v=5.0.7"></script>
-    <script src="js/ui/ui.js?v=5.0.7"></script>
-    <script src="js/ui/draggable.js?v=5.0.7"></script>
+    <script src="js/ui/ui-helpers.js?v=5.0.8"></script>
+    <script src="js/ui/keywords-dropdown.js?v=5.0.8"></script>
+    <script src="js/ui/protocol-form.js?v=5.0.8"></script>
+    <script src="js/ui/assignment-ui.js?v=5.0.8"></script>
+    <script src="js/ui/manual-incident.js?v=5.0.8"></script>
+    <script src="js/ui/tabs.js?v=5.0.8"></script>
+    <script src="js/ui/ui.js?v=5.0.8"></script>
+    <script src="js/ui/draggable.js?v=5.0.8"></script>
     
     <!-- 🆕 UI RADIO -->
-    <script src="js/ui/ui-radio.js?v=5.0.7"></script>
+    <script src="js/ui/ui-radio.js?v=5.0.8"></script>
     
     <!-- 🗺️ MAP & AI (bleiben in js/) -->
-    <script src="js/map.js?v=5.0.7"></script>
-    <script src="js/ai.js?v=5.0.7"></script>
+    <script src="js/map.js?v=5.0.8"></script>
+    <script src="js/ai.js?v=5.0.8"></script>
     
     <!-- 🔵 CORE INIT (ZULETZT) -->
-    <script src="js/core/game.js?v=5.0.7"></script>
-    <script src="js/core/main.js?v=5.0.7"></script>
-    <script src="js/core/bridge.js?v=5.0.7"></script>
+    <script src="js/core/game.js?v=5.0.8"></script>
+    <script src="js/core/main.js?v=5.0.8"></script>
+    <script src="js/core/bridge.js?v=5.0.8"></script>
     
     <!-- 🆕 DEBUG MENU (GANZ ZULETZT) -->
-    <script src="js/utils/debug-menu.js?v=5.0.7"></script>
+    <script src="js/utils/debug-menu.js?v=5.0.8"></script>
 </body>
 </html>
