@@ -1,5 +1,5 @@
 // =========================
-// KARTENLOGIK v5.0
+// KARTENLOGIK v5.1
 // + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge IMMER anklickbar (auch während Fahrt)
 // + Fahrzeuge in Wache unsichtbar
@@ -7,6 +7,7 @@
 // + ✅ Krankenhäuser werden angezeigt
 // + ✅ Routen werden beim Löschen entfernt
 // + ✅ Phase 3.1: Marker-Updates ohne Neuerstellen
+// + ✅ FIX: Bessere FMS-Status-Anzeige in Wachen
 // =========================
 
 let map = null;
@@ -156,18 +157,36 @@ function generateHospitalPopupContent(hospital) {
     `;
 }
 
+// ✅ FIX: Verbesserte getFMSStatus Funktion
 function getFMSStatus(vehicle) {
-    const fmsCode = vehicle.currentStatus || 2;
+    // Stelle sicher dass currentStatus gesetzt ist
+    const fmsCode = vehicle.currentStatus || vehicle.status || 2;
     
-    if (!CONFIG.FMS_STATUS || !CONFIG.FMS_STATUS[fmsCode]) {
-        return {
-            name: 'Unbekannt',
-            color: '#6c757d',
-            icon: '🚑'
-        };
+    // Hole aus CONFIG wenn vorhanden
+    if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS && CONFIG.FMS_STATUS[fmsCode]) {
+        return CONFIG.FMS_STATUS[fmsCode];
     }
     
-    return CONFIG.FMS_STATUS[fmsCode];
+    // Fallback mit vollständiger Definition
+    const fallbackStatus = {
+        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
+        2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
+        3: { name: 'Einsatz übernommen', color: '#ffc107', icon: '🟡' },
+        4: { name: 'Anfahrt Einsatzstelle', color: '#fd7e14', icon: '🟠' },
+        5: { name: 'Ankunft Einsatzstelle', color: '#dc3545', icon: '🔴' },
+        6: { name: 'Sprechwunsch', color: '#6c757d', icon: '⚪' },
+        7: { name: 'Patient aufgenommen', color: '#17a2b8', icon: '🔵' },
+        8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
+        9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' },
+        0: { name: 'Notruf/Hilferuf', color: '#dc3545', icon: '⚠️' },
+        'C': { name: 'Status C', color: '#dc3545', icon: '🛑' }
+    };
+    
+    return fallbackStatus[fmsCode] || {
+        name: 'Unbekannt',
+        color: '#6c757d',
+        icon: '❓'
+    };
 }
 
 function createStationMarkers() {
@@ -227,8 +246,12 @@ function createStationMarkers() {
     console.log(`✅ ${count} von ${Object.keys(STATIONS).length} Wachen erfolgreich erstellt`);
 }
 
+// ✅ FIX: Verbesserte Popup-Generierung mit besserer Status-Anzeige
 function generateStationPopupContent(station) {
-    const stationVehicles = VEHICLES.filter(v => v.station === station.id && v.owned);
+    // Nutze GAME_DATA oder game.vehicles für konsistente Daten
+    const vehicles = (typeof game !== 'undefined' && game.vehicles) ? 
+                     game.vehicles.filter(v => v.station === station.id && v.owned) :
+                     (typeof VEHICLES !== 'undefined' ? VEHICLES.filter(v => v.station === station.id && v.owned) : []);
     
     const categoryText = {
         'rettungswache': 'Rettungswache',
@@ -242,20 +265,30 @@ function generateStationPopupContent(station) {
     }[station.type] || station.type;
     
     let vehicleListHtml = '';
-    if (stationVehicles.length > 0) {
+    if (vehicles.length > 0) {
         vehicleListHtml = `
             <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
-                <strong>🚑 Fahrzeuge (${stationVehicles.length}):</strong><br>
+                <strong>🚑 Fahrzeuge (${vehicles.length}):</strong><br>
                 <div style="margin-top: 5px;">
-                    ${stationVehicles.map(v => {
+                    ${vehicles.map(v => {
+                        // ✅ FIX: Stelle sicher dass currentStatus existiert
+                        if (!v.currentStatus && !v.status) {
+                            v.currentStatus = 2; // Default: Einsatzbereit auf Wache
+                        }
+                        if (!v.currentStatus) {
+                            v.currentStatus = v.status;
+                        }
+                        
                         const fms = getFMSStatus(v);
+                        const statusNumber = v.currentStatus || 2;
+                        
                         return `
                             <div style="display: flex; align-items: center; margin: 3px 0; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid ${fms.color};">
                                 <span style="font-size: 0.9em; margin-right: 5px;">${fms.icon}</span>
                                 <div style="flex: 1;">
                                     <div style="font-size: 0.85em; font-weight: bold;">${v.callsign}</div>
                                     <div style="font-size: 0.75em; color: ${fms.color};">
-                                        <strong>Status ${v.currentStatus || 2}</strong> | ${fms.name}
+                                        <strong>Status ${statusNumber}</strong> | ${fms.name}
                                     </div>
                                 </div>
                             </div>
@@ -369,6 +402,7 @@ function createVehiclePopupContent(vehicle) {
     const fms = getFMSStatus(vehicle);
     const station = STATIONS[vehicle.station];
     const stationName = station ? station.name : 'Unbekannt';
+    const statusNumber = vehicle.currentStatus || vehicle.status || 2;
     
     return `
         <div style="min-width: 220px;">
@@ -382,7 +416,7 @@ function createVehiclePopupContent(vehicle) {
                 <strong>Wache:</strong> ${stationName}
             </div>
             <div style="margin: 10px 0; padding: 8px; background: rgba(0,0,0,0.2); border-left: 3px solid ${fms.color}; border-radius: 4px;">
-                <strong style="color: ${fms.color};">Status ${vehicle.currentStatus || 2}</strong><br>
+                <strong style="color: ${fms.color};">Status ${statusNumber}</strong><br>
                 <span style="color: ${fms.color}; font-size: 0.9em;">${fms.name}</span>
             </div>
             ${vehicle.incident ? `
