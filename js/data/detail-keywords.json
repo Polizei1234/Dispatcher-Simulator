@@ -1,0 +1,702 @@
+[
+  {
+    "keyword": "ACS/Infarkt",
+    "category": "Herz-Kreislauf",
+    "description": "Akutes Koronarsyndrom oder Herzinfarkt - lebensbedrohliche Durchblutungsstörung des Herzmuskels",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Akuter Thoraxschmerz",
+    "category": "Herz-Kreislauf",
+    "description": "Plötzliche Brustschmerzen unklarer Ursache",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Gefäßverschluss",
+    "category": "Herz-Kreislauf",
+    "description": "Akuter Verschluss einer Extremitätenarterie oder -vene mit Durchblutungsstörung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Kreislaufstillstand",
+    "category": "Herz-Kreislauf",
+    "description": "Herz-Kreislauf-Stillstand, Reanimationspflicht",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Kreislaufstillstand mit T-CPR",
+    "category": "Herz-Kreislauf",
+    "description": "Reanimation mit telefonischer Anleitung durch die Leitstelle",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Kollaps/Synkope",
+    "category": "Herz-Kreislauf",
+    "description": "Kurzzeitige Bewusstlosigkeit oder Ohnmacht",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Rhythmusstörung",
+    "category": "Herz-Kreislauf",
+    "description": "Herzrhythmusstörungen (zu schnell, zu langsam oder unregelmäßig)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Hypertensive Entgleisung",
+    "category": "Herz-Kreislauf",
+    "description": "Bluthochdruckkrise mit sehr hohen Blutdruckwerten",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Hypotonie",
+    "category": "Herz-Kreislauf",
+    "description": "Kritisch niedriger Blutdruck mit Kreislaufproblemen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Kardiologischer Notfall",
+    "category": "Herz-Kreislauf",
+    "description": "Sonstiger akuter Herznotfall",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Lungenembolie",
+    "category": "Herz-Kreislauf",
+    "description": "Verschluss der Lungenarterien durch Blutgerinnsel",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Lungenödem kardial",
+    "category": "Herz-Kreislauf",
+    "description": "Flüssigkeitsansammlung in der Lunge durch Linksherzinsuffizienz (Herzschwäche)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Atemnot akut",
+    "category": "Atmung",
+    "description": "Akute, plötzlich auftretende Atemnotsituation",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Asthma/COPD",
+    "category": "Atmung",
+    "description": "Asthmaanfall oder akute Verschlechterung einer chronisch obstruktiven Lungenerkrankung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Aspiration",
+    "category": "Atmung",
+    "description": "Einatmen von Fremdkörpern, Flüssigkeiten oder Erbrochenem in die Atemwege",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Bronchitis/Pneumonie",
+    "category": "Atmung",
+    "description": "Atemwegsentzündung oder Lungenentzündung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Hyperventilation",
+    "category": "Atmung",
+    "description": "Übermäßige schnelle oder tiefe Atmung mit Atembeschwerden",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Schlaganfall/Hirnblutung",
+    "category": "Neurologie",
+    "description": "Verdacht auf Hirninfarkt oder Hirnblutung - plötzliche neurologische Ausfälle",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Bewusstlosigkeit",
+    "category": "Neurologie",
+    "description": "Patient nicht ansprechbar, ohne Reaktion",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Krampfanfall",
+    "category": "Neurologie",
+    "description": "Epileptischer Anfall oder Krampfgeschehen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Neurologischer Notfall",
+    "category": "Neurologie",
+    "description": "Sonstiger akuter neurologischer Notfall",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "VU",
+    "category": "Unfälle",
+    "description": "Straßenverkehrsunfall mit Verletzten",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "VU schwer",
+    "category": "Unfälle",
+    "description": "Schwerer Verkehrsunfall mit eingeklemmten oder schwerverletzten Personen",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Betriebsunfall",
+    "category": "Unfälle",
+    "description": "Unfall am Arbeitsplatz oder während der Arbeit",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Sport-/Schulunfall",
+    "category": "Unfälle",
+    "description": "Unfall bei sportlicher Aktivität oder in der Schule",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Sturz",
+    "category": "Unfälle",
+    "description": "Sturzgeschehen (z.B. von Leiter, Treppe, aus Höhe)",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Stromunfall",
+    "category": "Unfälle",
+    "description": "Elektrounfall mit Stromeinwirkung auf den Körper",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Unfall eingeklemmt/verschüttet",
+    "category": "Unfälle",
+    "description": "Person eingeklemmt oder unter Gegenständen/Material verschüttet",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Bade-/Tauch-/Ertrinkungsunfall",
+    "category": "Unfälle",
+    "description": "Wassernotfall mit Ertrinkungsgefahr",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Eisunfall",
+    "category": "Unfälle",
+    "description": "Einbruch ins Eis auf zugefrorenen Gewässern",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Schiff-/Bootsunfall",
+    "category": "Unfälle",
+    "description": "Unfall auf oder mit Wasserfahrzeugen",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Unfall Luftfahrzeug",
+    "category": "Unfälle",
+    "description": "Flugzeugabsturz oder Hubschrauberunfall",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Unfall Schienenfahrzeug",
+    "category": "Unfälle",
+    "description": "Unfall mit Zug, Straßenbahn oder S-Bahn",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "SHT",
+    "category": "Trauma/Verletzungen",
+    "description": "Schädel-Hirn-Trauma - Kopfverletzung mit Hirnbeteiligung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Commotio cerebri",
+    "category": "Trauma/Verletzungen",
+    "description": "Gehirnerschütterung - leichte Form des Schädel-Hirn-Traumas",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "WS-Trauma",
+    "category": "Trauma/Verletzungen",
+    "description": "Wirbelsäulenverletzung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Trauma Extremitäten",
+    "category": "Trauma/Verletzungen",
+    "description": "Verletzungen an Armen oder Beinen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Trauma Gesicht/Hals/Kopf",
+    "category": "Trauma/Verletzungen",
+    "description": "Verletzungen im Kopf-Hals-Gesichtsbereich",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Trauma Körperstamm",
+    "category": "Trauma/Verletzungen",
+    "description": "Verletzungen an Brust, Bauch, Rücken oder Becken",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Trauma sonstiges",
+    "category": "Trauma/Verletzungen",
+    "description": "Sonstige Verletzungen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Schenkelhalsfraktur",
+    "category": "Trauma/Verletzungen",
+    "description": "Oberschenkelhalsbruch - typische Verletzung bei älteren Menschen",
+    "type": "Z",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Verbrennung/Verbrühung",
+    "category": "Trauma/Verletzungen",
+    "description": "Thermische Verletzungen durch Hitze oder heiße Flüssigkeiten",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Verätzung",
+    "category": "Trauma/Verletzungen",
+    "description": "Chemische Verletzungen durch Säuren oder Laugen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Amputation",
+    "category": "Trauma/Verletzungen",
+    "description": "Abtrennung von Körperteilen (vollständig oder teilweise)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Augenverletzung",
+    "category": "Trauma/Verletzungen",
+    "description": "Verletzung des Auges oder der Augenlider",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Hieb-/Stichverletzung",
+    "category": "Trauma/Verletzungen",
+    "description": "Verletzung durch scharfe oder spitze Gegenstände",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Schussverletzung",
+    "category": "Trauma/Verletzungen",
+    "description": "Verletzung durch Schusswaffe",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Schlägerei",
+    "category": "Trauma/Verletzungen",
+    "description": "Körperverletzung durch Gewalteinwirkung bei Auseinandersetzungen",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Abdomen akut",
+    "category": "Abdomen",
+    "description": "Akuter Bauchschmerz, \"akutes Abdomen\"",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Abdomen sonstiges",
+    "category": "Abdomen",
+    "description": "Sonstige Bauchbeschwerden",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "GI-Blutung",
+    "category": "Abdomen",
+    "description": "Magen-Darm-Blutung (gastrointestinale Blutung)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Kolik",
+    "category": "Abdomen",
+    "description": "Krampfartige, wellenartige Bauchschmerzen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Alkohol",
+    "category": "Intoxikationen",
+    "description": "Alkoholvergiftung oder -intoxikation",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Drogen",
+    "category": "Intoxikationen",
+    "description": "Vergiftung durch illegale Drogen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Medikamente",
+    "category": "Intoxikationen",
+    "description": "Medikamentenüberdosierung oder -vergiftung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Inhalativ",
+    "category": "Intoxikationen",
+    "description": "Vergiftung durch Einatmen (z.B. Rauchgas, Kohlenmonoxid)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Intoxikation sonstige",
+    "category": "Intoxikationen",
+    "description": "Andere Vergiftungen (z.B. Pflanzen, Chemikalien)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Geburt",
+    "category": "Gynäkologie",
+    "description": "Bevorstehende oder laufende Geburt außerhalb der Klinik",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Blutung vaginal",
+    "category": "Gynäkologie",
+    "description": "Gynäkologische Blutung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Gynäkologischer Notfall",
+    "category": "Gynäkologie",
+    "description": "Sonstiger gynäkologischer Akutfall",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Psychiatrischer Notfall",
+    "category": "Psychiatrie",
+    "description": "Akute psychiatrische Krise oder psychischer Ausnahmezustand",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Suizid/Suizidversuch",
+    "category": "Psychiatrie",
+    "description": "Selbstmordversuch oder akute Selbstmordgefährdung",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "HNO Notfall",
+    "category": "HNO",
+    "description": "Akuter Hals-Nasen-Ohren-Notfall",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Nasenbluten",
+    "category": "HNO",
+    "description": "Starkes oder anhaltendes Nasenbluten",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Nachblutung HNO-OP",
+    "category": "HNO",
+    "description": "Nachblutung nach HNO-Operation",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Urologischer Notfall",
+    "category": "Urologie",
+    "description": "Akuter urologischer Notfall (z.B. Harnverhalt, Nierenkolik, Hodentorsion)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Katheterwechsel",
+    "category": "Urologie",
+    "description": "Notfallmäßiger Wechsel eines Harnkatheters",
+    "type": "E",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Hypoglykämie",
+    "category": "Stoffwechsel",
+    "description": "Unterzuckerung (zu niedriger Blutzuckerspiegel), typisch bei Diabetikern",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Stoffwechsel sonstiges",
+    "category": "Stoffwechsel",
+    "description": "Andere Stoffwechselentgleisung (z.B. Überzuckerung, Ketoazidose)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Hitzschlag/Sonnenstich",
+    "category": "Thermische Schäden",
+    "description": "Überhitzung des Körpers durch hohe Außentemperaturen",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Unterkühlung/Erfrierung",
+    "category": "Thermische Schäden",
+    "description": "Zu niedrige Körpertemperatur durch Kälteeinwirkung",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Anaphylaxie",
+    "category": "Sonstiges",
+    "description": "Schwere allergische Reaktion mit Kreislaufbeteiligung (lebensbedrohlich)",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Bandscheibenbeschwerden/Lumbago",
+    "category": "Sonstiges",
+    "description": "Akute Rückenschmerzen, Hexenschuss, Bandscheibenvorfall",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Hilflose Person",
+    "category": "Sonstiges",
+    "description": "Person benötigt Hilfe, Situation noch unklar",
+    "type": "Z",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Unklare Lage",
+    "category": "Sonstiges",
+    "description": "Notfallsituation noch nicht einschätzbar",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Wohnungsöffnung",
+    "category": "Sonstiges",
+    "description": "Notöffnung einer Wohnung (z.B. bei hilfloser Person dahinter)",
+    "type": "E",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Hausnotruf",
+    "category": "Sonstiges",
+    "description": "Notruf über Hausnotrufsystem",
+    "type": "E",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Feuerwehrlage",
+    "category": "Sonderlagen",
+    "description": "Einsatz mit Beteiligung der Feuerwehr (z.B. Rettung aus Höhen/Tiefen, Technische Hilfeleistung)",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Polizeilage",
+    "category": "Sonderlagen",
+    "description": "Einsatz mit polizeilicher Beteiligung (z.B. Amok, Geiselnahme, Gewalttat)",
+    "type": "E",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Krankentransport",
+    "category": "Organisatorisch",
+    "description": "Geplanter Krankentransport ohne Notfallcharakter",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Blut-/Organtransport",
+    "category": "Organisatorisch",
+    "description": "Dringender Transport von Blutkonserven oder Spenderorganen",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Adipositastransport",
+    "category": "Organisatorisch",
+    "description": "Transport von stark übergewichtigen Patienten (Spezialfahrzeug erforderlich)",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Tragehilfe",
+    "category": "Organisatorisch",
+    "description": "Unterstützung beim Transport (z.B. aus oberen Stockwerken ohne Aufzug)",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "NA-Zubringer",
+    "category": "Organisatorisch",
+    "description": "Krankentransportwagen bringt Notarzt zum Einsatzort",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "LNA/OrgL-Zubringer",
+    "category": "Organisatorisch",
+    "description": "Transport von Leitendem Notarzt oder Organisatorischem Leiter bei Großschadenslagen",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "RTH-Landeplatztransfer",
+    "category": "Organisatorisch",
+    "description": "Transfer von/zum Rettungshubschrauberlandeplatz",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "PSNV/KIT",
+    "category": "Organisatorisch",
+    "description": "Psychosoziale Notfallversorgung/Kriseninterventionsteam",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Gebietsabdeckung",
+    "category": "Organisatorisch",
+    "description": "Bereitstellung zur Abdeckung eines nicht besetzten Rettungsdienstbereichs",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Wachbesetzung",
+    "category": "Organisatorisch",
+    "description": "Besetzung einer Rettungswache",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Hilfeleistung",
+    "category": "Organisatorisch",
+    "description": "Allgemeine Hilfeleistung ohne medizinischen Notfall",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Desinfektion",
+    "category": "Organisatorisch",
+    "description": "Desinfektionseinsatz (z.B. nach Infektionstransport)",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "Dienstfahrt",
+    "category": "Organisatorisch",
+    "description": "Dienstliche Fahrten ohne Einsatzcharakter",
+    "type": "S",
+    "sqr_required": false
+  },
+  {
+    "keyword": "ITH",
+    "category": "Sekundärtransporte",
+    "description": "Intensivtransporthubschrauber - Verlegung von Intensivpatienten per Hubschrauber",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "ITW",
+    "category": "Sekundärtransporte",
+    "description": "Intensivtransportwagen - Verlegung von Intensivpatienten",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "Inkubator/Baby-NAW",
+    "category": "Sekundärtransporte",
+    "description": "Neugeborenen-Intensivtransport mit Inkubator",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "NAW/RTW mit NEF",
+    "category": "Sekundärtransporte",
+    "description": "Verlegung mit Notarzt aus dem Regelrettungsdienst",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "RTW mit Klinikarzt",
+    "category": "Sekundärtransporte",
+    "description": "Verlegung mit begleitendem Klinik-Arzt",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "RTW",
+    "category": "Sekundärtransporte",
+    "description": "Verlegung mit Rettungswagen",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "RTH",
+    "category": "Sekundärtransporte",
+    "description": "Verlegung mit Rettungshubschrauber",
+    "type": "S",
+    "sqr_required": true
+  },
+  {
+    "keyword": "KTW",
+    "category": "Sekundärtransporte",
+    "description": "Verlegung mit Krankentransportwagen",
+    "type": "S",
+    "sqr_required": true
+  }
+]
