@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.0
+// MANUAL INCIDENT CREATION v5.1
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -7,6 +7,7 @@
 // + ✅ PHASE 2 FIX: Meldebild NUR aus gestellten Fragen
 // + ✅ PHASE 3.1: Gespräch bleibt offen, vollständiges Protokoll
 // + ✅ v5.0: Keyword-Dropdowns für Stadtteil & Örtlichkeit (wie Stichwörter)
+// + ✅ v5.1: Verstärkung anfordern Modus
 // =========================
 
 const ManualIncident = {
@@ -14,6 +15,8 @@ const ManualIncident = {
     modalOpen: false,
     vehicleModalOpen: false,
     inlineMode: false,
+    reinforcementMode: false,
+    currentIncident: null,
     selectedPriorityKeyword: null,
     selectedDetailKeyword: null,
     currentCallData: null,
@@ -21,7 +24,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v5.0 initialisiert (Keywords-Dropdowns)');
+        console.log('📝 Manual Incident System v5.1 initialisiert (Verstärkung + Keywords-Dropdowns)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -33,7 +36,7 @@ const ManualIncident = {
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 1000px; height: 80vh;">
                 <div class="modal-header">
-                    <h2><i class="fas fa-ambulance"></i> Fahrzeugdisposition</h2>
+                    <h2><i class="fas fa-ambulance"></i> <span id="vehicle-modal-title">Fahrzeugdisposition</span></h2>
                     <button class="close-btn" onclick="ManualIncident.closeVehicleModal()">&times;</button>
                 </div>
                 <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 120px);">
@@ -86,9 +89,43 @@ const ManualIncident = {
         });
     },
 
+    // ✅ NEU: Öffne Vehicle Modal für Verstärkung
+    openVehicleModalForReinforcement(incident) {
+        console.log('🚑 Verstärkung-Modus aktiviert für:', incident.id);
+        
+        this.reinforcementMode = true;
+        this.currentIncident = incident;
+        this.selectedVehicles = [];
+        
+        // Modal-Titel anpassen
+        const title = document.getElementById('vehicle-modal-title');
+        if (title) {
+            title.innerHTML = '<i class="fas fa-plus-circle"></i> Verstärkung anfordern';
+        }
+        
+        // Location setzen
+        const locationSpan = document.getElementById('vehicle-modal-location');
+        if (locationSpan) {
+            locationSpan.innerHTML = `<strong>Einsatz:</strong> ${incident.stichwort} - ${incident.ort}`;
+        }
+        
+        // Fahrzeuge laden (nur verfügbare)
+        this.loadVehiclesInModal();
+        
+        // Modal öffnen
+        this.vehicleModalOpen = true;
+        const modal = document.getElementById('vehicle-selection-modal');
+        if (modal) {
+            modal.classList.add('active');
+        }
+        
+        console.log('✅ Verstärkung-Modal geöffnet');
+    },
+
     // 🚀 Inline-Modus für Notruf-Tab
     showInline(callData) {
         this.inlineMode = true;
+        this.reinforcementMode = false;
         this.currentCallData = callData;
         this.selectedVehicles = [];
         this.selectedPriorityKeyword = null;
@@ -149,7 +186,7 @@ const ManualIncident = {
                             <input type="text" id="inline-stockwerk" placeholder="z.B. 3. OG links">
                         </div>
                         <div class="form-group">
-                            <label>🏥 Besondere Örtlichkeit:</label>
+                            <label>🏭 Besondere Örtlichkeit:</label>
                             <input type="text" id="inline-oertlichkeit" placeholder="z.B. Schule, Krankenhaus" autocomplete="off">
                         </div>
                         <div class="form-group">
@@ -414,7 +451,7 @@ const ManualIncident = {
             this.initializeKeywordsDropdownsInline();
         }, 100);
 
-        console.log('✅ Manual Incident Inline v5.0 angezeigt - Keywords-Dropdowns für alle Felder');
+        console.log('✅ Manual Incident Inline v5.1 angezeigt - Keywords-Dropdowns für alle Felder');
     },
 
     toggleSection(sectionName) {
@@ -439,6 +476,12 @@ const ManualIncident = {
     openVehicleModal() {
         this.vehicleModalOpen = true;
         
+        // Modal-Titel zurücksetzen (für normale Disposition)
+        const title = document.getElementById('vehicle-modal-title');
+        if (title && !this.reinforcementMode) {
+            title.innerHTML = '<i class="fas fa-ambulance"></i> Fahrzeugdisposition';
+        }
+        
         // Location setzen
         const locationSpan = document.getElementById('vehicle-modal-location');
         if (locationSpan && this.currentCallData?.einsatz?.ort) {
@@ -459,6 +502,9 @@ const ManualIncident = {
 
     closeVehicleModal() {
         this.vehicleModalOpen = false;
+        this.reinforcementMode = false;
+        this.currentIncident = null;
+        
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
             modal.classList.remove('active');
@@ -467,10 +513,68 @@ const ManualIncident = {
     },
 
     confirmVehicleSelection() {
+        if (this.reinforcementMode && this.currentIncident) {
+            // ✅ Verstärkung-Modus: Fahrzeuge direkt zum Einsatz schicken
+            this.dispatchReinforcement();
+        } else {
+            // Normal-Modus: Fahrzeuge nur auswählen
+            this.updateSelectedVehiclesDisplay();
+            this.updateUIInline();
+        }
+        
         this.closeVehicleModal();
-        this.updateSelectedVehiclesDisplay();
-        this.updateUIInline();
         console.log('✅ Fahrzeugauswahl übernommen:', this.selectedVehicles);
+    },
+
+    dispatchReinforcement() {
+        if (!this.currentIncident || this.selectedVehicles.length === 0) {
+            console.error('❌ Kann Verstärkung nicht senden - Einsatz oder Fahrzeuge fehlen');
+            return;
+        }
+
+        console.log(`🚑 Sende ${this.selectedVehicles.length} Verstärkung(en) zu Einsatz ${this.currentIncident.id}`);
+
+        // Fahrzeuge zum Einsatz hinzufügen
+        this.selectedVehicles.forEach(vId => {
+            const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
+            if (!vehicle) return;
+
+            // Fahrzeug zum Einsatz assignen
+            if (!this.currentIncident.vehicles.includes(vId)) {
+                this.currentIncident.vehicles.push(vId);
+            }
+            if (!this.currentIncident.assignedVehicles) {
+                this.currentIncident.assignedVehicles = [];
+            }
+            if (!this.currentIncident.assignedVehicles.includes(vId)) {
+                this.currentIncident.assignedVehicles.push(vId);
+            }
+
+            // Fahrzeug disponieren
+            vehicle.status = 'dispatched';
+            vehicle.incident = this.currentIncident.id;
+            vehicle.targetLocation = this.currentIncident.koordinaten;
+
+            if (typeof VehicleMovement !== 'undefined' && VehicleMovement.dispatchVehicle) {
+                VehicleMovement.dispatchVehicle(vId, this.currentIncident.koordinaten, this.currentIncident.id);
+            }
+
+            console.log(`✅ Verstärkung ${vehicle.callsign} alarmiert zu ${this.currentIncident.id}`);
+        });
+
+        // UI updaten
+        if (typeof UI !== 'undefined' && UI.updateIncidentList) {
+            UI.updateIncidentList();
+            UI.selectIncident(this.currentIncident.id);
+        }
+        if (typeof updateUI === 'function') {
+            updateUI();
+        }
+
+        // Bestätigung
+        alert(`✅ ${this.selectedVehicles.length} Fahrzeug(e) als Verstärkung alarmiert!`);
+        
+        this.selectedVehicles = [];
     },
 
     loadVehiclesInModal() {
@@ -480,7 +584,7 @@ const ManualIncident = {
         const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
         grid.innerHTML = '';
 
-        const targetCoords = this.currentCallData?.einsatz?.koordinaten;
+        const targetCoords = this.reinforcementMode ? this.currentIncident?.koordinaten : this.currentCallData?.einsatz?.koordinaten;
 
         vehicleTypes.forEach(type => {
             let vehicles = GAME_DATA.vehicles.filter(v => {
@@ -856,4 +960,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.0 geladen (Keywords-Dropdowns für Stadtteil & Örtlichkeit)');
+console.log('✅ Manual Incident System v5.1 geladen (Verstärkung + Keywords-Dropdowns)');
