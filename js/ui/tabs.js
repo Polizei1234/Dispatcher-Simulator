@@ -1,7 +1,8 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v4.2
+// TAB NAVIGATION & VEHICLE OVERVIEW v4.3
 // ✅ Phase 3 Fix 1: Fahrzeuge nach Wachen gruppiert
 // ✅ Phase 3 Fix 2.3: Radio-Tab mit Dropdown
+// ✅ FIX: FMS Status Anzeige korrekt
 // =========================
 
 let currentTab = 'map';
@@ -40,6 +41,37 @@ function switchTab(tabName) {
             updateRadioVehicleDropdown();
         }
     }
+}
+
+// ✅ FIX: Hole FMS Status (nutzt CONFIG.FMS_STATUS)
+function getFMSStatus(vehicle) {
+    const fmsCode = vehicle.currentStatus || vehicle.status || 2;
+    
+    // Hole FMS-Definition aus CONFIG
+    if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS && CONFIG.FMS_STATUS[fmsCode]) {
+        return CONFIG.FMS_STATUS[fmsCode];
+    }
+    
+    // Fallback wenn CONFIG nicht verfügbar
+    const fallbackStatus = {
+        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
+        2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
+        3: { name: 'Einsatz übernommen', color: '#ffc107', icon: '🟡' },
+        4: { name: 'Anfahrt Einsatzstelle', color: '#fd7e14', icon: '🟠' },
+        5: { name: 'Ankunft Einsatzstelle', color: '#dc3545', icon: '🔴' },
+        6: { name: 'Sprechwunsch', color: '#6c757d', icon: '⚪' },
+        7: { name: 'Patient aufgenommen', color: '#17a2b8', icon: '🔵' },
+        8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
+        9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' },
+        0: { name: 'Notruf/Hilferuf', color: '#dc3545', icon: '⚠️' },
+        'C': { name: 'Status C', color: '#dc3545', icon: '🛑' }
+    };
+    
+    return fallbackStatus[fmsCode] || {
+        name: 'Unbekannt',
+        color: '#6c757d',
+        icon: '❓'
+    };
 }
 
 // ✅ PHASE 3 FIX 1: Fahrzeuge direkt nach Wachen gruppiert
@@ -94,7 +126,10 @@ function updateVehiclesOverview() {
     
     // Zähle verfügbare Fahrzeuge
     const totalVehicles = ownedVehicles.length;
-    const availableVehicles = ownedVehicles.filter(v => v.status === 'available').length;
+    const availableVehicles = ownedVehicles.filter(v => {
+        const status = v.currentStatus || v.status || 2;
+        return status === 2 || status === 1; // Status 1 oder 2 = Einsatzbereit
+    }).length;
     
     // Header mit Statistik
     let html = `
@@ -142,7 +177,10 @@ function updateVehiclesOverview() {
         }
         
         // Zähle verfügbare Fahrzeuge dieser Wache
-        const stationAvailable = vehicles.filter(v => v.status === 'available').length;
+        const stationAvailable = vehicles.filter(v => {
+            const status = v.currentStatus || v.status || 2;
+            return status === 2 || status === 1;
+        }).length;
         const availabilityColor = stationAvailable === vehicles.length ? '#28a745' : 
                                   stationAvailable > 0 ? '#ffc107' : '#dc3545';
         
@@ -178,20 +216,20 @@ function updateVehiclesOverview() {
 
 // ✅ FIXED: Funktion getFMSStatusNumber hinzugefügt
 function getFMSStatusNumber(vehicle) {
-    const status = vehicle.currentStatus || 2;
+    const status = vehicle.currentStatus || vehicle.status || 2;
     
     // FMS-Status Nummern: 1-9 sind numerisch, 0 und C sind Buchstaben
     const statusMap = {
-        1: 1,    // Einsatzbereit auf Wache
+        1: 1,    // Einsatzbereit über Funk
         2: 2,    // Einsatzbereit auf Wache
         3: 3,    // Einsatz übernommen
-        4: 4,    // Am Einsatzort
-        5: 5,    // Sprechwunsch
-        6: 6,    // Nicht einsatzbereit
+        4: 4,    // Anfahrt Einsatzstelle
+        5: 5,    // Am Einsatzort
+        6: 6,    // Sprechwunsch
         7: 7,    // Patient aufgenommen
-        8: 8,    // Am Zielort
-        9: 9,    // Bereit am Standort
-        0: '0',  // Notfall
+        8: 8,    // Anfahrt Krankenhaus
+        9: 9,    // Ankunft Krankenhaus
+        0: '0',  // Notruf
         'C': 'C' // Status C
     };
     
@@ -205,6 +243,10 @@ function createVehicleCard(vehicle) {
     // Status Badge mit Zahl/Buchstabe
     const statusDisplay = typeof fmsNumber === 'number' ? fmsNumber : fmsNumber;
     
+    // Prüfe ob verfügbar (Status 1 oder 2)
+    const isAvailable = (vehicle.currentStatus === 1 || vehicle.currentStatus === 2 || 
+                         vehicle.status === 1 || vehicle.status === 2);
+    
     return `
         <div class="vehicle-card" style="border-left-color: ${fms.color};">
             <div class="vehicle-info">
@@ -217,7 +259,7 @@ function createVehicleCard(vehicle) {
                 </div>
             </div>
             <div class="vehicle-actions">
-                ${vehicle.status === 'available' ? `
+                ${isAvailable ? `
                     <button class="btn btn-small btn-primary" onclick="selectVehicleForIncident('${vehicle.id}')" title="Alarmieren">
                         <i class="fas fa-bell"></i>
                     </button>
@@ -323,4 +365,26 @@ setInterval(() => {
     }
 }, 3000);
 
-console.log('✅ Tabs v4.2 geladen - Fahrzeuge nach Wachen gruppiert + Radio-Dropdown');
+console.log('✅ Tabs v4.3 geladen - FMS Status Display Fix');
+
+// Helper functions
+function getVehicleIcon(type) {
+    const icons = {
+        'RTW': '🚑',
+        'NEF': '🚑',
+        'KTW': '🚐',
+        'Kdow': '🚗',
+        'GW-San': '🚚'
+    };
+    return icons[type] || '🚑';
+}
+
+function getIncidentIcon(type) {
+    const icons = {
+        'medical': '🆘',
+        'fire': '🔥',
+        'rescue': '🚨',
+        'accident': '🚗'
+    };
+    return icons[type] || '🚨';
+}
