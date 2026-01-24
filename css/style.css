@@ -1,4 +1,4 @@
-/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v2.2 */
+/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v5.0.3 */
 
 :root {
     --primary-color: #c8102e;
@@ -240,6 +240,268 @@ footer .panel { height: 100%; margin: 0; }
     background: rgba(220, 53, 69, 0.3);
     transform: scale(1.02);
     box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* ========================================
+   ✅ COMPACT VEHICLE OVERVIEW v5.0.3
+   ======================================== */
+
+/* Kompakter Header */
+.vehicles-header-compact {
+    background: var(--panel-bg);
+    padding: 12px 15px;
+    margin: -15px -15px 15px -15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.header-row h2 {
+    font-size: 1.3em;
+    margin: 0;
+}
+
+.quick-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.95em;
+    font-weight: 600;
+}
+
+.quick-stats .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Filter Row */
+.filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.filter-btn:hover {
+    background: var(--secondary-color);
+    border-color: var(--info-color);
+    transform: translateY(-2px);
+}
+
+.filter-btn.active {
+    background: var(--info-color);
+    border-color: var(--info-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.action-btn {
+    padding: 8px 12px;
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--secondary-color);
+    border-color: var(--info-color);
+}
+
+/* Shortcuts Hint */
+.shortcuts-hint {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shortcuts-hint kbd {
+    background: var(--panel-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border-color);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* Kompakte Station Groups */
+.stations-container-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.station-group-compact {
+    background: var(--panel-bg);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.station-header-compact {
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.station-header-compact:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.station-icon-compact {
+    font-size: 1.2em;
+}
+
+.station-name-compact {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.station-count {
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.collapse-icon-compact {
+    font-size: 0.8em;
+    transition: transform 0.3s;
+}
+
+.collapse-icon-compact.open {
+    transform: rotate(180deg);
+}
+
+.station-vehicles-compact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.station-vehicles-compact.open {
+    max-height: 2000px;
+    padding: 8px;
+}
+
+/* ✅ KOMPAKTE FAHRZEUG-KARTE (40% kleiner!) */
+.vehicle-card-compact {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    min-height: 45px; /* ✅ Früher 75px, jetzt 45px = 40% kleiner */
+}
+
+.vehicle-card-compact:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.vehicle-info-compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.vehicle-icon-compact {
+    font-size: 1.3em;
+}
+
+.vehicle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vehicle-callsign {
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.vehicle-status-text {
+    font-size: 0.75em;
+    opacity: 0.9;
+}
+
+.vehicle-actions-compact {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-icon-compact {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.btn-icon-compact:hover {
+    transform: scale(1.1);
+}
+
+.btn-icon-compact.btn-primary {
+    background: var(--info-color);
+    color: white;
+}
+
+.btn-icon-compact.btn-primary:hover {
+    background: #138496;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
 }
 
 /* ========================================
