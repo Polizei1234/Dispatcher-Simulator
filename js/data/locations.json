@@ -1,146 +1,146 @@
 [
     {
         "name": "Kindergarten",
-        "category": "Bildungseinrichtung",
-        "icon": "🏫",
-        "description": "Betreuungseinrichtung für Kinder"
+        "category": "Bildung",
+        "description": "Betreuungseinrichtung für Kinder",
+        "icon": "🏫"
     },
     {
         "name": "Schule",
-        "category": "Bildungseinrichtung",
-        "icon": "🏫",
-        "description": "Bildungseinrichtung"
+        "category": "Bildung",
+        "description": "Bildungseinrichtung (Grund-, Haupt-, Realschule, Gymnasium)",
+        "icon": "🏫"
     },
     {
         "name": "Pflegeheim",
-        "category": "Gesundheitswesen",
-        "icon": "🏥",
-        "description": "Einrichtung zur Altenpflege"
+        "category": "Gesundheit",
+        "description": "Stationäre Pflegeeinrichtung",
+        "icon": "🏥"
     },
     {
         "name": "Krankenhaus",
-        "category": "Gesundheitswesen",
-        "icon": "🏥",
-        "description": "Medizinische Einrichtung"
+        "category": "Gesundheit",
+        "description": "Medizinische Versorgungseinrichtung",
+        "icon": "🏥"
     },
     {
         "name": "Klinik",
-        "category": "Gesundheitswesen",
-        "icon": "🏥",
-        "description": "Medizinische Einrichtung"
+        "category": "Gesundheit",
+        "description": "Spezialisierte medizinische Einrichtung",
+        "icon": "🏥"
     },
     {
         "name": "Arztpraxis",
-        "category": "Gesundheitswesen",
-        "icon": "👨‍⚕️",
-        "description": "Niedergelassene Arztpraxis"
+        "category": "Gesundheit",
+        "description": "Ambulante ärztliche Versorgung",
+        "icon": "🩺"
     },
     {
         "name": "Industrieanlage",
-        "category": "Industrie",
-        "icon": "🏭",
-        "description": "Industrielle Produktionsstätte"
+        "category": "Gewerbe",
+        "description": "Produktionsstätte oder Fabrikgelände",
+        "icon": "🏭"
     },
     {
         "name": "Fabrik",
-        "category": "Industrie",
-        "icon": "🏭",
-        "description": "Produktionsstätte"
+        "category": "Gewerbe",
+        "description": "Produktionsstätte",
+        "icon": "🏭"
     },
     {
         "name": "Bürogebäude",
         "category": "Gewerbe",
-        "icon": "🏢",
-        "description": "Bürokomplex"
+        "description": "Verwaltungs- oder Bürokomplex",
+        "icon": "🏢"
     },
     {
         "name": "Einkaufszentrum",
-        "category": "Gewerbe",
-        "icon": "🛍️",
-        "description": "Shopping-Center"
+        "category": "Einzelhandel",
+        "description": "Großes Shoppingcenter",
+        "icon": "🛍️"
     },
     {
         "name": "Bahnhof",
         "category": "Verkehr",
-        "icon": "🚆",
-        "description": "Bahnstation"
+        "description": "Personenbahnhof oder S-Bahn-Station",
+        "icon": "🚆"
     },
     {
         "name": "Flughafen",
         "category": "Verkehr",
-        "icon": "✈️",
-        "description": "Flughafen"
-    },
-    {
-        "name": "Autobahn",
-        "category": "Verkehr",
-        "icon": "🛣️",
-        "description": "Autobahnabschnitt"
-    },
-    {
-        "name": "Landstraße",
-        "category": "Verkehr",
-        "icon": "🛣️",
-        "description": "Außerortsstraße"
+        "description": "Luftverkehrsanlage",
+        "icon": "✈️"
     },
     {
         "name": "Sportanlage",
         "category": "Freizeit",
-        "icon": "⚽",
-        "description": "Sportkomplex"
+        "description": "Sportzentrum oder Stadion",
+        "icon": "⚽"
     },
     {
         "name": "Schwimmbad",
         "category": "Freizeit",
-        "icon": "🏊",
-        "description": "Frei- oder Hallenbad"
+        "description": "Hallen- oder Freibad",
+        "icon": "🏊"
     },
     {
         "name": "Restaurant",
         "category": "Gastronomie",
-        "icon": "🍴",
-        "description": "Gaststätte"
+        "description": "Gaststätte oder Speiselokal",
+        "icon": "🍽️"
     },
     {
         "name": "Hotel",
         "category": "Gastronomie",
-        "icon": "🏨",
-        "description": "Beherbergungsbetrieb"
+        "description": "Beherbergungsbetrieb",
+        "icon": "🏨"
     },
     {
         "name": "Parkhaus",
         "category": "Verkehr",
-        "icon": "🅿️",
-        "description": "Parkgebäude"
+        "description": "Mehrstöckige Parkanlage",
+        "icon": "🅿️"
     },
     {
         "name": "Baustelle",
-        "category": "Bauwesen",
-        "icon": "🚧",
-        "description": "Baustellenbereich"
+        "category": "Sonstige",
+        "description": "Bauarbeiten oder Bauvorhaben",
+        "icon": "🚧"
+    },
+    {
+        "name": "Autobahn",
+        "category": "Verkehr",
+        "description": "Bundesautobahn (A8, A81, etc.)",
+        "icon": "🛣️"
+    },
+    {
+        "name": "Landstraße",
+        "category": "Verkehr",
+        "description": "Bundes- oder Landesstraße",
+        "icon": "🛣️"
     },
     {
         "name": "Wald",
         "category": "Natur",
-        "icon": "🌲",
-        "description": "Waldgebiet"
+        "description": "Waldgebiet oder Forstwirtschaft",
+        "icon": "🌳"
     },
     {
         "name": "Park",
         "category": "Natur",
-        "icon": "🌳",
-        "description": "Grünanlage"
+        "description": "Grünanlage oder Stadtpark",
+        "icon": "🏞️"
     },
     {
         "name": "Gewässer",
         "category": "Natur",
-        "icon": "🌊",
-        "description": "Fluss, See oder Teich"
+        "description": "Fluss, See oder Teich",
+        "icon": "🌊"
     },
     {
         "name": "Öffentliches Gebäude",
         "category": "Verwaltung",
-        "icon": "🏛️",
-        "description": "Rathaus, Behörde etc."
+        "description": "Rathaus, Behörde oder Amt",
+        "icon": "🏛️"
     }
 ]
