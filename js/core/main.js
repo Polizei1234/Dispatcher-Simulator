@@ -9,7 +9,7 @@ let gameTickCounter = 0;
 window.GameTime = {
     simulated: new Date(),    // Uhrzeit für Anzeige (z.B. "16:42:35")
     elapsed: 0,               // Verstrichene Spielzeit in ms (für Einsatz-Timing)
-    speed: 5, // Default 5x
+    speed: 1, // Default 1x (Echtzeit)
     lastTick: Date.now(),
     
     // Hilfsfunktionen
@@ -23,7 +23,7 @@ window.GameTime = {
         // ✅ FIXED: Starte mit aktueller Uhrzeit statt 08:00
         this.simulated = new Date();
         this.elapsed = 0;
-        this.speed = CONFIG?.GAME_SPEED || 5;
+        this.speed = CONFIG?.GAME_SPEED || 1;
         this.lastTick = Date.now();
         const timeStr = this.simulated.toLocaleTimeString('de-DE');
         console.log(`⏰ Zeit gestartet mit aktueller Uhrzeit: ${timeStr}`);
@@ -311,7 +311,7 @@ function showSettings() {
     if (overlay) overlay.classList.add('active');
     
     // Lade aktuelle Einstellungen
-    const speed = localStorage.getItem('gameSpeed') || '5';
+    const speed = localStorage.getItem('gameSpeed') || '1';
     const apiKey = localStorage.getItem('groqApiKey') || '';
     const sound = localStorage.getItem('soundEnabled') !== 'false';
     
@@ -330,7 +330,7 @@ function closeSettings() {
 }
 
 function saveSettings() {
-    const speed = document.getElementById('game-speed')?.value || '5';
+    const speed = document.getElementById('game-speed')?.value || '1';
     const apiKey = document.getElementById('groq-api-key')?.value || '';
     const sound = document.getElementById('sound-enabled')?.checked || true;
     
@@ -339,7 +339,7 @@ function saveSettings() {
     localStorage.setItem('soundEnabled', sound);
     
     // Update ZENTRALES Zeitsystem
-    GameTime.updateSpeed(parseInt(speed));
+    GameTime.updateSpeed(parseFloat(speed));
     if (game) game.apiKey = apiKey;
     
     // Update AI Generator mit neuem API Key
@@ -358,7 +358,7 @@ function loadSettings() {
     const apiKey = localStorage.getItem('groqApiKey');
     
     if (speed) {
-        GameTime.updateSpeed(parseInt(speed));
+        GameTime.updateSpeed(parseFloat(speed));
         console.log(`⚙️ Geschwindigkeit geladen: ${speed}x`);
     }
     
