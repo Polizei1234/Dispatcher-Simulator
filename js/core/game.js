@@ -1,6 +1,7 @@
 // =========================
-// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM
+// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.0.2
 // Nutzt window.GameTime aus main.js!
+// ✅ FIX: vehicle.status als String für Karten-Kompatibilität
 // =========================
 
 class Game {
@@ -35,24 +36,29 @@ class Game {
             // Prüfe ob Fahrzeug auf Wache steht
             const isOnStation = this.isVehicleOnStation(v);
             
-            if (!v.status && !v.currentStatus) {
-                // ✅ Korrekte Status-Initialisierung
-                if (isOnStation) {
-                    v.status = 2; // Status 2: Sprechwunsch auf Wache (Einsatzbereit)
-                    v.currentStatus = 2;
-                    console.log(`🚑 ${v.callsign}: Status 2 (auf Wache ${v.station})`);
-                } else {
-                    v.status = 3; // Status 3: Einsatzbereit außerhalb
-                    v.currentStatus = 3;
-                    console.log(`🚑 ${v.callsign}: Status 3 (außerhalb Wache)`);
-                }
+            // ✅ FIX: Initialisiere status UND currentStatus korrekt
+            if (!v.status || v.status === undefined) {
+                // v.status als STRING für Karten-Kompatibilität!
+                v.status = 'available';
             }
             
-            // Sync status und currentStatus
-            if (v.status && !v.currentStatus) {
-                v.currentStatus = v.status;
-            } else if (v.currentStatus && !v.status) {
-                v.status = v.currentStatus;
+            if (!v.currentStatus && !v.status) {
+                // ✅ Korrekte Status-Initialisierung
+                if (isOnStation) {
+                    v.currentStatus = 2; // FMS 2: Einsatzbereit auf Wache
+                    v.status = 'available';
+                } else {
+                    v.currentStatus = 3; // FMS 3: Einsatzbereit außerhalb
+                    v.status = 'available';
+                }
+            } else if (!v.currentStatus) {
+                // Setze currentStatus wenn nur status vorhanden
+                v.currentStatus = isOnStation ? 2 : 3;
+            }
+            
+            // Logging nur für erste paar Fahrzeuge (zu viel Spam vermeiden)
+            if (this.vehicles.indexOf(v) < 3) {
+                console.log(`🚑 ${v.callsign}: status='${v.status}', currentStatus=${v.currentStatus}`);
             }
         });
         
@@ -173,14 +179,14 @@ class Game {
             return;
         }
         
-        // ✅ FIX: Prüfe ob Fahrzeug verfügbar (Status 2 = auf Wache oder Status 3 = außerhalb)
-        if (vehicle.status !== 2 && vehicle.status !== 3) {
-            console.warn(`⚠️ ${vehicle.callsign} nicht verfügbar (Status ${vehicle.status})`);
+        // ✅ FIX: Prüfe ob Fahrzeug verfügbar
+        if (vehicle.status !== 'available' && vehicle.status !== 'preparing') {
+            console.warn(`⚠️ ${vehicle.callsign} nicht verfügbar (status='${vehicle.status}')`);
             return;
         }
         
-        vehicle.status = 4; // FMS 4: Anfahrt
-        vehicle.currentStatus = 4;
+        vehicle.status = 'dispatched'; // String-Status für Karte
+        vehicle.currentStatus = 4; // FMS 4: Anfahrt
         vehicle.targetIncident = incidentId;
         
         if (!incident.assignedVehicles) incident.assignedVehicles = [];
