@@ -75,7 +75,7 @@ const UI = {
                 </div>
 
                 <div class="detail-section">
-                    <h4>📍d Meldebild</h4>
+                    <h4>📝 Meldebild</h4>
                     <p>${incident.meldebild}</p>
                 </div>
 
