@@ -347,9 +347,6 @@ function saveSettings() {
         window.gameAIGenerator.apiKey = apiKey;
     }
     
-    const indicator = document.getElementById('game-speed-indicator');
-    if (indicator) indicator.textContent = speed + 'x';
-    
     closeSettings();
     alert('✅ Einstellungen gespeichert!');
     
@@ -362,8 +359,6 @@ function loadSettings() {
     
     if (speed) {
         GameTime.updateSpeed(parseInt(speed));
-        const indicator = document.getElementById('game-speed-indicator');
-        if (indicator) indicator.textContent = speed + 'x';
         console.log(`⚙️ Geschwindigkeit geladen: ${speed}x`);
     }
     
@@ -389,23 +384,6 @@ function toggleAPIKeyVisibility() {
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
     }
-}
-
-function cycleGameSpeed() {
-    const speeds = [1, 2, 5, 10, 30];
-    const currentIndex = speeds.indexOf(GameTime.speed);
-    const nextIndex = (currentIndex + 1) % speeds.length;
-    const nextSpeed = speeds[nextIndex];
-    
-    // Update ZENTRALES Zeitsystem
-    GameTime.updateSpeed(nextSpeed);
-    
-    const indicator = document.getElementById('game-speed-indicator');
-    if (indicator) indicator.textContent = nextSpeed + 'x';
-    
-    localStorage.setItem('gameSpeed', nextSpeed);
-    
-    console.log(`⏱️ Neue Geschwindigkeit: ${nextSpeed}x`);
 }
 
 function openShop() {
