@@ -1,79 +1,113 @@
-/* =========================
-   TAB NAVIGATION SYSTEM v4.0
-   ✅ Phase 3 Fix 1: Nach Wachen gruppiert
-   ========================= */
+/* =====================================================
+   TAB NAVIGATION SYSTEM v6.0.0 - PROFESSIONAL EDITION
+   Clean, functional tab navigation for dispatch interface
+   ===================================================== */
 
 .tab-navigation {
     display: flex;
-    background: #1a202c;
-    border-bottom: 2px solid #2d3748;
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border-medium);
     padding: 0;
     margin: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-sm);
+    height: 48px;
 }
 
 .tab-navigation .tab-btn {
     flex: 1;
     background: transparent;
     border: none;
-    padding: 15px 20px;
-    color: #a0aec0;
-    font-size: 0.95em;
-    font-weight: 600;
+    padding: 0 20px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    border-bottom: 3px solid transparent;
+    border-bottom: 2px solid transparent;
+    position: relative;
 }
 
 .tab-navigation .tab-btn:hover {
-    background: rgba(45, 55, 72, 0.5);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
 }
 
 .tab-navigation .tab-btn.active {
-    background: #2d3748;
-    color: #fff;
-    border-bottom-color: #3182ce;
+    background: transparent;
+    color: var(--text-primary);
+    border-bottom-color: var(--primary-red);
+    font-weight: 600;
+}
+
+.tab-navigation .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-red);
+    box-shadow: 0 0 8px rgba(211, 47, 47, 0.5);
 }
 
 .tab-navigation .tab-btn i {
-    font-size: 1.2em;
+    font-size: 1.1em;
 }
 
-/* TAB CONTENT */
+/* Professional blinking for urgent notifications */
+.tab-navigation .tab-btn.blinking {
+    animation: tab-pulse 2s infinite;
+}
+
+@keyframes tab-pulse {
+    0%, 100% {
+        background: rgba(211, 47, 47, 0.15);
+        color: var(--danger-red);
+    }
+    50% {
+        background: rgba(211, 47, 47, 0.25);
+        color: var(--text-primary);
+    }
+}
+
+/* =====================================================
+   TAB CONTENT
+   ===================================================== */
+
 .tab-content {
     display: none;
-    animation: fadeIn 0.3s ease;
+    animation: fadeInContent 0.2s ease;
 }
 
 .tab-content.active {
     display: block;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInContent {
     from {
         opacity: 0;
-        transform: translateY(10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
-/* ✅ NEU: VEHICLES HEADER MIT STATISTIK */
+/* =====================================================
+   VEHICLES TAB - Professional Header
+   ===================================================== */
+
 .vehicles-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    border-bottom: 2px solid #3182ce;
+    background: var(--panel-header);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-md);
+    border-bottom: 1px solid var(--border-medium);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -81,13 +115,14 @@
 
 .vehicles-header h2 {
     margin: 0;
-    font-size: 1.8em;
-    color: #fff;
+    font-size: 1.4em;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .vehicles-stats {
     display: flex;
-    gap: 30px;
+    gap: 24px;
 }
 
 .stat-item {
@@ -96,52 +131,62 @@
 
 .stat-value {
     display: block;
-    font-size: 2em;
-    font-weight: 700;
+    font-size: 1.6em;
+    font-weight: 600;
     line-height: 1;
+    font-family: 'Consolas', 'Courier New', monospace;
 }
 
 .stat-label {
     display: block;
-    font-size: 0.8em;
-    color: #a0aec0;
-    margin-top: 5px;
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-weight: 500;
 }
 
-/* ✅ NEU: STATIONS CONTAINER */
+/* =====================================================
+   STATIONS CONTAINER
+   ===================================================== */
+
 .stations-container {
-    padding: 20px;
+    padding: 16px;
 }
 
-/* ✅ NEU: STATION GROUP DESIGN */
+/* =====================================================
+   STATION GROUP - Professional Design
+   ===================================================== */
+
 .station-group-new {
-    background: #1a202c;
-    border-radius: 12px;
-    margin-bottom: 15px;
+    background: var(--panel-bg);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
     overflow: hidden;
-    border-left: 4px solid #3182ce;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
+    border-left-color: var(--secondary-blue);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
 }
 
 .station-group-new:hover {
-    box-shadow: 0 4px 16px rgba(49, 130, 206, 0.3);
-    transform: translateY(-2px);
+    border-left-color: var(--info-cyan);
+    box-shadow: var(--shadow-md);
 }
 
-/* ✅ NEU: STATION HEADER */
+/* Station Header */
 .station-header-new {
-    background: #2d3748;
-    padding: 15px 20px;
+    background: var(--panel-header);
+    padding: 12px 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: background 0.2s ease;
+    transition: background 0.15s ease;
 }
 
 .station-header-new:hover {
-    background: #374151;
+    background: var(--bg-dark);
 }
 
 .station-info {
@@ -151,13 +196,15 @@
 }
 
 .station-icon {
-    font-size: 1.5em;
+    font-size: 1.3em;
+    color: var(--info-cyan);
 }
 
 .station-name {
     margin: 0;
-    font-size: 1.1em;
-    color: #fff;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
 }
@@ -165,51 +212,62 @@
 .station-meta {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .vehicle-count {
-    font-weight: 700;
-    font-size: 1em;
+    font-weight: 600;
+    font-size: 0.9em;
     display: flex;
     align-items: center;
     gap: 6px;
+    color: var(--text-secondary);
+    font-family: 'Consolas', 'Courier New', monospace;
 }
 
-/* ✅ NEU: STATION VEHICLES */
+/* Station Vehicles Container */
 .station-vehicles-new {
-    padding: 15px;
+    padding: 12px;
     display: none;
-    background: #16191f;
+    background: var(--input-bg);
 }
 
 .station-vehicles-new.open {
     display: block;
 }
 
-/* VEHICLES OVERVIEW - FULL WIDTH */
+/* =====================================================
+   VEHICLES OVERVIEW
+   ===================================================== */
+
 .vehicles-overview {
     overflow-y: auto;
     height: calc(100vh - 180px);
-    background: #0f1419;
+    background: var(--bg-darkest);
 }
 
-/* VEHICLE CARD (Bleibt gleich) */
+/* =====================================================
+   VEHICLE CARD - Compact & Professional
+   ===================================================== */
+
 .vehicle-card {
-    background: #1a202c;
-    border-radius: 6px;
+    background: var(--panel-bg);
+    border-radius: var(--radius-sm);
     padding: 10px 12px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-left: 4px solid #4a5568;
-    transition: all 0.2s ease;
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
+    border-left-color: var(--border-medium);
+    transition: all 0.15s ease;
 }
 
 .vehicle-card:hover {
-    background: #252d3d;
-    transform: translateX(3px);
+    background: var(--bg-dark);
+    border-left-color: var(--info-cyan);
+    transform: translateX(2px);
 }
 
 .vehicle-info {
@@ -221,18 +279,18 @@
 }
 
 .status-badge {
-    min-width: 50px;
-    max-width: 50px;
-    padding: 5px 8px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.85em;
+    min-width: 45px;
+    max-width: 45px;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.8em;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    font-family: 'Consolas', 'Courier New', monospace;
 }
 
 .vehicle-details {
@@ -243,16 +301,18 @@
 .vehicle-name {
     font-weight: 600;
     font-size: 0.9em;
-    color: #fff;
-    margin-bottom: 3px;
+    color: var(--text-primary);
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: 'Consolas', 'Courier New', monospace;
+    letter-spacing: 0.3px;
 }
 
 .vehicle-type {
     font-size: 0.75em;
-    color: #a0aec0;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -260,7 +320,7 @@
 
 .vehicle-actions {
     display: flex;
-    gap: 5px;
+    gap: 4px;
     flex-shrink: 0;
 }
 
@@ -270,55 +330,61 @@
 }
 
 .collapse-icon {
-    transition: transform 0.3s ease;
-    color: #a0aec0;
+    transition: transform 0.2s ease;
+    color: var(--text-secondary);
+    font-size: 0.85em;
 }
 
 .collapse-icon.open {
     transform: rotate(180deg);
 }
 
-/* ALTE KLASSEN (Für Kompatibilität) */
+/* =====================================================
+   OLD CLASSES (Compatibility)
+   ===================================================== */
+
 .vehicle-category {
-    margin-bottom: 30px;
-    background: #1a202c;
-    border-radius: 12px;
+    margin-bottom: 24px;
+    background: var(--panel-bg);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
 }
 
 .category-header {
-    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    padding: 15px 20px;
+    background: var(--panel-header);
+    padding: 12px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #2d3748;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .category-header h2 {
     margin: 0;
-    font-size: 1.4em;
-    color: #fff;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .category-badge {
-    background: #3182ce;
+    background: var(--secondary-blue);
     color: white;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.95em;
-    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
 }
 
 .stations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 16px;
+    padding: 16px;
 }
 
 @media (min-width: 1600px) {
@@ -340,93 +406,106 @@
 }
 
 .station-group {
-    border-left: 4px solid #3182ce;
-    background: #2d3748;
-    border-radius: 8px;
+    border-left: 3px solid var(--secondary-blue);
+    background: var(--panel-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .station-group:hover {
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-left-color: var(--info-cyan);
 }
 
 .station-header {
-    background: #374151;
-    padding: 12px 15px;
+    background: var(--panel-header);
+    padding: 10px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.15s ease;
 }
 
 .station-header:hover {
-    background: #4b5563;
+    background: var(--bg-dark);
 }
 
 .station-header h3 {
     margin: 0;
-    font-size: 1em;
-    color: #fff;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .station-badge {
-    background: rgba(49, 130, 206, 0.2);
-    color: #63b3ed;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 0.8em;
+    background: rgba(25, 118, 210, 0.15);
+    color: var(--info-cyan);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
     font-weight: 600;
 }
 
 .station-vehicles {
     padding: 10px;
     display: none;
+    background: var(--input-bg);
 }
 
 .station-vehicles.open {
     display: block;
 }
 
-/* INCIDENTS OVERVIEW */
+/* =====================================================
+   INCIDENTS OVERVIEW
+   ===================================================== */
+
 .incidents-overview {
-    padding: 20px;
+    padding: 16px;
     max-width: 1200px;
     margin: 0 auto;
     overflow-y: auto;
     height: calc(100vh - 180px);
 }
 
-/* RADIO OVERVIEW */
+/* =====================================================
+   RADIO OVERVIEW
+   ===================================================== */
+
 .radio-overview {
-    padding: 20px;
+    padding: 16px;
     max-width: 1000px;
     margin: 0 auto;
 }
 
-/* SCROLLBAR STYLING */
+/* =====================================================
+   SCROLLBAR STYLING
+   ===================================================== */
+
 .vehicles-overview::-webkit-scrollbar,
 .incidents-overview::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
 }
 
 .vehicles-overview::-webkit-scrollbar-track,
 .incidents-overview::-webkit-scrollbar-track {
-    background: #1a202c;
+    background: var(--panel-header);
 }
 
 .vehicles-overview::-webkit-scrollbar-thumb,
 .incidents-overview::-webkit-scrollbar-thumb {
-    background: #3182ce;
-    border-radius: 5px;
+    background: var(--border-medium);
+    border-radius: 4px;
 }
 
 .vehicles-overview::-webkit-scrollbar-thumb:hover,
 .incidents-overview::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
+    background: var(--border-strong);
 }
