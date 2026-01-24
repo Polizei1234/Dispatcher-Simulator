@@ -1,38 +1,53 @@
 // =========================
-// VERSION MANAGER v1.1
+// VERSION MANAGER v1.2
 // Automatisches Cache-Management bei neuen Versionen
+// ✅ Version wird jetzt automatisch aus CONFIG.VERSION geladen!
 // =========================
 
 const VersionManager = {
-    CURRENT_VERSION: '4.9.0', // ✅ AKTUALISIERT!
+    // ✅ Version wird dynamisch aus CONFIG geladen
+    get CURRENT_VERSION() {
+        // Falls CONFIG noch nicht geladen ist, Fallback
+        return (typeof CONFIG !== 'undefined' && CONFIG.VERSION) ? CONFIG.VERSION : '5.0.2';
+    },
+    
     STORAGE_KEY: 'ils_waiblingen_version',
 
     initialize() {
-        console.log('🔄 Version Manager v1.1 initialisiert');
-        this.checkVersion();
+        console.log('🔄 Version Manager v1.2 initialisiert');
+        
+        // Warte kurz bis CONFIG geladen ist
+        if (typeof CONFIG === 'undefined') {
+            console.log('⏳ Warte auf CONFIG...');
+            setTimeout(() => this.checkVersion(), 100);
+        } else {
+            this.checkVersion();
+        }
     },
 
     checkVersion() {
         const storedVersion = localStorage.getItem(this.STORAGE_KEY);
+        const currentVersion = this.CURRENT_VERSION;
+        
         console.log(`📦 Gespeicherte Version: ${storedVersion}`);
-        console.log(`🆕 Aktuelle Version: ${this.CURRENT_VERSION}`);
+        console.log(`🆕 Aktuelle Version: ${currentVersion}`);
 
         if (!storedVersion) {
             // Erste Installation
             console.log('✨ Erste Installation erkannt');
-            localStorage.setItem(this.STORAGE_KEY, this.CURRENT_VERSION);
+            localStorage.setItem(this.STORAGE_KEY, currentVersion);
             this.showWelcomeMessage();
             return;
         }
 
-        if (storedVersion !== this.CURRENT_VERSION) {
+        if (storedVersion !== currentVersion) {
             // Neue Version erkannt!
             console.log('🚀 NEUE VERSION ERKANNT!');
-            console.log(`📤 Update von ${storedVersion} → ${this.CURRENT_VERSION}`);
+            console.log(`📤 Update von ${storedVersion} → ${currentVersion}`);
             
             this.clearCache();
             this.updateVersion();
-            this.showUpdateNotification(storedVersion, this.CURRENT_VERSION);
+            this.showUpdateNotification(storedVersion, currentVersion);
         } else {
             console.log('✅ Version ist aktuell');
         }
@@ -47,7 +62,11 @@ const VersionManager = {
             'groq_api_key',
             'groqApiKey',
             'game_speed',
-            'sound_enabled'
+            'sound_enabled',
+            'vehicle_speed_multiplier',
+            'incident_frequency',
+            'notifications_enabled',
+            'auto_zoom_enabled'
         ];
 
         const allKeys = Object.keys(localStorage);
@@ -81,6 +100,9 @@ const VersionManager = {
     },
 
     showUpdateNotification(oldVersion, newVersion) {
+        // ✅ Release Notes für Version 5.0.2
+        const releaseNotes = this.getReleaseNotes(newVersion);
+        
         // Erstelle Update-Banner
         const banner = document.createElement('div');
         banner.id = 'update-notification';
@@ -109,12 +131,9 @@ const VersionManager = {
                     <p style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.9;">
                         Version <strong>${oldVersion}</strong> → <strong>${newVersion}</strong>
                     </p>
-                    <p style="margin: 0; font-size: 13px; opacity: 0.8;">
-                        ✅ Fahrzeuge fahren jetzt los!<br>
-                        ✅ NEF bleibt am Einsatzort<br>
-                        ✅ RTW ohne Wartezeit<br>
-                        ✅ Krankenhäuser auf Karte
-                    </p>
+                    <div style="margin: 0; font-size: 13px; opacity: 0.8;">
+                        ${releaseNotes}
+                    </div>
                     <button onclick="VersionManager.closeNotification()" style="
                         margin-top: 12px;
                         padding: 8px 16px;
@@ -175,12 +194,38 @@ const VersionManager = {
 
         document.body.appendChild(banner);
 
-        // Auto-Close nach 12 Sekunden
+        // Auto-Close nach 15 Sekunden
         setTimeout(() => {
             this.closeNotification();
-        }, 12000);
+        }, 15000);
 
         console.log('📢 Update-Benachrichtigung angezeigt');
+    },
+    
+    // ✅ Release Notes für verschiedene Versionen
+    getReleaseNotes(version) {
+        const notes = {
+            '5.0.2': `
+                ✅ FMS-Status wird jetzt korrekt angezeigt<br>
+                ✅ Fahrzeuge auf Wache sind unsichtbar<br>
+                ✅ Status-Badges in Fahrzeug-Tab & Wachen<br>
+                ✅ Farbcodierung funktioniert
+            `,
+            '5.0.1': `
+                ✅ Fahrzeuge fahren jetzt los!<br>
+                ✅ NEF bleibt am Einsatzort<br>
+                ✅ RTW ohne Wartezeit<br>
+                ✅ Krankenhäuser auf Karte
+            `,
+            '5.0.0': `
+                ✅ Neues FMS-System<br>
+                ✅ Radio-System verbessert<br>
+                ✅ UI-Verbesserungen<br>
+                ✅ Bug-Fixes
+            `
+        };
+        
+        return notes[version] || '✅ Diverse Verbesserungen und Bug-Fixes';
     },
 
     showWelcomeMessage() {
@@ -208,10 +253,14 @@ const VersionManager = {
 
     // Version-Info für Console
     getInfo() {
+        const currentVersion = this.CURRENT_VERSION;
+        const storedVersion = localStorage.getItem(this.STORAGE_KEY);
+        
         return {
-            currentVersion: this.CURRENT_VERSION,
-            storedVersion: localStorage.getItem(this.STORAGE_KEY),
-            isUpToDate: localStorage.getItem(this.STORAGE_KEY) === this.CURRENT_VERSION
+            currentVersion: currentVersion,
+            storedVersion: storedVersion,
+            isUpToDate: storedVersion === currentVersion,
+            source: 'CONFIG.VERSION'
         };
     }
 };
@@ -230,4 +279,4 @@ if (typeof window !== 'undefined') {
     console.log('%cVersionManager.forceUpdate() - Erzwingt Cache-Leerung & Reload', 'color: #666;');
 }
 
-console.log('✅ Version Manager v1.1 geladen - Aktuelle Version: 4.9.0');
+console.log(`✅ Version Manager v1.2 geladen - Aktuelle Version: ${VersionManager.CURRENT_VERSION}`);
