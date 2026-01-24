@@ -1,18 +1,22 @@
 // =========================
-// KEYWORDS DROPDOWN SYSTEM v1.0
-// Autocomplete Dropdowns für Einsatzstichwörter
+// KEYWORDS DROPDOWN SYSTEM v2.0
+// Autocomplete Dropdowns für Einsatzstichwörter, Stadtteile & Örtlichkeiten
 // =========================
 
 const KeywordsDropdown = {
     priorityKeywords: [],
     detailKeywords: [],
+    districts: [],
+    locations: [],
     
     async initialize() {
         console.log('📝 Keywords Dropdown System wird initialisiert...');
         await this.loadKeywords();
         console.log('✅ Keywords geladen:', {
             priority: this.priorityKeywords.length,
-            detail: this.detailKeywords.length
+            detail: this.detailKeywords.length,
+            districts: this.districts.length,
+            locations: this.locations.length
         });
     },
 
@@ -29,12 +33,24 @@ const KeywordsDropdown = {
             if (detailResponse.ok) {
                 this.detailKeywords = await detailResponse.json();
             }
+
+            // 🆕 Lade Stadtteile
+            const districtsResponse = await fetch('js/data/districts.json');
+            if (districtsResponse.ok) {
+                this.districts = await districtsResponse.json();
+            }
+
+            // 🆕 Lade Örtlichkeiten
+            const locationsResponse = await fetch('js/data/locations.json');
+            if (locationsResponse.ok) {
+                this.locations = await locationsResponse.json();
+            }
         } catch (error) {
             console.error('❌ Fehler beim Laden der Keywords:', error);
         }
     },
 
-    createDropdown(inputId, keywords, placeholder, onSelect) {
+    createDropdown(inputId, keywords, placeholder, onSelect, keyField = 'keyword') {
         const input = document.getElementById(inputId);
         if (!input) {
             console.error(`❌ Input ${inputId} nicht gefunden`);
@@ -66,11 +82,11 @@ const KeywordsDropdown = {
 
             // Filtern
             const filtered = keywords.filter(k => {
-                const keyword = k.keyword.toLowerCase();
+                const keyValue = k[keyField].toLowerCase();
                 const category = k.category ? k.category.toLowerCase() : '';
                 const description = k.description ? k.description.toLowerCase() : '';
                 
-                return keyword.includes(searchTerm) || 
+                return keyValue.includes(searchTerm) || 
                        category.includes(searchTerm) || 
                        description.includes(searchTerm);
             });
@@ -82,27 +98,30 @@ const KeywordsDropdown = {
             }
 
             // Ergebnisse anzeigen
-            dropdown.innerHTML = filtered.slice(0, 10).map(k => `
-                <div class="dropdown-item" data-keyword="${k.keyword}">
-                    <div class="dropdown-item-title">${k.keyword}</div>
-                    <div class="dropdown-item-category">${k.category || ''}</div>
-                    <div class="dropdown-item-description">${k.description || ''}</div>
-                </div>
-            `).join('');
+            dropdown.innerHTML = filtered.slice(0, 10).map(k => {
+                const icon = k.icon ? k.icon + ' ' : '';
+                return `
+                    <div class="dropdown-item" data-value="${k[keyField]}">
+                        <div class="dropdown-item-title">${icon}${k[keyField]}</div>
+                        <div class="dropdown-item-category">${k.category || ''}</div>
+                        <div class="dropdown-item-description">${k.description || k.population || ''}</div>
+                    </div>
+                `;
+            }).join('');
 
             dropdown.style.display = 'block';
 
             // Click Events für Items
             dropdown.querySelectorAll('.dropdown-item:not(.no-results)').forEach(item => {
                 item.addEventListener('click', () => {
-                    const keyword = item.getAttribute('data-keyword');
-                    const keywordData = keywords.find(k => k.keyword === keyword);
+                    const value = item.getAttribute('data-value');
+                    const itemData = keywords.find(k => k[keyField] === value);
                     
-                    input.value = keyword;
+                    input.value = value;
                     dropdown.style.display = 'none';
                     
                     if (onSelect) {
-                        onSelect(keywordData);
+                        onSelect(itemData);
                     }
                 });
             });
@@ -136,7 +155,8 @@ const KeywordsDropdown = {
             inputId,
             this.priorityKeywords,
             'z.B. RD 2, MANV 1',
-            onSelect
+            onSelect,
+            'keyword'
         );
     },
 
@@ -145,7 +165,30 @@ const KeywordsDropdown = {
             inputId,
             this.detailKeywords,
             'z.B. VU, Herzinfarkt, Geburt',
-            onSelect
+            onSelect,
+            'keyword'
+        );
+    },
+
+    // 🆕 NEU: Stadtteil-Dropdown
+    initializeDistrictDropdown(inputId, onSelect) {
+        this.createDropdown(
+            inputId,
+            this.districts,
+            'z.B. Waiblingen, Fellbach',
+            onSelect,
+            'name'
+        );
+    },
+
+    // 🆕 NEU: Örtlichkeits-Dropdown
+    initializeLocationDropdown(inputId, onSelect) {
+        this.createDropdown(
+            inputId,
+            this.locations,
+            'z.B. Schule, Krankenhaus',
+            onSelect,
+            'name'
         );
     },
 
@@ -156,6 +199,14 @@ const KeywordsDropdown = {
 
     getDetailKeyword(keyword) {
         return this.detailKeywords.find(k => k.keyword === keyword);
+    },
+
+    getDistrict(name) {
+        return this.districts.find(d => d.name === name);
+    },
+
+    getLocation(name) {
+        return this.locations.find(l => l.name === name);
     },
 
     // Helper: Vorgeschlagene Fahrzeuge basierend auf Priorität
