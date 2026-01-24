@@ -19,13 +19,13 @@ const KeywordsDropdown = {
     async loadKeywords() {
         try {
             // Lade Prioritäts-Keywords
-            const priorityResponse = await fetch('data/priority-keywords.json');
+            const priorityResponse = await fetch('js/data/priority-keywords.json');
             if (priorityResponse.ok) {
                 this.priorityKeywords = await priorityResponse.json();
             }
 
             // Lade Detail-Keywords
-            const detailResponse = await fetch('data/detail-keywords.json');
+            const detailResponse = await fetch('js/data/detail-keywords.json');
             if (detailResponse.ok) {
                 this.detailKeywords = await detailResponse.json();
             }
