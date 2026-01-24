@@ -1,4 +1,4 @@
-/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v5.0.3 */
+/* DISPATCHER SIMULATOR CSS - ILS Waiblingen v5.0.4 */
 
 :root {
     --primary-color: #c8102e;
@@ -243,7 +243,8 @@ footer .panel { height: 100%; margin: 0; }
 }
 
 /* ========================================
-   ✅ COMPACT VEHICLE OVERVIEW v5.0.3
+   ✅ COMPACT VEHICLE OVERVIEW v5.0.4
+   RESPONSIVE 2-3 COLUMN LAYOUT
    ======================================== */
 
 /* Kompakter Header */
@@ -419,67 +420,82 @@ footer .panel { height: 100%; margin: 0; }
     transition: max-height 0.3s ease-out;
 }
 
+/* ✅ RESPONSIVE 2-3 SPALTEN GRID LAYOUT */
 .station-vehicles-compact.open {
-    max-height: 2000px;
+    display: grid;
+    /* Mindestens 140px pro Spalte, maximiert Anzahl der Spalten */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 6px;
     padding: 8px;
+    max-height: 2000px;
 }
 
-/* ✅ KOMPAKTE FAHRZEUG-KARTE (40% kleiner!) */
+/* ✅ KOMPAKTE FAHRZEUG-KARTE (optimiert für 2-3 Spalten) */
 .vehicle-card-compact {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 6px;
-    padding: 8px 12px;
-    margin-bottom: 6px;
+    padding: 8px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all 0.2s;
-    min-height: 45px; /* ✅ Früher 75px, jetzt 45px = 40% kleiner */
+    min-height: 42px;
 }
 
 .vehicle-card-compact:hover {
     background: rgba(255, 255, 255, 0.08);
-    transform: translateX(4px);
+    transform: translateX(3px);
 }
 
 .vehicle-info-compact {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
+    min-width: 0; /* Ermöglicht Text-Overflow */
 }
 
 .vehicle-icon-compact {
-    font-size: 1.3em;
+    font-size: 1.2em;
+    flex-shrink: 0;
 }
 
 .vehicle-text {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
+    flex: 1;
 }
 
 .vehicle-callsign {
     font-weight: 600;
-    font-size: 0.9em;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .vehicle-status-text {
-    font-size: 0.75em;
+    font-size: 0.7em;
     opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .vehicle-actions-compact {
     display: flex;
-    gap: 6px;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
 .btn-icon-compact {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     background: var(--panel-bg);
     color: var(--text-primary);
     cursor: pointer;
@@ -487,7 +503,8 @@ footer .panel { height: 100%; margin: 0; }
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    font-size: 0.9em;
+    font-size: 0.85em;
+    flex-shrink: 0;
 }
 
 .btn-icon-compact:hover {
