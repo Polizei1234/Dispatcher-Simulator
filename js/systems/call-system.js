@@ -47,8 +47,19 @@ const CallSystem = {
     },
 
     setupRingtone() {
-        this.ringtoneAudio = new Audio('sounds/ringtone.mp3');
-        this.ringtoneAudio.loop = true;
+        try {
+            this.ringtoneAudio = new Audio('sounds/ringtone.mp3');
+            this.ringtoneAudio.loop = true;
+            
+            // ✅ FIX: Prüfe ob Sound geladen werden kann
+            this.ringtoneAudio.addEventListener('error', (e) => {
+                console.warn('⚠️ Klingelton nicht gefunden - Stummschaltung aktiv');
+                this.ringtoneAudio = null;
+            });
+        } catch (error) {
+            console.warn('⚠️ Fehler beim Laden des Klingeltons:', error);
+            this.ringtoneAudio = null;
+        }
     },
 
     getRandomHotspot() {
@@ -509,7 +520,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
 
     playRingtone() {
         if (this.ringtoneAudio) {
-            this.ringtoneAudio.play().catch(e => console.log('Autoplay blockiert'));
+            this.ringtoneAudio.play().catch(e => console.log('⚠️ Ringtone Autoplay blockiert oder Datei fehlt'));
         }
     },
 
