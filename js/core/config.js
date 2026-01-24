@@ -1,9 +1,20 @@
 // =========================
-// CONFIGURATION
+// CONFIGURATION v5.0.2
 // Zentrale Konfiguration für ILS-Simulator
 // =========================
 
 const CONFIG = {
+    // =============================
+    // ✅ VERSION (SINGLE SOURCE OF TRUTH!)
+    // =============================
+    VERSION: '5.0.2',
+    BUILD_DATE: '2026-01-24',
+    
+    // =============================
+    // GAME MODE
+    // =============================
+    GAME_MODE: 'free', // 'career' oder 'free'
+    
     // =============================
     // API KEYS
     // =============================
@@ -225,6 +236,7 @@ const CONFIG = {
         }
 
         console.log('✅ Konfiguration geladen');
+        console.log(`🆙 Version: ${this.VERSION} (Build: ${this.BUILD_DATE})`);
         console.groupEnd();
     },
 
@@ -336,6 +348,17 @@ const CONFIG = {
     showSettingsUI() {
         console.log('⚙️ Settings UI wird geöffnet');
         // TODO: Settings Modal öffnen
+    },
+    
+    /**
+     * ✅ Gibt Versions-Informationen zurück
+     */
+    getVersion() {
+        return {
+            version: this.VERSION,
+            buildDate: this.BUILD_DATE,
+            mode: this.GAME_MODE
+        };
     }
 };
 
