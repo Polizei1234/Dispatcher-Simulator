@@ -1,0 +1,122 @@
+[
+    {
+        "name": "Waiblingen",
+        "category": "Kreisstadt",
+        "population": "56.000",
+        "type": "urban"
+    },
+    {
+        "name": "Fellbach",
+        "category": "Große Kreisstadt",
+        "population": "46.000",
+        "type": "urban"
+    },
+    {
+        "name": "Backnang",
+        "category": "Große Kreisstadt",
+        "population": "38.000",
+        "type": "urban"
+    },
+    {
+        "name": "Schorndorf",
+        "category": "Große Kreisstadt",
+        "population": "40.000",
+        "type": "urban"
+    },
+    {
+        "name": "Winnenden",
+        "category": "Stadt",
+        "population": "29.000",
+        "type": "urban"
+    },
+    {
+        "name": "Weinstadt",
+        "category": "Stadt",
+        "population": "27.000",
+        "type": "urban"
+    },
+    {
+        "name": "Korb",
+        "category": "Gemeinde",
+        "population": "11.000",
+        "type": "rural"
+    },
+    {
+        "name": "Kernen",
+        "category": "Gemeinde",
+        "population": "15.000",
+        "type": "rural"
+    },
+    {
+        "name": "Schwaikheim",
+        "category": "Gemeinde",
+        "population": "9.000",
+        "type": "rural"
+    },
+    {
+        "name": "Remshalden",
+        "category": "Gemeinde",
+        "population": "14.000",
+        "type": "rural"
+    },
+    {
+        "name": "Urbach",
+        "category": "Gemeinde",
+        "population": "9.000",
+        "type": "rural"
+    },
+    {
+        "name": "Plüderhausen",
+        "category": "Gemeinde",
+        "population": "10.000",
+        "type": "rural"
+    },
+    {
+        "name": "Rudersberg",
+        "category": "Gemeinde",
+        "population": "11.000",
+        "type": "rural"
+    },
+    {
+        "name": "Berglen",
+        "category": "Gemeinde",
+        "population": "8.000",
+        "type": "rural"
+    },
+    {
+        "name": "Leutenbach",
+        "category": "Gemeinde",
+        "population": "11.000",
+        "type": "rural"
+    },
+    {
+        "name": "Affalterbach",
+        "category": "Gemeinde",
+        "population": "5.000",
+        "type": "rural"
+    },
+    {
+        "name": "Burgstetten",
+        "category": "Gemeinde",
+        "population": "11.000",
+        "type": "rural"
+    },
+    {
+        "name": "Oppenweiler",
+        "category": "Gemeinde",
+        "population": "7.000",
+        "type": "rural"
+    },
+    {
+        "name": "Murrhardt",
+        "category": "Stadt",
+        "population": "14.000",
+        "type": "rural"
+    },
+    {
+        "name": "Welzheim",
+        "category": "Stadt",
+        "population": "11.000",
+        "type": "rural"
+    }
+]
