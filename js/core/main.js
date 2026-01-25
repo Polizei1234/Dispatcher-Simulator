@@ -1,5 +1,6 @@
 // =========================
-// HAUPTSTEUERUNG v4.9.0 - NEW AI SYSTEMS INTEGRATED
+// HAUPTSTEUERUNG v4.10.0 - SPEED INDICATOR FIX
+// + ✅ Spielgeschwindigkeit-Anzeige korrigiert
 // =========================
 
 let gamePaused = false;
@@ -23,10 +24,13 @@ window.GameTime = {
         // ✅ FIXED: Starte mit aktueller Uhrzeit statt 08:00
         this.simulated = new Date();
         this.elapsed = 0;
-        this.speed = CONFIG?.GAME_SPEED || 1;
+        this.speed = CONFIG?.GAME_SPEED?.DEFAULT || 1;
         this.lastTick = Date.now();
         const timeStr = this.simulated.toLocaleTimeString('de-DE');
         console.log(`⏰ Zeit gestartet mit aktueller Uhrzeit: ${timeStr}`);
+        
+        // ✅ UPDATE SPEED DISPLAY
+        updateSpeedDisplay();
     },
     
     updateSpeed: function(newSpeed) {
@@ -35,8 +39,25 @@ window.GameTime = {
             CONFIG.GAME_SPEED = newSpeed;
         }
         console.log(`⏱️ Geschwindigkeit: ${newSpeed}x`);
+        
+        // ✅ UPDATE SPEED DISPLAY
+        updateSpeedDisplay();
+        
+        // Fire event
+        window.dispatchEvent(new CustomEvent('gameSpeedChanged', { detail: { speed: newSpeed } }));
     }
 };
+
+/**
+ * ✅ FIX: Aktualisiert Spielgeschwindigkeit-Anzeige im UI
+ */
+function updateSpeedDisplay() {
+    const speedMultiplier = window.GameTime ? window.GameTime.speed : (CONFIG?.GAME_SPEED?.DEFAULT || 1);
+    const indicator = document.getElementById('game-speed-indicator');
+    if (indicator) {
+        indicator.textContent = `${speedMultiplier}x`;
+    }
+}
 
 // 🎮 GAME_DATA Global (für CallSystem & VehicleMovement)
 window.GAME_DATA = {
@@ -57,7 +78,7 @@ function showCareerComingSoon() {
 
 function startNewGame(mode) {
     console.log(`🎮 Starte neues Spiel: ${mode}`);
-    console.log(`⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED}x`);
+    console.log(`⏱️ Spielgeschwindigkeit: ${CONFIG.GAME_SPEED?.DEFAULT || 1}x`);
     
     // Setze Spielmodus
     CONFIG.GAME_MODE = mode;
@@ -94,6 +115,9 @@ function startNewGame(mode) {
     gamePaused = false;
     gameTickCounter = 0;
     
+    // ✅ Initial Speed Display Update
+    updateSpeedDisplay();
+    
     // Update UI
     updateUI();
     
@@ -101,8 +125,6 @@ function startNewGame(mode) {
     console.log('🔄 Starte Game Loop...');
     startGameLoop();
     
-    // ✅ PHASE 3 FIX 2.1: System-Nachrichten ENTFERNT!
-    // KEINE Radio-Nachrichten mehr beim Start!
     console.log('✅ Spiel gestartet - Funkverkehr bereit');
 }
 
@@ -242,6 +264,9 @@ function updateUI() {
         const seconds = String(GameTime.simulated.getSeconds()).padStart(2, '0');
         timeEl.textContent = `${hours}:${minutes}:${seconds}`;
     }
+    
+    // ✅ Update Speed Display
+    updateSpeedDisplay();
     
     // Update Wetter UI
     if (window.gameWeatherSystem) {
@@ -394,13 +419,9 @@ function startTutorial() {
     alert('🎓 Tutorial - In Entwicklung!\n\nStarte das Freie Spiel und probiere es einfach aus!');
 }
 
-// ✅ PHASE 3 FIX 2.1: addRadioMessage ENTFERNT
-// Keine globale addRadioMessage Funktion mehr hier
-// Alle Radio-Nachrichten gehen durch ui.js addRadioMessage(message, sender, color)
-
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v4.9.0 geladen');
+    console.log('🚀 ILS Waiblingen Simulator v4.10.0 geladen');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
@@ -411,4 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     console.log(`⏱️ Spielgeschwindigkeit: ${GameTime.speed}x`);
+    
+    // Listen for speed changes
+    window.addEventListener('gameSpeedChanged', (e) => {
+        console.log(`⏱️ Geschwindigkeit geändert: ${e.detail.speed}x`);
+    });
 });
