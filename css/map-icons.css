@@ -1,73 +1,232 @@
-/* =================================
-   MAP MARKER ICONS & ANIMATIONS
-   ================================= */
+/* =====================================================
+   MAP ICONS & MARKERS v6.0.0 - PROFESSIONAL EDITION
+   Beautiful, functional icons for realistic dispatch
+   ===================================================== */
 
-/* STATION MARKERS */
+/* =====================================================
+   STATION MARKERS - Professional Look
+   ===================================================== */
+
 .station-marker {
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .station-marker:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
     z-index: 1000 !important;
 }
 
-.station-popup .leaflet-popup-content {
-    margin: 10px;
-    min-width: 250px;
+/* Station Icon Container */
+.station-icon-container {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel-bg);
+    border-radius: 50%;
+    border: 3px solid var(--secondary-blue);
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.4);
 }
 
-/* VEHICLE MARKERS */
+.station-icon-container i {
+    font-size: 18px;
+    color: var(--secondary-blue);
+}
+
+/* Station Types */
+.station-type-rtw .station-icon-container {
+    border-color: #d32f2f;
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+}
+
+.station-type-rtw .station-icon-container i {
+    color: #d32f2f;
+}
+
+.station-type-nef .station-icon-container {
+    border-color: #f57c00;
+    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.4);
+}
+
+.station-type-nef .station-icon-container i {
+    color: #f57c00;
+}
+
+.station-type-ktw .station-icon-container {
+    border-color: #388e3c;
+    box-shadow: 0 2px 8px rgba(56, 142, 60, 0.4);
+}
+
+.station-type-ktw .station-icon-container i {
+    color: #388e3c;
+}
+
+/* =====================================================
+   VEHICLE MARKERS - Enhanced Movement
+   ===================================================== */
+
 .vehicle-marker-moving {
     cursor: pointer;
-    transition: all 0.3s ease-out;
-    animation: vehicleMove 0.5s ease-in-out;
+    transition: all 0.25s ease-out;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
 }
 
 .vehicle-marker-moving:hover {
-    transform: scale(1.15);
+    transform: scale(1.2);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
     z-index: 1500 !important;
 }
 
-@keyframes vehicleMove {
-    0% { opacity: 0.8; }
-    50% { opacity: 1; }
-    100% { opacity: 0.8; }
+/* Vehicle Icon Container */
+.vehicle-icon-container {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1d23 0%, #252932 100%);
+    border-radius: 8px;
+    border: 2px solid;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    animation: vehiclePulse 3s ease-in-out infinite;
 }
 
-/* INCIDENT MARKERS */
+@keyframes vehiclePulse {
+    0%, 100% {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+    }
+}
+
+.vehicle-icon-container i {
+    font-size: 16px;
+    z-index: 1;
+}
+
+/* FMS Status Colors */
+.fms-status-2 .vehicle-icon-container {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+}
+
+.fms-status-2 .vehicle-icon-container i {
+    color: #81c784;
+}
+
+.fms-status-3 .vehicle-icon-container,
+.fms-status-4 .vehicle-icon-container {
+    border-color: #ff9800;
+    background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);
+    animation: statusActivePulse 1.5s ease-in-out infinite;
+}
+
+.fms-status-3 .vehicle-icon-container i,
+.fms-status-4 .vehicle-icon-container i {
+    color: #ffb74d;
+}
+
+@keyframes statusActivePulse {
+    0%, 100% {
+        box-shadow: 0 3px 8px rgba(255, 152, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 152, 0, 0.8);
+    }
+}
+
+.fms-status-5 .vehicle-icon-container {
+    border-color: #2196f3;
+    background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+}
+
+.fms-status-5 .vehicle-icon-container i {
+    color: #64b5f6;
+}
+
+.fms-status-6 .vehicle-icon-container {
+    border-color: #9c27b0;
+    background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
+}
+
+.fms-status-6 .vehicle-icon-container i {
+    color: #ba68c8;
+}
+
+/* Status 0 - EMERGENCY */
+.fms-status-0 .vehicle-icon-container {
+    border-color: #f44336;
+    background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
+    animation: emergencyFlash 0.5s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(244, 67, 54, 0.9);
+}
+
+.fms-status-0 .vehicle-icon-container i {
+    color: #ffffff;
+    animation: emergencyShake 0.5s ease-in-out infinite;
+}
+
+@keyframes emergencyFlash {
+    0%, 100% {
+        border-color: #f44336;
+        box-shadow: 0 4px 20px rgba(244, 67, 54, 0.9);
+    }
+    50% {
+        border-color: #ffffff;
+        box-shadow: 0 6px 30px rgba(255, 255, 255, 0.8);
+    }
+}
+
+@keyframes emergencyShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+/* =====================================================
+   INCIDENT MARKERS - Eye-Catching Professional
+   ===================================================== */
+
 .incident-marker-custom {
     cursor: pointer;
     z-index: 2000 !important;
+    filter: drop-shadow(0 4px 12px rgba(211, 47, 47, 0.6));
 }
 
 .incident-icon-container {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+/* Pulse Ring Effect */
 .incident-pulse {
     position: absolute;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: rgba(220, 53, 69, 0.4);
-    animation: pulse 2s infinite;
+    background: radial-gradient(circle, rgba(211, 47, 47, 0.6) 0%, rgba(211, 47, 47, 0) 70%);
+    animation: incidentPulse 2s ease-out infinite;
 }
 
-@keyframes pulse {
+@keyframes incidentPulse {
     0% {
         transform: scale(0.8);
         opacity: 1;
     }
     50% {
-        transform: scale(1.5);
-        opacity: 0.5;
+        transform: scale(1.8);
+        opacity: 0.3;
     }
     100% {
         transform: scale(0.8);
@@ -75,77 +234,156 @@
     }
 }
 
+/* Incident Icon */
 .incident-icon {
     position: relative;
-    font-size: 32px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 16px rgba(211, 47, 47, 0.8);
     z-index: 1;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-    animation: bounce 1s infinite;
+    animation: incidentBounce 1.5s ease-in-out infinite;
 }
 
-@keyframes bounce {
+.incident-icon i {
+    font-size: 20px;
+    color: #ffffff;
+}
+
+@keyframes incidentBounce {
     0%, 100% {
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
     50% {
-        transform: translateY(-5px);
+        transform: translateY(-8px) scale(1.05);
     }
 }
 
-/* VEHICLE ROUTES */
-.vehicle-route {
-    animation: dash 20s linear infinite;
+/* High Priority - Extra attention */
+.incident-priority-high .incident-icon {
+    animation: incidentUrgent 0.8s ease-in-out infinite;
+    border-color: #ffc107;
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.9);
 }
 
-@keyframes dash {
+@keyframes incidentUrgent {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 20px rgba(255, 193, 7, 0.9);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 6px 30px rgba(255, 193, 7, 1);
+    }
+}
+
+/* =====================================================
+   VEHICLE ROUTES - Smooth Professional Lines
+   ===================================================== */
+
+.vehicle-route {
+    stroke-dasharray: 10, 5;
+    animation: routeDash 30s linear infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes routeDash {
     to {
         stroke-dashoffset: -1000;
     }
 }
 
-/* POPUP STYLING */
+/* =====================================================
+   POPUP STYLING - Professional Dark Theme
+   ===================================================== */
+
 .leaflet-popup-content-wrapper {
-    background: #1a1a2e;
-    color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background: var(--panel-bg);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-medium);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    padding: 0;
 }
 
 .leaflet-popup-content {
-    margin: 10px;
-    font-size: 14px;
-    line-height: 1.5;
+    margin: 14px;
+    font-size: 0.9em;
+    line-height: 1.6;
+    min-width: 200px;
 }
 
 .leaflet-popup-tip {
-    background: #1a1a2e;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-medium);
 }
 
 .leaflet-popup-close-button {
-    color: #ffffff !important;
+    color: var(--text-secondary) !important;
     font-size: 20px !important;
-    padding: 5px !important;
+    padding: 6px 8px !important;
+    transition: color 0.2s;
 }
 
 .leaflet-popup-close-button:hover {
-    color: #dc3545 !important;
+    color: var(--danger-red) !important;
 }
 
-/* INCIDENT LIST ITEMS */
+/* Popup Content Styling */
+.popup-header {
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.popup-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.popup-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85em;
+}
+
+.popup-info-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--info-cyan);
+}
+
+/* =====================================================
+   INCIDENT LIST ITEMS - Professional Cards
+   ===================================================== */
+
 .incident-item {
-    background: var(--panel-bg);
+    background: var(--input-bg);
     padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border-left: 4px solid #dc3545;
+    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--danger-red);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
 }
 
 .incident-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    background: rgba(220, 53, 69, 0.1);
+    background: var(--panel-bg);
+    border-left-color: var(--primary-red);
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
 }
 
 .incident-header {
@@ -156,142 +394,196 @@
 }
 
 .incident-badge {
-    font-size: 20px;
+    font-size: 18px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .incident-number {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    color: #ffc107;
-    font-size: 12px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-weight: 600;
+    color: var(--warning-orange);
+    font-size: 0.75em;
+    background: rgba(245, 124, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(245, 124, 0, 0.3);
 }
 
 .incident-keyword {
     font-weight: 600;
-    font-size: 15px;
-    margin-bottom: 5px;
-    color: #dc3545;
+    font-size: 0.95em;
+    margin-bottom: 4px;
+    color: var(--primary-red);
 }
 
 .incident-location {
-    font-size: 13px;
+    font-size: 0.85em;
     color: var(--text-secondary);
-    margin-bottom: 5px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.incident-location i {
+    font-size: 0.9em;
+    color: var(--info-cyan);
 }
 
 .incident-time {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-family: 'Courier New', monospace;
-    margin-bottom: 8px;
+    font-size: 0.75em;
+    color: var(--text-muted);
+    font-family: 'Courier New', 'Consolas', monospace;
+    margin-bottom: 6px;
 }
 
 .incident-vehicles {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 4px;
 }
 
 .vehicle-chip {
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7em;
     font-weight: 600;
-    font-family: 'Courier New', monospace;
+    font-family: 'Courier New', 'Consolas', monospace;
+    background: rgba(25, 118, 210, 0.15);
+    border: 1px solid rgba(25, 118, 210, 0.3);
+    color: var(--info-cyan);
+    letter-spacing: 0.3px;
 }
 
-/* INCIDENT DETAILS */
+/* =====================================================
+   INCIDENT DETAILS - Professional Detail View
+   ===================================================== */
+
 .incident-details-content {
-    padding: 10px;
+    padding: 12px;
 }
 
 .detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--primary-color);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary-red);
 }
 
 .detail-header h3 {
     margin: 0;
-    color: #dc3545;
-    font-size: 18px;
+    color: var(--primary-red);
+    font-size: 1.1em;
+    font-weight: 600;
 }
 
 .incident-badge-large {
-    background: var(--primary-color);
+    background: var(--primary-red);
     color: white;
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: bold;
-    font-family: 'Courier New', monospace;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    font-family: 'Courier New', 'Consolas', monospace;
+    letter-spacing: 0.5px;
 }
 
 .detail-section {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .detail-section h4 {
     color: var(--text-secondary);
-    font-size: 14px;
-    margin-bottom: 8px;
+    font-size: 0.85em;
+    margin-bottom: 6px;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .detail-section p {
     margin: 0;
-    line-height: 1.5;
-    font-size: 13px;
+    line-height: 1.6;
+    font-size: 0.9em;
+    color: var(--text-primary);
 }
 
 .vehicle-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .vehicle-detail-card {
-    background: var(--panel-bg);
+    background: var(--input-bg);
     padding: 10px;
-    border-radius: 6px;
-    border-left-width: 4px;
-    border-left-style: solid;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid;
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
+    transition: all 0.15s;
+}
+
+.vehicle-detail-card:hover {
+    background: var(--panel-bg);
+    transform: translateX(2px);
 }
 
 .vehicle-detail-header {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .vehicle-detail-name {
     font-weight: 600;
-    font-size: 13px;
+    font-size: 0.9em;
+    font-family: 'Courier New', 'Consolas', monospace;
+    letter-spacing: 0.5px;
 }
 
 .vehicle-detail-callsign {
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.75em;
     color: var(--text-secondary);
 }
 
 .vehicle-detail-status {
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75em;
     font-weight: 600;
 }
 
 .detail-actions {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
 }
 
 .detail-actions .btn {
     width: 100%;
+}
+
+/* =====================================================
+   ICON GLOW EFFECTS - Subtle Professional
+   ===================================================== */
+
+.icon-glow-red {
+    filter: drop-shadow(0 0 8px rgba(211, 47, 47, 0.6));
+}
+
+.icon-glow-blue {
+    filter: drop-shadow(0 0 8px rgba(25, 118, 210, 0.6));
+}
+
+.icon-glow-green {
+    filter: drop-shadow(0 0 8px rgba(56, 142, 60, 0.6));
+}
+
+.icon-glow-orange {
+    filter: drop-shadow(0 0 8px rgba(245, 124, 0, 0.6));
 }
