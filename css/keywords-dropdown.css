@@ -1,114 +1,27 @@
-/* =========================
-   KEYWORDS DROPDOWN STYLES
-   Autocomplete Dropdown für Einsatzstichwörter
-   ========================= */
+/* =====================================================
+   KEYWORDS DROPDOWN v6.0.0 - PROFESSIONAL EDITION
+   Beautiful autocomplete dropdown for incident keywords
+   ===================================================== */
 
-.keyword-dropdown-wrapper {
-    position: relative;
-    width: 100%;
-}
+/* =====================================================
+   DROPDOWN CONTAINER
+   ===================================================== */
 
-.keyword-dropdown-list {
+.stichwort-dropdown {
     position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    max-height: 300px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    max-height: 280px;
     overflow-y: auto;
-    background: var(--bg-secondary, #1e1e1e);
-    border: 2px solid var(--border-color, #333);
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     z-index: 1000;
-    margin-top: -2px;
+    width: calc(100% - 30px);
+    margin-top: 4px;
+    animation: dropdownSlideDown 0.2s ease-out;
 }
 
-/* Scrollbar Styling */
-.keyword-dropdown-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-.keyword-dropdown-list::-webkit-scrollbar-track {
-    background: var(--bg-primary, #121212);
-}
-
-.keyword-dropdown-list::-webkit-scrollbar-thumb {
-    background: var(--accent-color, #00a8ff);
-    border-radius: 4px;
-}
-
-.keyword-dropdown-list::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-hover, #0088cc);
-}
-
-/* Dropdown Items */
-.dropdown-item {
-    padding: 12px 15px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border-color, #333);
-    transition: background-color 0.2s ease;
-}
-
-.dropdown-item:last-child {
-    border-bottom: none;
-}
-
-.dropdown-item:hover {
-    background: var(--bg-hover, #2a2a2a);
-}
-
-.dropdown-item.no-results {
-    cursor: default;
-    color: var(--text-secondary, #888);
-    font-style: italic;
-    text-align: center;
-}
-
-.dropdown-item.no-results:hover {
-    background: transparent;
-}
-
-/* Item Content */
-.dropdown-item-title {
-    font-weight: bold;
-    color: var(--text-primary, #ffffff);
-    font-size: 1em;
-    margin-bottom: 4px;
-}
-
-.dropdown-item-category {
-    color: var(--accent-color, #00a8ff);
-    font-size: 0.85em;
-    margin-bottom: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.dropdown-item-description {
-    color: var(--text-secondary, #aaa);
-    font-size: 0.9em;
-    line-height: 1.4;
-}
-
-/* Highlighted Search Terms (optional) */
-.dropdown-item-title mark,
-.dropdown-item-description mark {
-    background: var(--accent-color-transparent, rgba(0, 168, 255, 0.2));
-    color: var(--accent-color, #00a8ff);
-    padding: 2px 4px;
-    border-radius: 3px;
-}
-
-/* Input Focus State */
-.keyword-dropdown-wrapper input:focus {
-    border-color: var(--accent-color, #00a8ff);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.1);
-}
-
-/* Animation */
-@keyframes slideDown {
+@keyframes dropdownSlideDown {
     from {
         opacity: 0;
         transform: translateY(-10px);
@@ -119,63 +32,279 @@
     }
 }
 
-.keyword-dropdown-list {
-    animation: slideDown 0.2s ease;
+/* =====================================================
+   DROPDOWN ITEMS - Professional List Style
+   ===================================================== */
+
+.stichwort-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: all 0.15s ease;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
 }
 
-/* Dark Mode Adjustments */
-@media (prefers-color-scheme: dark) {
-    .keyword-dropdown-list {
-        background: #1a1a1a;
-        border-color: #2a2a2a;
+.stichwort-item:last-child {
+    border-bottom: none;
+}
+
+.stichwort-item:hover {
+    background: var(--bg-dark);
+    transform: translateX(4px);
+}
+
+/* Icon styling */
+.stichwort-item::before {
+    content: '\f0a4';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: var(--info-cyan);
+    font-size: 0.9em;
+    width: 20px;
+    text-align: center;
+}
+
+/* Different icons for different keyword types */
+.stichwort-item[data-type="medical"]::before {
+    content: '\f0f0';
+    color: var(--danger-red);
+}
+
+.stichwort-item[data-type="trauma"]::before {
+    content: '\f7f9';
+    color: var(--warning-orange);
+}
+
+.stichwort-item[data-type="cardiac"]::before {
+    content: '\f21e';
+    color: var(--primary-red);
+}
+
+.stichwort-item[data-type="respiratory"]::before {
+    content: '\f5dc';
+    color: var(--info-cyan);
+}
+
+.stichwort-item[data-type="neurological"]::before {
+    content: '\f5ce';
+    color: var(--secondary-blue);
+}
+
+.stichwort-item[data-type="pediatric"]::before {
+    content: '\f77c';
+    color: #9c27b0;
+}
+
+/* Keyword text */
+.stichwort-keyword {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+/* Optional: Priority indicator */
+.stichwort-priority {
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.stichwort-priority.high {
+    background: rgba(211, 47, 47, 0.2);
+    color: var(--danger-red);
+    border: 1px solid rgba(211, 47, 47, 0.4);
+}
+
+.stichwort-priority.medium {
+    background: rgba(245, 124, 0, 0.2);
+    color: var(--warning-orange);
+    border: 1px solid rgba(245, 124, 0, 0.4);
+}
+
+.stichwort-priority.low {
+    background: rgba(56, 142, 60, 0.2);
+    color: var(--success-green);
+    border: 1px solid rgba(56, 142, 60, 0.4);
+}
+
+/* =====================================================
+   ACTIVE/SELECTED STATE
+   ===================================================== */
+
+.stichwort-item.active,
+.stichwort-item:focus {
+    background: linear-gradient(90deg, rgba(2, 136, 209, 0.15) 0%, rgba(2, 136, 209, 0.05) 100%);
+    border-left: 3px solid var(--info-cyan);
+    padding-left: 13px;
+}
+
+/* =====================================================
+   CATEGORY HEADERS (Optional)
+   ===================================================== */
+
+.stichwort-category-header {
+    padding: 8px 16px;
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    cursor: default;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.stichwort-category-header i {
+    margin-right: 6px;
+    color: var(--info-cyan);
+}
+
+/* =====================================================
+   NO RESULTS MESSAGE
+   ===================================================== */
+
+.stichwort-no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.stichwort-no-results i {
+    display: block;
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+/* =====================================================
+   SEARCH HIGHLIGHTING
+   ===================================================== */
+
+.stichwort-item mark {
+    background: rgba(255, 193, 7, 0.3);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* =====================================================
+   LOADING STATE
+   ===================================================== */
+
+.stichwort-loading {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.stichwort-loading i {
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    color: var(--info-cyan);
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
     }
-    
-    .dropdown-item:hover {
-        background: #252525;
-    }
-    
-    .dropdown-item-title {
-        color: #f0f0f0;
+    to {
+        transform: rotate(360deg);
     }
 }
 
-/* Mobile Responsive */
+/* =====================================================
+   SCROLLBAR STYLING
+   ===================================================== */
+
+.stichwort-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.stichwort-dropdown::-webkit-scrollbar-track {
+    background: var(--panel-header);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.stichwort-dropdown::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 4px;
+}
+
+.stichwort-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}
+
+/* =====================================================
+   KEYBOARD NAVIGATION INDICATOR
+   ===================================================== */
+
+.stichwort-item.keyboard-selected {
+    background: rgba(2, 136, 209, 0.2);
+    border-left: 3px solid var(--info-cyan);
+    padding-left: 13px;
+}
+
+.stichwort-item.keyboard-selected::after {
+    content: '\f358';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 16px;
+    color: var(--info-cyan);
+    font-size: 0.9em;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* =====================================================
+   DESCRIPTION/SUBTITLE (Optional)
+   ===================================================== */
+
+.stichwort-description {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+
 @media (max-width: 768px) {
-    .keyword-dropdown-list {
+    .stichwort-dropdown {
         max-height: 200px;
-        font-size: 0.95em;
     }
     
-    .dropdown-item {
-        padding: 10px 12px;
+    .stichwort-item {
+        padding: 10px 14px;
+        font-size: 0.85em;
     }
-}
-
-/* Priority Keywords - Color Coding */
-.dropdown-item[data-keyword^="RD 0"] .dropdown-item-category {
-    color: #4caf50; /* Grün */
-}
-
-.dropdown-item[data-keyword^="RD 1"] .dropdown-item-category {
-    color: #8bc34a; /* Hellgrün */
-}
-
-.dropdown-item[data-keyword^="RD 2"] .dropdown-item-category {
-    color: #ffc107; /* Gelb */
-}
-
-.dropdown-item[data-keyword^="RD 3"] .dropdown-item-category {
-    color: #ff9800; /* Orange */
-}
-
-.dropdown-item[data-keyword^="MANV"] .dropdown-item-category {
-    color: #f44336; /* Rot */
-}
-
-/* Loading State */
-.keyword-dropdown-wrapper.loading input {
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="%2300a8ff" stroke-width="2" stroke-dasharray="12.56 37.68"><animateTransform attributeName="transform" type="rotate" from="0 10 10" to="360 10 10" dur="1s" repeatCount="indefinite"/></circle></svg>');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px 20px;
+    
+    .stichwort-category-header {
+        padding: 6px 14px;
+        font-size: 0.7em;
+    }
 }
