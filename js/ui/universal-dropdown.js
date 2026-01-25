@@ -1,19 +1,20 @@
 // =========================
-// UNIVERSAL DROPDOWN v1.0
+// UNIVERSAL DROPDOWN v1.1
 // Schönes Custom Dropdown für:
 // - Detail-Stichwort
 // - Stadtteil
 // - Besondere Örtlichkeit
+// ✅ FIX: Callback gibt jetzt VALUE zurück, nicht ganzes Objekt!
 // =========================
 
 const UniversalDropdown = {
-    activeDropdowns: new Map(), // Tracking aktiver Dropdowns
+    activeDropdowns: new Map(),
 
     /**
      * Initialisiert ein Custom Dropdown
      * @param {string} inputId - ID des Input-Elements
      * @param {Array} items - Array von Items {keyword, label, description, category, icon, color}
-     * @param {Function} onSelect - Callback bei Auswahl
+     * @param {Function} onSelect - Callback bei Auswahl (bekommt nur VALUE als String!)
      * @param {Object} options - Zusätzliche Optionen
      */
     initialize(inputId, items, onSelect, options = {}) {
@@ -31,17 +32,14 @@ const UniversalDropdown = {
             keyField: options.keyField || 'keyword'
         };
 
-        // Wrapper erstellen
         const wrapper = document.createElement('div');
         wrapper.style.position = 'relative';
         wrapper.style.width = '100%';
         wrapper.dataset.dropdownId = inputId;
         
-        // Input ersetzen
         input.parentNode.insertBefore(wrapper, input);
         wrapper.appendChild(input);
 
-        // Dropdown-Objekt speichern
         this.activeDropdowns.set(inputId, {
             input,
             wrapper,
@@ -51,7 +49,6 @@ const UniversalDropdown = {
             dropdownElement: null
         });
 
-        // Event Listeners
         this.attachEventListeners(inputId);
 
         console.log(`✅ Universal Dropdown initialisiert: ${inputId}`);
@@ -63,24 +60,20 @@ const UniversalDropdown = {
 
         const { input, wrapper } = dropdown;
 
-        // Focus: Zeige Dropdown
         input.addEventListener('focus', () => {
             this.showDropdown(dropdownId);
         });
 
-        // Input: Filter Dropdown
         input.addEventListener('input', () => {
             this.filterDropdown(dropdownId, input.value);
         });
 
-        // Click außerhalb: Schließen
         document.addEventListener('click', (e) => {
             if (!wrapper.contains(e.target)) {
                 this.hideDropdown(dropdownId);
             }
         });
 
-        // Keyboard Navigation
         input.addEventListener('keydown', (e) => {
             this.handleKeyboard(dropdownId, e);
         });
@@ -90,17 +83,14 @@ const UniversalDropdown = {
         const dropdown = this.activeDropdowns.get(dropdownId);
         if (!dropdown) return;
 
-        // Schließe alte Dropdown-Anzeige
         this.hideDropdown(dropdownId);
 
         const { items, wrapper, config } = dropdown;
 
-        // Erstelle Dropdown-Element
         const dropdownElement = document.createElement('div');
         dropdownElement.className = 'universal-dropdown';
         dropdownElement.id = `universal-dropdown-${dropdownId}`;
 
-        // Füge Items hinzu
         items.forEach((item, index) => {
             const itemElement = this.createItemElement(item, index, config);
             
@@ -118,7 +108,6 @@ const UniversalDropdown = {
         wrapper.appendChild(dropdownElement);
         dropdown.dropdownElement = dropdownElement;
 
-        // Animation
         setTimeout(() => {
             dropdownElement.style.opacity = '1';
             dropdownElement.style.transform = 'translateY(0)';
@@ -166,7 +155,6 @@ const UniversalDropdown = {
         items.forEach(item => {
             const itemData = dropdown.items[parseInt(item.dataset.index)];
             
-            // Durchsuche alle konfigurierten Suchfelder
             let matches = false;
             if (!query) {
                 matches = true;
@@ -187,7 +175,6 @@ const UniversalDropdown = {
             }
         });
 
-        // "Keine Ergebnisse" Nachricht
         let noResults = dropdownElement.querySelector('.universal-no-results');
         
         if (visibleCount === 0) {
@@ -212,13 +199,15 @@ const UniversalDropdown = {
         if (!dropdown) return;
 
         const { input, onSelect, config } = dropdown;
-        const value = item[config.keyField] || item.keyword;
+        
+        // ✅ FIX: Extrahiere den VALUE als String
+        const value = item[config.keyField] || item.keyword || item.value;
 
         input.value = value;
 
-        // Callback aufrufen
+        // ✅ FIX: Callback bekommt jetzt nur den VALUE-String!
         if (onSelect) {
-            onSelect(item);
+            onSelect(value);
         }
 
         // Visual Feedback
@@ -274,7 +263,6 @@ const UniversalDropdown = {
                     const index = parseInt(currentActive.dataset.index);
                     this.selectItem(dropdownId, dropdown.items[index]);
                 } else if (items.length === 1) {
-                    // Auto-select bei nur 1 Ergebnis
                     const index = parseInt(items[0].dataset.index);
                     this.selectItem(dropdownId, dropdown.items[index]);
                 }
@@ -305,14 +293,12 @@ const UniversalDropdown = {
         }, 200);
     },
 
-    // Helper: Dropdown-Daten aktualisieren
     updateItems(dropdownId, newItems) {
         const dropdown = this.activeDropdowns.get(dropdownId);
         if (!dropdown) return;
 
         dropdown.items = newItems;
         
-        // Wenn Dropdown offen ist, neu rendern
         if (dropdown.dropdownElement) {
             this.hideDropdown(dropdownId);
             this.showDropdown(dropdownId);
@@ -322,9 +308,8 @@ const UniversalDropdown = {
     }
 };
 
-// Auto-Initialize
 if (typeof window !== 'undefined') {
     window.UniversalDropdown = UniversalDropdown;
 }
 
-console.log('✅ Universal Dropdown System v1.0 geladen');
+console.log('✅ Universal Dropdown System v1.1 geladen (FIX: Callback gibt value zurück)');
