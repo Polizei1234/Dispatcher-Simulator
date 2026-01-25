@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dispatcher Simulator - Leitstellensimulator Rems-Murr-Kreis</title>
+    <title>Dispatcher Simulator - ILS Waiblingen</title>
     
     <!-- 🔥 VERSION MANAGER - MUSS ZUERST GELADEN WERDEN! -->
     <script src="js/core/version-manager.js?v=6.1.0"></script>
@@ -22,9 +22,6 @@
     <!-- 🆕 KEYWORDS DROPDOWN CSS -->
     <link rel="stylesheet" href="css/keywords-dropdown.css?v=6.1.0">
     
-    <!-- 🆕 LAYOUT V6.1.0 -->
-    <link rel="stylesheet" href="css/layout.css?v=6.1.0">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -32,8 +29,8 @@
     <div id="welcome-screen" class="overlay active">
         <div class="welcome-container">
             <h1><i class="fas fa-headset"></i> Dispatcher Simulator</h1>
-            <h2>Leitstellensimulator Rems-Murr-Kreis</h2>
-            <p>Willkommen beim professionellen Dispatcher-Simulator der Integrierten Leitstelle Waiblingen!</p>
+            <h2>ILS Waiblingen - Rems-Murr-Kreis</h2>
+            <p>Realistische Leitstellensimulation mit echten Daten aus dem Rems-Murr-Kreis</p>
             <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
                 <h3 style="margin-top: 0;"><i class="fas fa-database"></i> Echte Daten aus dem Rems-Murr-Kreis</h3>
                 <ul style="text-align: left; display: inline-block; margin: 0 auto;">
@@ -61,7 +58,7 @@
             <!-- 🆕 VERSIONSANZEIGE -->
             <div style="position: absolute; bottom: 15px; right: 20px; padding: 8px 15px; background: rgba(211, 47, 47, 0.2); border: 1px solid rgba(211, 47, 47, 0.5); border-radius: 20px; font-size: 0.85em; color: #ef5350;">
                 <i class="fas fa-code-branch"></i> <strong>Version 6.1.0</strong>
-                <span style="margin-left: 8px; padding: 2px 8px; background: rgba(211, 47, 47, 0.3); border-radius: 10px; font-size: 0.8em;">✨ Optimized Layout</span>
+                <span style="margin-left: 8px; padding: 2px 8px; background: rgba(211, 47, 47, 0.3); border-radius: 10px; font-size: 0.8em;">✨ Layout Redesign</span>
             </div>
             <div style="position: absolute; bottom: 15px; left: 20px; font-size: 0.75em; color: #888;">
                 <i class="fas fa-calendar-alt"></i> Build: 25.01.2026
@@ -168,6 +165,7 @@
         <header>
             <div class="header-left">
                 <h1><i class="fas fa-headset"></i> Dispatcher Simulator</h1>
+                <span class="header-subtitle">ILS Waiblingen</span>
                 <span id="current-time">00:00:00</span>
                 <button id="pause-btn" onclick="togglePause()" class="btn btn-small" style="margin-left: 10px;" title="Pausieren">
                     <i class="fas fa-pause" id="pause-icon"></i>
@@ -204,37 +202,48 @@
             </button>
         </nav>
 
-        <!-- TAB: KARTE (OPTIMIERTES LAYOUT) -->
+        <!-- TAB: KARTE - OPTIMIZED LAYOUT -->
         <div id="tab-map" class="tab-content active">
-            <div class="layout-grid">
-                <!-- Links: Einsatzliste (30%) -->
-                <aside class="layout-sidebar-left">
-                    <div class="panel panel-full-height">
+            <div class="main-content">
+                <!-- LINKE SIDEBAR: Breiter für Einsatzliste -->
+                <aside class="sidebar-left" style="width: 350px;">
+                    <div class="panel" style="height: 100%;">
                         <div class="panel-header">
-                            <h3><i class="fas fa-list"></i> Einsatzliste</h3>
+                            <h3><i class="fas fa-list"></i> Aktive Einsätze</h3>
                             <span class="badge" id="incident-count">0</span>
                         </div>
-                        <div class="panel-content" id="incident-list"></div>
+                        <div class="panel-content" id="incident-list" style="height: calc(100% - 60px); overflow-y: auto;"></div>
                     </div>
                 </aside>
 
-                <!-- Mitte: Karte (50%) -->
-                <main class="layout-main">
-                    <div id="map" class="map-full-height"></div>
+                <!-- KARTE: Mehr Platz in der Mitte -->
+                <main class="map-container" style="flex: 1;">
+                    <div id="map"></div>
                     <div class="map-controls">
                         <button class="btn btn-small" onclick="centerMap()" title="Karte zentrieren"><i class="fas fa-crosshairs"></i></button>
                         <button class="btn btn-small" onclick="toggleStations()" title="Wachen ein/ausblenden"><i class="fas fa-hospital"></i></button>
                     </div>
                 </main>
 
-                <!-- Rechts: Einsatzdetails (20%) -->
-                <aside class="layout-sidebar-right">
-                    <div class="panel panel-full-height">
+                <!-- RECHTE SIDEBAR: Einsatzdetails + Eingehende Anrufe -->
+                <aside class="sidebar-right" style="width: 380px;">
+                    <!-- Einsatzdetails -->
+                    <div class="panel" style="flex: 1; min-height: 50%;">
                         <div class="panel-header">
                             <h3><i class="fas fa-info-circle"></i> Einsatzdetails</h3>
                         </div>
-                        <div class="panel-content" id="incident-details">
+                        <div class="panel-content" id="incident-details" style="overflow-y: auto;">
                             <p class="no-data">Wählen Sie einen Einsatz aus</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Eingehende Anrufe (unten) -->
+                    <div class="panel" style="flex: 0 0 auto; margin-top: 15px; max-height: 300px;">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-phone-volume"></i> Eingehende Anrufe</h3>
+                        </div>
+                        <div class="panel-content" id="call-list" style="max-height: 250px; overflow-y: auto;">
+                            <p class="no-data">Keine eingehenden Anrufe</p>
                         </div>
                     </div>
                 </aside>
@@ -255,7 +264,7 @@
                     <div style="text-align: center; padding: 50px; color: #666;">
                         <i class="fas fa-phone" style="font-size: 64px; margin-bottom: 20px;"></i>
                         <h3>Kein aktiver Notruf</h3>
-                        <p>Eingehende Anrufe werden in der Einsatzliste angezeigt.</p>
+                        <p>Eingehende Anrufe werden in der rechten Sidebar angezeigt.</p>
                     </div>
                 </div>
                 <div class="call-active" id="call-active" style="display: none;">
@@ -389,7 +398,7 @@
         </div>
     </div>
 
-    <!-- 📦 SKRIPTE v6.1.0 - NEUE ORDNERSTRUKTUR -->
+    <!-- 📦 SKRIPTE v6.1.0 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- ✅ LEAFLET ROUTING MACHINE JS -->
