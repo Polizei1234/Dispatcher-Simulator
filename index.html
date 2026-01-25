@@ -22,6 +22,9 @@
     <!-- 🆕 KEYWORDS DROPDOWN CSS -->
     <link rel="stylesheet" href="css/keywords-dropdown.css?v=6.1.0">
     
+    <!-- ✅ RADIO TAB CSS - Fixed Funktab Styling -->
+    <link rel="stylesheet" href="css/radio-tab.css?v=6.1.0">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
@@ -294,20 +297,20 @@
 
         <!-- TAB: FUNKVERKEHR ✅ PRETTIER UI v2 -->
         <div id="tab-radio" class="tab-content">
-            <div class="radio-overview" style="display: flex; gap: 20px; padding: 20px; height: calc(100vh - 200px);">
+            <div class="radio-overview">
                 <!-- Linke Seite: Funkverkehr (volle Höhe) -->
-                <div style="flex: 1; display: flex; flex-direction: column;">
-                    <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="radio-feed-container">
+                    <div class="panel">
                         <div class="panel-header">
                             <h3><i class="fas fa-walkie-talkie"></i> Funkverkehr</h3>
                             <small style="font-weight: normal; opacity: 0.8;">Fahrzeuge funken automatisch bei Status 0 & 5</small>
                         </div>
-                        <div class="panel-content radio-log" id="radio-feed-full" style="flex: 1; overflow-y: auto;"></div>
+                        <div class="panel-content radio-log" id="radio-feed-full"></div>
                     </div>
                 </div>
                 
                 <!-- Rechte Seite: Fahrzeug anfunken -->
-                <div style="flex: 1;">
+                <div class="radio-vehicle-selection">
                     <div class="panel">
                         <div class="panel-header" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); border-bottom: 2px solid #2c5282;">
                             <h3><i class="fas fa-broadcast-tower"></i> Fahrzeug anfunken</h3>
@@ -315,17 +318,11 @@
                         </div>
                         <div class="panel-content" style="padding: 20px;">
                             <!-- Dropdown für Fahrzeugauswahl -->
-                            <div style="margin-bottom: 20px;">
-                                <label style="display: block; margin-bottom: 10px; color: #e2e8f0; font-weight: 600; font-size: 0.95em;">
+                            <div class="radio-form-group">
+                                <label class="radio-form-label">
                                     <i class="fas fa-ambulance" style="color: #3182ce;"></i> Fahrzeug wählen:
                                 </label>
-                                <select 
-                                    id="radio-vehicle-dropdown" 
-                                    onchange="selectVehicleFromDropdown()" 
-                                    style="width: 100%; padding: 14px; background: linear-gradient(to bottom, #2d3748 0%, #1a202c 100%); border: 2px solid #3182ce; border-radius: 10px; color: #fff; font-size: 1em; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
-                                    onfocus="this.style.borderColor='#4299e1'; this.style.boxShadow='0 0 0 3px rgba(66,153,225,0.3)'"
-                                    onblur="this.style.borderColor='#3182ce'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)'"
-                                >
+                                <select id="radio-vehicle-dropdown" onchange="selectVehicleFromDropdown()">
                                     <option value="">-- Fahrzeug wählen --</option>
                                     <!-- Wird von updateRadioVehicleDropdown() gefüllt -->
                                 </select>
@@ -335,48 +332,39 @@
                             <div id="selected-vehicle-info" style="display: none;"></div>
                             
                             <!-- Funkspruch-Eingabe -->
-                            <div style="margin-bottom: 20px;">
-                                <label style="display: block; margin-bottom: 10px; color: #e2e8f0; font-weight: 600; font-size: 0.95em;">
+                            <div class="radio-form-group">
+                                <label class="radio-form-label">
                                     <i class="fas fa-comment" style="color: #48bb78;"></i> Nachricht:
                                 </label>
                                 <input 
                                     type="text" 
                                     id="radio-vehicle-message-input" 
                                     placeholder="Nachricht an Fahrzeug eingeben..." 
-                                    style="width: 100%; padding: 14px; background: linear-gradient(to bottom, #2d3748 0%, #1a202c 100%); border: 2px solid #48bb78; border-radius: 10px; color: #fff; font-size: 1em; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
-                                    onfocus="this.style.borderColor='#68d391'; this.style.boxShadow='0 0 0 3px rgba(72,187,120,0.3)'"
-                                    onblur="this.style.borderColor='#48bb78'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)'"
                                     onkeypress="if(event.key === 'Enter') sendRadioToVehicle()"
                                 />
                             </div>
                             
                             <!-- Senden-Button -->
-                            <button 
-                                class="btn btn-primary" 
-                                onclick="sendRadioToVehicle()" 
-                                style="width: 100%; padding: 14px; font-size: 1.05em; font-weight: bold; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); border: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(72,187,120,0.4); transition: all 0.2s;"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(72,187,120,0.5)'"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(72,187,120,0.4)'"
-                            >
+                            <button class="btn btn-primary radio-send-btn" onclick="sendRadioToVehicle()">
                                 <i class="fas fa-paper-plane"></i> Funkspruch senden
                             </button>
                             
-                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 15px; padding: 10px; background: rgba(66,153,225,0.1); border-left: 3px solid #4299e1; border-radius: 6px;">
-                                <i class="fas fa-info-circle" style="color: #4299e1; font-size: 1.1em;"></i>
-                                <small style="color: #cbd5e0; font-style: italic; line-height: 1.4;">
+                            <div class="radio-info-box">
+                                <i class="fas fa-info-circle"></i>
+                                <small>
                                     Fahrzeug antwortet automatisch und kontextabhängig auf Ihre Nachricht
                                 </small>
                             </div>
                             
                             <!-- Info-Box für Status 0 & 5 -->
-                            <div style="margin-top: 25px; padding: 18px; background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%); border: 2px solid rgba(255, 193, 7, 0.4); border-radius: 12px; box-shadow: 0 4px 12px rgba(255,193,7,0.2);">
-                                <h4 style="margin: 0 0 12px 0; color: #ffc107; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-exclamation-triangle" style="font-size: 1.2em;"></i>
+                            <div class="radio-status-info">
+                                <h4>
+                                    <i class="fas fa-exclamation-triangle"></i>
                                     <span>Fahrzeug-initiierte Funkrufe</span>
                                 </h4>
-                                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; color: #cbd5e0; line-height: 1.8;">
-                                        <li style="margin-bottom: 8px;">
+                                <div class="radio-status-info-content">
+                                    <ul>
+                                        <li>
                                             <strong style="color: #fc8181;">Status 0:</strong> <span style="color: #feb2b2;">Notfall - Crew in Gefahr</span>
                                         </li>
                                         <li>
