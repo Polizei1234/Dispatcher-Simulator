@@ -1,6 +1,7 @@
 /* =====================================================
-   DISPATCHER SIMULATOR v6.1.0 - PROFESSIONAL EDITION
+   DISPATCHER SIMULATOR v6.1.1 - PROFESSIONAL EDITION
    ILS Waiblingen - Realistic Dispatch Center Interface
+   + Improved Dropdown Styling
    ===================================================== */
 
 :root {
@@ -15,9 +16,11 @@
     /* Professional Gray Scale */
     --bg-darkest: #1a1d23;            /* Main background */
     --bg-dark: #252932;               /* Secondary background */
+    --bg-secondary: #1e2128;          /* Third background level */
     --panel-bg: #2a2f3a;              /* Panel backgrounds */
     --panel-header: #1f2329;          /* Panel headers */
     --input-bg: #1e2128;              /* Input fields */
+    --border-color: #3a3f4b;          /* Border color */
     
     /* Text Colors */
     --text-primary: #e8eaed;          /* Main text */
@@ -220,7 +223,7 @@ body {
 }
 
 /* =====================================================
-   SETTINGS
+   SETTINGS & FORMS
    ===================================================== */
 
 .setting-item {
@@ -252,6 +255,65 @@ body {
 .setting-item select:focus {
     outline: none;
     border-color: var(--info-cyan);
+}
+
+/* =====================================================
+   ✅ IMPROVED DROPDOWN / SELECT STYLING
+   ===================================================== */
+
+select {
+    width: 100%;
+    padding: 12px 14px;
+    background: linear-gradient(to bottom, var(--input-bg) 0%, var(--panel-header) 100%);
+    border: 2px solid var(--border-medium);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0a6' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+select:hover {
+    border-color: var(--info-cyan);
+    background: linear-gradient(to bottom, var(--panel-bg) 0%, var(--input-bg) 100%);
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--info-cyan);
+    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.2);
+}
+
+select option {
+    background: var(--panel-bg);
+    color: var(--text-primary);
+    padding: 10px;
+    font-weight: 500;
+}
+
+select option:hover,
+select option:checked {
+    background: var(--info-cyan);
+    color: white;
+}
+
+/* Spezielle Styles für Radio-Dropdown */
+#radio-vehicle-dropdown {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+}
+
+#radio-vehicle-dropdown option {
+    padding: 12px;
+    line-height: 1.6;
 }
 
 /* =====================================================
