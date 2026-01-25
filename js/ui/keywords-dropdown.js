@@ -1,19 +1,19 @@
 // =========================
-// KEYWORDS DROPDOWN SYSTEM v2.0
-// Autocomplete Dropdowns für Einsatzstichwörter, Stadtteile & Örtlichkeiten
+// KEYWORDS DROPDOWN SYSTEM v3.0
+// Wrapper für UniversalDropdown - Detail-Stichwörter, Stadtteile & Örtlichkeiten
+// ✅ JETZT: Nutzt UniversalDropdown für konsistentes Design
+// ✅ FIX: Checkmarks entfernt
 // =========================
 
 const KeywordsDropdown = {
-    priorityKeywords: [],
     detailKeywords: [],
     districts: [],
     locations: [],
     
     async initialize() {
-        console.log('📝 Keywords Dropdown System wird initialisiert...');
+        console.log('📝 Keywords Dropdown System v3.0 wird initialisiert (UniversalDropdown-Wrapper)...');
         await this.loadKeywords();
         console.log('✅ Keywords geladen:', {
-            priority: this.priorityKeywords.length,
             detail: this.detailKeywords.length,
             districts: this.districts.length,
             locations: this.locations.length
@@ -22,25 +22,19 @@ const KeywordsDropdown = {
 
     async loadKeywords() {
         try {
-            // Lade Prioritäts-Keywords
-            const priorityResponse = await fetch('js/data/priority-keywords.json');
-            if (priorityResponse.ok) {
-                this.priorityKeywords = await priorityResponse.json();
-            }
-
             // Lade Detail-Keywords
             const detailResponse = await fetch('js/data/detail-keywords.json');
             if (detailResponse.ok) {
                 this.detailKeywords = await detailResponse.json();
             }
 
-            // 🆕 Lade Stadtteile
+            // Lade Stadtteile
             const districtsResponse = await fetch('js/data/districts.json');
             if (districtsResponse.ok) {
                 this.districts = await districtsResponse.json();
             }
 
-            // 🆕 Lade Örtlichkeiten
+            // Lade Örtlichkeiten
             const locationsResponse = await fetch('js/data/locations.json');
             if (locationsResponse.ok) {
                 this.locations = await locationsResponse.json();
@@ -50,153 +44,82 @@ const KeywordsDropdown = {
         }
     },
 
-    createDropdown(inputId, keywords, placeholder, onSelect, keyField = 'keyword') {
-        const input = document.getElementById(inputId);
-        if (!input) {
-            console.error(`❌ Input ${inputId} nicht gefunden`);
+    // ✅ Detail-Stichwort Dropdown (wie Priority)
+    initializeDetailDropdown(inputId, onSelect) {
+        if (typeof UniversalDropdown === 'undefined') {
+            console.error('❌ UniversalDropdown nicht geladen!');
             return;
         }
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'keyword-dropdown-wrapper';
-        wrapper.style.position = 'relative';
+        const options = this.detailKeywords.map(k => ({
+            value: k.keyword,
+            label: k.keyword,
+            category: k.category,
+            description: k.description,
+            icon: k.icon || '🚑'
+        }));
 
-        // Input ersetzen
-        input.parentNode.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
-
-        // Dropdown-Liste erstellen
-        const dropdown = document.createElement('div');
-        dropdown.className = 'keyword-dropdown-list';
-        dropdown.style.display = 'none';
-        wrapper.appendChild(dropdown);
-
-        // Input Events
-        input.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            
-            if (searchTerm.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            // Filtern
-            const filtered = keywords.filter(k => {
-                const keyValue = k[keyField].toLowerCase();
-                const category = k.category ? k.category.toLowerCase() : '';
-                const description = k.description ? k.description.toLowerCase() : '';
-                
-                return keyValue.includes(searchTerm) || 
-                       category.includes(searchTerm) || 
-                       description.includes(searchTerm);
-            });
-
-            if (filtered.length === 0) {
-                dropdown.innerHTML = '<div class="dropdown-item no-results">Keine Ergebnisse gefunden</div>';
-                dropdown.style.display = 'block';
-                return;
-            }
-
-            // Ergebnisse anzeigen
-            dropdown.innerHTML = filtered.slice(0, 10).map(k => {
-                const icon = k.icon ? k.icon + ' ' : '';
-                return `
-                    <div class="dropdown-item" data-value="${k[keyField]}">
-                        <div class="dropdown-item-title">${icon}${k[keyField]}</div>
-                        <div class="dropdown-item-category">${k.category || ''}</div>
-                        <div class="dropdown-item-description">${k.description || k.population || ''}</div>
-                    </div>
-                `;
-            }).join('');
-
-            dropdown.style.display = 'block';
-
-            // Click Events für Items
-            dropdown.querySelectorAll('.dropdown-item:not(.no-results)').forEach(item => {
-                item.addEventListener('click', () => {
-                    const value = item.getAttribute('data-value');
-                    const itemData = keywords.find(k => k[keyField] === value);
-                    
-                    input.value = value;
-                    dropdown.style.display = 'none';
-                    
-                    if (onSelect) {
-                        onSelect(itemData);
-                    }
-                });
-            });
+        UniversalDropdown.initialize(inputId, options, onSelect, {
+            placeholder: 'z.B. VU, Herzinfarkt, Geburt',
+            searchPlaceholder: 'Detail-Stichwort suchen...',
+            noResultsText: 'Kein Stichwort gefunden',
+            maxHeight: '400px'
         });
 
-        // Focus Event
-        input.addEventListener('focus', (e) => {
-            if (e.target.value.trim().length > 0) {
-                const event = new Event('input', { bubbles: true });
-                input.dispatchEvent(event);
-            }
-        });
-
-        // Schließen bei Klick außerhalb
-        document.addEventListener('click', (e) => {
-            if (!wrapper.contains(e.target)) {
-                dropdown.style.display = 'none';
-            }
-        });
-
-        // ESC zum Schließen
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                dropdown.style.display = 'none';
-            }
-        });
+        console.log(`✅ Detail-Dropdown initialisiert für #${inputId} (${options.length} Optionen)`);
     },
 
-    initializePriorityDropdown(inputId, onSelect) {
-        this.createDropdown(
-            inputId,
-            this.priorityKeywords,
-            'z.B. RD 2, MANV 1',
-            onSelect,
-            'keyword'
-        );
-    },
-
-    initializeDetailDropdown(inputId, onSelect) {
-        this.createDropdown(
-            inputId,
-            this.detailKeywords,
-            'z.B. VU, Herzinfarkt, Geburt',
-            onSelect,
-            'keyword'
-        );
-    },
-
-    // 🆕 NEU: Stadtteil-Dropdown
+    // 🏛️ Stadtteil Dropdown (wie Priority)
     initializeDistrictDropdown(inputId, onSelect) {
-        this.createDropdown(
-            inputId,
-            this.districts,
-            'z.B. Waiblingen, Fellbach',
-            onSelect,
-            'name'
-        );
+        if (typeof UniversalDropdown === 'undefined') {
+            console.error('❌ UniversalDropdown nicht geladen!');
+            return;
+        }
+
+        const options = this.districts.map(d => ({
+            value: d.name,
+            label: d.name,
+            category: d.category,
+            description: d.population ? `Einwohner: ${d.population}` : '',
+            icon: '🏘️'
+        }));
+
+        UniversalDropdown.initialize(inputId, options, onSelect, {
+            placeholder: 'z.B. Waiblingen, Fellbach',
+            searchPlaceholder: 'Stadtteil suchen...',
+            noResultsText: 'Kein Stadtteil gefunden',
+            maxHeight: '400px'
+        });
+
+        console.log(`✅ Stadtteil-Dropdown initialisiert für #${inputId} (${options.length} Optionen)`);
     },
 
-    // 🆕 NEU: Örtlichkeits-Dropdown
+    // 🏭 Besondere Örtlichkeit Dropdown (wie Priority)
     initializeLocationDropdown(inputId, onSelect) {
-        this.createDropdown(
-            inputId,
-            this.locations,
-            'z.B. Schule, Krankenhaus',
-            onSelect,
-            'name'
-        );
+        if (typeof UniversalDropdown === 'undefined') {
+            console.error('❌ UniversalDropdown nicht geladen!');
+            return;
+        }
+
+        const options = this.locations.map(l => ({
+            value: l.name,
+            label: l.name,
+            category: l.category,
+            description: l.description || '',
+            icon: l.icon || '🏢'
+        }));
+
+        UniversalDropdown.initialize(inputId, options, onSelect, {
+            placeholder: 'z.B. Schule, Krankenhaus',
+            searchPlaceholder: 'Örtlichkeit suchen...',
+            noResultsText: 'Keine Örtlichkeit gefunden',
+            maxHeight: '400px'
+        });
+
+        console.log(`✅ Örtlichkeit-Dropdown initialisiert für #${inputId} (${options.length} Optionen)`);
     },
 
     // Helper: Hole Keyword-Daten
-    getPriorityKeyword(keyword) {
-        return this.priorityKeywords.find(k => k.keyword === keyword);
-    },
-
     getDetailKeyword(keyword) {
         return this.detailKeywords.find(k => k.keyword === keyword);
     },
@@ -207,12 +130,6 @@ const KeywordsDropdown = {
 
     getLocation(name) {
         return this.locations.find(l => l.name === name);
-    },
-
-    // Helper: Vorgeschlagene Fahrzeuge basierend auf Priorität
-    getSuggestedVehicles(priorityKeyword) {
-        const keyword = this.getPriorityKeyword(priorityKeyword);
-        return keyword ? keyword.suggestedVehicles || [] : [];
     }
 };
 
@@ -224,3 +141,5 @@ if (typeof window !== 'undefined') {
 
     window.KeywordsDropdown = KeywordsDropdown;
 }
+
+console.log('✅ Keywords Dropdown System v3.0 geladen (UniversalDropdown-Wrapper - Checkmarks entfernt)');
