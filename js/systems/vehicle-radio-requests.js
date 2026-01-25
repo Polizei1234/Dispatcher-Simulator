@@ -1,7 +1,8 @@
 // =========================
-// FAHRZEUG FUNK-ANFRAGEN SYSTEM v1.0
+// FAHRZEUG FUNK-ANFRAGEN SYSTEM v1.1
 // Status 0 (Notfall) & Status 5 (Sprechwunsch)
-// Fahrzeuge können Leitstelle anfunken
+// + ✅ Nutzt CONFIG.RADIO Konstanten
+// + ✅ Korrekte FMS-Status-Prüfung
 // =========================
 
 class VehicleRadioRequests {
@@ -16,8 +17,10 @@ class VehicleRadioRequests {
             GENERAL: 'general'                // Allgemeine Rückfrage
         };
         
-        this.requestChance = 0.15; // 15% Chance pro Check
-        this.checkInterval = 30000; // Check alle 30 Sekunden
+        // ✅ Nutze CONFIG statt Magic Numbers
+        this.requestChance = CONFIG.RADIO.REQUEST_CHANCE;
+        this.checkInterval = CONFIG.RADIO.CHECK_INTERVAL_MS;
+        this.emergencyChance = CONFIG.RADIO.EMERGENCY_CHANCE;
         
         this.initializeSystem();
     }
@@ -31,22 +34,25 @@ class VehicleRadioRequests {
             this.checkVehicleRequests();
         }, this.checkInterval);
         
-        console.log('📞 Vehicle Radio Requests System v1.0 initialisiert');
+        console.log('📡 Vehicle Radio Requests System v1.1 initialisiert');
         console.log(`⏰ Check-Intervall: ${this.checkInterval/1000}s`);
         console.log(`🎲 Anfrage-Chance: ${this.requestChance * 100}%`);
+        console.log(`🚨 Notfall-Chance: ${this.emergencyChance * 100}%`);
     }
     
     /**
      * Prüft regelmäßig ob Fahrzeuge anfunken möchten
      */
     checkVehicleRequests() {
-        if (!GAME_DATA || !GAME_DATA.vehicles) return;
+        if (!game || !game.vehicles) return;
         
-        const activeVehicles = GAME_DATA.vehicles.filter(v => 
-            v.owned && 
-            v.currentStatus !== 2 && // Nicht auf Wache
-            !this.activeRequests.has(v.id) // Noch keine offene Anfrage
-        );
+        const activeVehicles = game.vehicles.filter(v => {
+            const statusInfo = CONFIG.getFMSStatus(v.currentStatus);
+            return v.owned && 
+                   statusInfo.canBeContacted &&
+                   v.currentStatus !== 2 && // Nicht auf Wache
+                   !this.activeRequests.has(v.id); // Noch keine offene Anfrage
+        });
         
         activeVehicles.forEach(vehicle => {
             // Zufällige Chance ob Fahrzeug anfunkt
@@ -68,7 +74,7 @@ class VehicleRadioRequests {
         let priority = 'normal';
         
         // Status 0: NOTFALL (sehr selten, kritische Situation)
-        if (Math.random() < 0.02) { // 2% Chance für Notfall
+        if (Math.random() < this.emergencyChance) {
             requestType = this.requestTypes.EMERGENCY;
             priority = 'emergency';
             message = this.generateEmergencyMessage(vehicle, incident);
@@ -128,7 +134,7 @@ class VehicleRadioRequests {
         // Zeige Anfrage im Funk
         this.displayRequest(request);
         
-        console.log(`📞 ${vehicle.callsign} funkte an: ${requestType} (${priority})`);
+        console.log(`📡 ${vehicle.callsign} funkte an: ${requestType} (${priority})`);
     }
     
     /**
@@ -243,12 +249,13 @@ class VehicleRadioRequests {
     displayRequest(request) {
         const { vehicle, message, priority } = request;
         
-        // Farbe je nach Priorität
-        const color = priority === 'emergency' ? '#dc3545' : '#ffc107';
+        // ✅ Nutze CONFIG für Farben
+        const statusInfo = CONFIG.getFMSStatus(priority === 'emergency' ? 0 : 5);
+        const color = statusInfo.color;
         
         // Zeige im Funk-Feed
         if (typeof addRadioMessage !== 'undefined') {
-            addRadioMessage(message, 'vehicle', color);
+            addRadioMessage(vehicle.callsign, message, 'vehicle', color);
         }
         
         // Browser-Notification
@@ -267,7 +274,7 @@ class VehicleRadioRequests {
             // Normale Notification
             if (typeof NotificationSystem !== 'undefined') {
                 NotificationSystem.show(
-                    `📞 Sprechwunsch: ${vehicle.callsign}`,
+                    `📡 Sprechwunsch: ${vehicle.callsign}`,
                     'Fahrzeug möchte Leitstelle anfunken',
                     'info'
                 );
@@ -304,7 +311,8 @@ class VehicleRadioRequests {
         
         setTimeout(() => {
             if (typeof addRadioMessage !== 'undefined') {
-                addRadioMessage(confirmation, 'vehicle', '#28a745');
+                const statusInfo = CONFIG.getFMSStatus(2); // Status 2 = Grün
+                addRadioMessage(request.vehicle.callsign, confirmation, 'vehicle', statusInfo.color);
             }
         }, 800);
         
@@ -350,8 +358,8 @@ class VehicleRadioRequests {
      * Findet nächstes Krankenhaus
      */
     getNearestHospital(vehicle) {
-        // Einfache Implementierung - kann erweitert werden
-        const hospitals = ['Winnenden', 'Schorndorf'];
+        // TODO: Echte Distanzberechnung mit HOSPITALS Daten
+        const hospitals = ['Winnenden', 'Schorndorf', 'Backnang'];
         return hospitals[Math.floor(Math.random() * hospitals.length)];
     }
     
@@ -359,7 +367,7 @@ class VehicleRadioRequests {
      * Spielt Alert-Sound ab
      */
     playAlertSound() {
-        // Kann erweitert werden mit echtem Sound
+        // TODO: Echten Sound implementieren
         console.log('🔊 ALERT SOUND!');
     }
     
@@ -367,7 +375,7 @@ class VehicleRadioRequests {
      * Markiert Fahrzeug im UI
      */
     highlightVehicleInUI(vehicleId) {
-        // Kann erweitert werden
+        // TODO: UI-Highlight implementieren
         console.log(`🔆 Highlight Fahrzeug: ${vehicleId}`);
     }
     
@@ -375,8 +383,8 @@ class VehicleRadioRequests {
      * Hole Einsatz für Fahrzeug
      */
     getVehicleIncident(vehicle) {
-        if (!GAME_DATA || !GAME_DATA.incidents) return null;
-        return GAME_DATA.incidents.find(i => 
+        if (!game || !game.incidents) return null;
+        return game.incidents.find(i => 
             i.assignedVehicles && i.assignedVehicles.includes(vehicle.id)
         );
     }
@@ -411,4 +419,5 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Radio Requests System v1.0 geladen - Status 0 & 5 aktiv!');
+console.log('✅ Vehicle Radio Requests System v1.1 geladen');
+console.log(`✅ Nutzt CONFIG.RADIO Konstanten (Request-Chance: ${CONFIG.RADIO.REQUEST_CHANCE * 100}%)`);
