@@ -1,6 +1,7 @@
 /* =====================================================
-   PRIORITY DROPDOWN v1.0 - PROFESSIONAL EDITION
+   PRIORITY DROPDOWN v1.1 - PROFESSIONAL EDITION
    Beautiful styled dropdown for Prioritätsstufe selection
+   ✅ v1.1: CHECKMARKS ENTFERNT!
    ===================================================== */
 
 /* =====================================================
@@ -54,7 +55,8 @@
 }
 
 /* =====================================================
-   ACTIVE/SELECTED STATE
+   ACTIVE/SELECTED STATE (WITHOUT CHECKMARK!)
+   ✅ NO ::after with checkmark icon
    ===================================================== */
 
 .priority-item.active {
@@ -64,27 +66,7 @@
     font-weight: 700;
 }
 
-.priority-item.active::after {
-    content: '\f00c';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    position: absolute;
-    right: 20px;
-    color: var(--info-cyan);
-    font-size: 1.1em;
-    animation: checkPulse 0.3s ease-out;
-}
-
-@keyframes checkPulse {
-    0% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
+/* ❌ CHECKMARK REMOVED - No ::after anymore! */
 
 /* =====================================================
    NO RESULTS MESSAGE
@@ -143,7 +125,7 @@
 }
 
 /* =====================================================
-   KEYBOARD NAVIGATION INDICATOR
+   KEYBOARD NAVIGATION INDICATOR (WITHOUT CHECKMARK!)
    ===================================================== */
 
 .priority-item.keyboard-selected {
