@@ -1,23 +1,35 @@
 {
   "name": "dispatcher-simulator",
-  "version": "1.0.0",
+  "version": "6.2.0",
   "description": "Leitstellensimulator ILS Waiblingen - Ein realistisches Dispatcher-Spiel für den Rems-Murr-Kreis",
   "main": "index.html",
   "scripts": {
     "start": "npx http-server -p 8080 -c-1",
-    "dev": "npx http-server -p 8080 -c-1 -o"
+    "dev": "npx http-server -p 8080 -c-1 -o",
+    "build": "echo 'Build script not implemented yet'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Polizei1234/Dispatcher-Simulator.git"
   },
   "keywords": [
     "leitstelle",
     "simulator",
     "rettungsdienst",
     "feuerwehr",
-    "dispatcher"
+    "dispatcher",
+    "ils",
+    "waiblingen",
+    "rems-murr-kreis"
   ],
   "author": "Polizei1234",
   "license": "MIT",
   "devDependencies": {
     "http-server": "^14.1.1"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
 }
