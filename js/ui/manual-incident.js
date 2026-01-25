@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.2
+// MANUAL INCIDENT CREATION v5.2.1
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -9,6 +9,7 @@
 // + ✅ v5.0: Keyword-Dropdowns für Stadtteil & Örtlichkeit (wie Stichwörter)
 // + ✅ v5.1: Verstärkung anfordern Modus
 // + ✅ v5.2: Custom PriorityDropdown statt native Select
+// + ✅ v5.2.1: FIX - Dropdown Timing (100ms → 300ms)
 // =========================
 
 const ManualIncident = {
@@ -25,7 +26,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v5.2 initialisiert (Verstärkung + Custom Priority Dropdown)');
+        console.log('📝 Manual Incident System v5.2.1 initialisiert (FIX: Dropdown Timing)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -447,12 +448,12 @@ const ManualIncident = {
             </div>
         `;
 
-        // ✅ Initialisiere Keyword-Dropdowns (inkl. Stadtteil & Örtlichkeit + PRIORITY)
+        // ✅ FIX: Erhöhe Timeout auf 300ms damit DOM sicher bereit ist
         setTimeout(() => {
             this.initializeKeywordsDropdownsInline();
-        }, 100);
+        }, 300);
 
-        console.log('✅ Manual Incident Inline v5.2 angezeigt - Custom Priority Dropdown!');
+        console.log('✅ Manual Incident Inline v5.2.1 angezeigt - Custom Priority Dropdown (Fixed Timing)!');
     },
 
     toggleSection(sectionName) {
@@ -834,10 +835,17 @@ const ManualIncident = {
         }
 
         // 🆕 PRIORITY DROPDOWN (NEW!)
-        PriorityDropdown.initialize('inline-priority', (priorityData) => {
-            this.selectedPriorityKeyword = priorityData;
-            console.log('✅ Priorität ausgewählt:', priorityData.keyword);
-        });
+        console.log('🔍 Initialisiere Priority Dropdown...');
+        const priorityInput = document.getElementById('inline-priority');
+        if (priorityInput) {
+            console.log('✅ Priority Input gefunden:', priorityInput);
+            PriorityDropdown.initialize('inline-priority', (priorityData) => {
+                this.selectedPriorityKeyword = priorityData;
+                console.log('✅ Priorität ausgewählt:', priorityData.keyword);
+            });
+        } else {
+            console.error('❌ Priority Input NICHT gefunden!');
+        }
 
         // Detail-Stichwort
         KeywordsDropdown.initializeDetailDropdown('inline-detail', (keywordData) => {
@@ -967,4 +975,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.2 geladen (Verstärkung + Custom Priority Dropdown)');
+console.log('✅ Manual Incident System v5.2.1 geladen (FIX: Dropdown Timing 100ms → 300ms)');
