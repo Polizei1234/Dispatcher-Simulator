@@ -1,11 +1,12 @@
 // =========================
-// CONFIG v6.1.7 - FINAL + FMS_STATUS
+// CONFIG v6.1.8 - FINAL + FMS_STATUS
 // Global game configuration
 // + ✅ FIX: FMS_STATUS Definition hinzugefügt
+// + ✅ VERSION Manager zentralisiert
 // =========================
 
 const CONFIG = {
-    VERSION: '6.1.7',
+    VERSION: '6.1.8',
     BUILD_DATE: '25.01.2026 - 22:02',
     
     // Game Settings
@@ -41,6 +42,11 @@ const CONFIG = {
         8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
         9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' },
         'C': { name: 'Status C', color: '#dc3545', icon: '🛑' }
+    },
+    
+    // ✅ VERSION Manager - zentrale Version-Verwaltung
+    getVersionedUrl: function(path) {
+        return `${path}?v=${this.VERSION}`;
     }
 };
 
@@ -50,3 +56,4 @@ if (typeof window !== 'undefined') {
 
 console.log(`✅ Config v${CONFIG.VERSION} geladen (${CONFIG.BUILD_DATE})`);
 console.log('✅ FIX: FMS_STATUS Definitionen hinzugefügt');
+console.log('✅ FIX: VERSION Manager zentralisiert');
