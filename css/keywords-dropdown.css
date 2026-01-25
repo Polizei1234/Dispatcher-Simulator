@@ -1,6 +1,7 @@
 /* =====================================================
-   KEYWORDS DROPDOWN v6.0.0 - PROFESSIONAL EDITION
+   KEYWORDS DROPDOWN v6.1.6 - PROFESSIONAL EDITION
    Beautiful autocomplete dropdown for incident keywords
+   ✅ CHECKMARKS ENTFERNT!
    ===================================================== */
 
 /* =====================================================
@@ -250,6 +251,7 @@
 
 /* =====================================================
    KEYBOARD NAVIGATION INDICATOR
+   ✅ CHECKMARK ENTFERNT - nur Border-Highlight
    ===================================================== */
 
 .stichwort-item.keyboard-selected {
@@ -258,16 +260,7 @@
     padding-left: 13px;
 }
 
-.stichwort-item.keyboard-selected::after {
-    content: '\f358';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    position: absolute;
-    right: 16px;
-    color: var(--info-cyan);
-    font-size: 0.9em;
-    animation: pulse 1s ease-in-out infinite;
-}
+/* ❌ CHECKMARK ENTFERNT - Kein ::after mehr! */
 
 @keyframes pulse {
     0%, 100% {
