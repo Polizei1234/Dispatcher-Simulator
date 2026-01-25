@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.1
+// MANUAL INCIDENT CREATION v5.2
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -8,6 +8,7 @@
 // + ✅ PHASE 3.1: Gespräch bleibt offen, vollständiges Protokoll
 // + ✅ v5.0: Keyword-Dropdowns für Stadtteil & Örtlichkeit (wie Stichwörter)
 // + ✅ v5.1: Verstärkung anfordern Modus
+// + ✅ v5.2: Custom PriorityDropdown statt native Select
 // =========================
 
 const ManualIncident = {
@@ -24,7 +25,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v5.1 initialisiert (Verstärkung + Keywords-Dropdowns)');
+        console.log('📝 Manual Incident System v5.2 initialisiert (Verstärkung + Custom Priority Dropdown)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -446,12 +447,12 @@ const ManualIncident = {
             </div>
         `;
 
-        // ✅ Initialisiere Keyword-Dropdowns (inkl. Stadtteil & Örtlichkeit)
+        // ✅ Initialisiere Keyword-Dropdowns (inkl. Stadtteil & Örtlichkeit + PRIORITY)
         setTimeout(() => {
             this.initializeKeywordsDropdownsInline();
         }, 100);
 
-        console.log('✅ Manual Incident Inline v5.1 angezeigt - Keywords-Dropdowns für alle Felder');
+        console.log('✅ Manual Incident Inline v5.2 angezeigt - Custom Priority Dropdown!');
     },
 
     toggleSection(sectionName) {
@@ -820,25 +821,31 @@ const ManualIncident = {
         console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
-    // ✅ INITIALISIERE ALLE KEYWORD-DROPDOWNS
+    // ✅ INITIALISIERE ALLE KEYWORD-DROPDOWNS + PRIORITY
     initializeKeywordsDropdownsInline() {
         if (typeof KeywordsDropdown === 'undefined') {
             console.error('❌ KeywordsDropdown nicht geladen!');
             return;
         }
 
-        // Priorität & Detail (wie bisher)
-        KeywordsDropdown.initializePriorityDropdown('inline-priority', (keywordData) => {
-            this.selectedPriorityKeyword = keywordData;
-            console.log('✅ Priorität ausgewählt:', keywordData.keyword);
+        if (typeof PriorityDropdown === 'undefined') {
+            console.error('❌ PriorityDropdown nicht geladen!');
+            return;
+        }
+
+        // 🆕 PRIORITY DROPDOWN (NEW!)
+        PriorityDropdown.initialize('inline-priority', (priorityData) => {
+            this.selectedPriorityKeyword = priorityData;
+            console.log('✅ Priorität ausgewählt:', priorityData.keyword);
         });
 
+        // Detail-Stichwort
         KeywordsDropdown.initializeDetailDropdown('inline-detail', (keywordData) => {
             this.selectedDetailKeyword = keywordData;
             console.log('✅ Detail-Stichwort ausgewählt:', keywordData.keyword);
         });
 
-        // 🆕 NEU: Stadtteil & Örtlichkeit
+        // Stadtteil & Örtlichkeit
         KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtData) => {
             console.log('✅ Stadtteil ausgewählt:', districtData.name, '-', districtData.category);
         });
@@ -847,7 +854,7 @@ const ManualIncident = {
             console.log('✅ Örtlichkeit ausgewählt:', locationData.name, '-', locationData.category);
         });
 
-        console.log('✅ Alle Keyword-Dropdowns initialisiert (Stichwörter + Stadtteil + Örtlichkeit)');
+        console.log('✅ Alle Dropdowns initialisiert (Priority + Keywords + Stadtteil + Örtlichkeit)');
     },
 
     updateUIInline() {
@@ -960,4 +967,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.1 geladen (Verstärkung + Keywords-Dropdowns)');
+console.log('✅ Manual Incident System v5.2 geladen (Verstärkung + Custom Priority Dropdown)');
