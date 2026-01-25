@@ -1,5 +1,5 @@
 // =========================
-// CONFIGURATION v5.0.8
+// CONFIGURATION v6.1.4
 // Zentrale Konfiguration für ILS-Simulator
 // =========================
 
@@ -7,7 +7,7 @@ const CONFIG = {
     // =============================
     // ✅ VERSION (SINGLE SOURCE OF TRUTH!)
     // =============================
-    VERSION: '5.0.8',
+    VERSION: '6.1.4',
     BUILD_DATE: '2026-01-25',
     
     // =============================
