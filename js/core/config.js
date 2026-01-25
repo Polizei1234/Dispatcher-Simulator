@@ -1,11 +1,12 @@
 // =========================
-// CONFIG v6.1.6 - FINAL
+// CONFIG v6.1.7 - FINAL + FMS_STATUS
 // Global game configuration
+// + ✅ FIX: FMS_STATUS Definition hinzugefügt
 // =========================
 
 const CONFIG = {
-    VERSION: '6.1.6',
-    BUILD_DATE: '25.01.2026 - 21:16',
+    VERSION: '6.1.7',
+    BUILD_DATE: '25.01.2026 - 22:02',
     
     // Game Settings
     GAME_SPEED: 1.0,
@@ -25,6 +26,21 @@ const CONFIG = {
         WEATHER: true,
         RADIO: true,
         DEBUG_MENU: true
+    },
+    
+    // ✅ FMS Status Definitionen
+    FMS_STATUS: {
+        0: { name: 'Notruf/Hilferuf', color: '#dc3545', icon: '⚠️' },
+        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
+        2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
+        3: { name: 'Einsatz übernommen', color: '#ffc107', icon: '🟡' },
+        4: { name: 'Anfahrt Einsatzstelle', color: '#fd7e14', icon: '🟠' },
+        5: { name: 'Ankunft Einsatzstelle', color: '#dc3545', icon: '🔴' },
+        6: { name: 'Sprechwunsch', color: '#6c757d', icon: '⚪' },
+        7: { name: 'Patient aufgenommen', color: '#17a2b8', icon: '🔵' },
+        8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
+        9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' },
+        'C': { name: 'Status C', color: '#dc3545', icon: '🛑' }
     }
 };
 
@@ -33,3 +49,4 @@ if (typeof window !== 'undefined') {
 }
 
 console.log(`✅ Config v${CONFIG.VERSION} geladen (${CONFIG.BUILD_DATE})`);
+console.log('✅ FIX: FMS_STATUS Definitionen hinzugefügt');
