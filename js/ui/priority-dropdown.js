@@ -1,7 +1,8 @@
 // =========================
-// PRIORITY DROPDOWN v1.0
+// PRIORITY DROPDOWN v1.0.1
 // Custom styled dropdown for Prioritätsstufe (RD/MANV)
 // Beautiful design like Keywords Dropdown
+// FIX: Null check in highlightItem
 // =========================
 
 const PriorityDropdown = {
@@ -229,6 +230,9 @@ const PriorityDropdown = {
     },
 
     highlightItem(item) {
+        // ✅ FIX: Safety check for null dropdown
+        if (!this.activeDropdown) return;
+        
         // Remove highlight from all items
         const items = this.activeDropdown.querySelectorAll('.priority-item');
         items.forEach(i => i.classList.remove('active'));
@@ -301,4 +305,4 @@ if (typeof window !== 'undefined') {
     window.PriorityDropdown = PriorityDropdown;
 }
 
-console.log('✅ Priority Dropdown System v1.0 geladen');
+console.log('✅ Priority Dropdown System v1.0.1 geladen - Bug Fix');
