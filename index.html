@@ -22,25 +22,335 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
-    <!-- ... (kompletter Body-Inhalt bleibt gleich) ... -->
-    <!-- Version Badge Update -->
+    <!-- Willkommensbildschirm -->
     <div id="welcome-screen" class="overlay active">
         <div class="welcome-container">
             <h1><i class="fas fa-headset"></i> Dispatcher Simulator</h1>
             <h2>ILS Waiblingen - Rems-Murr-Kreis</h2>
             <p>Realistische Leitstellensimulation mit echten Daten aus dem Rems-Murr-Kreis</p>
-            <!-- ... Rest des Welcome Screens ... -->
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                <h3 style="margin-top: 0;"><i class="fas fa-database"></i> Echte Daten aus dem Rems-Murr-Kreis</h3>
+                <ul style="text-align: left; display: inline-block; margin: 0 auto;">
+                    <li><strong>35 Wachen</strong> (7 Hauptamtliche RW, 2 Notarztwachen, 17 Ortsvereine)</li>
+                    <li><strong>78 Fahrzeuge</strong> (RTW, NEF, KTW, Kdow, GW-San)</li>
+                    <li><strong>Kategorisiert</strong> - Rettungsdienst, Katastrophenschutz (inkl. OV), KTW</li>
+                    <li><strong>FMS-Statussystem</strong> mit Nummern & Farbcodierung</li>
+                </ul>
+            </div>
+            <div class="welcome-buttons" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="showCareerComingSoon()" style="position: relative; cursor: not-allowed; opacity: 0.6;" title="Kommt bald!">
+                    <i class="fas fa-lock" style="margin-right: 5px;"></i>
+                    <i class="fas fa-trophy"></i> Karrieremodus
+                    <span style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; font-weight: bold;">BALD</span>
+                </button>
+                <button class="btn btn-success" onclick="startNewGame('free')"><i class="fas fa-infinity"></i> Freies Spiel</button>
+                <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial</button>
+                <button class="btn btn-secondary" onclick="showSettings()"><i class="fas fa-cog"></i> Einstellungen</button>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <p style="margin: 5px 0;"><strong>🔒 Karrieremodus:</strong> Kommt bald! Starte mit wenigen Fahrzeugen und baue deine Flotte auf.</p>
+                <p style="margin: 5px 0;"><strong>♾️ Freies Spiel:</strong> Alle 78 Fahrzeuge sofort verfügbar!</p>
+            </div>
+            
+            <!-- ✅ VERSION BADGE - GRÜN -->
             <div style="position: absolute; bottom: 15px; right: 20px; padding: 8px 15px; background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); border-radius: 20px; font-size: 0.85em; color: #66bb6a;">
                 <i class="fas fa-code-branch"></i> <strong>Version 6.1.6</strong>
                 <span style="margin-left: 8px; padding: 2px 8px; background: rgba(76, 175, 80, 0.3); border-radius: 10px; font-size: 0.8em;">✅ FINAL</span>
             </div>
             <div style="position: absolute; bottom: 15px; left: 20px; font-size: 0.75em; color: #888;">
-                <i class="fas fa-calendar-alt"></i> Build: 25.01.2026 - 21:16
+                <i class="fas fa-calendar-alt"></i> Build: 25.01.2026 - 21:25
             </div>
         </div>
     </div>
-    <!-- ... Rest of HTML stays same ... -->
-    
+
+    <!-- Einstellungen -->
+    <div id="settings-overlay" class="overlay">
+        <div class="settings-container" style="max-width: 600px;">
+            <h2><i class="fas fa-cog"></i> Einstellungen</h2>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label><i class="fas fa-robot"></i> Groq API Key:</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="password" id="groq-api-key" placeholder="gsk_..." style="flex: 1;">
+                        <button class="btn btn-small" onclick="toggleAPIKeyVisibility()" style="padding: 8px 12px;">
+                            <i class="fas fa-eye" id="api-key-toggle-icon"></i>
+                        </button>
+                    </div>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        🤖 Für KI-generierte Einsätze & Telefonate<br>
+                        🌐 Kostenlos: <a href="https://console.groq.com/keys" target="_blank" style="color: #17a2b8;">console.groq.com/keys</a>
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-volume-up"></i> Sound:</label>
+                    <input type="checkbox" id="sound-enabled" checked>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Aktiviert Klingelton bei eingehenden Notrufen
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-bell"></i> Benachrichtigungen:</label>
+                    <input type="checkbox" id="notifications-enabled" checked>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Zeigt wichtige System-Meldungen an
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-map"></i> Auto-Zoom bei Einsatz:</label>
+                    <input type="checkbox" id="auto-zoom-enabled" checked>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Karte zoomt automatisch zu neuen Einsätzen
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-clock"></i> Spielgeschwindigkeit:</label>
+                    <select id="game-speed">
+                        <option value="0.5">Sehr langsam (0.5x)</option>
+                        <option value="0.75">Langsam (0.75x)</option>
+                        <option value="1" selected>Normal (1x - Echtzeit)</option>
+                        <option value="2">Schnell (2x)</option>
+                        <option value="5">Sehr schnell (5x)</option>
+                        <option value="10">Extrem schnell (10x)</option>
+                        <option value="30">Turbo (30x)</option>
+                    </select>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Beeinflusst wie schnell die Zeit im Spiel verläuft
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-tachometer-alt"></i> Fahrzeug-Geschwindigkeit:</label>
+                    <select id="vehicle-speed-multiplier">
+                        <option value="0.5">Langsam (0.5x)</option>
+                        <option value="1" selected>Normal (1x)</option>
+                        <option value="1.5">Schnell (1.5x)</option>
+                        <option value="2">Sehr schnell (2x)</option>
+                    </select>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Beeinflusst die Fahrgeschwindigkeit aller Fahrzeuge
+                    </small>
+                </div>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-clock"></i> Einsatzfrequenz:</label>
+                    <select id="incident-frequency">
+                        <option value="30">Sehr oft (30s)</option>
+                        <option value="60">Oft (1 Min)</option>
+                        <option value="120" selected>Normal (2 Min)</option>
+                        <option value="180">Selten (3 Min)</option>
+                        <option value="300">Sehr selten (5 Min)</option>
+                    </select>
+                    <small style="display: block; margin-top: 5px; color: #a0a0a0;">
+                        Zeitabstand zwischen automatischen Einsätzen
+                    </small>
+                </div>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeSettings()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hauptspiel -->
+    <div id="game-container" class="hidden">
+        <header>
+            <div class="header-left">
+                <h1><i class="fas fa-headset"></i> Dispatcher Simulator</h1>
+                <span class="header-subtitle">ILS Waiblingen</span>
+                <span id="current-time">00:00:00</span>
+                <button id="pause-btn" onclick="togglePause()" class="btn btn-small" style="margin-left: 10px;" title="Pausieren">
+                    <i class="fas fa-pause" id="pause-icon"></i>
+                </button>
+            </div>
+            <div class="header-right">
+                <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
+                <button class="btn btn-small" onclick="DebugMenu.toggle()" style="background: #6c757d; border-color: #6c757d;" title="Debug-Menü">
+                    <i class="fas fa-bug"></i> Debug
+                </button>
+                <button class="btn btn-small" onclick="openShop()"><i class="fas fa-shopping-cart"></i> Shop</button>
+                <button class="btn btn-small" onclick="showSettings()"><i class="fas fa-cog"></i></button>
+            </div>
+        </header>
+
+        <nav class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('map')">
+                <i class="fas fa-map"></i>
+                <span>Karte</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('vehicles')">
+                <i class="fas fa-ambulance"></i>
+                <span>Fahrzeuge</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('call')" id="call-tab-btn">
+                <i class="fas fa-phone"></i>
+                <span>Notruf</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('radio')">
+                <i class="fas fa-walkie-talkie"></i>
+                <span>Funkverkehr</span>
+            </button>
+        </nav>
+
+        <div id="tab-map" class="tab-content active">
+            <div class="main-content">
+                <aside class="sidebar-left" style="width: 350px;">
+                    <div class="panel" style="height: 100%;">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-list"></i> Aktive Einsätze</h3>
+                            <span class="badge" id="incident-count">0</span>
+                        </div>
+                        <div class="panel-content" id="incident-list" style="height: calc(100% - 60px); overflow-y: auto;"></div>
+                    </div>
+                </aside>
+
+                <main class="map-container" style="flex: 1;">
+                    <div id="map"></div>
+                    <div class="map-controls">
+                        <button class="btn btn-small" onclick="centerMap()" title="Karte zentrieren"><i class="fas fa-crosshairs"></i></button>
+                        <button class="btn btn-small" onclick="toggleStations()" title="Wachen ein/ausblenden"><i class="fas fa-hospital"></i></button>
+                    </div>
+                </main>
+
+                <aside class="sidebar-right" style="width: 380px;">
+                    <div class="panel" style="flex: 1; min-height: 50%;">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-info-circle"></i> Einsatzdetails</h3>
+                        </div>
+                        <div class="panel-content" id="incident-details" style="overflow-y: auto;">
+                            <p class="no-data">Wählen Sie einen Einsatz aus</p>
+                        </div>
+                    </div>
+                    
+                    <div class="panel" style="flex: 0 0 auto; margin-top: 15px; max-height: 300px;">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-phone-volume"></i> Eingehende Anrufe</h3>
+                        </div>
+                        <div class="panel-content" id="call-list" style="max-height: 250px; overflow-y: auto;">
+                            <p class="no-data">Keine eingehenden Anrufe</p>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div id="tab-vehicles" class="tab-content">
+            <div class="vehicles-overview" id="vehicles-overview"></div>
+        </div>
+
+        <div id="tab-call" class="tab-content">
+            <div class="call-tab-container">
+                <div class="call-no-active" id="call-no-active">
+                    <div style="text-align: center; padding: 50px; color: #666;">
+                        <i class="fas fa-phone" style="font-size: 64px; margin-bottom: 20px;"></i>
+                        <h3>Kein aktiver Notruf</h3>
+                        <p>Eingehende Anrufe werden in der rechten Sidebar angezeigt.</p>
+                    </div>
+                </div>
+                <div class="call-active" id="call-active" style="display: none;">
+                    <div style="display: flex; height: calc(100vh - 200px);">
+                        <div style="flex: 1; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--panel-bg);">
+                            <h3><i class="fas fa-phone-volume"></i> Notruf 112 - Gespräch läuft</h3>
+                            <div id="caller-messages" style="min-height: 400px; margin-top: 20px;"></div>
+                            <div id="question-buttons" style="margin-top: 20px;"></div>
+                        </div>
+                        <div style="flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-secondary);">
+                            <div id="manual-incident-inline-container"></div>
+                        </div>
+                    </div>
+                    <div style="position: sticky; bottom: 0; left: 0; right: 0; padding: 15px; background: var(--panel-bg); border-top: 2px solid var(--border-color); text-align: right; z-index: 100;">
+                        <button class="btn btn-danger" onclick="CallSystem.hangUp()" style="padding: 12px 30px; font-size: 16px; font-weight: bold;">
+                            <i class="fas fa-phone-slash"></i> GESPRÄCH BEENDEN
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-radio" class="tab-content">
+            <div class="radio-overview">
+                <div class="radio-feed-container">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-walkie-talkie"></i> Funkverkehr</h3>
+                            <small style="font-weight: normal; opacity: 0.8;">Fahrzeuge funken automatisch bei Status 0 & 5</small>
+                        </div>
+                        <div class="panel-content radio-log" id="radio-feed-full"></div>
+                    </div>
+                </div>
+                
+                <div class="radio-vehicle-selection">
+                    <div class="panel">
+                        <div class="panel-header" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); border-bottom: 2px solid #2c5282;">
+                            <h3><i class="fas fa-broadcast-tower"></i> Fahrzeug anfunken</h3>
+                            <small style="font-weight: normal; opacity: 0.9;">(außer Status 2 - Auf Wache)</small>
+                        </div>
+                        <div class="panel-content" style="padding: 20px;">
+                            <div class="radio-form-group">
+                                <label class="radio-form-label">
+                                    <i class="fas fa-ambulance" style="color: #3182ce;"></i> Fahrzeug wählen:
+                                </label>
+                                <select id="radio-vehicle-dropdown" onchange="selectVehicleFromDropdown()">
+                                    <option value="">-- Fahrzeug wählen --</option>
+                                </select>
+                            </div>
+                            
+                            <div id="selected-vehicle-info" style="display: none;"></div>
+                            
+                            <div class="radio-form-group">
+                                <label class="radio-form-label">
+                                    <i class="fas fa-comment" style="color: #48bb78;"></i> Nachricht:
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="radio-vehicle-message-input" 
+                                    placeholder="Nachricht an Fahrzeug eingeben..." 
+                                    onkeypress="if(event.key === 'Enter') sendRadioToVehicle()"
+                                />
+                            </div>
+                            
+                            <button class="btn btn-primary radio-send-btn" onclick="sendRadioToVehicle()">
+                                <i class="fas fa-paper-plane"></i> Funkspruch senden
+                            </button>
+                            
+                            <div class="radio-info-box">
+                                <i class="fas fa-info-circle"></i>
+                                <small>Fahrzeug antwortet automatisch und kontextabhängig auf Ihre Nachricht</small>
+                            </div>
+                            
+                            <div class="radio-status-info">
+                                <h4>
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>Fahrzeug-initiierte Funkrufe</span>
+                                </h4>
+                                <div class="radio-status-info-content">
+                                    <ul>
+                                        <li>
+                                            <strong style="color: #fc8181;">Status 0:</strong> <span style="color: #feb2b2;">Notfall - Crew in Gefahr</span>
+                                        </li>
+                                        <li>
+                                            <strong style="color: #63b3ed;">Status 5:</strong> <span style="color: #90cdf4;">Sprechwunsch - Anfragen:</span>
+                                            <ul style="margin-top: 6px; font-size: 0.95em;">
+                                                <li style="margin: 4px 0;">• Klinikzuweisung bei Transport</li>
+                                                <li style="margin: 4px 0;">• Verstärkung anfordern</li>
+                                                <li style="margin: 4px 0;">• Zusätzliche Einsatzinfos</li>
+                                                <li style="margin: 4px 0;">• Material nachfordern</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 📦 SKRIPTE v6.1.6 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
