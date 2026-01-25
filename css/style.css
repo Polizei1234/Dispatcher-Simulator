@@ -1,7 +1,7 @@
 /* =====================================================
-   DISPATCHER SIMULATOR v6.1.1 - PROFESSIONAL EDITION
+   DISPATCHER SIMULATOR v6.1.3 - PROFESSIONAL EDITION
    ILS Waiblingen - Realistic Dispatch Center Interface
-   + Improved Dropdown Styling
+   + REDESIGNED DROPDOWN STYLING
    ===================================================== */
 
 :root {
@@ -258,62 +258,139 @@ body {
 }
 
 /* =====================================================
-   ✅ IMPROVED DROPDOWN / SELECT STYLING
+   ✅ PROFESSIONAL DROPDOWN / SELECT STYLING v6.1.3
+   Modern design with proper visual hierarchy
    ===================================================== */
 
 select {
     width: 100%;
-    padding: 12px 14px;
-    background: linear-gradient(to bottom, var(--input-bg) 0%, var(--panel-header) 100%);
+    padding: 14px 18px;
+    padding-right: 45px;
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
     border: 2px solid var(--border-medium);
-    border-radius: 8px;
+    border-radius: 10px;
     color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0a6' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* Custom Arrow Icon */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%233182ce' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 36px;
+    background-position: right 15px center;
+    background-size: 16px;
 }
 
 select:hover {
     border-color: var(--info-cyan);
-    background: linear-gradient(to bottom, var(--panel-bg) 0%, var(--input-bg) 100%);
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
 }
 
 select:focus {
     outline: none;
     border-color: var(--info-cyan);
-    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.2);
+    box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.25), 0 4px 16px rgba(49, 130, 206, 0.3);
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
 }
 
+select:active {
+    transform: translateY(0);
+}
+
+/* Dropdown Options Styling */
 select option {
-    background: var(--panel-bg);
+    background: #2d3748;
     color: var(--text-primary);
-    padding: 10px;
+    padding: 14px 18px;
     font-weight: 500;
+    font-size: 14px;
+    line-height: 1.8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-select option:hover,
-select option:checked {
-    background: var(--info-cyan);
+select option:hover {
+    background: #374151;
     color: white;
 }
 
-/* Spezielle Styles für Radio-Dropdown */
+select option:checked,
+select option:focus {
+    background: linear-gradient(135deg, #3182ce 0%, #2563eb 100%);
+    color: white;
+    font-weight: 600;
+}
+
+/* Special styling for disabled options */
+select option:disabled {
+    color: var(--text-muted);
+    font-style: italic;
+    background: #1a202c;
+}
+
+/* Specific styling for Radio Vehicle Dropdown */
 #radio-vehicle-dropdown {
     font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 13px;
-    letter-spacing: 0.3px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    padding-right: 50px;
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border: 3px solid #3182ce;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(49, 130, 206, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+#radio-vehicle-dropdown:hover {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+#radio-vehicle-dropdown:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 5px rgba(49, 130, 206, 0.3), 0 5px 20px rgba(49, 130, 206, 0.4);
 }
 
 #radio-vehicle-dropdown option {
-    padding: 12px;
-    line-height: 1.6;
+    padding: 16px 20px;
+    line-height: 2;
+    background: #2d3748;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+#radio-vehicle-dropdown option:checked {
+    background: linear-gradient(135deg, #3182ce 0%, #2563eb 100%);
+    color: white;
+    font-weight: 700;
+}
+
+/* Settings Dropdowns - Subtle styling */
+.setting-item select {
+    background: linear-gradient(to bottom, #2d3748 0%, #1f2937 100%);
+    border: 2px solid var(--border-medium);
+    border-radius: 8px;
+    padding: 12px 16px;
+    padding-right: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.setting-item select:hover {
+    border-color: var(--info-cyan);
+    background: linear-gradient(to bottom, #374151 0%, #252932 100%);
+}
+
+.setting-item select:focus {
+    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.25);
 }
 
 /* =====================================================
