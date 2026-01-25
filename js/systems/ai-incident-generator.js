@@ -1,5 +1,6 @@
 // =========================
-// AI INCIDENT GENERATOR v1.0
+// AI INCIDENT GENERATOR v2.0
+// ADVANCED TEMPLATES & Variabilität
 // Intelligente Einsatzgenerierung mit Groq
 // =========================
 
@@ -9,6 +10,43 @@ class AIIncidentGenerator {
         this.locationGenerator = new LocationGenerator();
         this.hospitalService = new HospitalService();
         this.weatherSystem = null; // Wird später gesetzt
+        
+        // 🆕 NEUE TEMPLATE-KATEGORIEN
+        this.incidentTemplates = this.initializeTemplates();
+    }
+    
+    /**
+     * 🆕 Initialisiert erweiterte Einsatz-Templates
+     */
+    initializeTemplates() {
+        return {
+            // ZEIT-BASIERT
+            timeSpecific: {
+                night: ['Sturzgeschehen', 'Atemnot', 'Brustschmerzen', 'Bewusstlosigkeit'],
+                morning: ['Schlaganfall', 'Herzinfarkt', 'Diabetisches Koma'],
+                afternoon: ['Arbeitsunfall', 'Verkehrsunfall', 'Sport-Verletzung'],
+                evening: ['Häuslicher Unfall', 'Vergiftung', 'Alkoholintoxikation']
+            },
+            
+            // WETTER-BASIERT
+            weatherSpecific: {
+                'Regen': ['Verkehrsunfall nasse Fahrbahn', 'Sturz bei Glätte', 'Fahrradunfall'],
+                'Schnee': ['VU Winterglätte', 'Unterkühlung', 'Sturz auf Eis'],
+                'Gewitter': ['Blitzschlag', 'Sturz durch Wind', 'Baum auf Person'],
+                'Nebel': ['VU Sichtbehinderung', 'Orientierungslosigkeit'],
+                'Hitze': ['Kreislaufkollaps', 'Sonnenstich', 'Dehydrierung']
+            },
+            
+            // ORT-BASIERT
+            locationSpecific: {
+                'Wohnung': ['Häuslicher Sturz', 'Küchenunfall', 'Badezimmer-Sturz'],
+                'Straße': ['Verkehrsunfall', 'Fußgänger angefahren', 'Fahrradunfall'],
+                'Arbeitsplatz': ['Arbeitsunfall', 'Maschinenverletzung', 'Chemische Verletzung'],
+                'Schule': ['Sportunfall', 'Allergische Reaktion', 'Asthmaanfall'],
+                'Wald': ['Wanderunfall', 'Zeckenstich-Allergie', 'Pilzvergiftung'],
+                'See': ['Badeunfall', 'Ertrinkungsgefahr', 'Tauchunfall']
+            }
+        };
     }
     
     /**
@@ -22,7 +60,7 @@ class AIIncidentGenerator {
      * Generiert komplett neuen Einsatz mit Groq AI
      */
     async generateIncident(ownedVehicles, gameTime) {
-        console.group('🚑 GENERIERE EINSATZ MIT GROQ AI');
+        console.group('🚑 GENERIERE EINSATZ MIT GROQ AI V2.0');
         
         try {
             // 1. Generiere zufälligen Ort im Rems-Murr-Kreis
@@ -44,16 +82,21 @@ class AIIncidentGenerator {
             const availableVehicleTypes = this.getAvailableVehicleTypes(ownedVehicles);
             console.log(`🚑 Verfügbare Fahrzeuge: ${availableVehicleTypes.join(', ')}`);
             
-            // 4. Erstelle Groq-Prompt
-            const prompt = this.buildIncidentPrompt(
+            // 🆕 4. Wähle kontext-passenden Einsatztyp
+            const suggestedType = this.suggestIncidentType(timeOfDay.name, weather.name, location);
+            console.log(`🎯 Vorgeschlagener Typ: ${suggestedType || 'Zufall'}`);
+            
+            // 5. Erstelle erweiterten Groq-Prompt
+            const prompt = this.buildAdvancedIncidentPrompt(
                 location,
                 timeString,
                 timeOfDay.name,
                 weather.name,
-                availableVehicleTypes
+                availableVehicleTypes,
+                suggestedType
             );
             
-            // 5. Rufe Groq API auf
+            // 6. Rufe Groq API auf
             const incidentData = await this.callGroqAPI(prompt);
             
             if (!incidentData) {
@@ -62,7 +105,7 @@ class AIIncidentGenerator {
                 return this.createFallbackIncident(location, ownedVehicles);
             }
             
-            // 6. Erstelle finalen Einsatz
+            // 7. Erstelle finalen Einsatz
             const incident = this.createIncidentFromAI(incidentData, location, timeString);
             
             console.log(`✅ Einsatz generiert: ${incident.stichwort}`);
@@ -78,83 +121,169 @@ class AIIncidentGenerator {
     }
     
     /**
-     * Erstellt Groq-Prompt für Einsatzgenerierung
+     * 🆕 Schlägt passenden Einsatztyp basierend auf Kontext vor
      */
-    buildIncidentPrompt(location, time, timeOfDay, weather, availableVehicles) {
+    suggestIncidentType(timeOfDay, weather, location) {
+        const suggestions = [];
+        
+        // Zeit-basierte Vorschläge
+        const timeKey = this.getTimeCategory(timeOfDay);
+        if (this.incidentTemplates.timeSpecific[timeKey]) {
+            suggestions.push(...this.incidentTemplates.timeSpecific[timeKey]);
+        }
+        
+        // Wetter-basierte Vorschläge
+        if (this.incidentTemplates.weatherSpecific[weather]) {
+            suggestions.push(...this.incidentTemplates.weatherSpecific[weather]);
+        }
+        
+        // Wähle zufälligen Vorschlag (falls vorhanden)
+        return suggestions.length > 0 ? 
+            suggestions[Math.floor(Math.random() * suggestions.length)] : null;
+    }
+    
+    /**
+     * Helper: Zeit-Kategorie ermitteln
+     */
+    getTimeCategory(timeOfDay) {
+        const mapping = {
+            'Nacht': 'night',
+            'Morgen': 'morning',
+            'Früher Morgen': 'morning',
+            'Vormittag': 'morning',
+            'Mittag': 'afternoon',
+            'Nachmittag': 'afternoon',
+            'Abend': 'evening',
+            'Später Abend': 'evening'
+        };
+        return mapping[timeOfDay] || 'afternoon';
+    }
+    
+    /**
+     * 🆕 ERWEITETER Groq-Prompt mit mehr Details
+     */
+    buildAdvancedIncidentPrompt(location, time, timeOfDay, weather, availableVehicles, suggestedType) {
+        const suggestion = suggestedType ? `
+VORSCHLAG (passend zu Zeit/Wetter): ${suggestedType}` : '';
+        
         return `Du bist ein realistischer Notruf-Generator für die Integrierte Leitstelle Rems-Murr-Kreis.
 
-ERSTELLE EINEN REALISTISCHEN NOTRUF MIT FOLGENDEN RAHMENBEDINGUNGEN:
+ERSTELLE EINEN HOCHREALISTISCHEN NOTRUF MIT FOLGENDEN RAHMENBEDINGUNGEN:
 
 ORT: ${location.address}
 Gemeinde: ${location.hotspot}
 Koordinaten: [${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}]
 
 ZEIT: ${time} Uhr (${timeOfDay})
-WETTER: ${weather}
+WETTER: ${weather}${suggestion}
 
 VERFÜGBARE FAHRZEUGE: ${availableVehicles.join(', ')}
 
-WICHTIGE VORGABEN:
+====================================
+WICHTIGE VORGABEN (V2.0 - ERWEITERT):
+====================================
 
-1. STICHWORT:
-   - Wähle passendes Stichwort: RD 1, RD 2, RD 3, VU, VU P, B 1, B 2, B 3, THL 1, THL 2
-   - Berücksichtige Wetter (z.B. mehr Unfälle bei Regen/Schnee)
-   - Berücksichtige Tageszeit (z.B. mehr RD-Einsätze nachts)
+1️⃣ STICHWORT:
+   - Wähle PASSEND zu Zeit/Wetter/Ort:
+     * RD 1: Leichte Notfälle (Bauchschmerzen, leichte Verletzung)
+     * RD 2: Mittlere Notfälle (Atemnot, Brustschmerzen, Schlaganfall)
+     * RD 3: Schwere Notfälle (Herzinfarkt, Bewusstlosigkeit, Reanimation)
+     * VU: Verkehrsunfall leicht-mittel (1-2 Verletzte)
+     * VU P: VU schwer (Eingeklemmt, mehrere Verletzte)
+     * B 1: Kleinbrand (Mülltonne, Zimmer)
+     * B 2: Mittelbrand (Wohnung, Garage)
+     * B 3: Großbrand (Gebäude, mehrere Etagen)
+     * THL 1: Kleine Hilfeleistung (Türöffnung, Tier gerettet)
+     * THL 2: Große Hilfeleistung (Person eingeschlossen, Absturz)
 
-2. ORTSBESCHREIBUNG:
-   - Sei SEHR spezifisch basierend auf der echten Adresse
-   - Beispiele:
-     * "Wohnung im 3. OG links"
-     * "Auf der B14, Höhe Ausfahrt Winnenden"
-     * "Bushaltestelle vor dem Rathaus"
-     * "Waldweg 200m nach Wanderparkplatz"
-     * "Industriehalle, Tor 3"
-   - Mache es REALISTISCH zur Adresse passend
+2️⃣ ORTSBESCHREIBUNG:
+   - SEHR SPEZIFISCH zur Adresse passend!
+   - Nutze REALISTISCHE Details:
+     * Wohnung: "3. OG links", "EG rechts, Hintereingang", "Dachgeschoss"
+     * Straße: "Auf der B14, Fahrtrichtung Stuttgart", "Kreuzung Bahnhofstraße/Hauptstraße"
+     * Gebäude: "Industriehalle Tor 3", "Rathaus, Sitzungssaal 2. Stock", "Turnhalle"
+     * Natur: "Waldweg 500m nach Wanderparkplatz", "Uferweg am Rems, Höhe Brücke"
+   - Mache es GLAUBWÜRDIG!
 
-3. EINSATZDAUER:
-   - Gib realistische Dauer in Minuten (15-120)
-   - Berücksichtige:
-     * Schweregrad des Notfalls
-     * Anzahl Patienten/Betroffene
-     * Komplexität (z.B. Reanimation = länger)
-     * Verfügbarkeit benötigter Fahrzeuge
-   - Wenn WENIGER Fahrzeuge als nötig: Dauer deutlich länger!
+3️⃣ MELDEBILD:
+   - 15-30 Wörter
+   - Aufgeregt, emotional, authentisch
+   - Schwaben-Dialekt-Einflüsse erlaubt!
+   - VARIIERE stark:
+     * Hysterisch: "Oh Gott oh Gott, er bewegt sich nicht mehr!"
+     * Sachlich: "Ja hallo, hier ist ein Unfall passiert, wir brauchen einen Krankenwagen."
+     * Verzweifelt: "Bitte helfen Sie, meine Mutter atmet ganz schwer!"
+     * Verwirrt: "Äh, hier... ich weiß nicht was ich tun soll, der liegt da einfach!"
 
-4. TRANSPORT:
-   - true bei: schweren Verletzungen, Herzinfarkt, Schlaganfall, Bewusstlosigkeit
-   - false bei: leichten Verletzungen, stabile Patienten, THL/Brand ohne Verletzte
+4️⃣ ANRUFER-TYP:
+   - VARIIERE realistisch:
+     * "Ehepartner" / "Tochter" / "Sohn" / "Mutter" / "Vater"
+     * "Arbeitskollege" / "Chef" / "Mitschüler" / "Lehrer"
+     * "Passant" / "Autofahrer" / "Zeuge"
+     * "Betroffener selbst" / "Nachbar" / "Freund"
 
-5. BENÖTIGTE FAHRZEUGE:
-   - RD 1: 1 RTW
-   - RD 2/RD 3: 1 RTW + 1 NEF
-   - VU: 1-2 RTW
-   - VU P: 2 RTW + 1 NEF
-   - Brand/THL: abhängig von Größe
+5️⃣ PATIENT-DETAILS:
+   - Alter: Realistisch (z.B. Herzinfarkt = 50-80J, Sportunfall = 15-30J)
+   - Geschlecht: männlich/weiblich (passe zu Szenario)
+   - Vorerkrankungen: Optional (z.B. Diabetes, Herzerkrankung, Asthma)
 
-6. MELDEBILD:
-   - Erste aufgeregte, vage Meldung des Anrufers (10-20 Wörter)
-   - Nutze Umgangssprache, Emotionen, Dialekt
-   - Beispiele:
-     * "Hilfe, mein Mann ist zusammengebrochen, er atmet ganz komisch!"
-     * "Es hat gekracht auf der B14, es sind mehrere Autos beteiligt!"
-     * "Hier brennt's, das ganze Dach steht in Flammen!"
+6️⃣ EINSATZDAUER:
+   - REALISTISCH nach Schweregrad:
+     * RD 1: 15-30 Min
+     * RD 2: 25-45 Min  
+     * RD 3: 35-90 Min (Reanimation!)
+     * VU: 20-40 Min
+     * VU P: 45-120 Min (Rettung!)
+     * B 1: 20-40 Min
+     * B 2/3: 60-180 Min
+     * THL 1: 15-30 Min
+     * THL 2: 30-90 Min
 
-ANTWORTE NUR ALS JSON (kein Text drumherum!):
+7️⃣ TRANSPORT:
+   - true: Schwere Verletzungen, Herzinfarkt, Schlaganfall, Bewusstlosigkeit
+   - false: Leichte Verletzungen, stabile Patienten, Brand/THL ohne Verletzte
+
+8️⃣ BESONDERHEITEN:
+   - Nutze KREATIV:
+     * "Reanimation läuft"
+     * "Person eingeklemmt"
+     * "Mehrere Verletzte"
+     * "Starke Blutung"
+     * "Bewusstlos"
+     * "Allergische Reaktion"
+     * "Atemstillstand"
+     * "Schockzustand"
+     * "Schwangerschaft"
+     * "Kind betroffen"
+
+9️⃣ BENÖTIGTE FAHRZEUGE:
+   - RD 1: {"RTW": 1, "NEF": 0, "KTW": 0}
+   - RD 2/RD 3: {"RTW": 1, "NEF": 1, "KTW": 0}
+   - VU: {"RTW": 1-2, "NEF": 0, "KTW": 0}
+   - VU P: {"RTW": 2, "NEF": 1, "KTW": 0}
+   - Leichte Transporte: {"RTW": 0, "NEF": 0, "KTW": 1}
+
+====================================
+ANTWORTE NUR ALS JSON (kein Text!):
+====================================
 
 {
-  "stichwort": "RD 1" / "RD 2" / "RD 3" / "VU" / "VU P" / "B 1" / "B 2" / "B 3" / "THL 1" / "THL 2",
-  "ortsbeschreibung": "Sehr spezifische Ortsbeschreibung basierend auf Adresse",
-  "meldebild": "Erste aufgeregte Meldung des Anrufers",
-  "anrufer_typ": "Angehöriger" / "Passant" / "Zeuge" / "Betroffener",
-  "einsatzdauer_minuten": 15-120,
+  "stichwort": "RD 1/RD 2/RD 3/VU/VU P/B 1/B 2/B 3/THL 1/THL 2",
+  "ortsbeschreibung": "Sehr spezifische Beschreibung passend zur Adresse",
+  "meldebild": "Erste aufgeregte/emotionale Meldung (15-30 Wörter)",
+  "anrufer_typ": "Spezifischer Anrufer-Typ",
+  "patient_alter": 5-100,
+  "patient_geschlecht": "männlich"/"weiblich",
+  "patient_vorerkrankungen": "Optional: z.B. Diabetes, Herzerkrankung",
+  "einsatzdauer_minuten": 15-180,
   "transport_notwendig": true/false,
   "anzahl_patienten": 1-5,
-  "schweregrad": "leicht" / "mittel" / "schwer" / "lebensbedrohlich",
-  "besonderheiten": "Optionale Besonderheiten (z.B. eingeklemmt, Reanimation, Chemikalien)",
+  "schweregrad": "leicht"/"mittel"/"schwer"/"lebensbedrohlich",
+  "besonderheiten": "Optional: z.B. Reanimation, eingeklemmt, starke Blutung",
   "benoetigte_fahrzeuge": {
-    "RTW": 1,
-    "NEF": 0,
-    "KTW": 0
+    "RTW": 0-2,
+    "NEF": 0-1,
+    "KTW": 0-1
   }
 }`;
     }
@@ -180,14 +309,15 @@ ANTWORTE NUR ALS JSON (kein Text drumherum!):
                     messages: [
                         { 
                             role: 'system', 
-                            content: 'Du bist ein Experte für Rettungsdienst-Einsätze. Antworte NUR als JSON, kein Text drumherum.' 
+                            content: 'Du bist ein Experte für Rettungsdienst-Einsätze. Erstelle REALISTISCHE und VARIIERENDE Notrufe. Antworte NUR als JSON, kein Text drumherum.' 
                         },
                         { role: 'user', content: prompt }
                     ],
-                    temperature: 1.1,
-                    max_tokens: 800,
+                    temperature: 1.2, // 🆕 Erhöht für mehr Variabilität!
+                    max_tokens: 1000,
                     response_format: { type: 'json_object' }
-                })
+                }),
+                signal: AbortSignal.timeout(15000) // 15s Timeout
             });
             
             if (!response.ok) {
@@ -229,11 +359,16 @@ ANTWORTE NUR ALS JSON (kein Text drumherum!):
             zeitstempel: timeString,
             timestamp: Date.now(),
             
-            // Einsatzdetails
+            // 🆕 Erweiterte Einsatzdetails
             anrufer_typ: aiData.anrufer_typ,
             anzahl_patienten: aiData.anzahl_patienten || 1,
             schweregrad: aiData.schweregrad,
             besonderheiten: aiData.besonderheiten,
+            
+            // 🆕 Patient-Details
+            patient_alter: aiData.patient_alter,
+            patient_geschlecht: aiData.patient_geschlecht,
+            patient_vorerkrankungen: aiData.patient_vorerkrankungen,
             
             // Einsatzdauer & Transport
             einsatzdauer_minuten: aiData.einsatzdauer_minuten,
@@ -267,20 +402,27 @@ ANTWORTE NUR ALS JSON (kein Text drumherum!):
      * Fallback-Einsatz wenn Groq fehlschlägt
      */
     createFallbackIncident(location, ownedVehicles) {
-        const keywords = ['RD 1', 'RD 2', 'VU', 'B 1', 'THL 1'];
-        const keyword = keywords[Math.floor(Math.random() * keywords.length)];
+        const templates = [
+            { keyword: 'RD 1', msg: 'Patient mit Bauchschmerzen', duration: 20, transport: true },
+            { keyword: 'RD 2', msg: 'Person mit Atemnot', duration: 30, transport: true },
+            { keyword: 'VU', msg: 'Verkehrsunfall mit Verletzten', duration: 35, transport: true },
+            { keyword: 'B 1', msg: 'Kleinbrand in Wohnung', duration: 25, transport: false },
+            { keyword: 'THL 1', msg: 'Türöffnung dringend', duration: 15, transport: false }
+        ];
+        
+        const template = templates[Math.floor(Math.random() * templates.length)];
         
         return {
             id: `E${Date.now().toString().slice(-8)}`,
-            stichwort: keyword,
-            keyword: keyword,
+            stichwort: template.keyword,
+            keyword: template.keyword,
             ort: location.address,
             koordinaten: { lat: location.lat, lon: location.lon },
             position: [location.lat, location.lon],
-            meldebild: 'Notfall - Details unklar',
+            meldebild: template.msg,
             zeitstempel: new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'}),
-            einsatzdauer_minuten: 25,
-            transport_notwendig: Math.random() > 0.5,
+            einsatzdauer_minuten: template.duration,
+            transport_notwendig: template.transport,
             benoetigte_fahrzeuge: { RTW: 1, NEF: 0, KTW: 0 },
             assignedVehicles: [],
             status: 'incoming',
@@ -305,4 +447,4 @@ ANTWORTE NUR ALS JSON (kein Text drumherum!):
 // Globale Instanz
 window.AIIncidentGenerator = AIIncidentGenerator;
 
-console.log('🤖 AI Incident Generator geladen');
+console.log('🤖 AI Incident Generator v2.0 geladen - Advanced Templates!');
