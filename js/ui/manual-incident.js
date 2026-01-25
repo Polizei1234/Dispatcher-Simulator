@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.2.1
+// MANUAL INCIDENT CREATION v5.2.2
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -10,6 +10,7 @@
 // + ✅ v5.1: Verstärkung anfordern Modus
 // + ✅ v5.2: Custom PriorityDropdown statt native Select
 // + ✅ v5.2.1: FIX - Dropdown Timing (100ms → 300ms)
+// + ✅ v5.2.2: FIX - Detail-Stichwort Callback (value statt Objekt)
 // =========================
 
 const ManualIncident = {
@@ -26,7 +27,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v5.2.1 initialisiert (FIX: Dropdown Timing)');
+        console.log('📝 Manual Incident System v5.2.2 initialisiert (FIX: Detail-Stichwort Callback)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -91,7 +92,6 @@ const ManualIncident = {
         });
     },
 
-    // ✅ NEU: Öffne Vehicle Modal für Verstärkung
     openVehicleModalForReinforcement(incident) {
         console.log('🚑 Verstärkung-Modus aktiviert für:', incident.id);
         
@@ -99,22 +99,18 @@ const ManualIncident = {
         this.currentIncident = incident;
         this.selectedVehicles = [];
         
-        // Modal-Titel anpassen
         const title = document.getElementById('vehicle-modal-title');
         if (title) {
             title.innerHTML = '<i class="fas fa-plus-circle"></i> Verstärkung anfordern';
         }
         
-        // Location setzen
         const locationSpan = document.getElementById('vehicle-modal-location');
         if (locationSpan) {
             locationSpan.innerHTML = `<strong>Einsatz:</strong> ${incident.stichwort} - ${incident.ort}`;
         }
         
-        // Fahrzeuge laden (nur verfügbare)
         this.loadVehiclesInModal();
         
-        // Modal öffnen
         this.vehicleModalOpen = true;
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
@@ -124,7 +120,6 @@ const ManualIncident = {
         console.log('✅ Verstärkung-Modal geöffnet');
     },
 
-    // 🚀 Inline-Modus für Notruf-Tab
     showInline(callData) {
         this.inlineMode = true;
         this.reinforcementMode = false;
@@ -155,7 +150,6 @@ const ManualIncident = {
         container.innerHTML = `
             <h3 style="margin-bottom: 20px;"><i class="fas fa-file-medical"></i> Einsatzprotokoll</h3>
             
-            <!-- ABSCHNITT 1: EINSATZINFORMATIONEN (BASIS) -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('basis')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-info-circle"></i> Einsatzinformationen</h4>
@@ -206,7 +200,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 2: PATIENTENINFORMATIONEN -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('patient')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-user-injured"></i> Patienteninformationen</h4>
@@ -249,7 +242,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 3: MEDIZINISCHE HISTORIE -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('medical')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-notes-medical"></i> Medizinische Historie</h4>
@@ -271,7 +263,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 4: SYMPTOME & VERLETZUNGEN -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('symptoms')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-heartbeat"></i> Symptome & Verletzungen</h4>
@@ -299,7 +290,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 5: UNFALL-DETAILS -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('accident')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-car-crash"></i> Unfall-Details</h4>
@@ -331,7 +321,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 6: GEFAHREN -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('hazards')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-exclamation-triangle"></i> Gefahren & Besonderheiten</h4>
@@ -374,7 +363,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 7: ANRUFER-INFORMATIONEN -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('caller')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-phone"></i> Anrufer-Informationen</h4>
@@ -405,7 +393,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 8: EINSATZMITTEL -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" style="padding: 12px; background: var(--card-bg); border-radius: 8px; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-ambulance"></i> Einsatzmittel</h4>
@@ -422,7 +409,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- ABSCHNITT 9: NOTIZEN -->
             <div class="protocol-section" style="margin-bottom: 15px;">
                 <div class="section-header" onclick="ManualIncident.toggleSection('notes')" style="cursor: pointer; padding: 12px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0; color: var(--accent-color);"><i class="fas fa-sticky-note"></i> Notizen</h4>
@@ -436,7 +422,6 @@ const ManualIncident = {
                 </div>
             </div>
 
-            <!-- FOOTER MIT ALARMIEREN BUTTON -->
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--card-bg); border-radius: 8px; margin-top: 20px;">
                 <div style="color: var(--text-secondary);">
                     <i class="fas fa-check-circle"></i> 
@@ -448,12 +433,11 @@ const ManualIncident = {
             </div>
         `;
 
-        // ✅ FIX: Erhöhe Timeout auf 300ms damit DOM sicher bereit ist
         setTimeout(() => {
             this.initializeKeywordsDropdownsInline();
         }, 300);
 
-        console.log('✅ Manual Incident Inline v5.2.1 angezeigt - Custom Priority Dropdown (Fixed Timing)!');
+        console.log('✅ Manual Incident Inline v5.2.2 angezeigt - Detail-Stichwort Callback fixed!');
     },
 
     toggleSection(sectionName) {
@@ -478,22 +462,18 @@ const ManualIncident = {
     openVehicleModal() {
         this.vehicleModalOpen = true;
         
-        // Modal-Titel zurücksetzen (für normale Disposition)
         const title = document.getElementById('vehicle-modal-title');
         if (title && !this.reinforcementMode) {
             title.innerHTML = '<i class="fas fa-ambulance"></i> Fahrzeugdisposition';
         }
         
-        // Location setzen
         const locationSpan = document.getElementById('vehicle-modal-location');
         if (locationSpan && this.currentCallData?.einsatz?.ort) {
             locationSpan.innerHTML = `<strong>Einsatzort:</strong> ${this.currentCallData.einsatz.ort}`;
         }
 
-        // Fahrzeuge laden
         this.loadVehiclesInModal();
 
-        // Modal anzeigen
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
             modal.classList.add('active');
@@ -516,10 +496,8 @@ const ManualIncident = {
 
     confirmVehicleSelection() {
         if (this.reinforcementMode && this.currentIncident) {
-            // ✅ Verstärkung-Modus: Fahrzeuge direkt zum Einsatz schicken
             this.dispatchReinforcement();
         } else {
-            // Normal-Modus: Fahrzeuge nur auswählen
             this.updateSelectedVehiclesDisplay();
             this.updateUIInline();
         }
@@ -536,12 +514,10 @@ const ManualIncident = {
 
         console.log(`🚑 Sende ${this.selectedVehicles.length} Verstärkung(en) zu Einsatz ${this.currentIncident.id}`);
 
-        // Fahrzeuge zum Einsatz hinzufügen
         this.selectedVehicles.forEach(vId => {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (!vehicle) return;
 
-            // Fahrzeug zum Einsatz assignen
             if (!this.currentIncident.vehicles.includes(vId)) {
                 this.currentIncident.vehicles.push(vId);
             }
@@ -552,7 +528,6 @@ const ManualIncident = {
                 this.currentIncident.assignedVehicles.push(vId);
             }
 
-            // Fahrzeug disponieren
             vehicle.status = 'dispatched';
             vehicle.incident = this.currentIncident.id;
             vehicle.targetLocation = this.currentIncident.koordinaten;
@@ -564,7 +539,6 @@ const ManualIncident = {
             console.log(`✅ Verstärkung ${vehicle.callsign} alarmiert zu ${this.currentIncident.id}`);
         });
 
-        // UI updaten
         if (typeof UI !== 'undefined' && UI.updateIncidentList) {
             UI.updateIncidentList();
             UI.selectIncident(this.currentIncident.id);
@@ -573,7 +547,6 @@ const ManualIncident = {
             updateUI();
         }
 
-        // Bestätigung
         alert(`✅ ${this.selectedVehicles.length} Fahrzeug(e) als Verstärkung alarmiert!`);
         
         this.selectedVehicles = [];
@@ -596,7 +569,6 @@ const ManualIncident = {
 
             if (vehicles.length === 0) return;
 
-            // 🚀 SORTIERE nach Entfernung
             if (typeof VehicleMovement !== 'undefined' && VehicleMovement.getDistanceToIncident && targetCoords) {
                 vehicles = vehicles.map(v => {
                     const distInfo = VehicleMovement.getDistanceToIncident(v.station, targetCoords);
@@ -609,7 +581,6 @@ const ManualIncident = {
                 }).sort((a, b) => a.distance - b.distance);
             }
 
-            // Status-Map für Anzeige
             const statusMap = {
                 'available': { text: 'Verfügbar', color: '#4CAF50', icon: 'check-circle' },
                 'dispatched': { text: 'Alarmiert', color: '#FF9800', icon: 'bell' },
@@ -822,7 +793,7 @@ const ManualIncident = {
         console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
-    // ✅ INITIALISIERE ALLE KEYWORD-DROPDOWNS + PRIORITY
+    // ✅ FIX: Callback nimmt jetzt nur den VALUE statt ganzes Objekt
     initializeKeywordsDropdownsInline() {
         if (typeof KeywordsDropdown === 'undefined') {
             console.error('❌ KeywordsDropdown nicht geladen!');
@@ -834,7 +805,7 @@ const ManualIncident = {
             return;
         }
 
-        // 🆕 PRIORITY DROPDOWN (NEW!)
+        // Priority Dropdown
         console.log('🔍 Initialisiere Priority Dropdown...');
         const priorityInput = document.getElementById('inline-priority');
         if (priorityInput) {
@@ -847,22 +818,27 @@ const ManualIncident = {
             console.error('❌ Priority Input NICHT gefunden!');
         }
 
-        // Detail-Stichwort
-        KeywordsDropdown.initializeDetailDropdown('inline-detail', (keywordData) => {
-            this.selectedDetailKeyword = keywordData;
-            console.log('✅ Detail-Stichwort ausgewählt:', keywordData.keyword);
+        // ✅ FIX: Detail-Stichwort - Callback bekommt nur VALUE
+        KeywordsDropdown.initializeDetailDropdown('inline-detail', (value) => {
+            // Finde das komplette Keyword-Objekt
+            const keywordData = KeywordsDropdown.getDetailKeyword(value);
+            this.selectedDetailKeyword = keywordData || { keyword: value };
+            console.log('✅ Detail-Stichwort ausgewählt:', value, keywordData);
         });
 
-        // Stadtteil & Örtlichkeit
-        KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtData) => {
-            console.log('✅ Stadtteil ausgewählt:', districtData.name, '-', districtData.category);
+        // Stadtteil
+        KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (value) => {
+            const districtData = KeywordsDropdown.getDistrict(value) || { name: value };
+            console.log('✅ Stadtteil ausgewählt:', value, districtData);
         });
 
-        KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (locationData) => {
-            console.log('✅ Örtlichkeit ausgewählt:', locationData.name, '-', locationData.category);
+        // Örtlichkeit
+        KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (value) => {
+            const locationData = KeywordsDropdown.getLocation(value) || { name: value };
+            console.log('✅ Örtlichkeit ausgewählt:', value, locationData);
         });
 
-        console.log('✅ Alle Dropdowns initialisiert (Priority + Keywords + Stadtteil + Örtlichkeit)');
+        console.log('✅ Alle Dropdowns initialisiert (Priority + Detail [FIXED] + Stadtteil + Örtlichkeit)');
     },
 
     updateUIInline() {
@@ -927,10 +903,8 @@ const ManualIncident = {
 
         this.dispatchVehicles(incident);
 
-        // ✅ PHASE 3.1: Gespräch bleibt offen
         console.log(`✅ Einsatz ${incident.id} erfolgreich erstellt und alarmiert!`);
         
-        // Visual Feedback
         const alarmBtn = document.getElementById('inline-alarm-btn');
         if (alarmBtn) {
             const originalText = alarmBtn.innerHTML;
@@ -966,7 +940,6 @@ const ManualIncident = {
     }
 };
 
-// Auto-Initialize
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
         ManualIncident.initialize();
@@ -975,4 +948,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.2.1 geladen (FIX: Dropdown Timing 100ms → 300ms)');
+console.log('✅ Manual Incident System v5.2.2 geladen (FIX: Detail-Stichwort Callback - value statt Objekt)');
