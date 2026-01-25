@@ -1,7 +1,8 @@
 // =========================
-// VERSION MANAGER v1.5
+// VERSION MANAGER v1.6
 // Automatische Version-Synchronisation mit CONFIG
 // FIXED: Async Loading + CONFIG Wait
+// FIXED: Zentrale Versionsverwaltung
 // =========================
 
 const VersionManager = {
@@ -12,7 +13,7 @@ const VersionManager = {
      * Initialisiert den Version Manager
      */
     async init() {
-        console.log('🔄 Version Manager v1.5 initialisiert');
+        console.log('🔄 Version Manager v1.6 initialisiert');
         
         // ✅ Warte auf CONFIG
         await this.waitForConfig();
@@ -20,7 +21,7 @@ const VersionManager = {
         // Hole aktuelle Version aus CONFIG
         this.CURRENT_VERSION = CONFIG.VERSION;
         
-        console.log(`✅ Version Manager v1.5 geladen - Aktuelle Version: ${this.CURRENT_VERSION}`);
+        console.log(`✅ Version Manager v1.6 geladen - Aktuelle Version: ${this.CURRENT_VERSION}`);
         
         // Check ob Update nötig
         this.checkForUpdate();
@@ -323,6 +324,13 @@ const VersionManager = {
                     <li>✅ Stichwort-Dropdown mit Live-Suche</li>
                     <li>✅ Intelligente Fahrzeugantworten im Funk</li>
                 </ul>
+            `,
+            '6.1.8': `
+                <ul>
+                    <li>✅ Zentrale Versionsverwaltung implementiert</li>
+                    <li>✅ Alle Skripte und CSS-Dateien nutzen CONFIG.getVersionedUrl()</li>
+                    <li>✅ Version-Parameter an nur einer Stelle zu ändern</li>
+                </ul>
             `
         };
         
@@ -369,4 +377,4 @@ console.log('💡 Version Manager Befehle:');
 console.log('VersionManager.getInfo()     - Zeigt Version-Informationen');
 console.log('VersionManager.forceUpdate() - Erzwingt Cache-Leerung & Reload');
 
-console.log('✅ Version Manager v1.5 bereit - Auto-Sync mit CONFIG.VERSION + Cache-Busting');
+console.log('✅ Version Manager v1.6 bereit - Auto-Sync mit CONFIG.VERSION + Cache-Busting + Zentrale Versionsverwaltung');
