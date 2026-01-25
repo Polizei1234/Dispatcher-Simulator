@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.2.2
+// MANUAL INCIDENT CREATION v5.2.3
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -11,6 +11,7 @@
 // + ✅ v5.2: Custom PriorityDropdown statt native Select
 // + ✅ v5.2.1: FIX - Dropdown Timing (100ms → 300ms)
 // + ✅ v5.2.2: FIX - Detail-Stichwort Callback (value statt Objekt)
+// + ✅ v5.2.3: FIX - String-Value von UniversalDropdown korrekt verarbeiten
 // =========================
 
 const ManualIncident = {
@@ -27,7 +28,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v5.2.2 initialisiert (FIX: Detail-Stichwort Callback)');
+        console.log('📝 Manual Incident System v5.2.3 initialisiert (FIX: String-Value von UniversalDropdown)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -437,7 +438,7 @@ const ManualIncident = {
             this.initializeKeywordsDropdownsInline();
         }, 300);
 
-        console.log('✅ Manual Incident Inline v5.2.2 angezeigt - Detail-Stichwort Callback fixed!');
+        console.log('✅ Manual Incident Inline v5.2.3 angezeigt!');
     },
 
     toggleSection(sectionName) {
@@ -793,7 +794,7 @@ const ManualIncident = {
         console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
-    // ✅ FIX: Callback nimmt jetzt nur den VALUE statt ganzes Objekt
+    // ✅ FIX v5.2.3: Callback bekommt jetzt String-Value von UniversalDropdown
     initializeKeywordsDropdownsInline() {
         if (typeof KeywordsDropdown === 'undefined') {
             console.error('❌ KeywordsDropdown nicht geladen!');
@@ -805,11 +806,10 @@ const ManualIncident = {
             return;
         }
 
-        // Priority Dropdown
+        // Priority Dropdown (gibt Objekt zurück)
         console.log('🔍 Initialisiere Priority Dropdown...');
         const priorityInput = document.getElementById('inline-priority');
         if (priorityInput) {
-            console.log('✅ Priority Input gefunden:', priorityInput);
             PriorityDropdown.initialize('inline-priority', (priorityData) => {
                 this.selectedPriorityKeyword = priorityData;
                 console.log('✅ Priorität ausgewählt:', priorityData.keyword);
@@ -818,27 +818,27 @@ const ManualIncident = {
             console.error('❌ Priority Input NICHT gefunden!');
         }
 
-        // ✅ FIX: Detail-Stichwort - Callback bekommt nur VALUE
-        KeywordsDropdown.initializeDetailDropdown('inline-detail', (value) => {
-            // Finde das komplette Keyword-Objekt
-            const keywordData = KeywordsDropdown.getDetailKeyword(value);
-            this.selectedDetailKeyword = keywordData || { keyword: value };
-            console.log('✅ Detail-Stichwort ausgewählt:', value, keywordData);
+        // ✅ Detail-Stichwort (gibt jetzt String zurück!)
+        KeywordsDropdown.initializeDetailDropdown('inline-detail', (keyword) => {
+            // keyword ist jetzt ein String wie "ACS/Infarkt"
+            const keywordData = KeywordsDropdown.getDetailKeyword(keyword);
+            this.selectedDetailKeyword = keywordData || { keyword: keyword };
+            console.log('✅ Detail-Stichwort ausgewählt:', keyword, '- Data:', keywordData);
         });
 
-        // Stadtteil
-        KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (value) => {
-            const districtData = KeywordsDropdown.getDistrict(value) || { name: value };
-            console.log('✅ Stadtteil ausgewählt:', value, districtData);
+        // Stadtteil (gibt String zurück)
+        KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtName) => {
+            const districtData = KeywordsDropdown.getDistrict(districtName) || { name: districtName };
+            console.log('✅ Stadtteil ausgewählt:', districtName, '- Data:', districtData);
         });
 
-        // Örtlichkeit
-        KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (value) => {
-            const locationData = KeywordsDropdown.getLocation(value) || { name: value };
-            console.log('✅ Örtlichkeit ausgewählt:', value, locationData);
+        // Örtlichkeit (gibt String zurück)
+        KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (locationName) => {
+            const locationData = KeywordsDropdown.getLocation(locationName) || { name: locationName };
+            console.log('✅ Örtlichkeit ausgewählt:', locationName, '- Data:', locationData);
         });
 
-        console.log('✅ Alle Dropdowns initialisiert (Priority + Detail [FIXED] + Stadtteil + Örtlichkeit)');
+        console.log('✅ Alle Dropdowns initialisiert (String-Values von UniversalDropdown)');
     },
 
     updateUIInline() {
@@ -948,4 +948,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.2.2 geladen (FIX: Detail-Stichwort Callback - value statt Objekt)');
+console.log('✅ Manual Incident System v5.2.3 geladen (FIX: String-Value von UniversalDropdown)');
