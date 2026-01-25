@@ -1,5 +1,5 @@
 /* =====================================================
-   DISPATCHER SIMULATOR v6.0.0 - PROFESSIONAL EDITION
+   DISPATCHER SIMULATOR v6.1.0 - PROFESSIONAL EDITION
    ILS Waiblingen - Realistic Dispatch Center Interface
    ===================================================== */
 
@@ -283,6 +283,16 @@ header {
     letter-spacing: 0.5px;
 }
 
+.header-subtitle {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 400;
+    padding: 4px 10px;
+    background: var(--panel-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+
 #current-time {
     font-size: 1.1em;
     font-weight: 500;
@@ -315,7 +325,7 @@ header {
 
 .main-content {
     display: grid;
-    grid-template-columns: 340px 1fr 340px;
+    grid-template-columns: 350px 1fr 380px;
     height: calc(100vh - 200px);
     gap: 8px;
     padding: 8px;
