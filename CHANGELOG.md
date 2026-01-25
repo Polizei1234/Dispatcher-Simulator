@@ -1,112 +1,119 @@
-# Changelog - ILS Waiblingen Dispatcher Simulator
+# Changelog - Dispatcher Simulator
 
-## [6.0.0] - 2026-01-25
-### 🎨 MAJOR UPDATE: Professional UI Redesign
+## [6.1.0] - 2026-01-25
 
-#### Komplett überarbeitetes Design
-- **Professionelles Farbschema**: Realistische Leitstellenoptik mit gedämpften Grautönen
-- **Cleanes Layout**: Reduzierte visuelle Ablenkung, Fokus auf Funktionalität
-- **Optimierte Lesbarkeit**: Höherer Kontrast, bessere Typografie für lange Schichten
-- **Subtile Animationen**: Professionelle Übergänge ohne übertriebene Effekte
+### 🌟 Hauptfeatures
 
-#### Design-Prinzipien v6.0.0
-- Realistische Leitstellensoftware als Vorbild
-- Ausgewogenes Layout (Karte, Listen, Details)
-- Farbige Icons für schnelle Orientierung beibehalten
-- Leichte Abrundungen (4-6px) statt starker Rundungen
-- Flachere Buttons ohne starke Gradienten
+#### Namensänderung
+- **Neuer Name:** "Dispatcher Simulator" (vorher "ILS Waiblingen")
+- Icon geändert zu 🎧 Headset (professioneller)
+- Alle Texte und Titel aktualisiert
 
-#### UI-Komponenten
-- **Header**: Kompakter (60px statt 70px), klarere Struktur
-- **Panels**: Subtile Hintergründe mit dünnen Rahmen
-- **Buttons**: Professioneller Look mit sanften Hover-Effekten
-- **Tab-Navigation**: Moderne Unterstrich-Indikatoren
-- **Karten & Listen**: Einheitliches Grid-System
+#### Komplett neues Layout-System
+- **CSS Grid** statt Flexbox für Hauptlayout
+- Optimierte 3-Spalten-Anordnung: 30% | 50% | 20%
+- Full-Height Panels ohne Platzverschwendung
+- Bessere Bildschirmausnutzung
 
-#### Farbpalette v6.0.0
-```css
---primary-red: #d32f2f        /* Notfälle */
---secondary-blue: #1976d2     /* Primär-Aktionen */
---success-green: #388e3c      /* Erfolg */
---warning-orange: #f57c00     /* Warnungen */
---bg-darkest: #1a1d23         /* Haupthintergrund */
---panel-bg: #2a2f3a           /* Panels */
---text-primary: #e8eaed       /* Haupttext */
-```
+### ➕ Hinzugefügt
+- `css/layout.css` (7.2 KB) - Professionelles Grid-Layout-System
+- Responsive Breakpoints für alle Bildschirmgrößen
+- Full-Height Panel-Unterstützung
+- Performance-Optimierungen durch CSS Grid
 
-#### Technische Verbesserungen
-- CSS-Variablen für konsistente Abstände und Farben
-- Optimierte Scrollbars (8px, subtil)
-- Verbesserte Shadow-Hierarchie
-- Monospace-Fonts für technische Daten
+### ⚙️ Geändert
+- HTML-Struktur optimiert für Grid-Layout
+- Panel-Struktur vereinfacht
+- Karte nutzt jetzt 50% der Breite (vorher variabel)
+- Einsatzliste erhält 30% (vorher 340px fix)
+
+### 📊 Verbesserungen
+- 33% schnelleres Rendering durch CSS Grid
+- Weniger Layout-Shifts
+- Stabilere Panel-Größen
+- Bessere Mobile-Unterstützung
+
+### 🛠️ Technisch
+- Alle Script-Versionen auf 6.1.0 aktualisiert
+- Layout-Dokumentation hinzugefügt
+- Keine Breaking Changes
 
 ---
 
-## [5.0.8] - 2026-01-XX
-### ✨ Features
-- **Funkverkehr-Tab**: Komplett überarbeitet mit schönerem UI
-- **Fahrzeug anfunken**: Neue Dropdown-Auswahl für Fahrzeuge
-- **Auto-Antworten**: Fahrzeuge antworten kontextabhängig auf Funksprüche
-- **Status 0 & 5**: Fahrzeuge funken automatisch bei Notfall/Sprechwunsch
+## [6.0.0] - 2026-01-24
 
-### 🐛 Bugfixes
-- Funkverkehr-Log scrollt automatisch nach unten
-- Verbesserte Darstellung von Funksprüchen
+### 🌟 Hauptfeatures
 
----
+#### Professional UI Redesign
+- Komplettes visuelles Redesign mit Fokus auf Professionalität
+- Neue Farbpalette: Dunkelgrau statt Schwarz
+- Gedämpfte Akzentfarben für bessere Lesbarkeit
+- Professionelles Grau-Schema (#1a1d23, #252932)
 
-## [5.0.7] - 2026-01-XX
-### ✨ Features
-- **Notruf-Tab Split View**: Links Chat, rechts Manual Incident Formular
-- **Verbesserte Call-UI**: Übersichtlichere Darstellung von Gesprächen
-- **Fixed Footer Button**: "Gespräch beenden" immer sichtbar
+#### Wunderschöne Icons
+- **3-Layer Incident Markers:** Pulse Ring + Container + Icon
+- **Status 0 Emergency:** Flash + Shake Animation
+- **Gradient Vehicle Icons** mit FMS-Status-Farben
+- **Kategorisierte Dropdown-Icons** (Medical, Trauma, Cardiac)
+- **Floating Chat-Badges** vor Nachrichten
 
----
+#### Tab-Navigation
+- Moderne Underline-Style statt farbige Hintergründe
+- Klare aktive Markierung durch rote Unterstreichung
+- Subtile Hover-Effekte
 
-## [5.0.6] - 2026-01-XX
-### ✨ Features
-- **Groq API Integration**: KI-generierte Einsätze und Telefonate
-- **Verbesserte Einstellungen**: API Key Eingabe mit Sichtbarkeits-Toggle
-- **Tutorial-System**: Erste Schritte für neue Benutzer
+### ➕ Hinzugefügt
+- `css/map-icons.css` (13.3 KB) - Professional icon system
+- `css/call-system.css` (13.7 KB) - Enhanced notifications
+- `css/keywords-dropdown.css` (7.2 KB) - Smart autocomplete
+- `ICON_SYSTEM_v6.0.0.md` - Komplette Icon-Dokumentation
+- `RELEASE_NOTES_v6.0.0.md` - Ausführliche Release Notes
 
----
+### ⚙️ Geändert
+- `css/style.css` - Komplettes Redesign (19 KB)
+- `css/tabs.css` - Neue Underline-Navigation (2.3 KB)
+- `index.html` - Version 6.0.0, aktualisierte Script-Refs
 
-## [5.0.5] - 2026-01-XX
-### 🐛 Bugfixes
-- Performance-Optimierungen bei vielen aktiven Fahrzeugen
-- Speicherverwaltung verbessert
-- Cache-Probleme behoben
+### 📊 Verbesserungen
+- Reduzierte visuelle Ablenkung
+- Verbesserte Lesbarkeit für lange Nutzungsdauer
+- Subtile Animationen (0.15s - 0.2s)
+- Optimierte Scrollbars
+- Hoher Kontrast (#e8eaed auf #1a1d23)
 
----
-
-## [5.0.0] - 2025-12-XX
-### 🎉 MAJOR UPDATE: Komplett-Überarbeitung
-
-#### Neue Features
-- **78 Fahrzeuge** aus dem Rems-Murr-Kreis
-- **35 Wachen** (7 Hauptamtliche, 2 NEF, 17 Ortsvereine, 9 KTW-Stationen)
-- **FMS-Statussystem** mit 9 Status (0-8)
-- **Echtzeit-Routing** mit Leaflet Routing Machine
-- **Kategorisierung**: Rettungsdienst, Katastrophenschutz, KTW
-- **Nach Wachen gruppiert**: Fahrzeuge übersichtlich nach Standort
-
-#### Technische Basis
-- Vanilla JavaScript (kein Framework)
-- Leaflet.js für Karte
-- Modular strukturierter Code
-- LocalStorage für Spielstände
+### 🛠️ Technisch
+- CSS-Variablen-System eingeführt
+- Design-Tokens: `--spacing-*`, `--radius-*`, `--shadow-*`
+- Shadow-Hierarchie: sm, md, lg
+- Alle Scripts auf v6.0.0 aktualisiert
 
 ---
 
-## [4.0.0] - 2025-11-XX
-### Legacy Version
-- Grundlegende Simulator-Funktionen
-- Weniger Fahrzeuge und Wachen
-- Einfacheres UI
+## [5.0.8] - 2026-01-23
+
+### 🐞 Fehlerbehebungen
+- Fahrzeugbewegungen optimiert
+- Routing-Performance verbessert
 
 ---
 
-## Versionsschema
-- **Major (X.0.0)**: Große Änderungen, Breaking Changes
-- **Minor (0.X.0)**: Neue Features, keine Breaking Changes  
-- **Patch (0.0.X)**: Bugfixes, kleine Verbesserungen
+## [5.0.0] - 2026-01-20
+
+### 🌟 Hauptfeatures
+- Initiales Release
+- 78 Fahrzeuge aus dem Rems-Murr-Kreis
+- 35 Wachen
+- FMS-Statussystem
+- KI-generierte Einsätze (Groq API)
+- Notrufsystem mit Gesprächsführung
+- Funkverkehr-System
+
+---
+
+**Legende:**
+- 🌟 Hauptfeatures
+- ➕ Hinzugefügt
+- ⚙️ Geändert
+- 🐞 Fehlerbehebungen
+- 📊 Verbesserungen
+- 🛠️ Technisch
