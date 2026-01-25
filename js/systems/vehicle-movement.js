@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.2
+// VEHICLE MOVEMENT SYSTEM v7.2.1
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -10,6 +10,7 @@
 // + ✅ PHASE 3.2: Automatischer FMS-Wechsel nach Einsatzende
 // + ✅ PHASE 3.2.1: Intelligente Maßnahmendauer je Einsatztyp
 // + ✅ PHASE 3.2.2: Groq AI für dynamische Maßnahmendauer
+// + ✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung
 // =========================
 
 const VehicleMovement = {
@@ -69,7 +70,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.2 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.2.1 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -79,6 +80,7 @@ const VehicleMovement = {
         console.log('✅ Phase 3.2: Automatischer FMS-Wechsel nach Einsatzende');
         console.log('✅ Phase 3.2.1: Intelligente Maßnahmendauer je Einsatztyp');
         console.log('✅ Phase 3.2.2: Groq AI für dynamische Maßnahmendauer');
+        console.log('✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung');
         this.startUpdateLoop();
     },
 
@@ -720,11 +722,41 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
         return [48.8700, 9.3922];
     },
 
+    // ✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung mit Fallback
     setVehicleStatus(vehicle, fmsCode) {
         const oldStatus = vehicle.currentStatus;
         vehicle.currentStatus = fmsCode;
 
         if (oldStatus === fmsCode) {
+            return;
+        }
+
+        // ✅ FIX: Prüfe ob CONFIG.FMS_STATUS existiert
+        if (typeof CONFIG === 'undefined' || !CONFIG.FMS_STATUS) {
+            console.warn('⚠️ CONFIG.FMS_STATUS nicht verfügbar - verwende Fallback');
+            
+            // Fallback FMS Status
+            const fallbackStatus = {
+                0: { name: 'Notruf/Hilferuf', color: '#dc3545', icon: '⚠️' },
+                1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
+                2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
+                3: { name: 'Einsatz übernommen', color: '#ffc107', icon: '🟡' },
+                4: { name: 'Anfahrt Einsatzstelle', color: '#fd7e14', icon: '🟠' },
+                5: { name: 'Ankunft Einsatzstelle', color: '#dc3545', icon: '🔴' },
+                6: { name: 'Sprechwunsch', color: '#6c757d', icon: '⚪' },
+                7: { name: 'Patient aufgenommen', color: '#17a2b8', icon: '🔵' },
+                8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
+                9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' }
+            };
+            
+            const fmsInfo = fallbackStatus[fmsCode] || { name: 'Unbekannt', color: '#6c757d', icon: '🚑' };
+            
+            console.log(`📻 ${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`);
+
+            const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
+            if (typeof addRadioMessage === 'function') {
+                addRadioMessage(message, 'vehicle', fmsInfo.color);
+            }
             return;
         }
 
@@ -773,4 +805,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Movement System v7.2 geladen - Phase 3.2.2 komplett!');
+console.log('✅ Vehicle Movement System v7.2.1 geladen - FIX: Sichere FMS_STATUS Prüfung!');
