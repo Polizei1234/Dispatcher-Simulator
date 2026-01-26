@@ -1,0 +1,458 @@
+/* =====================================================
+   DISPATCHER SIMULATOR - LIGHT THEME (WHITEMODE)
+   Professional Clean Design for Daylight Usage
+   ===================================================== */
+
+[data-theme="light"] {
+    /* Professional Light Color Palette */
+    --primary-red: #d32f2f;           /* Emergency red - stays bold */
+    --secondary-blue: #1976d2;        /* Professional blue */
+    --success-green: #388e3c;         /* Success green */
+    --warning-orange: #f57c00;        /* Warning orange */
+    --danger-red: #c62828;            /* Critical red */
+    --info-cyan: #0288d1;             /* Information blue */
+    
+    /* Light Gray Scale - Inverted */
+    --bg-darkest: #f5f7fa;            /* Main background - light gray */
+    --bg-dark: #ffffff;               /* Secondary background - pure white */
+    --bg-secondary: #fafbfc;          /* Third level - very light gray */
+    --panel-bg: #ffffff;              /* Panel backgrounds - white */
+    --panel-header: #f0f3f7;          /* Panel headers - light gray */
+    --input-bg: #ffffff;              /* Input fields - white */
+    --border-color: #d1d5db;          /* Border color - medium gray */
+    
+    /* Text Colors - Inverted for Light Background */
+    --text-primary: #1f2937;          /* Main text - dark gray */
+    --text-secondary: #6b7280;        /* Secondary text - medium gray */
+    --text-muted: #9ca3af;            /* Muted text - light gray */
+    
+    /* Borders & Dividers - Light Theme */
+    --border-light: #e5e7eb;          /* Subtle borders */
+    --border-medium: #d1d5db;         /* Medium borders */
+    --border-strong: #9ca3af;         /* Strong borders */
+    
+    /* Functional Colors - Stay the same */
+    --status-available: #2e7d32;      /* Available/Ready */
+    --status-busy: #f57c00;           /* Busy/En route */
+    --status-offline: #616161;        /* Offline */
+    --status-emergency: #c62828;      /* Emergency */
+    
+    /* Shadows - Lighter for white background */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================================================
+   BODY - Light Background
+   ===================================================== */
+
+[data-theme="light"] body {
+    background: var(--bg-darkest);
+    color: var(--text-primary);
+}
+
+/* =====================================================
+   OVERLAYS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .overlay {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+}
+
+[data-theme="light"] .welcome-container,
+[data-theme="light"] .settings-container {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-lg);
+}
+
+/* =====================================================
+   BUTTONS - Light Theme Adjustments
+   ===================================================== */
+
+[data-theme="light"] .btn {
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .btn:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* =====================================================
+   FORMS & INPUTS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .setting-item input[type="text"],
+[data-theme="light"] .setting-item input[type="password"],
+[data-theme="light"] .setting-item select,
+[data-theme="light"] .form-control {
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .setting-item input:focus,
+[data-theme="light"] .setting-item select:focus,
+[data-theme="light"] .form-control:focus {
+    border-color: var(--info-cyan);
+    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.1);
+}
+
+/* =====================================================
+   DROPDOWNS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] select {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 2px solid var(--border-medium);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] select:hover {
+    border-color: var(--info-cyan);
+    background: linear-gradient(135deg, #fafbfc 0%, #f3f4f6 100%);
+    box-shadow: 0 4px 8px rgba(49, 130, 206, 0.1), inset 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] select:focus {
+    border-color: var(--info-cyan);
+    box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.15), 0 4px 12px rgba(49, 130, 206, 0.2);
+}
+
+[data-theme="light"] select option {
+    background: #ffffff;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+[data-theme="light"] select option:hover {
+    background: #f3f4f6;
+}
+
+[data-theme="light"] select option:checked {
+    background: linear-gradient(135deg, #3182ce 0%, #2563eb 100%);
+    color: white;
+}
+
+[data-theme="light"] #radio-vehicle-dropdown {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 3px solid #3182ce;
+    box-shadow: 0 3px 8px rgba(49, 130, 206, 0.15), inset 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+/* =====================================================
+   HEADER - Light Theme
+   ===================================================== */
+
+[data-theme="light"] header {
+    background: var(--panel-bg);
+    border-bottom: 2px solid var(--primary-red);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .header-subtitle,
+[data-theme="light"] #current-time,
+[data-theme="light"] .header-right span {
+    background: var(--panel-header);
+    border: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   PANELS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .panel-header {
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   INCIDENTS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .incident-item {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--danger-red);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .incident-item:hover {
+    background: var(--panel-header);
+    box-shadow: var(--shadow-md);
+}
+
+/* =====================================================
+   VEHICLES - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .vehicle-item {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .vehicle-item:hover {
+    background: var(--panel-header);
+}
+
+[data-theme="light"] .vehicle-card-compact {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .vehicle-card-compact:hover {
+    background: var(--panel-header);
+    border-color: var(--border-medium);
+    box-shadow: var(--shadow-md);
+}
+
+/* =====================================================
+   STATIONS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .station-group-compact {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .station-header-compact {
+    background: var(--panel-header);
+}
+
+[data-theme="light"] .station-header-compact:hover {
+    background: var(--bg-secondary);
+}
+
+/* =====================================================
+   MAP - Light Theme (Subtle Border)
+   ===================================================== */
+
+[data-theme="light"] .map-container {
+    background: #e5e7eb;
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-md);
+}
+
+/* =====================================================
+   RADIO LOG - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .radio-message {
+    background: var(--panel-header);
+    border-left: 2px solid var(--info-cyan);
+}
+
+/* =====================================================
+   MODALS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .modal {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+}
+
+[data-theme="light"] .modal-content {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-lg);
+}
+
+[data-theme="light"] .modal-header {
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   SCROLLBARS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: var(--panel-header);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}
+
+/* =====================================================
+   INCOMING CALL - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .incoming-call-card {
+    background: rgba(211, 47, 47, 0.08);
+    border: 2px solid var(--danger-red);
+}
+
+[data-theme="light"] .incoming-call-card:hover {
+    background: rgba(211, 47, 47, 0.15);
+}
+
+/* =====================================================
+   FILTER BUTTONS - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .filter-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+}
+
+[data-theme="light"] .filter-btn:hover {
+    background: var(--panel-header);
+}
+
+[data-theme="light"] .filter-btn.active {
+    background: var(--info-cyan);
+    color: white;
+}
+
+[data-theme="light"] .action-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+}
+
+[data-theme="light"] .action-btn:hover {
+    background: var(--panel-header);
+}
+
+/* =====================================================
+   VEHICLE CARDS (Assignment) - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .vehicle-card-large {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-medium);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .vehicle-card-large:hover {
+    border-color: var(--info-cyan);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .vehicle-card-large.selected {
+    background: var(--success-green);
+    border-color: var(--success-green);
+}
+
+[data-theme="light"] .vehicle-card-type {
+    background: var(--panel-header);
+}
+
+[data-theme="light"] .vehicle-card-large.selected .vehicle-card-type {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* =====================================================
+   CALL SYSTEM - Light Theme
+   ===================================================== */
+
+[data-theme="light"] #caller-messages {
+    background: var(--panel-header);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .msg-dispatcher {
+    background: rgba(25, 118, 210, 0.08);
+    border-left: 3px solid var(--info-cyan);
+}
+
+[data-theme="light"] .msg-caller {
+    background: var(--bg-dark);
+    border-left: 3px solid var(--warning-orange);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .cat-header {
+    background: var(--panel-header);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .cat-header:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="light"] .q-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--info-cyan);
+}
+
+[data-theme="light"] .q-btn:hover {
+    background: var(--panel-header);
+    box-shadow: var(--shadow-sm);
+}
+
+/* =====================================================
+   STICHWORT DROPDOWN - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .stichwort-dropdown {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .stichwort-item {
+    border-bottom: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .stichwort-item:hover {
+    background: var(--panel-header);
+}
+
+/* =====================================================
+   SHORTCUTS HINT - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .shortcuts-hint kbd {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+/* =====================================================
+   BUTTON ICON COMPACT - Light Theme
+   ===================================================== */
+
+[data-theme="light"] .btn-icon-compact {
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+}
+
+[data-theme="light"] .btn-icon-compact:hover {
+    background: var(--panel-header);
+    box-shadow: var(--shadow-sm);
+}
+
+/* =====================================================
+   THEME TOGGLE BUTTON (Special Styling)
+   ===================================================== */
+
+[data-theme="light"] .theme-toggle-btn {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f;
+    border: 2px solid #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+console.log('🌞 Light Theme CSS geladen!');
