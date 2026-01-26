@@ -1,6 +1,7 @@
 // =========================
-// THEME MANAGER v1.0
+// THEME MANAGER v1.1
 // Dark/Light Mode Toggle System
+// Without Emojis in Settings
 // =========================
 
 class ThemeManager {
@@ -116,8 +117,8 @@ class ThemeManager {
                     <i class="fas fa-palette"></i> Design-Theme
                 </label>
                 <select id="theme-select" class="form-control">
-                    <option value="dark">🌙 Dark Mode (Standard)</option>
-                    <option value="light">☀️ Light Mode (Whitemode)</option>
+                    <option value="dark">Dark Mode</option>
+                    <option value="light">White Mode</option>
                 </select>
                 <small style="color: var(--text-muted); margin-top: 6px; display: block;">
                     Wechsel zwischen dunklem und hellem Design
@@ -126,7 +127,7 @@ class ThemeManager {
         `;
         
         // Füge nach Spielgeschwindigkeit ein
-        const speedSetting = document.querySelector('.setting-item:has(#speedMultiplier)');
+        const speedSetting = document.querySelector('.setting-item:has(#game-speed)');
         if (speedSetting) {
             speedSetting.insertAdjacentHTML('afterend', themeSettingHTML);
         } else {
@@ -227,4 +228,4 @@ class ThemeManager {
 // Globale Instanz erstellen
 window.themeManager = new ThemeManager();
 
-console.log('🎨 Theme Manager v1.0 geladen');
+console.log('🎨 Theme Manager v1.1 geladen (ohne Emojis in Settings)');
