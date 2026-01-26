@@ -32,7 +32,7 @@ const VERSION_CONFIG = {
      * CSS-Dateien die geladen werden müssen
      */
     CSS_FILES: [
-        'css/style-v6.1.3.css', // ✅ FIX: Korrigierter Dateiname
+        'css/style.css', // ✅ FIX: Korrigierter Dateiname
         'css/map-icons.css',
         'css/draggable.css',
         'css/tabs.css',
@@ -145,7 +145,7 @@ const VERSION_CONFIG = {
             this.loadedCSS.add(normalized);
         });
         
-        // Lokale CSS OHNE Versionierung (da bereits im Dateinamen)
+        // Lokale CSS mit Versionierung
         this.CSS_FILES.forEach(path => {
             const normalized = this.normalizeUrl(path);
             if (this.loadedCSS.has(normalized)) {
@@ -155,7 +155,7 @@ const VERSION_CONFIG = {
             
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = path; // ✅ OHNE Version-Parameter
+            link.href = this.getVersionedUrl(path); // ✅ MIT Version-Parameter
             document.head.appendChild(link);
             this.loadedCSS.add(normalized);
         });
