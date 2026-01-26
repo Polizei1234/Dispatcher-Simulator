@@ -1,11 +1,11 @@
 // =========================
-// AI INCIDENT GENERATOR v3.0.1
+// AI INCIDENT GENERATOR v3.0.2
 // PHASE 2 - COMPOSITION SYSTEM INTEGRATION
 // Nutzt incident-composer.js für flexible Einsatzerstellung
 // =========================
 
 /**
- * AI INCIDENT GENERATOR v3.0.1
+ * AI INCIDENT GENERATOR v3.0.2
  * 
  * 🆕 NEU IN v3.0:
  * - Nutzt incidentComposer.compose() statt feste Templates
@@ -17,6 +17,9 @@
  * ✅ FIX v3.0.1:
  * - Entfernt HospitalService Dependency (nicht nötig)
  * - Hospital-Auswahl direkt aus HOSPITALS Datenbank
+ * 
+ * ✅ FIX v3.0.2:
+ * - Verwendet hospital.location statt hospital.position
  * 
  * WORKFLOW:
  * 1. Wähle Severity (MINOR/MODERATE/CRITICAL) basierend auf:
@@ -37,7 +40,7 @@ class AIIncidentGenerator {
         this.locationGenerator = new LocationGenerator();
         this.weatherSystem = null;
         
-        console.log('🤖 AI Incident Generator v3.0.1 initialisiert');
+        console.log('🤖 AI Incident Generator v3.0.2 initialisiert');
         console.log('   ✅ Nutzt Composition System');
     }
     
@@ -52,7 +55,7 @@ class AIIncidentGenerator {
      * 🆕 HAUPT-FUNKTION: Generiert Einsatz mit Composition System
      */
     async generateIncident(ownedVehicles, gameTime) {
-        console.group('🚑 GENERIERE EINSATZ MIT COMPOSITION SYSTEM v3.0.1');
+        console.group('🚑 GENERIERE EINSATZ MIT COMPOSITION SYSTEM v3.0.2');
         
         try {
             // 1. Prüfe ob Composer verfügbar
@@ -531,7 +534,10 @@ MELDEBILD-BEISPIELE:
         const incidentId = `E${Date.now().toString().slice(-8)}`;
         
         // ✅ FIX: Hospital direkt aus HOSPITALS wählen
-        const targetHospital = this.selectNearestHospital([location.lat, location.lon]);
+        let targetHospital = null;
+        if (schema.transport.probability > 0.5) {
+            targetHospital = this.selectNearestHospital([location.lat, location.lon]);
+        }
         
         return {
             // IDs
@@ -574,7 +580,7 @@ MELDEBILD-BEISPIELE:
             // ✅ Dauer & Transport (Schema)
             einsatzdauer_minuten: schema.duration.min + Math.floor(Math.random() * (schema.duration.max - schema.duration.min)),
             transport_notwendig: schema.transport.probability > 0.5,
-            zielkrankenhaus: schema.transport.probability > 0.5 ? targetHospital : null,
+            zielkrankenhaus: targetHospital, // ✅ FIX: Direkt Hospital-Object speichern (nicht nur Name)
             
             // ✅ Fahrzeuge (Schema)
             benoetigte_fahrzeuge: this.convertVehiclesToObject(schema.vehicles),
@@ -604,16 +610,24 @@ MELDEBILD-BEISPIELE:
     
     /**
      * ✅ FIX: Wählt nächstes Krankenhaus aus HOSPITALS
+     * @returns {object|null} Hospital-Objekt mit .location Property
      */
     selectNearestHospital(position) {
         if (!window.HOSPITALS || HOSPITALS.length === 0) {
-            return 'Rems-Murr-Klinikum Winnenden';
+            console.warn('⚠️ HOSPITALS nicht verfügbar');
+            return null;
         }
         
-        // Einfache Auswahl: Erstes Krankenhaus
-        // TODO: Später Distanzberechnung implementieren
-        const hospital = HOSPITALS[Math.floor(Math.random() * HOSPITALS.length)];
-        return hospital.name;
+        // Nutze HOSPITALS.findNearest()
+        const hospital = HOSPITALS.findNearest(position, { emergencyRoom: true });
+        
+        if (!hospital) {
+            console.warn('⚠️ Kein Krankenhaus gefunden');
+            return null;
+        }
+        
+        console.log(`🏥 Krankenhaus gewählt: ${hospital.shortName}`);
+        return hospital; // ✅ Gibt vollständiges Hospital-Objekt zurück (mit .location)
     }
     
     /**
@@ -731,4 +745,4 @@ MELDEBILD-BEISPIELE:
 // Globale Instanz
 window.AIIncidentGenerator = AIIncidentGenerator;
 
-console.log('🤖 AI Incident Generator v3.0.1 geladen - ✅ HospitalService Fix!');
+console.log('🤖 AI Incident Generator v3.0.2 geladen - ✅ Hospital.location Fix!');
