@@ -1,6 +1,7 @@
 // =========================
-// DEBUG-MENÜ SYSTEM v1.0
+// DEBUG-MENÜ SYSTEM v1.1 - TEST CALL FIX
 // Erweiterte Debug-Funktionen für Entwickler
+// ✅ FIX: Test-Einsatz startet jetzt Anruf über CallSystem
 // =========================
 
 class DebugMenu {
@@ -314,8 +315,8 @@ class DebugMenu {
             <div class="debug-actions-grid">
                 <div class="debug-action-section">
                     <h4>🚨 Einsätze</h4>
-                    <button class="btn-debug" onclick="debugMenu.createTestIncident()">Test-Einsatz erstellen</button>
-                    <button class="btn-debug" onclick="debugMenu.createMassIncidents()">5 Einsätze erstellen</button>
+                    <button class="btn-debug" onclick="debugMenu.createTestIncident()">📞 Test-Anruf starten</button>
+                    <button class="btn-debug" onclick="debugMenu.createMassIncidents()">📞 5 Anrufe starten</button>
                     <button class="btn-debug" onclick="debugMenu.clearAllIncidents()">Alle Einsätze löschen</button>
                 </div>
                 
@@ -375,29 +376,57 @@ class DebugMenu {
         this.update();
     }
 
-    createTestIncident() {
-        if (!game) return;
+    /**
+     * ✅ FIX: Erstellt Test-ANRUF statt fertigen Einsatz
+     */
+    async createTestIncident() {
+        if (!game) {
+            this.log('incidents', 'Kein Spiel aktiv!', 'error');
+            return;
+        }
         
-        const testIncident = {
-            id: `TEST-${Date.now()}`,
-            stichwort: 'TEST-EINSATZ',
-            ort: 'Test-Straße 123',
-            meldebild: 'Debug-Test-Einsatz',
-            zeitstempel: new Date().toLocaleTimeString('de-DE'),
-            koordinaten: { lat: 48.8309415, lon: 9.3256194 },
-            assignedVehicles: [],
-            completed: false
-        };
+        // Prüfe ob CallSystem verfügbar
+        if (typeof CallSystem === 'undefined') {
+            this.log('incidents', '❌ CallSystem nicht verfügbar!', 'error');
+            alert('❌ CallSystem nicht verfügbar. Bitte Seite neu laden.');
+            return;
+        }
         
-        game.incidents.push(testIncident);
-        this.log('incidents', 'Test-Einsatz erstellt');
+        try {
+            this.log('incidents', '📞 Starte Test-Anruf...');
+            
+            // Nutze CallSystem für eingehenden Anruf
+            await CallSystem.generateIncomingCall();
+            
+            this.log('incidents', '✅ Test-Anruf erfolgreich gestartet!');
+            
+            // Wechsle zum Notruf-Tab wenn möglich
+            if (typeof switchTab === 'function') {
+                switchTab('call');
+            }
+            
+        } catch (error) {
+            this.log('incidents', `❌ Fehler beim Test-Anruf: ${error.message}`, 'error');
+            console.error('Debug Test-Anruf Fehler:', error);
+            alert(`❌ Fehler beim Test-Anruf:\n${error.message}`);
+        }
+        
         this.update();
     }
 
-    createMassIncidents() {
+    /**
+     * Erstellt mehrere Test-Anrufe
+     */
+    async createMassIncidents() {
+        this.log('incidents', '📞 Starte 5 Test-Anrufe...');
+        
         for (let i = 0; i < 5; i++) {
-            this.createTestIncident();
+            await this.createTestIncident();
+            // Kurze Pause zwischen Anrufen
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
+        
+        this.log('incidents', '✅ 5 Test-Anrufe gestartet!');
     }
 
     clearAllIncidents() {
@@ -717,7 +746,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-console.log('✅ Debug-Menü geladen - Drücke Strg+Shift+D zum Öffnen');
+console.log('✅ Debug-Menü v1.1 geladen - Drücke Strg+Shift+D zum Öffnen');
 
 if (typeof window !== 'undefined') {
     window.debugMenu = debugMenu;
