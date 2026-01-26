@@ -1,10 +1,11 @@
 // =========================
-// UNIVERSAL DROPDOWN v1.1
+// UNIVERSAL DROPDOWN v1.2
 // Schönes Custom Dropdown für:
 // - Detail-Stichwort
 // - Stadtteil
 // - Besondere Örtlichkeit
 // ✅ FIX: Callback gibt jetzt VALUE zurück, nicht ganzes Objekt!
+// ✅ v1.2: Verhindert doppelte Event Listener beim Neuinitialisieren
 // =========================
 
 const UniversalDropdown = {
@@ -24,6 +25,12 @@ const UniversalDropdown = {
             return;
         }
 
+        // ✅ FIX: Cleanup wenn bereits initialisiert
+        if (this.activeDropdowns.has(inputId)) {
+            console.log(`♻️ Dropdown ${inputId} bereits initialisiert, cleanup...`);
+            this.cleanup(inputId);
+        }
+
         const config = {
             placeholder: options.placeholder || 'Eingabe...',
             searchFields: options.searchFields || ['keyword', 'label', 'description', 'category'],
@@ -32,13 +39,29 @@ const UniversalDropdown = {
             keyField: options.keyField || 'keyword'
         };
 
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.width = '100%';
-        wrapper.dataset.dropdownId = inputId;
-        
-        input.parentNode.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
+        // ✅ FIX: Wrapper nur erstellen wenn nicht vorhanden
+        let wrapper = input.parentElement;
+        if (!wrapper || !wrapper.dataset.dropdownId) {
+            wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.width = '100%';
+            wrapper.dataset.dropdownId = inputId;
+            
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+        }
+
+        // ✅ FIX: Event Listener Funktionen speichern für späteres Cleanup
+        const listeners = {
+            focus: () => this.showDropdown(inputId),
+            input: () => this.filterDropdown(inputId, input.value),
+            keydown: (e) => this.handleKeyboard(inputId, e),
+            documentClick: (e) => {
+                if (!wrapper.contains(e.target)) {
+                    this.hideDropdown(inputId);
+                }
+            }
+        };
 
         this.activeDropdowns.set(inputId, {
             input,
@@ -46,7 +69,8 @@ const UniversalDropdown = {
             items,
             onSelect,
             config,
-            dropdownElement: null
+            dropdownElement: null,
+            listeners // ✅ Speichere Listener für Cleanup
         });
 
         this.attachEventListeners(inputId);
@@ -58,25 +82,36 @@ const UniversalDropdown = {
         const dropdown = this.activeDropdowns.get(dropdownId);
         if (!dropdown) return;
 
-        const { input, wrapper } = dropdown;
+        const { input, listeners } = dropdown;
 
-        input.addEventListener('focus', () => {
-            this.showDropdown(dropdownId);
-        });
+        // ✅ Attach Event Listeners
+        input.addEventListener('focus', listeners.focus);
+        input.addEventListener('input', listeners.input);
+        input.addEventListener('keydown', listeners.keydown);
+        document.addEventListener('click', listeners.documentClick);
+    },
 
-        input.addEventListener('input', () => {
-            this.filterDropdown(dropdownId, input.value);
-        });
+    // ✅ NEU: Cleanup Funktion
+    cleanup(dropdownId) {
+        const dropdown = this.activeDropdowns.get(dropdownId);
+        if (!dropdown) return;
 
-        document.addEventListener('click', (e) => {
-            if (!wrapper.contains(e.target)) {
-                this.hideDropdown(dropdownId);
-            }
-        });
+        const { input, listeners, dropdownElement } = dropdown;
 
-        input.addEventListener('keydown', (e) => {
-            this.handleKeyboard(dropdownId, e);
-        });
+        // Entferne Event Listeners
+        if (listeners) {
+            input.removeEventListener('focus', listeners.focus);
+            input.removeEventListener('input', listeners.input);
+            input.removeEventListener('keydown', listeners.keydown);
+            document.removeEventListener('click', listeners.documentClick);
+        }
+
+        // Entferne Dropdown Element
+        if (dropdownElement && dropdownElement.parentNode) {
+            dropdownElement.remove();
+        }
+
+        console.log(`🗑️ Dropdown ${dropdownId} bereinigt`);
     },
 
     showDropdown(dropdownId) {
@@ -94,7 +129,8 @@ const UniversalDropdown = {
         items.forEach((item, index) => {
             const itemElement = this.createItemElement(item, index, config);
             
-            itemElement.addEventListener('click', () => {
+            itemElement.addEventListener('click', (e) => {
+                e.stopPropagation(); // ✅ Verhindert dass document click das Dropdown schließt
                 this.selectItem(dropdownId, item);
             });
 
@@ -305,6 +341,13 @@ const UniversalDropdown = {
         }
 
         console.log(`✅ Dropdown-Items aktualisiert: ${dropdownId}`);
+    },
+
+    // ✅ NEU: Destroy Funktion für komplette Entfernung
+    destroy(dropdownId) {
+        this.cleanup(dropdownId);
+        this.activeDropdowns.delete(dropdownId);
+        console.log(`🗑️ Dropdown ${dropdownId} komplett entfernt`);
     }
 };
 
@@ -312,4 +355,4 @@ if (typeof window !== 'undefined') {
     window.UniversalDropdown = UniversalDropdown;
 }
 
-console.log('✅ Universal Dropdown System v1.1 geladen (FIX: Callback gibt value zurück)');
+console.log('✅ Universal Dropdown System v1.2 geladen (FIX: Verhindert doppelte Event Listener)');
