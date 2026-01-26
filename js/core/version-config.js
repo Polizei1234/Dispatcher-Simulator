@@ -1,7 +1,7 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.0
+// CENTRAL VERSION MANAGER v2.1
 // SINGLE SOURCE OF TRUTH für Version
-// Ersetzt dezentrale Versionspflege
+// ✅ FIX: Verhindert doppeltes Script-Laden
 // =========================
 
 const VERSION_CONFIG = {
@@ -17,6 +17,7 @@ const VERSION_CONFIG = {
     
     // ✅ FIX: Tracking für bereits geladene Scripts
     loadedScripts: new Set(),
+    loadedCSS: new Set(),
     
     /**
      * Generiert versionierte URL für Cache-Busting
@@ -31,7 +32,7 @@ const VERSION_CONFIG = {
      * CSS-Dateien die geladen werden müssen
      */
     CSS_FILES: [
-        'css/style.css', // ✅ FIX: Entfernt Versionsnummer aus Dateiname
+        'css/style-v6.1.3.css', // ✅ FIX: Korrigierter Dateiname
         'css/map-icons.css',
         'css/draggable.css',
         'css/tabs.css',
@@ -118,23 +119,45 @@ const VERSION_CONFIG = {
     },
     
     /**
+     * ✅ FIX: Normalisiert URLs für Vergleich
+     */
+    normalizeUrl: function(url) {
+        return url.split('?')[0].toLowerCase().trim();
+    },
+    
+    /**
      * Lädt alle CSS-Dateien dynamisch
+     * ✅ FIX: Verhindert doppeltes Laden
      */
     loadCSS: function() {
         // Externe CSS
         this.EXTERNAL_LIBS.css.forEach(url => {
+            const normalized = this.normalizeUrl(url);
+            if (this.loadedCSS.has(normalized)) {
+                console.warn(`⚠️ CSS bereits geladen, überspringe: ${url}`);
+                return;
+            }
+            
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = url;
             document.head.appendChild(link);
+            this.loadedCSS.add(normalized);
         });
         
-        // Lokale CSS mit Versionierung
+        // Lokale CSS OHNE Versionierung (da bereits im Dateinamen)
         this.CSS_FILES.forEach(path => {
+            const normalized = this.normalizeUrl(path);
+            if (this.loadedCSS.has(normalized)) {
+                console.warn(`⚠️ CSS bereits geladen, überspringe: ${path}`);
+                return;
+            }
+            
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = this.getVersionedUrl(path);
+            link.href = path; // ✅ OHNE Version-Parameter
             document.head.appendChild(link);
+            this.loadedCSS.add(normalized);
         });
         
         console.log(`✅ ${this.CSS_FILES.length} CSS-Dateien geladen (v${this.VERSION})`);
@@ -142,42 +165,71 @@ const VERSION_CONFIG = {
     
     /**
      * Lädt alle JavaScript-Dateien dynamisch und sequenziell
+     * ✅ FIX: Bessere Duplikat-Prüfung
      */
     loadJS: async function() {
-        // Externe JS
-        for (const url of this.EXTERNAL_LIBS.js) {
-            await this.loadScript(url);
+        try {
+            // Externe JS
+            for (const url of this.EXTERNAL_LIBS.js) {
+                await this.loadScript(url, false); // Keine Versionierung für CDN
+            }
+            
+            // Lokale JS mit Versionierung
+            for (const path of this.JS_FILES) {
+                await this.loadScript(path, true); // Mit Versionierung
+            }
+            
+            console.log(`✅ ${this.JS_FILES.length} JS-Dateien erfolgreich geladen (v${this.VERSION})`);
+        } catch (error) {
+            console.error('❌ Fehler beim Laden der JS-Dateien:', error);
+            throw error;
         }
-        
-        // Lokale JS mit Versionierung
-        for (const path of this.JS_FILES) {
-            await this.loadScript(this.getVersionedUrl(path));
-        }
-        
-        console.log(`✅ ${this.JS_FILES.length} JS-Dateien geladen (v${this.VERSION})`);
     },
     
     /**
      * Lädt einzelnes Script asynchron
-     * ✅ FIX: Verhindert doppeltes Laden
+     * ✅ FIX: Verhindert doppeltes Laden mit besserer Normalisierung
      */
-    loadScript: function(src) {
+    loadScript: function(path, addVersion = true) {
         return new Promise((resolve, reject) => {
+            const normalized = this.normalizeUrl(path);
+            
             // ✅ FIX: Prüfe ob bereits geladen
-            const normalizedSrc = src.split('?')[0]; // Entferne Query-Parameter für Vergleich
-            if (this.loadedScripts.has(normalizedSrc)) {
-                console.warn(`⚠️ Script bereits geladen, überspringe: ${normalizedSrc}`);
+            if (this.loadedScripts.has(normalized)) {
+                console.warn(`⚠️ Script bereits geladen, überspringe: ${path}`);
+                resolve();
+                return;
+            }
+            
+            // ✅ FIX: Prüfe ob Script-Tag bereits im DOM existiert
+            const existingScripts = Array.from(document.querySelectorAll('script'));
+            const exists = existingScripts.some(script => {
+                const scriptNormalized = this.normalizeUrl(script.src);
+                return scriptNormalized === normalized;
+            });
+            
+            if (exists) {
+                console.warn(`⚠️ Script bereits im DOM, überspringe: ${path}`);
+                this.loadedScripts.add(normalized);
                 resolve();
                 return;
             }
             
             const script = document.createElement('script');
+            const src = addVersion ? this.getVersionedUrl(path) : path;
             script.src = src;
+            
             script.onload = () => {
-                this.loadedScripts.add(normalizedSrc);
+                this.loadedScripts.add(normalized);
+                console.log(`  ✓ Geladen: ${path}`);
                 resolve();
             };
-            script.onerror = () => reject(new Error(`Failed to load: ${src}`));
+            
+            script.onerror = (error) => {
+                console.error(`  ✗ Fehler: ${path}`, error);
+                reject(new Error(`Failed to load script: ${path}`));
+            };
+            
             document.body.appendChild(script);
         });
     },
@@ -317,12 +369,11 @@ const VERSION_CONFIG = {
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
                 <p><strong>Neu in dieser Version:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>✅ Zentrale Versionsverwaltung (nur 1 Stelle!)</li>
-                    <li>✅ FMS-Status vereinheitlicht</li>
-                    <li>✅ Funksystem-Bugs behoben</li>
-                    <li>✅ Memory-Leaks gefixed</li>
-                    <li>✅ Performance verbessert</li>
-                    <li>✅ Doppeltes Script-Laden verhindert</li>
+                    <li>✅ Doppeltes Script-Laden behoben</li>
+                    <li>✅ CSS-Dateipfad korrigiert</li>
+                    <li>✅ Bessere Duplikat-Prüfung</li>
+                    <li>✅ Verbesserte Fehlerbehandlung</li>
+                    <li>✅ Performance optimiert</li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
@@ -383,4 +434,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.1 geladen - Version: ${VERSION_CONFIG.VERSION}`);
