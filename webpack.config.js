@@ -1,44 +1,47 @@
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 module.exports = (env, argv) => {
     const isProduction = argv.mode === 'production';
-    const isDevelopment = !isProduction;
+    const shouldAnalyze = env && env.analyze;
 
     return {
         entry: {
-            // Main bundle
+            // Hauptbundle: Core + Game Logic
             main: './js/core/main.js',
             
-            // Version config (separate for cache busting)
-            version: './js/core/version-config.js',
+            // UI Bundle: Alle UI-Komponenten
+            ui: './js/ui/ui.js',
+            
+            // Systems Bundle: AI, Weather, Radio etc.
+            systems: './js/systems/call-system.js',
+            
+            // Styles Bundle
+            styles: './css/style.css'
         },
         
         output: {
+            filename: isProduction ? 'js/[name].[contenthash:8].bundle.js' : 'js/[name].bundle.js',
             path: path.resolve(__dirname, 'dist'),
-            filename: isProduction 
-                ? 'js/[name].[contenthash:8].js' 
-                : 'js/[name].js',
-            chunkFilename: isProduction 
-                ? 'js/[name].[contenthash:8].chunk.js' 
-                : 'js/[name].chunk.js',
-            assetModuleFilename: 'assets/[name].[contenthash:8][ext]',
             clean: true,
-            publicPath: '/'
+            publicPath: '/dist/'
         },
-        
-        mode: isProduction ? 'production' : 'development',
-        devtool: isProduction ? 'source-map' : 'eval-source-map',
         
         module: {
             rules: [
-                // JavaScript
+                // CSS Handling
+                {
+                    test: /\.css$/i,
+                    use: [
+                        isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
+                        'css-loader'
+                    ]
+                },
+                
+                // JavaScript (optional: Babel für ältere Browser)
                 {
                     test: /\.js$/,
                     exclude: /node_modules/,
@@ -47,123 +50,39 @@ module.exports = (env, argv) => {
                         options: {
                             presets: [
                                 ['@babel/preset-env', {
-                                    targets: '> 0.5%, last 2 versions, not dead',
+                                    targets: '> 0.25%, not dead',
                                     useBuiltIns: 'usage',
-                                    corejs: { version: 3, proposals: true }
+                                    corejs: 3
                                 }]
-                            ],
-                            cacheDirectory: true
+                            ]
                         }
-                    }
-                },
-                
-                // CSS
-                {
-                    test: /\.css$/,
-                    use: [
-                        isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
-                        'css-loader'
-                    ]
-                },
-                
-                // Images
-                {
-                    test: /\.(png|jpg|jpeg|gif|svg|ico)$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'images/[name].[contenthash:8][ext]'
-                    }
-                },
-                
-                // Fonts
-                {
-                    test: /\.(woff|woff2|eot|ttf|otf)$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'fonts/[name].[contenthash:8][ext]'
-                    }
-                },
-                
-                // Audio
-                {
-                    test: /\.(mp3|wav|ogg)$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'audio/[name].[contenthash:8][ext]'
                     }
                 }
             ]
         },
         
         plugins: [
-            // Clean dist folder
-            new CleanWebpackPlugin(),
-            
-            // Generate HTML
-            new HtmlWebpackPlugin({
-                template: './index.html',
-                filename: 'index.html',
-                inject: 'body',
-                minify: isProduction ? {
-                    collapseWhitespace: true,
-                    removeComments: true,
-                    removeRedundantAttributes: true,
-                    removeScriptTypeAttributes: true,
-                    removeStyleLinkTypeAttributes: true,
-                    useShortDoctype: true
-                } : false
+            // CSS Extraktion für Production
+            new MiniCssExtractPlugin({
+                filename: isProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css'
             }),
             
-            // Extract CSS
-            ...(isProduction ? [
-                new MiniCssExtractPlugin({
-                    filename: 'css/[name].[contenthash:8].css',
-                    chunkFilename: 'css/[name].[contenthash:8].chunk.css'
-                })
-            ] : []),
-            
-            // Copy static assets
-            new CopyWebpackPlugin({
-                patterns: [
-                    // CSS files (keep external for now, can be bundled later)
-                    { from: 'css', to: 'css', noErrorOnMissing: true },
-                    
-                    // Data files
-                    { from: 'js/data', to: 'js/data', noErrorOnMissing: true },
-                    
-                    // Audio files
-                    { from: 'audio', to: 'audio', noErrorOnMissing: true },
-                    
-                    // Images
-                    { from: 'images', to: 'images', noErrorOnMissing: true },
-                    
-                    // Manifest & other root files
-                    { from: 'manifest.json', to: 'manifest.json', noErrorOnMissing: true },
-                    { from: 'favicon.ico', to: 'favicon.ico', noErrorOnMissing: true },
-                    { from: 'robots.txt', to: 'robots.txt', noErrorOnMissing: true }
-                ]
-            }),
-            
-            // Bundle analyzer (only when --env analyze is set)
-            ...(env && env.analyze ? [
-                new BundleAnalyzerPlugin({
-                    analyzerMode: 'static',
-                    openAnalyzer: true,
-                    reportFilename: 'bundle-report.html'
-                })
-            ] : [])
+            // Bundle Analyzer (nur wenn --env analyze)
+            ...(shouldAnalyze ? [new BundleAnalyzerPlugin()] : [])
         ],
         
         optimization: {
             minimize: isProduction,
             minimizer: [
-                // Minify JS
+                // JavaScript Minification
                 new TerserPlugin({
                     terserOptions: {
                         compress: {
-                            drop_console: isProduction, // Remove console.log in production
-                            drop_debugger: true,
-                            pure_funcs: isProduction ? ['console.log', 'console.debug'] : []
+                            drop_console: isProduction, // Entfernt console.logs in Production
+                            passes: 2
+                        },
+                        mangle: {
+                            safari10: true
                         },
                         format: {
                             comments: false
@@ -172,75 +91,57 @@ module.exports = (env, argv) => {
                     extractComments: false
                 }),
                 
-                // Minify CSS
+                // CSS Minification
                 new CssMinimizerPlugin()
             ],
             
-            // Code splitting
+            // Code Splitting
             splitChunks: {
                 chunks: 'all',
                 cacheGroups: {
-                    // Vendor libraries (external dependencies)
+                    // Vendor Bundle für externe Libraries
                     vendor: {
                         test: /[\\/]node_modules[\\/]/,
                         name: 'vendor',
-                        priority: 10,
-                        reuseExistingChunk: true
+                        priority: 10
                     },
                     
-                    // Core modules (config, game, etc)
-                    core: {
-                        test: /[\\/]js[\\/]core[\\/]/,
-                        name: 'core',
-                        priority: 5,
-                        minChunks: 2,
-                        reuseExistingChunk: true
-                    },
-                    
-                    // UI modules
-                    ui: {
-                        test: /[\\/]js[\\/]ui[\\/]/,
-                        name: 'ui',
-                        priority: 5,
-                        minChunks: 2,
-                        reuseExistingChunk: true
-                    },
-                    
-                    // Systems modules
-                    systems: {
-                        test: /[\\/]js[\\/]systems[\\/]/,
-                        name: 'systems',
-                        priority: 5,
-                        minChunks: 2,
-                        reuseExistingChunk: true
-                    },
-                    
-                    // Utils modules
-                    utils: {
-                        test: /[\\/]js[\\/]utils[\\/]/,
-                        name: 'utils',
-                        priority: 5,
-                        minChunks: 2,
-                        reuseExistingChunk: true
-                    },
-                    
-                    // Common modules (shared across multiple entry points)
+                    // Common Code zwischen Bundles
                     common: {
-                        name: 'common',
                         minChunks: 2,
-                        priority: 1,
-                        reuseExistingChunk: true
+                        priority: 5,
+                        reuseExistingChunk: true,
+                        enforce: true
                     }
                 }
             },
             
-            // Runtime chunk for better caching
-            runtimeChunk: 'single',
-            
-            // Module IDs for better caching
-            moduleIds: 'deterministic'
+            // Runtime Chunk für besseres Caching
+            runtimeChunk: 'single'
         },
         
+        // Source Maps für Debugging
+        devtool: isProduction ? 'source-map' : 'eval-source-map',
+        
+        // Performance Hints
+        performance: {
+            hints: isProduction ? 'warning' : false,
+            maxEntrypointSize: 512000, // 500 KB
+            maxAssetSize: 512000
+        },
+        
+        // Dev Server Config (falls benötigt)
+        devServer: {
+            static: {
+                directory: path.join(__dirname, './')
+            },
+            compress: true,
+            port: 8080,
+            hot: true,
+            open: true
+        },
+        
+        // Resolve Config
         resolve: {
             extensions: ['.js', '.json'],
             alias: {
@@ -248,40 +149,26 @@ module.exports = (env, argv) => {
                 '@ui': path.resolve(__dirname, 'js/ui'),
                 '@systems': path.resolve(__dirname, 'js/systems'),
                 '@utils': path.resolve(__dirname, 'js/utils'),
-                '@data': path.resolve(__dirname, 'js/data'),
-                '@css': path.resolve(__dirname, 'css')
+                '@data': path.resolve(__dirname, 'js/data')
             }
         },
         
-        devServer: {
-            static: {
-                directory: path.join(__dirname, 'dist')
-            },
-            compress: true,
-            port: 8080,
-            hot: true,
-            open: true,
-            historyApiFallback: true,
-            client: {
-                overlay: {
-                    errors: true,
-                    warnings: false
-                }
-            }
-        },
-        
-        performance: {
-            hints: isProduction ? 'warning' : false,
-            maxEntrypointSize: 512000, // 500kb
-            maxAssetSize: 512000
-        },
-        
+        // Stats Output
         stats: {
             colors: true,
-            modules: false,
-            children: false,
+            hash: false,
+            version: false,
+            timings: true,
+            assets: true,
             chunks: false,
-            chunkModules: false
+            modules: false,
+            reasons: false,
+            children: false,
+            source: false,
+            errors: true,
+            errorDetails: true,
+            warnings: true,
+            publicPath: false
         }
     };
 };
