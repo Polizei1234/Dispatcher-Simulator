@@ -1,150 +1,361 @@
 // =========================
-// HOSPITALS v2.2
-// Krankenhäuser im Rems-Murr-Kreis
-// + Korrekte Koordinaten
-// + Karten-Symbole
-// + ✅ FIXED: Schorndorf Position korrigiert
-// + ✅ FIX v2.2: Entferne showOnMap() - Marker werden nur in map.js erstellt
+// KRANKENHAUS-DATENBANK
+// Krankenhäuser im Rems-Murr-Kreis und Umgebung
 // =========================
 
-const HOSPITALS = {
-    WINNENDEN: {
-        id: 'kh_winnenden',
+const HOSPITALS = [
+    // Rems-Murr-Kreis
+    {
+        id: 'rkh-winnenden',
         name: 'Rems-Murr-Klinikum Winnenden',
         shortName: 'Winnenden',
+        location: [48.87438, 9.39862],
         address: 'Am Jakobsweg 1, 71364 Winnenden',
-        position: [48.8700, 9.3922], // ✅ KORRIGIERT: 48°52'12"N, 9°23'32"E
-        departments: [
-            'Notaufnahme',
-            'Innere Medizin',
-            'Chirurgie',
-            'Neurologie',
-            'Kardiologie',
-            'Unfallchirurgie'
+        type: 'Maximalversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Stroke Unit',
+            'Chest Pain Unit',
+            'Traumazentrum',
+            'Herzkatheterlabor',
+            'Neurochirurgie',
+            'Gefäßchirurgie'
         ],
-        capabilities: {
-            trauma: true,
-            cardiology: true,
-            neurology: true,
-            pediatrics: true,
-            stroke_unit: true
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Groß',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
         }
     },
-    SCHORNDORF: {
-        id: 'kh_schorndorf',
-        name: 'Rems-Murr-Klinik Schorndorf',
+    {
+        id: 'rkh-schorndorf',
+        name: 'Rems-Murr-Klinikum Schorndorf',
         shortName: 'Schorndorf',
-        address: 'Schlichtener Straße 105, 73614 Schorndorf',
-        position: [48.7967, 9.5295], // ✅ FIXED: 48°47'48"N, 9°31'46"E (offiziell LBA)
-        departments: [
-            'Notaufnahme',
+        location: [48.80416, 9.53095],
+        address: 'Schlossgasse 100, 73614 Schorndorf',
+        type: 'Schwerpunktversorgung',
+        specialties: [
+            'Notfallversorgung',
             'Innere Medizin',
-            'Unfallchirurgie',
-            'Kardiologie',
-            'Gynäkologie'
+            'Chirurgie',
+            'Gynäkologie',
+            'Pädiatrie',
+            'Orthopädie'
         ],
-        capabilities: {
-            trauma: true,
-            cardiology: true,
-            neurology: false,
-            pediatrics: true,
-            stroke_unit: false
+        emergencyRoom: true,
+        helicopterLanding: false,
+        capacity: 'Mittel',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    {
+        id: 'rwk-backnang',
+        name: 'Rems-Murr-Klinikum Backnang',
+        shortName: 'Backnang',
+        location: [48.94597, 9.43303],
+        address: 'Heininger Weg 24, 71522 Backnang',
+        type: 'Schwerpunktversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Innere Medizin',
+            'Chirurgie',
+            'Urologie',
+            'HNO',
+            'Augenheilkunde'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Mittel',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    
+    // Stuttgart (Umgebung)
+    {
+        id: 'katharinen-stuttgart',
+        name: 'Katharinenhospital Stuttgart',
+        shortName: 'Katharinenhospital',
+        location: [48.78232, 9.18110],
+        address: 'Kriegsbergstraße 60, 70174 Stuttgart',
+        type: 'Maximalversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Traumazentrum',
+            'Stroke Unit',
+            'Herzkatheterlabor',
+            'Intensivmedizin',
+            'Brandverletzten-Zentrum'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Sehr groß',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    {
+        id: 'olgahospital-stuttgart',
+        name: 'Olgahospital Stuttgart',
+        shortName: 'Olgahospital',
+        location: [48.78115, 9.18265],
+        address: 'Kriegsbergstraße 62, 70174 Stuttgart',
+        type: 'Maximalversorgung',
+        specialties: [
+            'Kinder-Notfallversorgung',
+            'Pädiatrie',
+            'Kinderchirurgie',
+            'Neonatologie',
+            'Kinder-Intensivmedizin'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Groß',
+        pediatricOnly: true,
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    {
+        id: 'rbk-stuttgart',
+        name: 'Robert-Bosch-Krankenhaus Stuttgart',
+        shortName: 'Robert-Bosch',
+        location: [48.75883, 9.15528],
+        address: 'Auerbachstraße 110, 70376 Stuttgart',
+        type: 'Maximalversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Stroke Unit',
+            'Herzkatheterlabor',
+            'Onkologie',
+            'Gefäßchirurgie'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Groß',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    
+    // Ludwigsburg
+    {
+        id: 'rkh-ludwigsburg',
+        name: 'Klinikum Ludwigsburg',
+        shortName: 'Ludwigsburg',
+        location: [48.89683, 9.20122],
+        address: 'Posilipostraße 4, 71640 Ludwigsburg',
+        type: 'Maximalversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Stroke Unit',
+            'Chest Pain Unit',
+            'Traumazentrum',
+            'Perinatalzentrum'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Sehr groß',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    
+    // Waiblingen
+    {
+        id: 'rkh-waiblingen',
+        name: 'Rems-Murr-Klinikum Waiblingen',
+        shortName: 'Waiblingen',
+        location: [48.82945, 9.31718],
+        address: 'Korber Straße 38, 71332 Waiblingen',
+        type: 'Schwerpunktversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Innere Medizin',
+            'Chirurgie',
+            'Gynäkologie',
+            'Orthopädie'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: false,
+        capacity: 'Mittel',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
+        }
+    },
+    
+    // Weitere Spezialkliniken
+    {
+        id: 'klinik-schwäbisch-hall',
+        name: 'Diakoneo Klinik Schwäbisch Hall',
+        shortName: 'Schwäbisch Hall',
+        location: [49.11195, 9.73583],
+        address: 'Diakonieweg 10, 74523 Schwäbisch Hall',
+        type: 'Schwerpunktversorgung',
+        specialties: [
+            'Notfallversorgung',
+            'Innere Medizin',
+            'Chirurgie',
+            'Neurologie'
+        ],
+        emergencyRoom: true,
+        helicopterLanding: true,
+        capacity: 'Groß',
+        distance: function(from) {
+            return this.calculateDistance(from, this.location);
         }
     }
+];
+
+// Helper-Funktionen
+HOSPITALS.calculateDistance = function(from, to) {
+    // Haversine-Formel für Distanzberechnung
+    const R = 6371; // Erdradius in km
+    const dLat = (to[0] - from[0]) * Math.PI / 180;
+    const dLon = (to[1] - from[1]) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(from[0] * Math.PI / 180) * Math.cos(to[0] * Math.PI / 180) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
 };
 
-class HospitalService {
-    constructor() {
-        this.hospitals = HOSPITALS;
-        this.markers = {};
+/**
+ * Findet nächstes Krankenhaus
+ * @param {array} location - [lat, lng]
+ * @param {object} options - Filter-Optionen
+ * @returns {object} Nächstes Krankenhaus
+ */
+HOSPITALS.findNearest = function(location, options = {}) {
+    let hospitals = [...HOSPITALS];
+    
+    // Filter nach Optionen
+    if (options.emergencyRoom) {
+        hospitals = hospitals.filter(h => h.emergencyRoom);
     }
     
-    /**
-     * Berechnet Distanz zwischen zwei Koordinaten (Haversine)
-     */
-    calculateDistance(pos1, pos2) {
-        const R = 6371; // Erdradius in km
-        const lat1 = pos1[0] * Math.PI / 180;
-        const lat2 = pos2[0] * Math.PI / 180;
-        const dLat = (pos2[0] - pos1[0]) * Math.PI / 180;
-        const dLon = (pos2[1] - pos1[1]) * Math.PI / 180;
-        
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1) * Math.cos(lat2) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-        
-        return distance;
+    if (options.specialty) {
+        hospitals = hospitals.filter(h => 
+            h.specialties.some(s => s.toLowerCase().includes(options.specialty.toLowerCase()))
+        );
     }
     
-    /**
-     * Wählt nächstes Krankenhaus basierend auf Einsatzort
-     */
-    selectNearestHospital(incidentPosition) {
-        const distWinnenden = this.calculateDistance(incidentPosition, HOSPITALS.WINNENDEN.position);
-        const distSchorndorf = this.calculateDistance(incidentPosition, HOSPITALS.SCHORNDORF.position);
-        
-        console.log(`🏥 Distanzen: Winnenden ${distWinnenden.toFixed(1)}km, Schorndorf ${distSchorndorf.toFixed(1)}km`);
-        
-        if (distWinnenden < distSchorndorf) {
-            return HOSPITALS.WINNENDEN;
-        } else {
-            return HOSPITALS.SCHORNDORF;
-        }
+    if (options.pediatric) {
+        hospitals = hospitals.filter(h => 
+            h.pediatricOnly || h.specialties.includes('Pädiatrie')
+        );
     }
     
-    /**
-     * Wählt Krankenhaus basierend auf Einsatztyp und Fähigkeiten
-     */
-    selectHospitalByIncidentType(incidentPosition, incidentType, patientCondition) {
-        // Bei Schlaganfall immer Winnenden (hat Stroke Unit)
-        if (incidentType.toLowerCase().includes('schlaganfall') || 
-            patientCondition?.neurologicalDeficit) {
-            console.log('🧠 Neurologischer Notfall → Winnenden (Stroke Unit)');
-            return HOSPITALS.WINNENDEN;
-        }
-        
-        // Bei schwerem Trauma prüfe nächstes Traumazentrum
-        if (incidentType.includes('VU P') || patientCondition?.severeTrauma) {
-            return this.selectNearestHospital(incidentPosition);
-        }
-        
-        // Standard: Nächstes Krankenhaus
-        return this.selectNearestHospital(incidentPosition);
+    if (options.helicopterLanding) {
+        hospitals = hospitals.filter(h => h.helicopterLanding);
     }
     
-    /**
-     * Gibt alle Krankenhäuser zurück
-     */
-    getAllHospitals() {
-        return Object.values(this.hospitals);
+    // Berechne Distanzen und sortiere
+    hospitals = hospitals.map(h => ({
+        ...h,
+        distanceKm: this.calculateDistance(location, h.location)
+    }));
+    
+    hospitals.sort((a, b) => a.distanceKm - b.distanceKm);
+    
+    return hospitals[0] || null;
+};
+
+/**
+ * Findet alle Krankenhäuser in Radius
+ * @param {array} location - [lat, lng]
+ * @param {number} radiusKm - Radius in Kilometern
+ * @returns {array} Krankenhäuser im Radius
+ */
+HOSPITALS.findInRadius = function(location, radiusKm = 10) {
+    return HOSPITALS
+        .map(h => ({
+            ...h,
+            distanceKm: this.calculateDistance(location, h.location)
+        }))
+        .filter(h => h.distanceKm <= radiusKm)
+        .sort((a, b) => a.distanceKm - b.distanceKm);
+};
+
+/**
+ * Findet Krankenhaus nach ID
+ * @param {string} id - Krankenhaus-ID
+ * @returns {object} Krankenhaus oder null
+ */
+HOSPITALS.findById = function(id) {
+    return HOSPITALS.find(h => h.id === id) || null;
+};
+
+/**
+ * Findet Krankenhaus nach Namen (Kurzname oder voller Name)
+ * @param {string} name - Name
+ * @returns {object} Krankenhaus oder null
+ */
+HOSPITALS.findByName = function(name) {
+    const nameLower = name.toLowerCase();
+    return HOSPITALS.find(h => 
+        h.shortName.toLowerCase().includes(nameLower) ||
+        h.name.toLowerCase().includes(nameLower)
+    ) || null;
+};
+
+/**
+ * Wählt geeignetes Krankenhaus basierend auf Einsatz-Typ
+ * @param {array} location - [lat, lng]
+ * @param {string} incidentType - Einsatz-Typ (Herzinfarkt, Schlaganfall, etc.)
+ * @returns {object} Empfohlenes Krankenhaus
+ */
+HOSPITALS.selectForIncident = function(location, incidentType) {
+    const incidentLower = incidentType.toLowerCase();
+    
+    // Spezialisierte Zuweisungen
+    if (incidentLower.includes('schlaganfall') || incidentLower.includes('stroke')) {
+        return this.findNearest(location, { specialty: 'Stroke Unit' });
     }
     
-    /**
-     * Gibt Krankenhaus-Info für UI zurück
-     */
-    getHospitalInfo(hospitalId) {
-        for (const hospital of Object.values(this.hospitals)) {
-            if (hospital.id === hospitalId) {
-                return hospital;
-            }
-        }
-        return null;
+    if (incidentLower.includes('herzinfarkt') || incidentLower.includes('chest pain')) {
+        return this.findNearest(location, { specialty: 'Chest Pain Unit' });
     }
     
-    // ❌ REMOVED: showOnMap() - Marker werden nur noch in map.js erstellt!
-    // Kein duplicates mehr!
+    if (incidentLower.includes('kind') || incidentLower.includes('baby')) {
+        return this.findNearest(location, { pediatric: true });
+    }
+    
+    if (incidentLower.includes('trauma') || incidentLower.includes('verkehrsunfall')) {
+        return this.findNearest(location, { specialty: 'Traumazentrum' });
+    }
+    
+    if (incidentLower.includes('verbrennung') || incidentLower.includes('brand')) {
+        return this.findNearest(location, { specialty: 'Brandverletzten' });
+    }
+    
+    // Standard: Nächstes Krankenhaus mit Notaufnahme
+    return this.findNearest(location, { emergencyRoom: true });
+};
+
+/**
+ * Gibt Liste aller Krankenhaus-Namen zurück (für Dropdowns)
+ * @returns {array} Namen
+ */
+HOSPITALS.getNames = function() {
+    return HOSPITALS.map(h => h.shortName);
+};
+
+/**
+ * Gibt zufälliges Krankenhaus zurück
+ * @returns {object} Zufälliges Krankenhaus
+ */
+HOSPITALS.getRandom = function() {
+    return HOSPITALS[Math.floor(Math.random() * HOSPITALS.length)];
+};
+
+// Global verfügbar machen
+if (typeof window !== 'undefined') {
+    window.HOSPITALS = HOSPITALS;
 }
 
-// Globale Instanz
-window.HospitalService = HospitalService;
-window.HOSPITALS = HOSPITALS;
-
-// ❌ REMOVED: Automatisches Anzeigen auf Karte
-// Marker werden jetzt nur noch durch createHospitalMarkers() in map.js erstellt!
-
-console.log('✅ Hospital Service v2.2 initialisiert: Winnenden & Schorndorf');
-console.log('🏥 Winnenden: [48.8700, 9.3922]');
-console.log('🏥 Schorndorf: [48.7967, 9.5295] - KORRIGIERT');
-console.log('✅ FIX v2.2: Keine doppelten Krankenhaus-Marker mehr!');
+console.log(`✅ Krankenhaus-Datenbank geladen (${HOSPITALS.length} Krankenhäuser)`);
+console.log('✅ HOSPITALS.findNearest(), .selectForIncident() verfügbar');
