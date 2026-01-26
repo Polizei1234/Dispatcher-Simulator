@@ -1,7 +1,7 @@
 /* =====================================================
    DISPATCHER SIMULATOR - LIGHT THEME (WHITEMODE)
    Professional Clean Design for Daylight Usage
-   v2.0 - Improved Radio, Debug & Call System
+   v2.1 - Fixed Overlay Blur & Vehicle Menu
    ===================================================== */
 
 [data-theme="light"] {
@@ -53,16 +53,82 @@
     color: var(--text-primary);
 }
 
+/* =====================================================
+   OVERLAYS - REDUCED BLUR FOR VISIBILITY
+   ===================================================== */
+
 [data-theme="light"] .overlay {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.75); /* Reduced from 0.95 */
+    backdrop-filter: blur(2px); /* Reduced from 4px */
 }
 
 [data-theme="light"] .welcome-container,
 [data-theme="light"] .settings-container {
     background: var(--bg-dark);
-    border: 1px solid var(--border-medium);
-    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--border-medium); /* Stronger border */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); /* Stronger shadow */
+}
+
+/* =====================================================
+   VEHICLE MENU - IMPROVED VISIBILITY
+   ===================================================== */
+
+/* Vehicle Callsign - Full Width */
+[data-theme="light"] .vehicle-callsign {
+    white-space: normal; /* Allow wrapping */
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
+}
+
+/* Vehicle Card Compact - Better Layout */
+[data-theme="light"] .vehicle-card-compact {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    min-height: 50px; /* Increased for wrapped text */
+}
+
+[data-theme="light"] .vehicle-card-compact:hover {
+    background: var(--panel-header);
+    border-color: var(--border-medium);
+    box-shadow: var(--shadow-md);
+}
+
+/* Alarm Button - Visible in White Mode */
+[data-theme="light"] .btn-icon-compact {
+    background: var(--panel-header); /* Changed from white */
+    border: 1px solid var(--border-strong); /* Stronger border */
+    color: var(--text-primary); /* Dark text */
+}
+
+[data-theme="light"] .btn-icon-compact:hover {
+    background: var(--info-cyan); /* Blue on hover */
+    color: white;
+    border-color: var(--info-cyan);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .btn-icon-compact.btn-primary {
+    background: var(--info-cyan); /* Blue background */
+    border-color: var(--info-cyan);
+    color: white;
+}
+
+[data-theme="light"] .btn-icon-compact.btn-primary:hover {
+    background: #0277bd; /* Darker blue on hover */
+    border-color: #0277bd;
+}
+
+/* Vehicle Info - Better Layout */
+[data-theme="light"] .vehicle-info-compact {
+    min-width: 0;
+    flex: 1;
+}
+
+[data-theme="light"] .vehicle-text {
+    min-width: 0;
+    flex: 1;
 }
 
 /* =====================================================
@@ -462,18 +528,6 @@
     background: var(--panel-header);
 }
 
-[data-theme="light"] .vehicle-card-compact {
-    background: var(--panel-bg);
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
-}
-
-[data-theme="light"] .vehicle-card-compact:hover {
-    background: var(--panel-header);
-    border-color: var(--border-medium);
-    box-shadow: var(--shadow-md);
-}
-
 /* =====================================================
    STATIONS
    ===================================================== */
@@ -675,20 +729,6 @@
 }
 
 /* =====================================================
-   BUTTON ICON COMPACT
-   ===================================================== */
-
-[data-theme="light"] .btn-icon-compact {
-    background: var(--input-bg);
-    border: 1px solid var(--border-medium);
-}
-
-[data-theme="light"] .btn-icon-compact:hover {
-    background: var(--panel-header);
-    box-shadow: var(--shadow-sm);
-}
-
-/* =====================================================
    STICHWORT DROPDOWN
    ===================================================== */
 
@@ -706,4 +746,4 @@
     background: var(--panel-header);
 }
 
-console.log('☀️ Light Theme v2.0 CSS geladen - Radio, Debug & Call System optimiert!');
+console.log('☀️ Light Theme v2.1 CSS geladen - Fixed Overlay & Vehicle Menu!');
