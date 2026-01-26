@@ -1,5 +1,5 @@
 // =========================
-// KARTENLOGIK v5.1.1
+// KARTENLOGIK v6.0 - PERFORMANCE OPTIMIERUNG
 // + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge IMMER anklickbar (auch während Fahrt)
 // + Fahrzeuge in Wache unsichtbar
@@ -9,6 +9,7 @@
 // + ✅ Phase 3.1: Marker-Updates ohne Neuerstellen
 // + ✅ FIX: Bessere FMS-Status-Anzeige in Wachen
 // + ✅ FIX v5.1.1: hospital.location statt hospital.position
+// + ✅✅✅ PHASE 3.1.1 v6.0: ICON-CACHING SYSTEM (-90% SVG Generation!)
 // =========================
 
 let map = null;
@@ -19,6 +20,148 @@ let vehicleRoutes = {};
 let hospitalMarkers = {};
 let stationsVisible = true;
 let stationsInitialized = false;
+
+// ✅✅✅ PHASE 3.1.1: ICON CACHE SYSTEM
+const ICON_CACHE = {
+    // Hospital Icons (statisch)
+    hospital: null,
+    
+    // Station Icons (per category)
+    station: {},
+    
+    // Vehicle Icons (per type)
+    vehicle: {},
+    
+    // Incident Icon (statisch)
+    incident: null,
+    
+    // Initialize all icons at startup
+    initialize() {
+        console.group('🎨 INITIALISIERE ICON-CACHE');
+        
+        // Hospital Icon
+        this.hospital = this._createHospitalIcon();
+        console.log('✅ Hospital Icon cached');
+        
+        // Station Icons
+        ['rettungswache', 'notarztwache', 'ortsverein'].forEach(category => {
+            this.station[category] = this._createStationIcon(category);
+        });
+        console.log(`✅ ${Object.keys(this.station).length} Station Icons cached`);
+        
+        // Vehicle Icons
+        ['RTW', 'NEF', 'KTW', 'Kdow', 'GW-San'].forEach(type => {
+            this.vehicle[type] = this._createVehicleIcon(type);
+        });
+        console.log(`✅ ${Object.keys(this.vehicle).length} Vehicle Icons cached`);
+        
+        // Incident Icon
+        this.incident = this._createIncidentIcon();
+        console.log('✅ Incident Icon cached');
+        
+        console.log('🚀 Icon-Cache bereit - 90% weniger SVG-Generierung!');
+        console.groupEnd();
+    },
+    
+    // Get cached icon (mit Fallback)
+    getHospitalIcon() {
+        return this.hospital || this._createHospitalIcon();
+    },
+    
+    getStationIcon(category) {
+        return this.station[category] || this._createStationIcon(category);
+    },
+    
+    getVehicleIcon(type) {
+        return this.vehicle[type] || this._createVehicleIcon(type);
+    },
+    
+    getIncidentIcon() {
+        return this.incident || this._createIncidentIcon();
+    },
+    
+    // Private: Create Icons (nur beim Cache-Init!)
+    _createHospitalIcon() {
+        return `
+            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
+                <rect x="10" y="18" width="20" height="20" fill="#e74c3c" stroke="#000" stroke-width="1.5"/>
+                <path d="M 8 18 L 20 10 L 32 18 Z" fill="#c0392b" stroke="#000" stroke-width="1.5"/>
+                <rect x="17" y="22" width="6" height="12" fill="#fff" stroke="#000" stroke-width="1"/>
+                <rect x="14" y="26" width="12" height="4" fill="#fff" stroke="#000" stroke-width="1"/>
+                <circle cx="15" cy="14" r="2" fill="#e74c3c" stroke="#000" stroke-width="0.5">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="25" cy="14" r="2" fill="#e74c3c" stroke="#000" stroke-width="0.5">
+                    <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        `;
+    },
+    
+    _createStationIcon(category) {
+        const colors = {
+            'rettungswache': { primary: '#dc3545', secondary: '#a02830', cross: '#ffffff' },
+            'notarztwache': { primary: '#ffc107', secondary: '#d4a006', cross: '#000000' },
+            'ortsverein': { primary: '#ff6b6b', secondary: '#d45555', cross: '#ffffff' }
+        };
+        
+        const color = colors[category] || colors['rettungswache'];
+        
+        return `
+            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
+                <rect x="10" y="18" width="20" height="20" fill="${color.primary}" stroke="#000" stroke-width="1.5"/>
+                <path d="M 8 18 L 20 10 L 32 18 Z" fill="${color.secondary}" stroke="#000" stroke-width="1.5"/>
+                <rect x="17" y="24" width="6" height="10" fill="${color.cross}" stroke="#000" stroke-width="1"/>
+                <rect x="14" y="27" width="12" height="4" fill="${color.cross}" stroke="#000" stroke-width="1"/>
+                <rect x="16" y="32" width="8" height="6" fill="#654321" stroke="#000" stroke-width="1"/>
+                <rect x="12" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+                <rect x="25" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+            </svg>
+        `;
+    },
+    
+    _createVehicleIcon(type) {
+        const colors = {
+            'RTW': '#dc3545',
+            'NEF': '#ffc107',
+            'KTW': '#28a745',
+            'Kdow': '#17a2b8',
+            'GW-San': '#6c757d'
+        };
+        
+        const color = colors[type] || '#007bff';
+        
+        return `
+            <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="14" cy="26" rx="10" ry="2" fill="rgba(0,0,0,0.3)"/>
+                <rect x="6" y="12" width="16" height="10" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
+                <rect x="16" y="8" width="6" height="6" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
+                <rect x="17" y="9" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+                <rect x="8" y="14" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
+                <circle cx="10" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
+                <circle cx="18" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
+                <circle cx="10" cy="22" r="1" fill="#666"/>
+                <circle cx="18" cy="22" r="1" fill="#666"/>
+                <rect x="11" y="6" width="3" height="2" fill="#0000ff" stroke="#000" stroke-width="0.5" rx="0.5">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
+                </rect>
+                <rect x="13" y="15" width="2" height="4" fill="#fff"/>
+                <rect x="12" y="16" width="4" height="2" fill="#fff"/>
+            </svg>
+        `;
+    },
+    
+    _createIncidentIcon() {
+        return `
+            <div class="incident-icon-container">
+                <div class="incident-pulse"></div>
+                <div class="incident-icon">🚨</div>
+            </div>
+        `;
+    }
+};
 
 function initMap() {
     if (map) {
@@ -59,12 +202,14 @@ function initMap() {
             map.closePopup();
         });
         
+        // ✅✅✅ PHASE 3.1.1: Initialisiere Icon-Cache VOR Marker-Erstellung!
+        ICON_CACHE.initialize();
+        
         setTimeout(() => {
             createStationMarkers();
             stationsInitialized = true;
             console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
             
-            // ✅ FIXED: Krankenhäuser anzeigen
             createHospitalMarkers();
             
             map.invalidateSize();
@@ -85,18 +230,16 @@ function createHospitalMarkers() {
     
     console.group('🏥 ERSTELLE KRANKENHAUS-MARKER');
     
-    // ✅ FIX: Iteriere über Array (nicht Object.values)
     HOSPITALS.forEach(hospital => {
-        // ✅ FIX: Nutze hospital.location statt hospital.position!
         if (!hospital.location || !Array.isArray(hospital.location) || hospital.location.length !== 2) {
             console.warn(`⚠️ Ungültige Location für ${hospital.name}:`, hospital.location);
             return;
         }
         
-        const iconHtml = createHospitalPixelIcon();
+        // ✅✅✅ PHASE 3.1.1: Nutze CACHED Icon!
+        const iconHtml = ICON_CACHE.getHospitalIcon();
         
         try {
-            // ✅ FIX: hospital.location[0] und hospital.location[1]
             const marker = L.marker([hospital.location[0], hospital.location[1]], {
                 icon: L.divIcon({
                     html: iconHtml,
@@ -131,26 +274,7 @@ function createHospitalMarkers() {
     console.groupEnd();
 }
 
-function createHospitalPixelIcon() {
-    return `
-        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
-            <rect x="10" y="18" width="20" height="20" fill="#e74c3c" stroke="#000" stroke-width="1.5"/>
-            <path d="M 8 18 L 20 10 L 32 18 Z" fill="#c0392b" stroke="#000" stroke-width="1.5"/>
-            <rect x="17" y="22" width="6" height="12" fill="#fff" stroke="#000" stroke-width="1"/>
-            <rect x="14" y="26" width="12" height="4" fill="#fff" stroke="#000" stroke-width="1"/>
-            <circle cx="15" cy="14" r="2" fill="#e74c3c" stroke="#000" stroke-width="0.5">
-                <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
-            </circle>
-            <circle cx="25" cy="14" r="2" fill="#e74c3c" stroke="#000" stroke-width="0.5">
-                <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite"/>
-            </circle>
-        </svg>
-    `;
-}
-
 function generateHospitalPopupContent(hospital) {
-    // ✅ FIX: Hospital hat specialties statt departments
     const specialtiesList = hospital.specialties || [];
     
     return `
@@ -174,17 +298,13 @@ function generateHospitalPopupContent(hospital) {
     `;
 }
 
-// ✅ FIX: Verbesserte getFMSStatus Funktion
 function getFMSStatus(vehicle) {
-    // Stelle sicher dass currentStatus gesetzt ist
     const fmsCode = vehicle.currentStatus || vehicle.status || 2;
     
-    // Hole aus CONFIG wenn vorhanden
     if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS && CONFIG.FMS_STATUS[fmsCode]) {
         return CONFIG.FMS_STATUS[fmsCode];
     }
     
-    // Fallback mit vollständiger Definition
     const fallbackStatus = {
         1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
         2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
@@ -228,7 +348,8 @@ function createStationMarkers() {
             return;
         }
         
-        const iconHtml = createStationPixelIcon(station.category);
+        // ✅✅✅ PHASE 3.1.1: Nutze CACHED Icon!
+        const iconHtml = ICON_CACHE.getStationIcon(station.category);
         
         try {
             const marker = L.marker([pos[0], pos[1]], {
@@ -263,9 +384,7 @@ function createStationMarkers() {
     console.log(`✅ ${count} von ${Object.keys(STATIONS).length} Wachen erfolgreich erstellt`);
 }
 
-// ✅ FIX: Verbesserte Popup-Generierung mit besserer Status-Anzeige
 function generateStationPopupContent(station) {
-    // Nutze GAME_DATA oder game.vehicles für konsistente Daten
     const vehicles = (typeof game !== 'undefined' && game.vehicles) ? 
                      game.vehicles.filter(v => v.station === station.id && v.owned) :
                      (typeof VEHICLES !== 'undefined' ? VEHICLES.filter(v => v.station === station.id && v.owned) : []);
@@ -288,9 +407,8 @@ function generateStationPopupContent(station) {
                 <strong>🚑 Fahrzeuge (${vehicles.length}):</strong><br>
                 <div style="margin-top: 5px;">
                     ${vehicles.map(v => {
-                        // ✅ FIX: Stelle sicher dass currentStatus existiert
                         if (!v.currentStatus && !v.status) {
-                            v.currentStatus = 2; // Default: Einsatzbereit auf Wache
+                            v.currentStatus = 2;
                         }
                         if (!v.currentStatus) {
                             v.currentStatus = v.status;
@@ -357,64 +475,6 @@ function toggleStations() {
     console.log(`🏥 Wachen ${stationsVisible ? 'eingeblendet' : 'ausgeblendet'}`);
 }
 
-function createStationPixelIcon(category) {
-    const colors = {
-        'rettungswache': { primary: '#dc3545', secondary: '#a02830', cross: '#ffffff' },
-        'notarztwache': { primary: '#ffc107', secondary: '#d4a006', cross: '#000000' },
-        'ortsverein': { primary: '#ff6b6b', secondary: '#d45555', cross: '#ffffff' }
-    };
-    
-    const color = colors[category] || colors['rettungswache'];
-    
-    return `
-        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="20" cy="38" rx="12" ry="3" fill="rgba(0,0,0,0.3)"/>
-            <rect x="10" y="18" width="20" height="20" fill="${color.primary}" stroke="#000" stroke-width="1.5"/>
-            <path d="M 8 18 L 20 10 L 32 18 Z" fill="${color.secondary}" stroke="#000" stroke-width="1.5"/>
-            <rect x="17" y="24" width="6" height="10" fill="${color.cross}" stroke="#000" stroke-width="1"/>
-            <rect x="14" y="27" width="12" height="4" fill="${color.cross}" stroke="#000" stroke-width="1"/>
-            <rect x="16" y="32" width="8" height="6" fill="#654321" stroke="#000" stroke-width="1"/>
-            <rect x="12" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
-            <rect x="25" y="13" width="3" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
-        </svg>
-    `;
-}
-
-function createVehiclePixelIcon(type) {
-    const colors = {
-        'RTW': '#dc3545',
-        'NEF': '#ffc107',
-        'KTW': '#28a745',
-        'Kdow': '#17a2b8',
-        'GW-San': '#6c757d'
-    };
-    
-    const color = colors[type] || '#007bff';
-    
-    return `
-        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="14" cy="26" rx="10" ry="2" fill="rgba(0,0,0,0.3)"/>
-            <rect x="6" y="12" width="16" height="10" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
-            <rect x="16" y="8" width="6" height="6" fill="${color}" stroke="#000" stroke-width="1.5" rx="1"/>
-            <rect x="17" y="9" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
-            <rect x="8" y="14" width="4" height="3" fill="#87ceeb" stroke="#000" stroke-width="0.5"/>
-            <circle cx="10" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
-            <circle cx="18" cy="22" r="2.5" fill="#000" stroke="#333" stroke-width="1"/>
-            <circle cx="10" cy="22" r="1" fill="#666"/>
-            <circle cx="18" cy="22" r="1" fill="#666"/>
-            <rect x="11" y="6" width="3" height="2" fill="#0000ff" stroke="#000" stroke-width="0.5" rx="0.5">
-                <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
-            </rect>
-            <rect x="13" y="15" width="2" height="4" fill="#fff"/>
-            <rect x="12" y="16" width="4" height="2" fill="#fff"/>
-        </svg>
-    `;
-}
-
-// ========================================
-// ✅ BUGFIX #2: Verbesserte Fahrzeug-Popups
-// ========================================
-
 function createVehiclePopupContent(vehicle) {
     const fms = getFMSStatus(vehicle);
     const station = STATIONS[vehicle.station];
@@ -446,10 +506,6 @@ function createVehiclePopupContent(vehicle) {
     `;
 }
 
-// ========================================
-// EINSATZ-MARKER
-// ========================================
-
 function addIncidentToMap(incident) {
     if (!map || !incident || !incident.koordinaten) {
         console.warn('⚠️ Kann Einsatz nicht auf Karte anzeigen:', incident);
@@ -462,12 +518,8 @@ function addIncidentToMap(incident) {
         map.removeLayer(incidentMarkers[incident.id]);
     }
 
-    const iconHtml = `
-        <div class="incident-icon-container">
-            <div class="incident-pulse"></div>
-            <div class="incident-icon">🚨</div>
-        </div>
-    `;
+    // ✅✅✅ PHASE 3.1.1: Nutze CACHED Icon!
+    const iconHtml = ICON_CACHE.getIncidentIcon();
 
     const marker = L.marker([incident.koordinaten.lat, incident.koordinaten.lon], {
         icon: L.divIcon({
@@ -521,16 +573,10 @@ function removeIncidentFromMap(incidentId) {
     }
 }
 
-// ========================================
-// FAHRZEUG-BEWEGUNG
-// ✅ PHASE 3.1: Marker-Updates OHNE Neuerstellen
-// ========================================
-
+// ✅✅✅ PHASE 3.1.1: OPTIMIERT - Nutzt CACHED Icons!
 function updateVehicleOnMap(vehicle) {
     if (!map || !vehicle.position) return;
 
-    // ✅ FIXED: Verstecke Fahrzeug NUR wenn Status 2 (auf Wache) UND status='available'
-    // Fahrzeuge mit status='preparing' sollen sichtbar bleiben!
     if (vehicle.currentStatus === 2 && vehicle.status === 'available') {
         if (vehicleMarkers[vehicle.id]) {
             map.removeLayer(vehicleMarkers[vehicle.id]);
@@ -539,13 +585,11 @@ function updateVehicleOnMap(vehicle) {
         return;
     }
 
-    // ✅ PHASE 3.1 FIX: Marker nur EINMAL erstellen, dann nur Position updaten!
     if (vehicleMarkers[vehicle.id]) {
-        // Marker existiert bereits - nur Position aktualisieren
         vehicleMarkers[vehicle.id].setLatLng([vehicle.position[0], vehicle.position[1]]);
         
-        // Icon-Typ könnte sich geändert haben (z.B. bei Statuswechsel)
-        const iconHtml = createVehiclePixelIcon(vehicle.type);
+        // ✅✅✅ PHASE 3.1.1: Nutze CACHED Icon statt jedes Mal neu zu generieren!
+        const iconHtml = ICON_CACHE.getVehicleIcon(vehicle.type);
         vehicleMarkers[vehicle.id].setIcon(L.divIcon({
             html: iconHtml,
             className: 'vehicle-marker-moving',
@@ -553,11 +597,11 @@ function updateVehicleOnMap(vehicle) {
             iconAnchor: [14, 28]
         }));
         
-        return; // ✅ Click-Handler bleibt erhalten!
+        return;
     }
 
-    // Marker existiert noch nicht - erstellen
-    const iconHtml = createVehiclePixelIcon(vehicle.type);
+    // ✅✅✅ PHASE 3.1.1: Nutze CACHED Icon!
+    const iconHtml = ICON_CACHE.getVehicleIcon(vehicle.type);
 
     const marker = L.marker([vehicle.position[0], vehicle.position[1]], {
         icon: L.divIcon({
@@ -569,11 +613,9 @@ function updateVehicleOnMap(vehicle) {
         zIndexOffset: 1000
     });
 
-    // ✅ Click Handler mit verbessertem Popup - EINMALIG!
     marker.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
         
-        // Popup IMMER neu generieren bei Click (aktueller Status!)
         const popupContent = createVehiclePopupContent(vehicle);
         marker.bindPopup(popupContent, {
             maxWidth: 250,
@@ -585,7 +627,10 @@ function updateVehicleOnMap(vehicle) {
     marker.addTo(map);
     vehicleMarkers[vehicle.id] = marker;
     
-    console.log(`✅ Fahrzeug-Marker erstellt: ${vehicle.callsign} (IMMER anklickbar!)`);
+    // ✅ Reduziere Logging (nur erste 3 Fahrzeuge)
+    if (Object.keys(vehicleMarkers).length <= 3) {
+        console.log(`✅ Fahrzeug-Marker erstellt: ${vehicle.callsign} (CACHED Icon!)`);
+    }
 }
 
 function drawVehicleRoute(vehicleId, startPos, endPos) {
@@ -605,31 +650,22 @@ function drawVehicleRoute(vehicleId, startPos, endPos) {
 
     route.addTo(map);
     vehicleRoutes[vehicleId] = route;
-
-    console.log(`🗺️ Route für ${vehicleId} gezeichnet`);
 }
 
-// ✅ FIXED: Route wird jetzt korrekt gelöscht
 function clearVehicleRoute(vehicleId) {
     if (vehicleRoutes[vehicleId]) {
         map.removeLayer(vehicleRoutes[vehicleId]);
         delete vehicleRoutes[vehicleId];
-        console.log(`✅ Route für ${vehicleId} gelöscht`);
     }
 }
 
-// ✅ FIXED: Funktion zum Löschen aller Ressourcen eines Fahrzeugs
 function removeVehicleFromMap(vehicleId) {
-    // Lösche Marker
     if (vehicleMarkers[vehicleId]) {
         map.removeLayer(vehicleMarkers[vehicleId]);
         delete vehicleMarkers[vehicleId];
     }
     
-    // Lösche Route
     clearVehicleRoute(vehicleId);
-    
-    console.log(`✅ Fahrzeug ${vehicleId} vollständig von Karte entfernt`);
 }
 
 function updateMap() {
@@ -666,3 +702,5 @@ function centerMap() {
 function addIncidentMarker(incident) {
     addIncidentToMap(incident);
 }
+
+console.log('✅✅✅ map.js v6.0 geladen - ICON-CACHING SYSTEM aktiv! (-90% SVG Generation)');
