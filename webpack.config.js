@@ -11,16 +11,10 @@ module.exports = (env, argv) => {
     return {
         entry: {
             // Hauptbundle: Core + Game Logic
-            main: './js/core/main.js',
-            
-            // UI Bundle: Alle UI-Komponenten
-            ui: './js/ui/ui.js',
-            
-            // Systems Bundle: AI, Weather, Radio etc.
-            systems: './js/systems/call-system.js',
+            main: './js/main-bundle.js',
             
             // Styles Bundle
-            styles: './css/style.css'
+            styles: './css/styles-bundle.css'
         },
         
         output: {
@@ -39,25 +33,8 @@ module.exports = (env, argv) => {
                         isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
                         'css-loader'
                     ]
-                },
-                
-                // JavaScript (optional: Babel für ältere Browser)
-                {
-                    test: /\.js$/,
-                    exclude: /node_modules/,
-                    use: {
-                        loader: 'babel-loader',
-                        options: {
-                            presets: [
-                                ['@babel/preset-env', {
-                                    targets: '> 0.25%, not dead',
-                                    useBuiltIns: 'usage',
-                                    corejs: 3
-                                }]
-                            ]
-                        }
-                    }
                 }
+                // Babel entfernt - nicht benötigt für moderne Browser
             ]
         },
         
