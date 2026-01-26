@@ -1,12 +1,12 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.4
+// CENTRAL VERSION MANAGER v2.5
 // SINGLE SOURCE OF TRUTH für Version
-// ✅ v7.0.0: Phase 1 - Kompositions-System integriert!
+// ✅ v7.1.0: Phase 2 - AI Integration & Dynamische Systeme!
 // =========================
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '7.0.0',
+    VERSION: '7.1.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -30,7 +30,7 @@ const VERSION_CONFIG = {
     
     /**
      * CSS-Dateien die geladen werden müssen
-     * ✅ v7.0.0: Keine Änderungen
+     * ✅ v7.1.0: Keine Änderungen
      */
     CSS_FILES: [
         'css/style.css',
@@ -48,10 +48,15 @@ const VERSION_CONFIG = {
     
     /**
      * JavaScript-Dateien in Ladereihenfolge
-     * ✅ v7.0.0: Phase 1 Kompositions-System hinzugefügt!
-     * 🆕 severity-bases.js, incident-types.js, incident-modifiers.js
-     * 🆕 incident-composer.js, conversation-pools.js
-     * 🆕 conversation-engine.js (Phase 2 Teil 3)
+     * 
+     * ✅ v7.0.0 (Phase 1): Kompositions-System
+     *   - severity-bases.js, incident-types.js, incident-modifiers.js
+     *   - incident-composer.js, conversation-pools.js
+     * 
+     * ✅ v7.1.0 (Phase 2): AI Integration & Dynamische Systeme
+     *   - ai-incident-generator.js v3.0 (nutzt Composer)
+     *   - escalation-system.js v2.0 (Schema-basiert)
+     *   - conversation-engine.js v1.0 (dynamische Fragen)
      */
     JS_FILES: [
         // Core
@@ -69,12 +74,12 @@ const VERSION_CONFIG = {
         'js/utils/scoring-system.js',
         'js/utils/tutorial.js',
         
-        // 🆕 PHASE 1 - Kompositions-System (MUSS VOR data.js geladen werden!)
-        'js/data/severity-bases.js',         // 🆕 v7.0.0 - 3 Schweregrade
-        'js/data/incident-types.js',         // 🆕 v7.0.0 - 8 Einsatzarten
-        'js/data/incident-modifiers.js',     // 🆕 v7.0.0 - 5 Modifikatoren
-        'js/core/incident-composer.js',      // 🆕 v7.0.0 - Kompositions-Engine
-        'js/data/conversation-pools.js',     // 🆕 v7.0.0 - Fragen-Datenbank
+        // 🆕 PHASE 1 (v7.0.0) - Kompositions-System
+        'js/data/severity-bases.js',         // 3 Schweregrade: MINOR, MODERATE, CRITICAL
+        'js/data/incident-types.js',         // 8 Einsatzarten: MEDICAL, TRAFFIC, BIRTH, etc.
+        'js/data/incident-modifiers.js',     // 5 Modifikatoren: ENTRAPMENT, FIRE, etc.
+        'js/core/incident-composer.js',      // Kompositions-Engine: 120+ Kombinationen
+        'js/data/conversation-pools.js',     // 50+ Fragen-Templates
         
         // Data (NACH Kompositions-System!)
         'js/data/hospitals.js',
@@ -83,11 +88,11 @@ const VERSION_CONFIG = {
         
         // Systems
         'js/systems/weather-system.js',
-        'js/systems/ai-incident-generator.js',
-        'js/systems/escalation-system.js',
+        'js/systems/ai-incident-generator.js',   // 🆕 v7.1.0: Nutzt incident-composer!
+        'js/systems/escalation-system.js',       // 🆕 v7.1.0: Schema-basierte Eskalation!
         'js/systems/groq-validator.js',
         'js/systems/call-system.js',
-        'js/systems/conversation-engine.js',  // 🆕 Phase 2 Teil 3 - NACH call-system.js!
+        'js/systems/conversation-engine.js',     // 🆕 v7.1.0: Dynamische Fragen & Follow-Ups!
         'js/systems/mission-timer.js',
         'js/systems/vehicle-movement.js',
         'js/systems/status-0-5-system.js',
@@ -347,9 +352,9 @@ const VERSION_CONFIG = {
             position: fixed;
             top: 20px;
             right: 20px;
-            max-width: 400px;
+            max-width: 450px;
             background: #2d3748;
-            border: 2px solid #4299e1;
+            border: 2px solid #48bb78;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -361,34 +366,37 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🎯</span>
+                <span style="font-size: 2em;">🎉</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🚀 PHASE 1 ABGESCHLOSSEN!</strong></p>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>🎼 <strong>Kompositions-System!</strong></li>
-                    <li>⚖️ 3 Schweregrade (Minor/Moderate/Critical)</li>
-                    <li>🎭 8 Einsatzarten (Medical/Traffic/Birth/etc.)</li>
-                    <li>⚙️ 5 Modifikatoren (Entrapment/Fire/etc.)</li>
-                    <li>💬 50+ Fragen-Templates bereit!</li>
-                    <li>🎯 120+ mögliche Kombinationen!</li>
+                <p><strong>🚀 PHASE 2 ABGESCHLOSSEN!</strong></p>
+                <p style="margin: 8px 0; color: #cbd5e0;">🤖 <strong>AI Integration & Dynamische Systeme:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
+                    <li>🤖 <strong>AI Generator v3.0</strong> - Nutzt Composer für Einsatz-Generierung</li>
+                    <li>🚨 <strong>Escalation System v2.0</strong> - Schema-basierte Eskalationen</li>
+                    <li>💬 <strong>Conversation Engine v1.0</strong> - Dynamische Fragen & Follow-Ups</li>
+                    <li>⚡ Type-spezifische Groq-Prompts</li>
+                    <li>🔺 Intelligente Priority-Upgrades</li>
+                    <li>🎯 Kritische Antworten triggern Actions</li>
                 </ul>
-                <p style="margin-top: 10px; font-size: 0.9em; color: #fbbf24;">
-                    ⚠️ Phase 2 folgt: AI Generator & Conversation Engine!
-                </p>
+                <div style="margin-top: 12px; padding: 10px; background: rgba(72, 187, 120, 0.1); border-left: 3px solid #48bb78; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 0.9em; color: #68d391;">
+                        <strong>✨ Neu:</strong> Einsätze werden jetzt intelligent komponiert und können dynamisch eskalieren!
+                    </p>
+                </div>
             </div>
             <button onclick="this.parentElement.remove()" style="
                 width: 100%;
                 padding: 10px;
-                background: #4299e1;
+                background: #48bb78;
                 color: white;
                 border: none;
                 border-radius: 8px;
                 cursor: pointer;
                 font-weight: bold;
                 font-size: 1em;
-            ">Verstanden</button>
+            ">Verstanden ✓</button>
         `;
         
         document.body.appendChild(notification);
@@ -396,23 +404,29 @@ const VERSION_CONFIG = {
             if (notification.parentElement) {
                 notification.remove();
             }
-        }, 30000);
+        }, 45000);
     },
     
     printInfo: function() {
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
-        console.log('%c🎮 Dispatcher Simulator', 'color: #4299e1; font-size: 1.5em; font-weight: bold');
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
-        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #48bb78; font-weight: bold');
+        console.log('%c═══════════════════════════════════', 'color: #48bb78');
+        console.log('%c🎮 Dispatcher Simulator', 'color: #48bb78; font-size: 1.5em; font-weight: bold');
+        console.log('%c═══════════════════════════════════', 'color: #48bb78');
+        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #48bb78; font-weight: bold; font-size: 1.1em');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
-        console.log('%c🎯 NEU: Phase 1 Kompositions-System integriert!', 'color: #fbbf24; font-weight: bold');
-        console.log('%c   ⚖️ 3 Severity Bases', 'color: #a0aec0');
-        console.log('%c   🎭 8 Incident Types', 'color: #a0aec0');
-        console.log('%c   ⚙️ 5 Modifiers', 'color: #a0aec0');
-        console.log('%c   🎼 Incident Composer', 'color: #a0aec0');
-        console.log('%c   💬 Conversation Pools', 'color: #a0aec0');
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
+        console.log('%c', 'color: #a0aec0');
+        console.log('%c🎉 NEU IN v7.1.0 - PHASE 2!', 'color: #fbbf24; font-weight: bold; font-size: 1.1em');
+        console.log('%c   🤖 AI Generator v3.0 - Nutzt Composer', 'color: #68d391');
+        console.log('%c   🚨 Escalation System v2.0 - Schema-basiert', 'color: #68d391');
+        console.log('%c   💬 Conversation Engine v1.0 - Dynamische Fragen', 'color: #68d391');
+        console.log('%c', 'color: #a0aec0');
+        console.log('%c✅ PHASE 1 (v7.0.0) - Kompositions-System:', 'color: #4299e1; font-weight: bold');
+        console.log('%c   ⚖️ 3 Severity Bases (MINOR/MODERATE/CRITICAL)', 'color: #a0aec0');
+        console.log('%c   🎭 8 Incident Types (MEDICAL/TRAFFIC/BIRTH/...)', 'color: #a0aec0');
+        console.log('%c   ⚙️ 5 Modifiers (ENTRAPMENT/FIRE/...)', 'color: #a0aec0');
+        console.log('%c   🎼 Incident Composer (120+ Kombinationen)', 'color: #a0aec0');
+        console.log('%c   💬 Conversation Pools (50+ Fragen)', 'color: #a0aec0');
+        console.log('%c═══════════════════════════════════', 'color: #48bb78');
     }
 };
 
@@ -430,4 +444,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.4 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.5 geladen - Version: ${VERSION_CONFIG.VERSION}`);
