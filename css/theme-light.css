@@ -1,60 +1,57 @@
 /* =====================================================
    DISPATCHER SIMULATOR - LIGHT THEME (WHITEMODE)
    Professional Clean Design for Daylight Usage
+   v2.0 - Improved Radio, Debug & Call System
    ===================================================== */
 
 [data-theme="light"] {
     /* Professional Light Color Palette */
-    --primary-red: #d32f2f;           /* Emergency red - stays bold */
-    --secondary-blue: #1976d2;        /* Professional blue */
-    --success-green: #388e3c;         /* Success green */
-    --warning-orange: #f57c00;        /* Warning orange */
-    --danger-red: #c62828;            /* Critical red */
-    --info-cyan: #0288d1;             /* Information blue */
+    --primary-red: #d32f2f;
+    --secondary-blue: #1976d2;
+    --success-green: #388e3c;
+    --warning-orange: #f57c00;
+    --danger-red: #c62828;
+    --info-cyan: #0288d1;
     
-    /* Light Gray Scale - Inverted */
-    --bg-darkest: #f5f7fa;            /* Main background - light gray */
-    --bg-dark: #ffffff;               /* Secondary background - pure white */
-    --bg-secondary: #fafbfc;          /* Third level - very light gray */
-    --panel-bg: #ffffff;              /* Panel backgrounds - white */
-    --panel-header: #f0f3f7;          /* Panel headers - light gray */
-    --input-bg: #ffffff;              /* Input fields - white */
-    --border-color: #d1d5db;          /* Border color - medium gray */
+    /* Light Gray Scale */
+    --bg-darkest: #f5f7fa;
+    --bg-dark: #ffffff;
+    --bg-secondary: #fafbfc;
+    --panel-bg: #ffffff;
+    --panel-header: #f0f3f7;
+    --input-bg: #ffffff;
+    --border-color: #d1d5db;
     
-    /* Text Colors - Inverted for Light Background */
-    --text-primary: #1f2937;          /* Main text - dark gray */
-    --text-secondary: #6b7280;        /* Secondary text - medium gray */
-    --text-muted: #9ca3af;            /* Muted text - light gray */
+    /* Text Colors */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
     
-    /* Borders & Dividers - Light Theme */
-    --border-light: #e5e7eb;          /* Subtle borders */
-    --border-medium: #d1d5db;         /* Medium borders */
-    --border-strong: #9ca3af;         /* Strong borders */
+    /* Borders */
+    --border-light: #e5e7eb;
+    --border-medium: #d1d5db;
+    --border-strong: #9ca3af;
     
-    /* Functional Colors - Stay the same */
-    --status-available: #2e7d32;      /* Available/Ready */
-    --status-busy: #f57c00;           /* Busy/En route */
-    --status-offline: #616161;        /* Offline */
-    --status-emergency: #c62828;      /* Emergency */
+    /* Functional Colors */
+    --status-available: #2e7d32;
+    --status-busy: #f57c00;
+    --status-offline: #616161;
+    --status-emergency: #c62828;
     
-    /* Shadows - Lighter for white background */
+    /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.12);
     --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* =====================================================
-   BODY - Light Background
+   BODY & BASIC ELEMENTS
    ===================================================== */
 
 [data-theme="light"] body {
     background: var(--bg-darkest);
     color: var(--text-primary);
 }
-
-/* =====================================================
-   OVERLAYS - Light Theme
-   ===================================================== */
 
 [data-theme="light"] .overlay {
     background: rgba(255, 255, 255, 0.95);
@@ -69,7 +66,7 @@
 }
 
 /* =====================================================
-   BUTTONS - Light Theme Adjustments
+   BUTTONS
    ===================================================== */
 
 [data-theme="light"] .btn {
@@ -81,13 +78,17 @@
 }
 
 /* =====================================================
-   FORMS & INPUTS - Light Theme
+   FORMS & INPUTS
    ===================================================== */
 
 [data-theme="light"] .setting-item input[type="text"],
 [data-theme="light"] .setting-item input[type="password"],
 [data-theme="light"] .setting-item select,
-[data-theme="light"] .form-control {
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-group input[type="text"],
+[data-theme="light"] .form-group input[type="number"],
+[data-theme="light"] .form-group select,
+[data-theme="light"] .form-group textarea {
     background: var(--input-bg);
     border: 1px solid var(--border-medium);
     color: var(--text-primary);
@@ -95,13 +96,21 @@
 
 [data-theme="light"] .setting-item input:focus,
 [data-theme="light"] .setting-item select:focus,
-[data-theme="light"] .form-control:focus {
+[data-theme="light"] .form-control:focus,
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group select:focus,
+[data-theme="light"] .form-group textarea:focus {
     border-color: var(--info-cyan);
     box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.1);
 }
 
+[data-theme="light"] .form-group input:read-only {
+    background: var(--panel-header);
+    border-color: var(--border-light);
+}
+
 /* =====================================================
-   DROPDOWNS - Light Theme
+   DROPDOWNS
    ===================================================== */
 
 [data-theme="light"] select {
@@ -114,7 +123,7 @@
 [data-theme="light"] select:hover {
     border-color: var(--info-cyan);
     background: linear-gradient(135deg, #fafbfc 0%, #f3f4f6 100%);
-    box-shadow: 0 4px 8px rgba(49, 130, 206, 0.1), inset 0 1px 0 rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 8px rgba(49, 130, 206, 0.1);
 }
 
 [data-theme="light"] select:focus {
@@ -137,14 +146,263 @@
     color: white;
 }
 
+/* =====================================================
+   RADIO TAB - FAHRZEUG ANFUNKEN MENU (LIGHT)
+   ===================================================== */
+
+/* Radio Vehicle Dropdown */
 [data-theme="light"] #radio-vehicle-dropdown {
-    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-    border: 3px solid #3182ce;
-    box-shadow: 0 3px 8px rgba(49, 130, 206, 0.15), inset 0 1px 0 rgba(0, 0, 0, 0.03);
+    background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+    border: 2px solid #3182ce;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.15);
+}
+
+[data-theme="light"] #radio-vehicle-dropdown:hover {
+    border-color: #2563eb;
+    background: linear-gradient(to bottom, #fafbfc 0%, #f3f4f6 100%);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.25);
+}
+
+[data-theme="light"] #radio-vehicle-dropdown:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2), 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+[data-theme="light"] #radio-vehicle-dropdown option {
+    background: #ffffff;
+    color: var(--text-primary);
+}
+
+[data-theme="light"] #radio-vehicle-dropdown option:hover {
+    background: #f3f4f6;
+}
+
+[data-theme="light"] #radio-vehicle-dropdown option:checked {
+    background: #3182ce;
+    color: white;
+}
+
+[data-theme="light"] #radio-vehicle-dropdown option[value=""] {
+    color: var(--text-muted);
+}
+
+/* Radio Message Input */
+[data-theme="light"] #radio-vehicle-message-input {
+    background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+    border: 2px solid #48bb78;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(72, 187, 120, 0.15);
+}
+
+[data-theme="light"] #radio-vehicle-message-input:focus {
+    border-color: #38a169;
+    box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.2), 0 2px 8px rgba(72, 187, 120, 0.3);
+    background: linear-gradient(to bottom, #fafbfc 0%, #f3f4f6 100%);
+}
+
+[data-theme="light"] #radio-vehicle-message-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Radio Info Box */
+[data-theme="light"] .radio-info-box {
+    background: rgba(49, 130, 206, 0.08);
+    border-left: 3px solid #3182ce;
+    border-radius: 6px;
+}
+
+[data-theme="light"] .radio-info-box i {
+    color: #3182ce;
+}
+
+[data-theme="light"] .radio-info-box small {
+    color: var(--text-secondary);
+}
+
+/* Radio Status Info Box */
+[data-theme="light"] .radio-status-info {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.08) 100%);
+    border: 2px solid rgba(255, 193, 7, 0.5);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
+}
+
+[data-theme="light"] .radio-status-info h4 {
+    color: #f57c00;
+}
+
+[data-theme="light"] .radio-status-info-content {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .radio-status-info ul {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .radio-form-label {
+    color: var(--text-primary);
+}
+
+/* Radio Send Button */
+[data-theme="light"] .radio-send-btn {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+[data-theme="light"] .radio-send-btn:hover {
+    box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
 }
 
 /* =====================================================
-   HEADER - Light Theme
+   CALL SYSTEM - EIGENE FRAGE STELLEN PANEL (LIGHT)
+   ===================================================== */
+
+/* Call Messages */
+[data-theme="light"] #caller-messages {
+    background: var(--panel-header);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .msg-dispatcher {
+    background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%);
+    border-left: 3px solid var(--secondary-blue);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .msg-dispatcher::before {
+    background: var(--secondary-blue);
+    color: white;
+    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.3);
+}
+
+[data-theme="light"] .msg-caller {
+    background: linear-gradient(135deg, rgba(245, 124, 0, 0.1) 0%, rgba(245, 124, 0, 0.05) 100%);
+    border-left: 3px solid var(--warning-orange);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .msg-caller::before {
+    background: var(--warning-orange);
+    color: white;
+    box-shadow: 0 2px 6px rgba(245, 124, 0, 0.3);
+}
+
+/* Question Buttons */
+[data-theme="light"] #question-buttons .question-cat {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .cat-header {
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .cat-header:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="light"] .cat-header i:first-child {
+    color: var(--info-cyan);
+}
+
+[data-theme="light"] .cat-header .arrow {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .q-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--info-cyan);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .q-btn:hover {
+    background: var(--panel-header);
+    border-left-color: var(--primary-red);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .q-btn i {
+    color: var(--info-cyan);
+}
+
+/* Protocol Sections */
+[data-theme="light"] .section-header {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .section-header:hover {
+    background: var(--panel-header);
+    border-color: var(--border-medium);
+}
+
+[data-theme="light"] .section-header h4 {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .section-header h4 i {
+    color: var(--info-cyan);
+}
+
+[data-theme="light"] .section-header i.fa-chevron-down,
+[data-theme="light"] .section-header i.fa-chevron-right {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .section-content {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   DEBUG MENU (LIGHT)
+   ===================================================== */
+
+[data-theme="light"] #debug-menu {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-lg);
+}
+
+[data-theme="light"] #debug-menu h3 {
+    background: var(--panel-header);
+    border-bottom: 2px solid var(--border-medium);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .debug-section {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .debug-section h4 {
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .debug-actions button {
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .debug-actions button:hover {
+    background: var(--panel-header);
+    border-color: var(--info-cyan);
+}
+
+[data-theme="light"] .debug-stat {
+    background: var(--panel-header);
+    border: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   HEADER
    ===================================================== */
 
 [data-theme="light"] header {
@@ -161,7 +419,7 @@
 }
 
 /* =====================================================
-   PANELS - Light Theme
+   PANELS
    ===================================================== */
 
 [data-theme="light"] .panel {
@@ -176,7 +434,7 @@
 }
 
 /* =====================================================
-   INCIDENTS - Light Theme
+   INCIDENTS
    ===================================================== */
 
 [data-theme="light"] .incident-item {
@@ -192,7 +450,7 @@
 }
 
 /* =====================================================
-   VEHICLES - Light Theme
+   VEHICLES
    ===================================================== */
 
 [data-theme="light"] .vehicle-item {
@@ -217,7 +475,7 @@
 }
 
 /* =====================================================
-   STATIONS - Light Theme
+   STATIONS
    ===================================================== */
 
 [data-theme="light"] .station-group-compact {
@@ -235,7 +493,7 @@
 }
 
 /* =====================================================
-   MAP - Light Theme (Subtle Border)
+   MAP
    ===================================================== */
 
 [data-theme="light"] .map-container {
@@ -245,7 +503,7 @@
 }
 
 /* =====================================================
-   RADIO LOG - Light Theme
+   RADIO LOG
    ===================================================== */
 
 [data-theme="light"] .radio-message {
@@ -254,7 +512,7 @@
 }
 
 /* =====================================================
-   MODALS - Light Theme
+   MODALS
    ===================================================== */
 
 [data-theme="light"] .modal {
@@ -262,35 +520,75 @@
     backdrop-filter: blur(3px);
 }
 
-[data-theme="light"] .modal-content {
+[data-theme="light"] .modal-content,
+[data-theme="light"] #vehicle-selection-modal .modal-content {
     background: var(--bg-dark);
     border: 1px solid var(--border-medium);
     box-shadow: var(--shadow-lg);
 }
 
-[data-theme="light"] .modal-header {
+[data-theme="light"] .modal-header,
+[data-theme="light"] #vehicle-selection-modal .modal-header {
     background: var(--panel-header);
     border-bottom: 1px solid var(--border-light);
 }
 
+[data-theme="light"] #vehicle-selection-modal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] #vehicle-selection-modal .modal-header h2 i {
+    color: var(--info-cyan);
+}
+
+[data-theme="light"] #vehicle-selection-modal .modal-body {
+    background: var(--bg-darkest);
+}
+
+[data-theme="light"] #vehicle-selection-modal .modal-footer {
+    background: var(--panel-header);
+    border-top: 2px solid var(--border-medium);
+}
+
+/* Vehicle Modal Cards */
+[data-theme="light"] .vehicle-modal-card {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-light);
+}
+
+[data-theme="light"] .vehicle-modal-card:hover {
+    border-color: var(--info-cyan);
+    background: var(--bg-dark);
+    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.2);
+}
+
+[data-theme="light"] .vehicle-modal-card.selected {
+    border-color: var(--success-green);
+    background: linear-gradient(135deg, rgba(56, 142, 60, 0.1) 0%, rgba(56, 142, 60, 0.05) 100%);
+    box-shadow: 0 4px 12px rgba(56, 142, 60, 0.3);
+}
+
 /* =====================================================
-   SCROLLBARS - Light Theme
+   SCROLLBARS
    ===================================================== */
 
-[data-theme="light"] ::-webkit-scrollbar-track {
+[data-theme="light"] ::-webkit-scrollbar-track,
+[data-theme="light"] #radio-feed-full::-webkit-scrollbar-track {
     background: var(--panel-header);
 }
 
-[data-theme="light"] ::-webkit-scrollbar-thumb {
+[data-theme="light"] ::-webkit-scrollbar-thumb,
+[data-theme="light"] #radio-feed-full::-webkit-scrollbar-thumb {
     background: var(--border-medium);
 }
 
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] #radio-feed-full::-webkit-scrollbar-thumb:hover {
     background: var(--border-strong);
 }
 
 /* =====================================================
-   INCOMING CALL - Light Theme
+   INCOMING CALL
    ===================================================== */
 
 [data-theme="light"] .incoming-call-card {
@@ -303,7 +601,7 @@
 }
 
 /* =====================================================
-   FILTER BUTTONS - Light Theme
+   FILTER BUTTONS
    ===================================================== */
 
 [data-theme="light"] .filter-btn {
@@ -330,7 +628,7 @@
 }
 
 /* =====================================================
-   VEHICLE CARDS (Assignment) - Light Theme
+   VEHICLE CARDS (Assignment)
    ===================================================== */
 
 [data-theme="light"] .vehicle-card-large {
@@ -358,47 +656,40 @@
 }
 
 /* =====================================================
-   CALL SYSTEM - Light Theme
+   SELECTED VEHICLES
    ===================================================== */
 
-[data-theme="light"] #caller-messages {
-    background: var(--panel-header);
+[data-theme="light"] #inline-selected-vehicles {
+    background: var(--input-bg);
     border: 1px solid var(--border-light);
 }
 
-[data-theme="light"] .msg-dispatcher {
-    background: rgba(25, 118, 210, 0.08);
-    border-left: 3px solid var(--info-cyan);
-}
+/* =====================================================
+   SHORTCUTS HINT
+   ===================================================== */
 
-[data-theme="light"] .msg-caller {
-    background: var(--bg-dark);
-    border-left: 3px solid var(--warning-orange);
+[data-theme="light"] .shortcuts-hint kbd {
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
     box-shadow: var(--shadow-sm);
 }
 
-[data-theme="light"] .cat-header {
-    background: var(--panel-header);
-    border: 1px solid var(--border-light);
-}
+/* =====================================================
+   BUTTON ICON COMPACT
+   ===================================================== */
 
-[data-theme="light"] .cat-header:hover {
-    background: var(--bg-secondary);
-}
-
-[data-theme="light"] .q-btn {
+[data-theme="light"] .btn-icon-compact {
     background: var(--input-bg);
-    border: 1px solid var(--border-light);
-    border-left: 3px solid var(--info-cyan);
+    border: 1px solid var(--border-medium);
 }
 
-[data-theme="light"] .q-btn:hover {
+[data-theme="light"] .btn-icon-compact:hover {
     background: var(--panel-header);
     box-shadow: var(--shadow-sm);
 }
 
 /* =====================================================
-   STICHWORT DROPDOWN - Light Theme
+   STICHWORT DROPDOWN
    ===================================================== */
 
 [data-theme="light"] .stichwort-dropdown {
@@ -415,44 +706,4 @@
     background: var(--panel-header);
 }
 
-/* =====================================================
-   SHORTCUTS HINT - Light Theme
-   ===================================================== */
-
-[data-theme="light"] .shortcuts-hint kbd {
-    background: var(--input-bg);
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
-}
-
-/* =====================================================
-   BUTTON ICON COMPACT - Light Theme
-   ===================================================== */
-
-[data-theme="light"] .btn-icon-compact {
-    background: var(--input-bg);
-    border: 1px solid var(--border-medium);
-}
-
-[data-theme="light"] .btn-icon-compact:hover {
-    background: var(--panel-header);
-    box-shadow: var(--shadow-sm);
-}
-
-/* =====================================================
-   THEME TOGGLE BUTTON (Special Styling)
-   ===================================================== */
-
-[data-theme="light"] .theme-toggle-btn {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    color: #78350f;
-    border: 2px solid #f59e0b;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-
-[data-theme="light"] .theme-toggle-btn:hover {
-    background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-}
-
-console.log('🌞 Light Theme CSS geladen!');
+console.log('☀️ Light Theme v2.0 CSS geladen - Radio, Debug & Call System optimiert!');
