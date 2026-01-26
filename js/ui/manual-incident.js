@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.2.4
+// MANUAL INCIDENT CREATION v5.2.5
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -9,10 +9,8 @@
 // + ✅ v5.0: Keyword-Dropdowns für Stadtteil & Örtlichkeit (wie Stichwörter)
 // + ✅ v5.1: Verstärkung anfordern Modus
 // + ✅ v5.2: Custom PriorityDropdown statt native Select
-// + ✅ v5.2.1: FIX - Dropdown Timing (100ms → 300ms)
-// + ✅ v5.2.2: FIX - Detail-Stichwort Callback (value statt Objekt)
-// + ✅ v5.2.3: FIX - String-Value von UniversalDropdown korrekt verarbeiten
 // + ✅ v5.2.4: FIX - Async Dropdown-Initialisierung & besseres Error-Handling
+// + ✅ v5.2.5: FIX - Modal wird dynamisch erstellt falls nicht vorhanden
 // =========================
 
 const ManualIncident = {
@@ -29,12 +27,30 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📋 Manual Incident System v5.2.4 initialisiert (FIX: Async Dropdown-Init)');
-        this.createVehicleModalHTML();
+        console.log('📋 Manual Incident System v5.2.5 initialisiert (FIX: Dynamische Modal-Erstellung)');
+        this.ensureVehicleModalExists();
         this.attachEventListeners();
     },
 
+    // ✅ NEU: Stelle sicher, dass Modal existiert
+    ensureVehicleModalExists() {
+        let modal = document.getElementById('vehicle-selection-modal');
+        if (!modal) {
+            console.log('⚠️ Modal existiert nicht, erstelle es jetzt...');
+            this.createVehicleModalHTML();
+        } else {
+            console.log('✅ Modal existiert bereits');
+        }
+    },
+
     createVehicleModalHTML() {
+        // ✅ Entferne altes Modal falls vorhanden
+        const existing = document.getElementById('vehicle-selection-modal');
+        if (existing) {
+            existing.remove();
+            console.log('🗑️ Altes Modal entfernt');
+        }
+
         const modal = document.createElement('div');
         modal.id = 'vehicle-selection-modal';
         modal.className = 'modal';
@@ -75,18 +91,11 @@ const ManualIncident = {
             </div>
         `;
         document.body.appendChild(modal);
+        console.log('✅ Modal HTML erstellt und zum DOM hinzugefügt');
     },
 
     attachEventListeners() {
-        const modal = document.getElementById('vehicle-selection-modal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.closeVehicleModal();
-                }
-            });
-        }
-
+        // Event Listener werden direkt beim Öffnen angebracht (siehe openVehicleModal)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.vehicleModalOpen) {
                 this.closeVehicleModal();
@@ -100,6 +109,9 @@ const ManualIncident = {
         this.reinforcementMode = true;
         this.currentIncident = incident;
         this.selectedVehicles = [];
+        
+        // ✅ Stelle sicher, dass Modal existiert
+        this.ensureVehicleModalExists();
         
         const title = document.getElementById('vehicle-modal-title');
         if (title) {
@@ -117,9 +129,8 @@ const ManualIncident = {
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
             modal.classList.add('active');
+            console.log('✅ Verstärkung-Modal geöffnet');
         }
-        
-        console.log('✅ Verstärkung-Modal geöffnet');
     },
 
     async showInline(callData) {
@@ -435,10 +446,13 @@ const ManualIncident = {
             </div>
         `;
 
+        // ✅ Stelle sicher dass Modal existiert
+        this.ensureVehicleModalExists();
+
         // ✅ FIX: Warte auf KeywordsDropdown und initialisiere dann Dropdowns
         await this.initializeKeywordsDropdownsInline();
 
-        console.log('✅ Manual Incident Inline v5.2.4 angezeigt!');
+        console.log('✅ Manual Incident Inline v5.2.5 angezeigt!');
     },
 
     toggleSection(sectionName) {
@@ -462,6 +476,10 @@ const ManualIncident = {
 
     openVehicleModal() {
         console.log('🚨 openVehicleModal() aufgerufen');
+        
+        // ✅ KRITISCHER FIX: Stelle sicher, dass Modal existiert!
+        this.ensureVehicleModalExists();
+        
         this.vehicleModalOpen = true;
         
         const title = document.getElementById('vehicle-modal-title');
@@ -478,10 +496,17 @@ const ManualIncident = {
 
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
+            // ✅ Event Listener für Modal-Close
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeVehicleModal();
+                }
+            });
+            
             modal.classList.add('active');
             console.log('✅ Modal Klasse "active" hinzugefügt');
         } else {
-            console.error('❌ Modal-Element nicht gefunden!');
+            console.error('❌ Modal-Element IMMER NOCH nicht gefunden nach ensureVehicleModalExists()!');
         }
 
         console.log('🚑 Fahrzeugauswahl-Modal geöffnet');
@@ -559,7 +584,10 @@ const ManualIncident = {
 
     loadVehiclesInModal() {
         const grid = document.getElementById('vehicle-modal-grid');
-        if (!grid) return;
+        if (!grid) {
+            console.error('❌ vehicle-modal-grid nicht gefunden!');
+            return;
+        }
 
         const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
         grid.innerHTML = '';
@@ -642,6 +670,7 @@ const ManualIncident = {
         });
 
         this.updateVehicleModalCount();
+        console.log('✅ Fahrzeug-Grid geladen');
     },
 
     toggleVehicleInModal(id) {
@@ -798,11 +827,9 @@ const ManualIncident = {
         console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
-    // ✅ FIX v5.2.4: Async Initialisierung & besseres Error-Handling
     async initializeKeywordsDropdownsInline() {
         console.log('🔍 Starte Dropdown-Initialisierung...');
 
-        // ✅ Warte auf KeywordsDropdown wenn es noch lädt
         if (typeof KeywordsDropdown === 'undefined') {
             console.warn('⚠️ KeywordsDropdown noch nicht geladen, warte...');
             await new Promise(resolve => {
@@ -813,7 +840,6 @@ const ManualIncident = {
                     }
                 }, 100);
                 
-                // Timeout nach 5 Sekunden
                 setTimeout(() => {
                     clearInterval(checkInterval);
                     console.error('❌ Timeout: KeywordsDropdown nicht geladen!');
@@ -827,7 +853,6 @@ const ManualIncident = {
             return;
         }
 
-        // ✅ Warte auf Daten-Laden
         if (KeywordsDropdown.detailKeywords.length === 0 || 
             KeywordsDropdown.districts.length === 0 || 
             KeywordsDropdown.locations.length === 0) {
@@ -841,7 +866,6 @@ const ManualIncident = {
         }
 
         try {
-            // Priority Dropdown (gibt Objekt zurück)
             console.log('🔍 Initialisiere Priority Dropdown...');
             const priorityInput = document.getElementById('inline-priority');
             if (priorityInput) {
@@ -853,7 +877,6 @@ const ManualIncident = {
                 console.error('❌ Priority Input NICHT gefunden!');
             }
 
-            // ✅ Detail-Stichwort (gibt String zurück)
             console.log('🔍 Initialisiere Detail-Stichwort Dropdown...');
             KeywordsDropdown.initializeDetailDropdown('inline-detail', (keyword) => {
                 const keywordData = KeywordsDropdown.getDetailKeyword(keyword);
@@ -861,14 +884,12 @@ const ManualIncident = {
                 console.log('✅ Detail-Stichwort ausgewählt:', keyword, '- Data:', keywordData);
             });
 
-            // Stadtteil (gibt String zurück)
             console.log('🔍 Initialisiere Stadtteil Dropdown...');
             KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtName) => {
                 const districtData = KeywordsDropdown.getDistrict(districtName) || { name: districtName };
                 console.log('✅ Stadtteil ausgewählt:', districtName, '- Data:', districtData);
             });
 
-            // Örtlichkeit (gibt String zurück)
             console.log('🔍 Initialisiere Örtlichkeit Dropdown...');
             KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (locationName) => {
                 const locationData = KeywordsDropdown.getLocation(locationName) || { name: locationName };
@@ -988,4 +1009,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.2.4 geladen (FIX: Async Dropdown-Init & Error-Handling)');
+console.log('✅ Manual Incident System v5.2.5 geladen (FIX: Dynamische Modal-Erstellung)');
