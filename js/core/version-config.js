@@ -1,8 +1,7 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.2
+// CENTRAL VERSION MANAGER v2.3
 // SINGLE SOURCE OF TRUTH für Version
-// ✅ FIX: Verhindert doppeltes Script-Laden
-// ✅ NEU: Light Theme Support
+// ✅ v6.3.0: Radio UI Integration komplett
 // =========================
 
 const VERSION_CONFIG = {
@@ -31,11 +30,11 @@ const VERSION_CONFIG = {
     
     /**
      * CSS-Dateien die geladen werden müssen
-     * ✅ NEU: Light Theme CSS hinzugefügt
+     * ✅ v6.3.0: radio.css hinzugefügt
      */
     CSS_FILES: [
-        'css/style.css', // Dark Theme (Standard)
-        'css/theme-light.css', // 🆕 Light Theme (Whitemode)
+        'css/style.css',
+        'css/theme-light.css',
         'css/map-icons.css',
         'css/draggable.css',
         'css/tabs.css',
@@ -43,16 +42,17 @@ const VERSION_CONFIG = {
         'css/priority-dropdown.css',
         'css/universal-dropdown.css',
         'css/keywords-dropdown.css',
-        'css/radio-tab.css'
+        'css/radio-tab.css',
+        'css/radio.css' // 🆕 v6.3.0 - Complete radio UI styling
     ],
     
     /**
      * JavaScript-Dateien in Ladereihenfolge
-     * ✅ NEU: Theme Manager hinzugefügt (früh laden!)
+     * ✅ v6.3.0: radio-feed.js & radio-vehicle-control.js hinzugefügt
      */
     JS_FILES: [
-        // Core (Theme Manager ZUERST!)
-        'js/systems/theme-manager.js', // 🆕 Theme Manager
+        // Core
+        'js/systems/theme-manager.js',
         'js/core/config.js',
         'js/core/incident-manager.js',
         
@@ -79,10 +79,13 @@ const VERSION_CONFIG = {
         'js/systems/groq-validator.js',
         'js/systems/call-system.js',
         'js/systems/vehicle-movement.js',
-        'js/systems/radio-system.js',
-        'js/systems/vehicle-radio-requests.js',
+        'js/systems/status-0-5-system.js', // Status 0/5 System
+        'js/systems/radio-system.js', // Radio-Logik
+        'js/systems/vehicle-radio-requests.js', // Automatische Fahrzeug-Anfragen
         
-        // UI
+        // UI - Radio zuerst!
+        'js/ui/radio-feed.js', // 🆕 v6.3.0 - Radio Feed UI (addRadioMessage)
+        'js/ui/radio-vehicle-control.js', // 🆕 v6.3.0 - Vehicle Selection & Control
         'js/ui/ui-helpers.js',
         'js/ui/priority-dropdown.js',
         'js/ui/universal-dropdown.js',
@@ -94,6 +97,7 @@ const VERSION_CONFIG = {
         'js/ui/ui.js',
         'js/ui/draggable.js',
         'js/ui/ui-radio.js',
+        'js/ui/radio-ui-enhancements.js',
         
         // Map & AI
         'js/map.js',
@@ -104,8 +108,8 @@ const VERSION_CONFIG = {
         'js/core/main.js',
         'js/core/bridge.js',
         
-        // Debug
-        'js/utils/debug-menu.js'
+        // Debug (last)
+        'js/systems/debug-menu.js'
     ],
     
     /**
@@ -160,7 +164,7 @@ const VERSION_CONFIG = {
             
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = this.getVersionedUrl(path); // ✅ MIT Version-Parameter
+            link.href = this.getVersionedUrl(path);
             document.head.appendChild(link);
             this.loadedCSS.add(normalized);
         });
@@ -170,18 +174,17 @@ const VERSION_CONFIG = {
     
     /**
      * Lädt alle JavaScript-Dateien dynamisch und sequenziell
-     * ✅ FIX: Bessere Duplikat-Prüfung
      */
     loadJS: async function() {
         try {
             // Externe JS
             for (const url of this.EXTERNAL_LIBS.js) {
-                await this.loadScript(url, false); // Keine Versionierung für CDN
+                await this.loadScript(url, false);
             }
             
             // Lokale JS mit Versionierung
             for (const path of this.JS_FILES) {
-                await this.loadScript(path, true); // Mit Versionierung
+                await this.loadScript(path, true);
             }
             
             console.log(`✅ ${this.JS_FILES.length} JS-Dateien erfolgreich geladen (v${this.VERSION})`);
@@ -193,20 +196,17 @@ const VERSION_CONFIG = {
     
     /**
      * Lädt einzelnes Script asynchron
-     * ✅ FIX: Verhindert doppeltes Laden mit besserer Normalisierung
      */
     loadScript: function(path, addVersion = true) {
         return new Promise((resolve, reject) => {
             const normalized = this.normalizeUrl(path);
             
-            // ✅ FIX: Prüfe ob bereits geladen
             if (this.loadedScripts.has(normalized)) {
                 console.warn(`⚠️ Script bereits geladen, überspringe: ${path}`);
                 resolve();
                 return;
             }
             
-            // ✅ FIX: Prüfe ob Script-Tag bereits im DOM existiert
             const existingScripts = Array.from(document.querySelectorAll('script'));
             const exists = existingScripts.some(script => {
                 const scriptNormalized = this.normalizeUrl(script.src);
@@ -247,7 +247,6 @@ const VERSION_CONFIG = {
         const savedVersion = localStorage.getItem(STORAGE_KEY);
         
         if (!savedVersion) {
-            // Erste Installation
             localStorage.setItem(STORAGE_KEY, this.VERSION);
             console.log('📦 Erste Installation:', this.VERSION);
             return;
@@ -266,9 +265,6 @@ const VERSION_CONFIG = {
         }
     },
     
-    /**
-     * Vergleicht Versionen (Semantic Versioning)
-     */
     isNewerVersion: function(newVer, oldVer) {
         newVer = newVer.replace(/^v/, '');
         oldVer = oldVer.replace(/^v/, '');
@@ -287,18 +283,14 @@ const VERSION_CONFIG = {
         return false;
     },
     
-    /**
-     * Löscht Browser-Cache
-     */
     clearCache: async function() {
         console.log('🧹 Cache wird geleert...');
         
-        // Behalte wichtige Daten
         const keysToKeep = [
             'app_version',
             'groq_api_key',
             'game_difficulty',
-            'dispatcher_theme', // 🆕 Theme-Präferenz behalten!
+            'dispatcher_theme',
             'ui_theme',
             'sound_enabled',
             'notifications_enabled',
@@ -309,7 +301,6 @@ const VERSION_CONFIG = {
             'user_settings'
         ];
         
-        // LocalStorage aufräumen
         const keysToDelete = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -319,27 +310,17 @@ const VERSION_CONFIG = {
         }
         
         keysToDelete.forEach(key => localStorage.removeItem(key));
-        console.log(`  🗑️ ${keysToDelete.length} LocalStorage Keys entfernt`);
-        
-        // SessionStorage
         sessionStorage.clear();
-        console.log('  🗑️ SessionStorage geleert');
         
-        // Service Worker Caches
         if ('caches' in window) {
             const cacheNames = await caches.keys();
             await Promise.all(cacheNames.map(name => caches.delete(name)));
-            console.log(`  🗑️ ${cacheNames.length} Service Worker Caches geleert`);
         }
         
         console.log('✅ Cache erfolgreich geleert');
     },
     
-    /**
-     * Zeigt Update-Benachrichtigung
-     */
     showUpdateNotification: function(oldVersion) {
-        // Nur wenn DOM ready ist
         if (document.readyState !== 'loading') {
             this._showNotification(oldVersion);
         } else {
@@ -369,17 +350,17 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🎉</span>
+                <span style="font-size: 2em;">📡</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
                 <p><strong>Neu in dieser Version:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>🌞 <strong>Light Mode hinzugefügt!</strong> (In Einstellungen umschaltbar)</li>
-                    <li>🎨 Theme Manager mit Smooth Transitions</li>
-                    <li>✅ Doppeltes Script-Laden behoben</li>
-                    <li>✅ Performance optimiert</li>
-                    <li>💾 Theme-Präferenz wird gespeichert</li>
+                    <li>📡 <strong>Radio-System komplett!</strong></li>
+                    <li>🎙️ Fahrzeuge funken automatisch</li>
+                    <li>💬 Funksprüche mit KI & Templates</li>
+                    <li>🚨 Status 0 & 5 vollständig</li>
+                    <li>✅ Alle UI-Elemente funktional</li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
@@ -396,8 +377,6 @@ const VERSION_CONFIG = {
         `;
         
         document.body.appendChild(notification);
-        
-        // Auto-Close nach 30 Sekunden
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.remove();
@@ -405,9 +384,6 @@ const VERSION_CONFIG = {
         }, 30000);
     },
     
-    /**
-     * Info für Konsole
-     */
     printInfo: function() {
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
         console.log('%c🎮 Dispatcher Simulator', 'color: #4299e1; font-size: 1.5em; font-weight: bold');
@@ -415,24 +391,15 @@ const VERSION_CONFIG = {
         console.log(`%c📦 Version: ${this.VERSION}`, 'color: #48bb78; font-weight: bold');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
-        console.log('%c🎨 Features: Dark Mode, Light Mode, Theme Manager', 'color: #fbbf24');
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
-        console.log('%c💡 Befehle:', 'color: #ffc107; font-weight: bold');
-        console.log('%c   VERSION_CONFIG.VERSION        ', 'color: #a0aec0');
-        console.log('%c   VERSION_CONFIG.checkForUpdate()', 'color: #a0aec0');
-        console.log('%c   VERSION_CONFIG.clearCache()   ', 'color: #a0aec0');
-        console.log('%c   themeManager.toggleTheme()    ', 'color: #a0aec0');
-        console.log('%c   themeManager.getCurrentTheme()', 'color: #a0aec0');
+        console.log('%c📡 NEU: Radio-System komplett funktional!', 'color: #fbbf24');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
 
-// Global verfügbar machen
 if (typeof window !== 'undefined') {
     window.VERSION_CONFIG = VERSION_CONFIG;
 }
 
-// Auto-Initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         VERSION_CONFIG.checkForUpdate();
@@ -443,4 +410,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.2 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.3 geladen - Version: ${VERSION_CONFIG.VERSION}`);
