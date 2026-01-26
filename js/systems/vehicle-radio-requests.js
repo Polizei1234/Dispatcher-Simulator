@@ -1,8 +1,9 @@
 // =========================
-// FAHRZEUG FUNK-ANFRAGEN SYSTEM v1.1
+// FAHRZEUG FUNK-ANFRAGEN SYSTEM v1.2
 // Status 0 (Notfall) & Status 5 (Sprechwunsch)
 // + ✅ Nutzt CONFIG.RADIO Konstanten
 // + ✅ Korrekte FMS-Status-Prüfung
+// + ✅ Echte Krankenhaus-Datenbank Integration
 // =========================
 
 class VehicleRadioRequests {
@@ -34,7 +35,7 @@ class VehicleRadioRequests {
             this.checkVehicleRequests();
         }, this.checkInterval);
         
-        console.log('📡 Vehicle Radio Requests System v1.1 initialisiert');
+        console.log('📡 Vehicle Radio Requests System v1.2 initialisiert');
         console.log(`⏰ Check-Intervall: ${this.checkInterval/1000}s`);
         console.log(`🎲 Anfrage-Chance: ${this.requestChance * 100}%`);
         console.log(`🚨 Notfall-Chance: ${this.emergencyChance * 100}%`);
@@ -267,9 +268,6 @@ class VehicleRadioRequests {
                     'error'
                 );
             }
-            
-            // Sound abspielen (falls vorhanden)
-            this.playAlertSound();
         } else {
             // Normale Notification
             if (typeof NotificationSystem !== 'undefined') {
@@ -280,9 +278,6 @@ class VehicleRadioRequests {
                 );
             }
         }
-        
-        // Highlight im UI (falls vorhanden)
-        this.highlightVehicleInUI(vehicle.id);
     }
     
     /**
@@ -334,8 +329,8 @@ class VehicleRadioRequests {
             case this.requestTypes.HOSPITAL_ASSIGNMENT:
                 // Wähle nächstes verfügbares Krankenhaus
                 const hospital = this.getNearestHospital(vehicle);
-                vehicle.targetHospital = hospital;
-                return `${vehicle.callsign}, fahren Sie Krankenhaus ${hospital}, kommen.`;
+                vehicle.targetHospital = hospital.shortName;
+                return `${vehicle.callsign}, fahren Sie Krankenhaus ${hospital.shortName}, kommen.`;
                 
             case this.requestTypes.REINFORCEMENT:
                 return `${vehicle.callsign}, Verstärkung ist alarmiert, ETA 5 Minuten, kommen.`;
@@ -356,27 +351,59 @@ class VehicleRadioRequests {
     
     /**
      * Findet nächstes Krankenhaus
+     * ✅ Nutzt jetzt echte HOSPITALS Datenbank!
      */
     getNearestHospital(vehicle) {
-        // TODO: Echte Distanzberechnung mit HOSPITALS Daten
-        const hospitals = ['Winnenden', 'Schorndorf', 'Backnang'];
-        return hospitals[Math.floor(Math.random() * hospitals.length)];
-    }
-    
-    /**
-     * Spielt Alert-Sound ab
-     */
-    playAlertSound() {
-        // TODO: Echten Sound implementieren
-        console.log('🔊 ALERT SOUND!');
-    }
-    
-    /**
-     * Markiert Fahrzeug im UI
-     */
-    highlightVehicleInUI(vehicleId) {
-        // TODO: UI-Highlight implementieren
-        console.log(`🔆 Highlight Fahrzeug: ${vehicleId}`);
+        // Versuche Fahrzeug-Position zu ermitteln
+        let vehicleLocation = null;
+        
+        // Option 1: Fahrzeug hat Koordinaten
+        if (vehicle.lat && vehicle.lng) {
+            vehicleLocation = [vehicle.lat, vehicle.lng];
+        }
+        // Option 2: Einsatzort verwenden
+        else {
+            const incident = this.getVehicleIncident(vehicle);
+            if (incident && incident.lat && incident.lng) {
+                vehicleLocation = [incident.lat, incident.lng];
+            }
+        }
+        
+        // Nutze HOSPITALS Datenbank falls verfügbar
+        if (typeof HOSPITALS !== 'undefined' && vehicleLocation) {
+            const incident = this.getVehicleIncident(vehicle);
+            const incidentType = incident ? incident.keyword : null;
+            
+            // Intelligente Krankenhaus-Auswahl basierend auf Einsatztyp
+            if (incidentType) {
+                const hospital = HOSPITALS.selectForIncident(vehicleLocation, incidentType);
+                if (hospital) {
+                    console.log(`🏭 ${vehicle.callsign} -> ${hospital.shortName} (Distanz: ${hospital.distanceKm.toFixed(1)} km)`);
+                    return hospital;
+                }
+            }
+            
+            // Fallback: Nächstes Krankenhaus mit Notaufnahme
+            const hospital = HOSPITALS.findNearest(vehicleLocation, { emergencyRoom: true });
+            if (hospital) {
+                console.log(`🏭 ${vehicle.callsign} -> ${hospital.shortName} (Nächstes, ${hospital.distanceKm.toFixed(1)} km)`);
+                return hospital;
+            }
+        }
+        
+        // Fallback: Zufälliges Krankenhaus aus Liste
+        if (typeof HOSPITALS !== 'undefined' && HOSPITALS.length > 0) {
+            return HOSPITALS.getRandom();
+        }
+        
+        // Letzter Fallback: Dummy-Daten
+        console.warn('⚠️ HOSPITALS Datenbank nicht verfügbar, nutze Fallback');
+        const fallbackHospitals = [
+            { shortName: 'Winnenden', name: 'RMK Winnenden' },
+            { shortName: 'Schorndorf', name: 'RMK Schorndorf' },
+            { shortName: 'Backnang', name: 'RMK Backnang' }
+        ];
+        return fallbackHospitals[Math.floor(Math.random() * fallbackHospitals.length)];
     }
     
     /**
@@ -419,5 +446,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Vehicle Radio Requests System v1.1 geladen');
+console.log('✅ Vehicle Radio Requests System v1.2 geladen');
 console.log(`✅ Nutzt CONFIG.RADIO Konstanten (Request-Chance: ${CONFIG.RADIO.REQUEST_CHANCE * 100}%)`);
+console.log('✅ Integriert mit HOSPITALS Datenbank für intelligente Klinik-Zuweisung');
