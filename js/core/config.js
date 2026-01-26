@@ -1,15 +1,16 @@
 // =========================
-// CONFIG v6.2.0 - UNIFIED + CONSTANTS
+// CONFIG v6.3.0 - UNIFIED STATUS SYSTEM UPDATE
 // Global game configuration
-// + ✅ FMS_STATUS vereinheitlicht
-// + ✅ Magic Numbers durch Konstanten ersetzt
-// + ✅ Nutzt VERSION_CONFIG für Version
+// + ✅ FMS_STATUS Farben angepasst (gemäß Anforderung)
+// + ✅ Status 9 entfernt (nicht verwendet)
+// + ✅ Status 0: NUR für Besatzungs-Notfälle
+// + ✅ Status 5: Für alle Fahrzeug-Anfragen
 // =========================
 
 const CONFIG = {
     // Version wird zentral aus VERSION_CONFIG geladen
     get VERSION() {
-        return window.VERSION_CONFIG ? window.VERSION_CONFIG.VERSION : '6.2.0';
+        return window.VERSION_CONFIG ? window.VERSION_CONFIG.VERSION : '6.3.0';
     },
     get BUILD_DATE() {
         return window.VERSION_CONFIG ? window.VERSION_CONFIG.BUILD_DATE : new Date().toLocaleString('de-DE');
@@ -68,9 +69,9 @@ const CONFIG = {
     
     // Radio System Constants
     RADIO: {
-        REQUEST_CHANCE: 0.15,           // 15% Chance dass Fahrzeug anfunkt
+        REQUEST_CHANCE: 0.02,           // 2% Chance dass Fahrzeug Status 5 sendet
         CHECK_INTERVAL_MS: 30000,       // 30 Sekunden zwischen Checks
-        EMERGENCY_CHANCE: 0.02,         // 2% Chance für Notfall (Status 0)
+        EMERGENCY_CHANCE: 0.001,        // 0.1% Chance für Status 0 (SEHR SELTEN!)
         RESPONSE_DELAY_MIN_MS: 800,     // Min. Verzögerung bei Antwort
         RESPONSE_DELAY_MAX_MS: 1400,    // Max. Verzögerung bei Antwort
         CONVERSATION_HISTORY_LIMIT: 10, // Max. Nachrichten in History
@@ -115,22 +116,23 @@ const CONFIG = {
     },
     
     // ✅ UNIFIED FMS STATUS DEFINITIONS
-    // Diese Definitionen sind für ALLE Systeme verbindlich!
+    // Farben gemäß Anforderung angepasst!
     FMS_STATUS: {
         0: { 
-            name: 'Notruf/Hilferuf', 
-            shortName: 'Notfall',
-            color: '#dc3545', 
+            name: 'Notruf Besatzung', 
+            shortName: 'NOTFALL',
+            color: '#ff4444',      // Helles Rot
             icon: '🚨',
-            description: 'Crew in Gefahr - Sofortige Hilfe erforderlich!',
+            description: 'NOTFALL: Besatzung in Gefahr - NUR in echten Notfällen!',
             canBeContacted: true,
-            priority: 'emergency'
+            priority: 'emergency',
+            usage: 'NUR bei Notfällen der Besatzung (Unfall, Übergriff, medizinischer Notfall der Crew)'
         },
         1: { 
             name: 'Einsatzbereit über Funk', 
             shortName: 'EB Funk',
-            color: '#28a745', 
-            icon: '🟽',
+            color: '#90ee90',      // Hellgrün
+            icon: '🔽',
             description: 'Fahrzeug einsatzbereit, außerhalb der Wache',
             canBeContacted: true,
             priority: 'normal'
@@ -138,8 +140,8 @@ const CONFIG = {
         2: { 
             name: 'Einsatzbereit auf Wache', 
             shortName: 'EB Wache',
-            color: '#28a745', 
-            icon: '🟽',
+            color: '#006400',      // Dunkelgrün
+            icon: '🏠',
             description: 'Fahrzeug einsatzbereit auf Wache',
             canBeContacted: true,
             priority: 'normal'
@@ -147,8 +149,8 @@ const CONFIG = {
         3: { 
             name: 'Einsatz übernommen', 
             shortName: 'Alarmiert',
-            color: '#ffc107', 
-            icon: '🟡',
+            color: '#ffa500',      // Orange
+            icon: '🔔',
             description: 'Einsatz wurde angenommen, Vorbereitung läuft',
             canBeContacted: true,
             priority: 'normal'
@@ -156,8 +158,8 @@ const CONFIG = {
         4: { 
             name: 'Anfahrt Einsatzstelle', 
             shortName: 'Anfahrt',
-            color: '#fd7e14', 
-            icon: '🟠',
+            color: '#8b0000',      // Dunkles Rot
+            icon: '🚑',
             description: 'Fahrzeug ist unterwegs zur Einsatzstelle',
             canBeContacted: true,
             priority: 'normal'
@@ -165,17 +167,18 @@ const CONFIG = {
         5: { 
             name: 'Sprechwunsch', 
             shortName: 'Sprechwunsch',
-            color: '#6c757d', 
+            color: '#ff6666',      // Helles Rot
             icon: '📞',
             description: 'Fahrzeug möchte Leitstelle kontaktieren',
             canBeContacted: true,
-            priority: 'high'
+            priority: 'high',
+            usage: 'Für ALLE Anfragen vom Fahrzeug an die Leitstelle (ETA, Lage, Rückfragen, etc.)'
         },
         6: { 
             name: 'Ankunft Einsatzstelle', 
             shortName: 'Vor Ort',
-            color: '#dc3545', 
-            icon: '🔴',
+            color: '#808080',      // Grau
+            icon: '📍',
             description: 'Fahrzeug ist an der Einsatzstelle eingetroffen',
             canBeContacted: true,
             priority: 'normal'
@@ -183,8 +186,8 @@ const CONFIG = {
         7: { 
             name: 'Patient aufgenommen', 
             shortName: 'Patient an Bord',
-            color: '#17a2b8', 
-            icon: '🔵',
+            color: '#ffb6c1',      // Rosa
+            icon: '🩺',
             description: 'Patient wurde aufgenommen und verladen',
             canBeContacted: true,
             priority: 'normal'
@@ -192,27 +195,19 @@ const CONFIG = {
         8: { 
             name: 'Anfahrt Krankenhaus', 
             shortName: 'Transport',
-            color: '#007bff', 
-            icon: '🔵',
+            color: '#9370db',      // Lila
+            icon: '🏥',
             description: 'Transportfahrt zum Krankenhaus',
             canBeContacted: true,
             priority: 'normal'
         },
-        9: { 
-            name: 'Ankunft Krankenhaus', 
-            shortName: 'KH erreicht',
-            color: '#6f42c1', 
-            icon: '🟣',
-            description: 'Krankenhaus erreicht, Patientübergabe',
-            canBeContacted: true,
-            priority: 'normal'
-        },
+        // Status 9 ENTFERNT (nicht verwendet)
         'C': { 
-            name: 'Status C', 
+            name: 'Nicht Einsatzbereit', 
             shortName: 'Status C',
-            color: '#dc3545', 
-            icon: '🛑',
-            description: 'Nicht einsatzbereit',
+            color: '#666666',      // Dunkelgrau
+            icon: '🚫',
+            description: 'Fahrzeug nicht einsatzbereit (Werkstatt, Pause, etc.)',
             canBeContacted: false,
             priority: 'low'
         }
@@ -288,5 +283,7 @@ if (typeof window !== 'undefined') {
 }
 
 console.log(`✅ Config v${CONFIG.VERSION} geladen (${CONFIG.BUILD_DATE})`);
-console.log('✅ FMS_STATUS vereinheitlicht - Alle Systeme nutzen gleiche Definitionen');
-console.log('✅ Magic Numbers ersetzt - Alle Konstanten zentral definiert');
+console.log('✅ FMS_STATUS Farben aktualisiert (gemäß Anforderung)');
+console.log('✅ Status 9 entfernt');
+console.log('✅ Status 0: NUR für Besatzungs-Notfälle');
+console.log('✅ Status 5: Für alle Fahrzeug-Anfragen');
