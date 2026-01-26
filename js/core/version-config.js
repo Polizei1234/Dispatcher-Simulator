@@ -1,12 +1,12 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.3
+// CENTRAL VERSION MANAGER v2.4
 // SINGLE SOURCE OF TRUTH für Version
-// ✅ v6.3.0: Radio UI Integration komplett
+// ✅ v7.0.0: Phase 1 - Kompositions-System integriert!
 // =========================
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '6.3.0',
+    VERSION: '7.0.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -30,7 +30,7 @@ const VERSION_CONFIG = {
     
     /**
      * CSS-Dateien die geladen werden müssen
-     * ✅ v6.3.0: radio.css hinzugefügt
+     * ✅ v7.0.0: Keine Änderungen
      */
     CSS_FILES: [
         'css/style.css',
@@ -43,12 +43,14 @@ const VERSION_CONFIG = {
         'css/universal-dropdown.css',
         'css/keywords-dropdown.css',
         'css/radio-tab.css',
-        'css/radio.css' // 🆕 v6.3.0 - Complete radio UI styling
+        'css/radio.css'
     ],
     
     /**
      * JavaScript-Dateien in Ladereihenfolge
-     * ✅ v6.3.0: radio-feed.js & radio-vehicle-control.js hinzugefügt
+     * ✅ v7.0.0: Phase 1 Kompositions-System hinzugefügt!
+     * 🆕 severity-bases.js, incident-types.js, incident-modifiers.js
+     * 🆕 incident-composer.js, conversation-pools.js
      */
     JS_FILES: [
         // Core
@@ -66,7 +68,14 @@ const VERSION_CONFIG = {
         'js/utils/scoring-system.js',
         'js/utils/tutorial.js',
         
-        // Data
+        // 🆕 PHASE 1 - Kompositions-System (MUSS VOR data.js geladen werden!)
+        'js/data/severity-bases.js',         // 🆕 v7.0.0 - 3 Schweregrade
+        'js/data/incident-types.js',         // 🆕 v7.0.0 - 8 Einsatzarten
+        'js/data/incident-modifiers.js',     // 🆕 v7.0.0 - 5 Modifikatoren
+        'js/core/incident-composer.js',      // 🆕 v7.0.0 - Kompositions-Engine
+        'js/data/conversation-pools.js',     // 🆕 v7.0.0 - Fragen-Datenbank
+        
+        // Data (NACH Kompositions-System!)
         'js/data/hospitals.js',
         'js/data/incidents.js',
         'js/data/data.js',
@@ -79,13 +88,13 @@ const VERSION_CONFIG = {
         'js/systems/groq-validator.js',
         'js/systems/call-system.js',
         'js/systems/vehicle-movement.js',
-        'js/systems/status-0-5-system.js', // Status 0/5 System
-        'js/systems/radio-system.js', // Radio-Logik
-        'js/systems/vehicle-radio-requests.js', // Automatische Fahrzeug-Anfragen
+        'js/systems/status-0-5-system.js',
+        'js/systems/radio-system.js',
+        'js/systems/vehicle-radio-requests.js',
         
         // UI - Radio zuerst!
-        'js/ui/radio-feed.js', // 🆕 v6.3.0 - Radio Feed UI (addRadioMessage)
-        'js/ui/radio-vehicle-control.js', // 🆕 v6.3.0 - Vehicle Selection & Control
+        'js/ui/radio-feed.js',
+        'js/ui/radio-vehicle-control.js',
         'js/ui/ui-helpers.js',
         'js/ui/priority-dropdown.js',
         'js/ui/universal-dropdown.js',
@@ -350,18 +359,22 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">📡</span>
+                <span style="font-size: 2em;">🎯</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>Neu in dieser Version:</strong></p>
+                <p><strong>🚀 PHASE 1 ABGESCHLOSSEN!</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>📡 <strong>Radio-System komplett!</strong></li>
-                    <li>🎙️ Fahrzeuge funken automatisch</li>
-                    <li>💬 Funksprüche mit KI & Templates</li>
-                    <li>🚨 Status 0 & 5 vollständig</li>
-                    <li>✅ Alle UI-Elemente funktional</li>
+                    <li>🎼 <strong>Kompositions-System!</strong></li>
+                    <li>⚖️ 3 Schweregrade (Minor/Moderate/Critical)</li>
+                    <li>🎭 8 Einsatzarten (Medical/Traffic/Birth/etc.)</li>
+                    <li>⚙️ 5 Modifikatoren (Entrapment/Fire/etc.)</li>
+                    <li>💬 50+ Fragen-Templates bereit!</li>
+                    <li>🎯 120+ mögliche Kombinationen!</li>
                 </ul>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #fbbf24;">
+                    ⚠️ Phase 2 folgt: AI Generator & Conversation Engine!
+                </p>
             </div>
             <button onclick="this.parentElement.remove()" style="
                 width: 100%;
@@ -391,7 +404,12 @@ const VERSION_CONFIG = {
         console.log(`%c📦 Version: ${this.VERSION}`, 'color: #48bb78; font-weight: bold');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
-        console.log('%c📡 NEU: Radio-System komplett funktional!', 'color: #fbbf24');
+        console.log('%c🎯 NEU: Phase 1 Kompositions-System integriert!', 'color: #fbbf24; font-weight: bold');
+        console.log('%c   ⚖️ 3 Severity Bases', 'color: #a0aec0');
+        console.log('%c   🎭 8 Incident Types', 'color: #a0aec0');
+        console.log('%c   ⚙️ 5 Modifiers', 'color: #a0aec0');
+        console.log('%c   🎼 Incident Composer', 'color: #a0aec0');
+        console.log('%c   💬 Conversation Pools', 'color: #a0aec0');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
@@ -410,4 +428,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.3 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.4 geladen - Version: ${VERSION_CONFIG.VERSION}`);
