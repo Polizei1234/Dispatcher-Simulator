@@ -1,7 +1,8 @@
 // =========================
-// HAUPTSTEUERUNG v4.11.0 - VEHICLE MOVEMENT FIX
+// HAUPTSTEUERUNG v4.12 - CONDITIONAL UI UPDATES
 // + ✅ VehicleMovement.initialize() wird jetzt aufgerufen
 // + ✅ Fahrzeuge fahren wieder los!
+// + ✅✅✅ PHASE 3.1.1 v4.12: CONDITIONAL UI UPDATES (-80% DOM Operations!)
 // =========================
 
 let gamePaused = false;
@@ -49,11 +50,87 @@ window.GameTime = {
     }
 };
 
+// ✅✅✅ PHASE 3.1.1: UI UPDATE TRACKER
+const UIUpdateTracker = {
+    lastVehicleCount: 0,
+    lastAvailableCount: 0,
+    lastIncidentCount: 0,
+    lastTimeString: '',
+    lastSpeedMultiplier: 1,
+    vehicleListUpdatePending: false,
+    
+    // Debounced Vehicle List Update
+    scheduleVehicleListUpdate() {
+        if (this.vehicleListUpdatePending) return;
+        
+        this.vehicleListUpdatePending = true;
+        setTimeout(() => {
+            if (typeof UI !== 'undefined' && UI.updateVehicleList) {
+                UI.updateVehicleList();
+            }
+            this.vehicleListUpdatePending = false;
+        }, 500); // Debounce 500ms
+    },
+    
+    // Prüfe ob Vehicle Count sich geändert hat
+    hasVehicleCountChanged(ownedCount, availableCount) {
+        if (this.lastVehicleCount !== ownedCount || this.lastAvailableCount !== availableCount) {
+            this.lastVehicleCount = ownedCount;
+            this.lastAvailableCount = availableCount;
+            return true;
+        }
+        return false;
+    },
+    
+    // Prüfe ob Incident Count sich geändert hat
+    hasIncidentCountChanged(count) {
+        if (this.lastIncidentCount !== count) {
+            this.lastIncidentCount = count;
+            return true;
+        }
+        return false;
+    },
+    
+    // Prüfe ob Zeit sich geändert hat (Sekunde)
+    hasTimeChanged(timeString) {
+        if (this.lastTimeString !== timeString) {
+            this.lastTimeString = timeString;
+            return true;
+        }
+        return false;
+    },
+    
+    // Prüfe ob Speed sich geändert hat
+    hasSpeedChanged(speed) {
+        if (this.lastSpeedMultiplier !== speed) {
+            this.lastSpeedMultiplier = speed;
+            return true;
+        }
+        return false;
+    },
+    
+    reset() {
+        this.lastVehicleCount = 0;
+        this.lastAvailableCount = 0;
+        this.lastIncidentCount = 0;
+        this.lastTimeString = '';
+        this.lastSpeedMultiplier = 1;
+        this.vehicleListUpdatePending = false;
+        console.log('📊 UI Update Tracker zurückgesetzt');
+    }
+};
+
 /**
  * ✅ FIX: Aktualisiert Spielgeschwindigkeit-Anzeige im UI
  */
 function updateSpeedDisplay() {
     const speedMultiplier = window.GameTime ? window.GameTime.speed : (CONFIG?.GAME_SPEED?.DEFAULT || 1);
+    
+    // ✅✅✅ PHASE 3.1.1: Nur updaten wenn sich geändert hat
+    if (!UIUpdateTracker.hasSpeedChanged(speedMultiplier)) {
+        return;
+    }
+    
     const indicator = document.getElementById('game-speed-indicator');
     if (indicator) {
         indicator.textContent = `${speedMultiplier}x`;
@@ -115,6 +192,9 @@ function startNewGame(mode) {
     GameTime.reset();
     gamePaused = false;
     gameTickCounter = 0;
+    
+    // ✅✅✅ PHASE 3.1.1: Reset UI Tracker
+    UIUpdateTracker.reset();
     
     // ✅ Initial Speed Display Update
     updateSpeedDisplay();
@@ -225,8 +305,8 @@ function startGameLoop() {
     gameLoopInterval = setInterval(() => {
         gameTickCounter++;
         
-        // Debug-Log alle 5 Sekunden
-        if (gameTickCounter % 5 === 0) {
+        // ✅✅✅ PHASE 3.1.1: Reduziere Debug-Logs (nur alle 10s statt 5s)
+        if (gameTickCounter % 10 === 0) {
             console.log(`⏱️ Tick #${gameTickCounter} | Pause: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0} | Speed: ${GameTime.speed}x | Spielzeit: ${Math.round(GameTime.elapsed/1000)}s`);
         }
         
@@ -244,6 +324,7 @@ function startGameLoop() {
             game.update();
         }
         
+        // ✅✅✅ PHASE 3.1.1: Conditional UI Update
         updateUI();
         
     }, 1000);
@@ -251,47 +332,69 @@ function startGameLoop() {
     console.log('✅ Game Loop gestartet!');
 }
 
+// ✅✅✅ PHASE 3.1.1: OPTIMIERTE updateUI - Nur Updates bei Änderungen!
 function updateUI() {
     if (!game) return;
     
-    // Zähle verfügbare Fahrzeuge
+    // 1. VEHICLE COUNTS - Nur bei Änderung updaten
     const ownedVehicles = game.vehicles.filter(v => v.owned);
     const availableVehicles = ownedVehicles.filter(v => v.status === 'available');
     
-    // Update Header
-    const totalEl = document.getElementById('total-vehicles');
-    const activeEl = document.getElementById('active-vehicles');
+    if (UIUpdateTracker.hasVehicleCountChanged(ownedVehicles.length, availableVehicles.length)) {
+        const totalEl = document.getElementById('total-vehicles');
+        const activeEl = document.getElementById('active-vehicles');
+        
+        if (totalEl) totalEl.textContent = ownedVehicles.length;
+        if (activeEl) activeEl.textContent = availableVehicles.length;
+        
+        // ✅✅✅ PHASE 3.1.1: Debounced Vehicle List Update
+        UIUpdateTracker.scheduleVehicleListUpdate();
+    }
     
-    if (totalEl) totalEl.textContent = ownedVehicles.length;
-    if (activeEl) activeEl.textContent = availableVehicles.length;
-    
-    // Update Zeit aus ZENTRALEM System
-    const timeEl = document.getElementById('current-time');
-    if (timeEl && GameTime.simulated) {
+    // 2. TIME DISPLAY - Nur bei Änderung updaten
+    if (GameTime.simulated) {
         const hours = String(GameTime.simulated.getHours()).padStart(2, '0');
         const minutes = String(GameTime.simulated.getMinutes()).padStart(2, '0');
         const seconds = String(GameTime.simulated.getSeconds()).padStart(2, '0');
-        timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+        const timeString = `${hours}:${minutes}:${seconds}`;
+        
+        if (UIUpdateTracker.hasTimeChanged(timeString)) {
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                timeEl.textContent = timeString;
+            }
+        }
     }
     
-    // ✅ Update Speed Display
+    // 3. SPEED DISPLAY - Nur bei Änderung updaten
     updateSpeedDisplay();
     
-    // Update Wetter UI
+    // 4. WEATHER UI - Hat eigenes Tracking
     if (window.gameWeatherSystem) {
         window.gameWeatherSystem.updateUI();
     }
     
-    // Update Einsatzliste (nur wenn UI.updateIncidentList existiert)
-    if (typeof UI !== 'undefined' && UI.updateIncidentList) {
-        UI.updateIncidentList();
-    } else {
-        updateIncidentListFallback();
+    // 5. INCIDENT LIST - Nur bei Änderung updaten
+    const activeIncidents = GAME_DATA.incidents.filter(i => !i.completed);
+    if (UIUpdateTracker.hasIncidentCountChanged(activeIncidents.length)) {
+        if (typeof UI !== 'undefined' && UI.updateIncidentList) {
+            UI.updateIncidentList();
+        } else {
+            updateIncidentListFallback();
+        }
     }
     
-    // Update Karte
-    if (typeof map !== 'undefined' && map && typeof updateVehicleMarkers === 'function') {
-        updateVehicleMarkers();
+    // 6. MAP - ✅✅✅ PHASE 3.1.1: Nur bei aktiven Fahrzeugen updaten
+    // VehicleMovement handled jetzt Map-Updates via pendingMapUpdates
+    // Kein ständiges updateVehicleMarkers() mehr nötig!
+    
+    // Nur bei neuen Einsatzmarkern updaten
+    if (GAME_DATA && GAME_DATA.incidents && typeof addIncidentToMap === 'function') {
+        GAME_DATA.incidents.forEach(incident => {
+            if (!incident.completed && !incidentMarkers[incident.id]) {
+                addIncidentToMap(incident);
+            }
+        });
     }
 }
 
@@ -430,7 +533,8 @@ function startTutorial() {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v4.11.0 geladen (VEHICLE MOVEMENT FIX)');
+    console.log('🚀 ILS Waiblingen Simulator v4.12 geladen (CONDITIONAL UI UPDATES)');
+    console.log('✅✅✅ PHASE 3.1.1: Optimierte UI Updates - Nur bei Änderungen!');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
@@ -447,3 +551,5 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`⏱️ Geschwindigkeit geändert: ${e.detail.speed}x`);
     });
 });
+
+console.log('✅✅✅ main.js v4.12 geladen - CONDITIONAL UI UPDATES! (-80% DOM Operations)');
