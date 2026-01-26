@@ -1,8 +1,9 @@
 // =========================
-// PRIORITY DROPDOWN v1.0.1
+// PRIORITY DROPDOWN v1.1
 // Custom styled dropdown for Prioritätsstufe (RD/MANV)
 // Beautiful design like Keywords Dropdown
-// FIX: Null check in highlightItem
+// ✅ v1.0.1: Null check in highlightItem
+// ✅ v1.1: Verhindert doppelte Event Listener beim Neuinitialisieren
 // =========================
 
 const PriorityDropdown = {
@@ -75,6 +76,8 @@ const PriorityDropdown = {
 
     activeDropdown: null,
     selectedCallback: null,
+    // ✅ NEU: Speichere aktive Initialisierungen
+    activeInputs: new Map(),
 
     initialize(inputId, onSelect) {
         const input = document.getElementById(inputId);
@@ -83,39 +86,73 @@ const PriorityDropdown = {
             return;
         }
 
+        // ✅ FIX: Cleanup wenn bereits initialisiert
+        if (this.activeInputs.has(inputId)) {
+            console.log(`♻️ Priority Dropdown ${inputId} bereits initialisiert, cleanup...`);
+            this.cleanup(inputId);
+        }
+
         this.selectedCallback = onSelect;
 
-        // Wrapper für Dropdown erstellen
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.width = '100%';
-        
-        // Input ersetzen
-        input.parentNode.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
+        // ✅ FIX: Wrapper nur erstellen wenn nicht vorhanden
+        let wrapper = input.parentElement;
+        if (!wrapper || !wrapper.dataset.priorityWrapper) {
+            wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.width = '100%';
+            wrapper.dataset.priorityWrapper = inputId;
+            
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+        }
 
-        // Event Listener
-        input.addEventListener('focus', () => {
-            this.showDropdown(input, wrapper);
-        });
-
-        input.addEventListener('input', () => {
-            this.filterDropdown(input.value);
-        });
-
-        // Schließen bei Click außerhalb
-        document.addEventListener('click', (e) => {
-            if (!wrapper.contains(e.target)) {
-                this.hideDropdown();
+        // ✅ FIX: Event Listener Funktionen speichern
+        const listeners = {
+            focus: () => this.showDropdown(input, wrapper),
+            input: () => this.filterDropdown(input.value),
+            keydown: (e) => this.handleKeyboard(e, input),
+            documentClick: (e) => {
+                if (!wrapper.contains(e.target)) {
+                    this.hideDropdown();
+                }
             }
+        };
+
+        // Speichere die Konfiguration
+        this.activeInputs.set(inputId, {
+            input,
+            wrapper,
+            listeners
         });
 
-        // Keyboard Navigation
-        input.addEventListener('keydown', (e) => {
-            this.handleKeyboard(e, input);
-        });
+        // Event Listener anbringen
+        input.addEventListener('focus', listeners.focus);
+        input.addEventListener('input', listeners.input);
+        input.addEventListener('keydown', listeners.keydown);
+        document.addEventListener('click', listeners.documentClick);
 
         console.log(`✅ Priority Dropdown initialisiert für #${inputId}`);
+    },
+
+    // ✅ NEU: Cleanup Funktion
+    cleanup(inputId) {
+        const config = this.activeInputs.get(inputId);
+        if (!config) return;
+
+        const { input, listeners } = config;
+
+        // Entferne Event Listeners
+        if (listeners) {
+            input.removeEventListener('focus', listeners.focus);
+            input.removeEventListener('input', listeners.input);
+            input.removeEventListener('keydown', listeners.keydown);
+            document.removeEventListener('click', listeners.documentClick);
+        }
+
+        // Entferne Dropdown
+        this.hideDropdown();
+
+        console.log(`🗑️ Priority Dropdown ${inputId} bereinigt`);
     },
 
     showDropdown(input, wrapper) {
@@ -147,7 +184,9 @@ const PriorityDropdown = {
                 </div>
             `;
 
-            item.addEventListener('click', () => {
+            // ✅ FIX: stopPropagation hinzufügen
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.selectPriority(priority, input);
             });
 
@@ -297,6 +336,13 @@ const PriorityDropdown = {
                 }
             }, 200);
         }
+    },
+
+    // ✅ NEU: Destroy Funktion
+    destroy(inputId) {
+        this.cleanup(inputId);
+        this.activeInputs.delete(inputId);
+        console.log(`🗑️ Priority Dropdown ${inputId} komplett entfernt`);
     }
 };
 
@@ -305,4 +351,4 @@ if (typeof window !== 'undefined') {
     window.PriorityDropdown = PriorityDropdown;
 }
 
-console.log('✅ Priority Dropdown System v1.0.1 geladen - Bug Fix');
+console.log('✅ Priority Dropdown System v1.1 geladen (FIX: Verhindert doppelte Event Listener)');
