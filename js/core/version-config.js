@@ -15,6 +15,9 @@ const VERSION_CONFIG = {
         minute: '2-digit'
     }),
     
+    // ✅ FIX: Tracking für bereits geladene Scripts
+    loadedScripts: new Set(),
+    
     /**
      * Generiert versionierte URL für Cache-Busting
      * @param {string} path - Dateipfad
@@ -28,7 +31,7 @@ const VERSION_CONFIG = {
      * CSS-Dateien die geladen werden müssen
      */
     CSS_FILES: [
-        'css/style-v6.1.3.css',
+        'css/style.css', // ✅ FIX: Entfernt Versionsnummer aus Dateiname
         'css/map-icons.css',
         'css/draggable.css',
         'css/tabs.css',
@@ -156,12 +159,24 @@ const VERSION_CONFIG = {
     
     /**
      * Lädt einzelnes Script asynchron
+     * ✅ FIX: Verhindert doppeltes Laden
      */
     loadScript: function(src) {
         return new Promise((resolve, reject) => {
+            // ✅ FIX: Prüfe ob bereits geladen
+            const normalizedSrc = src.split('?')[0]; // Entferne Query-Parameter für Vergleich
+            if (this.loadedScripts.has(normalizedSrc)) {
+                console.warn(`⚠️ Script bereits geladen, überspringe: ${normalizedSrc}`);
+                resolve();
+                return;
+            }
+            
             const script = document.createElement('script');
             script.src = src;
-            script.onload = () => resolve();
+            script.onload = () => {
+                this.loadedScripts.add(normalizedSrc);
+                resolve();
+            };
             script.onerror = () => reject(new Error(`Failed to load: ${src}`));
             document.body.appendChild(script);
         });
@@ -307,6 +322,7 @@ const VERSION_CONFIG = {
                     <li>✅ Funksystem-Bugs behoben</li>
                     <li>✅ Memory-Leaks gefixed</li>
                     <li>✅ Performance verbessert</li>
+                    <li>✅ Doppeltes Script-Laden verhindert</li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
