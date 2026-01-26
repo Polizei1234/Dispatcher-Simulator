@@ -1,5 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.2.3
+// MANUAL INCIDENT CREATION v5.2.4
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -12,6 +12,7 @@
 // + ✅ v5.2.1: FIX - Dropdown Timing (100ms → 300ms)
 // + ✅ v5.2.2: FIX - Detail-Stichwort Callback (value statt Objekt)
 // + ✅ v5.2.3: FIX - String-Value von UniversalDropdown korrekt verarbeiten
+// + ✅ v5.2.4: FIX - Async Dropdown-Initialisierung & besseres Error-Handling
 // =========================
 
 const ManualIncident = {
@@ -28,7 +29,7 @@ const ManualIncident = {
     answeredQuestions: {},
 
     initialize() {
-        console.log('📝 Manual Incident System v5.2.3 initialisiert (FIX: String-Value von UniversalDropdown)');
+        console.log('📋 Manual Incident System v5.2.4 initialisiert (FIX: Async Dropdown-Init)');
         this.createVehicleModalHTML();
         this.attachEventListeners();
     },
@@ -121,7 +122,7 @@ const ManualIncident = {
         console.log('✅ Verstärkung-Modal geöffnet');
     },
 
-    showInline(callData) {
+    async showInline(callData) {
         this.inlineMode = true;
         this.reinforcementMode = false;
         this.currentCallData = callData;
@@ -377,7 +378,7 @@ const ManualIncident = {
                         </div>
                         <div class="form-group">
                             <label>Telefonnummer:</label>
-                            <input type="tel" id="inline-anrufer-tel" placeholder="Rückrufnummer">
+                            <input type="tel" id="inline-anrufer-tel" placeholder="Rückriufnummer">
                         </div>
                     </div>
                     <div class="form-group">
@@ -434,11 +435,10 @@ const ManualIncident = {
             </div>
         `;
 
-        setTimeout(() => {
-            this.initializeKeywordsDropdownsInline();
-        }, 300);
+        // ✅ FIX: Warte auf KeywordsDropdown und initialisiere dann Dropdowns
+        await this.initializeKeywordsDropdownsInline();
 
-        console.log('✅ Manual Incident Inline v5.2.3 angezeigt!');
+        console.log('✅ Manual Incident Inline v5.2.4 angezeigt!');
     },
 
     toggleSection(sectionName) {
@@ -461,6 +461,7 @@ const ManualIncident = {
     },
 
     openVehicleModal() {
+        console.log('🚨 openVehicleModal() aufgerufen');
         this.vehicleModalOpen = true;
         
         const title = document.getElementById('vehicle-modal-title');
@@ -478,6 +479,9 @@ const ManualIncident = {
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
             modal.classList.add('active');
+            console.log('✅ Modal Klasse "active" hinzugefügt');
+        } else {
+            console.error('❌ Modal-Element nicht gefunden!');
         }
 
         console.log('🚑 Fahrzeugauswahl-Modal geöffnet');
@@ -794,11 +798,41 @@ const ManualIncident = {
         console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
-    // ✅ FIX v5.2.3: Callback bekommt jetzt String-Value von UniversalDropdown
-    initializeKeywordsDropdownsInline() {
+    // ✅ FIX v5.2.4: Async Initialisierung & besseres Error-Handling
+    async initializeKeywordsDropdownsInline() {
+        console.log('🔍 Starte Dropdown-Initialisierung...');
+
+        // ✅ Warte auf KeywordsDropdown wenn es noch lädt
         if (typeof KeywordsDropdown === 'undefined') {
-            console.error('❌ KeywordsDropdown nicht geladen!');
+            console.warn('⚠️ KeywordsDropdown noch nicht geladen, warte...');
+            await new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    if (typeof KeywordsDropdown !== 'undefined') {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100);
+                
+                // Timeout nach 5 Sekunden
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    console.error('❌ Timeout: KeywordsDropdown nicht geladen!');
+                    resolve();
+                }, 5000);
+            });
+        }
+
+        if (typeof KeywordsDropdown === 'undefined') {
+            console.error('❌ KeywordsDropdown NICHT geladen! Dropdowns werden nicht initialisiert.');
             return;
+        }
+
+        // ✅ Warte auf Daten-Laden
+        if (KeywordsDropdown.detailKeywords.length === 0 || 
+            KeywordsDropdown.districts.length === 0 || 
+            KeywordsDropdown.locations.length === 0) {
+            console.log('⌛ Warte auf Keyword-Daten...');
+            await KeywordsDropdown.initialize();
         }
 
         if (typeof PriorityDropdown === 'undefined') {
@@ -806,39 +840,45 @@ const ManualIncident = {
             return;
         }
 
-        // Priority Dropdown (gibt Objekt zurück)
-        console.log('🔍 Initialisiere Priority Dropdown...');
-        const priorityInput = document.getElementById('inline-priority');
-        if (priorityInput) {
-            PriorityDropdown.initialize('inline-priority', (priorityData) => {
-                this.selectedPriorityKeyword = priorityData;
-                console.log('✅ Priorität ausgewählt:', priorityData.keyword);
+        try {
+            // Priority Dropdown (gibt Objekt zurück)
+            console.log('🔍 Initialisiere Priority Dropdown...');
+            const priorityInput = document.getElementById('inline-priority');
+            if (priorityInput) {
+                PriorityDropdown.initialize('inline-priority', (priorityData) => {
+                    this.selectedPriorityKeyword = priorityData;
+                    console.log('✅ Priorität ausgewählt:', priorityData.keyword);
+                });
+            } else {
+                console.error('❌ Priority Input NICHT gefunden!');
+            }
+
+            // ✅ Detail-Stichwort (gibt String zurück)
+            console.log('🔍 Initialisiere Detail-Stichwort Dropdown...');
+            KeywordsDropdown.initializeDetailDropdown('inline-detail', (keyword) => {
+                const keywordData = KeywordsDropdown.getDetailKeyword(keyword);
+                this.selectedDetailKeyword = keywordData || { keyword: keyword };
+                console.log('✅ Detail-Stichwort ausgewählt:', keyword, '- Data:', keywordData);
             });
-        } else {
-            console.error('❌ Priority Input NICHT gefunden!');
+
+            // Stadtteil (gibt String zurück)
+            console.log('🔍 Initialisiere Stadtteil Dropdown...');
+            KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtName) => {
+                const districtData = KeywordsDropdown.getDistrict(districtName) || { name: districtName };
+                console.log('✅ Stadtteil ausgewählt:', districtName, '- Data:', districtData);
+            });
+
+            // Örtlichkeit (gibt String zurück)
+            console.log('🔍 Initialisiere Örtlichkeit Dropdown...');
+            KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (locationName) => {
+                const locationData = KeywordsDropdown.getLocation(locationName) || { name: locationName };
+                console.log('✅ Örtlichkeit ausgewählt:', locationName, '- Data:', locationData);
+            });
+
+            console.log('✅ Alle Dropdowns erfolgreich initialisiert!');
+        } catch (error) {
+            console.error('❌ Fehler bei Dropdown-Initialisierung:', error);
         }
-
-        // ✅ Detail-Stichwort (gibt jetzt String zurück!)
-        KeywordsDropdown.initializeDetailDropdown('inline-detail', (keyword) => {
-            // keyword ist jetzt ein String wie "ACS/Infarkt"
-            const keywordData = KeywordsDropdown.getDetailKeyword(keyword);
-            this.selectedDetailKeyword = keywordData || { keyword: keyword };
-            console.log('✅ Detail-Stichwort ausgewählt:', keyword, '- Data:', keywordData);
-        });
-
-        // Stadtteil (gibt String zurück)
-        KeywordsDropdown.initializeDistrictDropdown('inline-stadtteil', (districtName) => {
-            const districtData = KeywordsDropdown.getDistrict(districtName) || { name: districtName };
-            console.log('✅ Stadtteil ausgewählt:', districtName, '- Data:', districtData);
-        });
-
-        // Örtlichkeit (gibt String zurück)
-        KeywordsDropdown.initializeLocationDropdown('inline-oertlichkeit', (locationName) => {
-            const locationData = KeywordsDropdown.getLocation(locationName) || { name: locationName };
-            console.log('✅ Örtlichkeit ausgewählt:', locationName, '- Data:', locationData);
-        });
-
-        console.log('✅ Alle Dropdowns initialisiert (String-Values von UniversalDropdown)');
     },
 
     updateUIInline() {
@@ -948,4 +988,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.2.3 geladen (FIX: String-Value von UniversalDropdown)');
+console.log('✅ Manual Incident System v5.2.4 geladen (FIX: Async Dropdown-Init & Error-Handling)');
