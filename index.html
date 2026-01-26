@@ -8,29 +8,8 @@
     <!-- ✅ VERSION CONFIG v2.0 - Zentrale Versionsverwaltung -->
     <script src="js/core/version-config.js"></script>
     
-    <!-- 🌐 External CSS (CDN) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    
-    <!-- 📜 Local CSS - Dynamisch geladen mit Cache-Busting -->
-    <script>
-    // Lade alle lokalen CSS-Dateien mit automatischem Cache-Busting
-    if (window.VERSION_CONFIG) {
-        const cssFiles = [
-            'css/style.css',              // ✅ FIXED: Einheitlicher Name ohne Version
-            'css/map-icons.css',
-            'css/draggable.css',
-            'css/tabs.css',
-            'css/call-system.css',
-            'css/priority-dropdown.css',
-            'css/universal-dropdown.css',
-            'css/keywords-dropdown.css',
-            'css/radio-tab.css'
-        ];
-        cssFiles.forEach(css => VERSION_CONFIG.loadCSS(css));
-    }
-    </script>
+    <!-- 🌐 External CSS (CDN) - Werden automatisch von version-config.js geladen -->
+    <!-- 📋 Local CSS - Werden automatisch von version-config.js geladen -->
 </head>
 <body>
     <!-- Willkommensbildschirm -->
@@ -352,9 +331,9 @@
         </div>
     </div>
 
-    <!-- 🔧 INIT SCRIPT - Setzt Version Badge & Radio Status Texte -->
+    <!-- 🔧 INIT SCRIPT - Setzt Version Badge & Lädt CSS/JS -->
     <script>
-    // Setze Version Badge aus VERSION_CONFIG
+    // ✅ FIX: Initialisiere CSS & JS Laden aus VERSION_CONFIG
     document.addEventListener('DOMContentLoaded', () => {
         if (window.VERSION_CONFIG) {
             // Version Badge
@@ -362,6 +341,14 @@
             const buildDate = document.getElementById('build-date');
             if (versionText) versionText.textContent = `Version ${VERSION_CONFIG.VERSION}`;
             if (buildDate) buildDate.innerHTML = `<i class="fas fa-calendar-alt"></i> Build: ${VERSION_CONFIG.BUILD_DATE}`;
+            
+            // ✅ FIX: Lade CSS & JS Dateien über VERSION_CONFIG (verhindert doppeltes Laden)
+            VERSION_CONFIG.loadCSS();
+            VERSION_CONFIG.loadJS().then(() => {
+                console.log('✅ Alle Scripts erfolgreich geladen');
+            }).catch(err => {
+                console.error('❌ Fehler beim Laden der Scripts:', err);
+            });
             
             console.log(`✅ index.html geladen - Version ${VERSION_CONFIG.VERSION}`);
         }
@@ -415,74 +402,6 @@
             }
         });
     });
-    </script>
-
-    <!-- 📦 EXTERNAL SCRIPTS (CDN) -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    
-    <!-- 📜 LOCAL SCRIPTS - Dynamisch geladen mit Cache-Busting -->
-    <script>
-    // Lade alle JS-Dateien mit automatischem Cache-Busting
-    if (window.VERSION_CONFIG) {
-        const jsFiles = [
-            // Core
-            'js/core/config.js',
-            'js/core/incident-manager.js',
-            
-            // Utils
-            'js/utils/settings-manager.js',
-            'js/utils/location-generator.js',
-            'js/utils/incident-numbering.js',
-            'js/utils/vehicle-analyzer.js',
-            'js/utils/address-service.js',
-            'js/utils/notification-system.js',
-            'js/utils/scoring-system.js',
-            'js/utils/tutorial.js',
-            
-            // Data
-            'js/data/hospitals.js',
-            'js/data/incidents.js',
-            'js/data/data.js',
-            
-            // Systems
-            'js/systems/weather-system.js',
-            'js/systems/ai-incident-generator.js',
-            'js/systems/mission-timer.js',
-            'js/systems/escalation-system.js',
-            'js/systems/groq-validator.js',
-            'js/systems/call-system.js',
-            'js/systems/vehicle-movement.js',
-            'js/systems/radio-system.js',
-            'js/systems/vehicle-radio-requests.js',
-            
-            // UI
-            'js/ui/ui-helpers.js',
-            'js/ui/priority-dropdown.js',
-            'js/ui/universal-dropdown.js',
-            'js/ui/keywords-dropdown.js',
-            'js/ui/protocol-form.js',
-            'js/ui/assignment-ui.js',
-            'js/ui/manual-incident.js',
-            'js/ui/tabs.js',
-            'js/ui/ui.js',
-            'js/ui/draggable.js',
-            'js/ui/ui-radio.js',
-            
-            // Map & Game Logic
-            'js/map.js',
-            'js/ai.js',
-            'js/core/game.js',
-            'js/core/main.js',
-            'js/core/bridge.js',
-            
-            // Debug
-            'js/utils/debug-menu.js'
-        ];
-        
-        // Sequential loading (wichtig für Abhängigkeiten)
-        jsFiles.forEach(js => VERSION_CONFIG.loadJS(js));
-    }
     </script>
 </body>
 </html>
