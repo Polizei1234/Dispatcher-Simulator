@@ -1,12 +1,13 @@
 // =========================
-// MISSION TIMER v1.0
+// MISSION TIMER v1.0.1
 // Dynamische Einsatzdauer & automatischer Transport
+// ✅ FIX: HospitalService entfernt, nutzt window.HOSPITALS direkt
 // =========================
 
 class MissionTimer {
     constructor() {
         this.activeMissions = new Map();
-        this.hospitalService = new HospitalService();
+        // ✅ FIX: Kein HospitalService mehr
     }
     
     /**
@@ -139,8 +140,15 @@ class MissionTimer {
         
         // Entscheide: Transport oder direkt Status 1?
         if (incident.transport_notwendig && incident.zielkrankenhaus) {
-            console.log(`🏥 Transport notwendig → ${incident.zielkrankenhaus.shortName}`);
-            this.startTransport(mission);
+            // ✅ FIX: Hole Hospital-Daten direkt aus HOSPITALS
+            const hospital = this.getHospitalData(incident.zielkrankenhaus);
+            if (hospital) {
+                console.log(`🏥 Transport notwendig → ${hospital.shortName}`);
+                this.startTransport(mission, hospital);
+            } else {
+                console.warn(`⚠️ Krankenhaus nicht gefunden: ${incident.zielkrankenhaus}`);
+                this.returnToStation(mission);
+            }
         } else {
             console.log('🔙 Kein Transport nötig → zurück zur Wache');
             this.returnToStation(mission);
@@ -154,11 +162,31 @@ class MissionTimer {
     }
     
     /**
+     * ✅ FIX: Hole Krankenhaus-Daten aus window.HOSPITALS
+     */
+    getHospitalData(hospitalNameOrId) {
+        if (!window.HOSPITALS) {
+            console.error('❌ HOSPITALS Datenbank nicht geladen!');
+            return null;
+        }
+        
+        // Versuche nach ID
+        let hospital = window.HOSPITALS.findById(hospitalNameOrId);
+        if (hospital) return hospital;
+        
+        // Versuche nach Name
+        hospital = window.HOSPITALS.findByName(hospitalNameOrId);
+        if (hospital) return hospital;
+        
+        // Fallback: Erstes Krankenhaus
+        console.warn(`⚠️ Krankenhaus '${hospitalNameOrId}' nicht gefunden, nutze Fallback`);
+        return window.HOSPITALS[0];
+    }
+    
+    /**
      * Startet Transport zum Krankenhaus
      */
-    startTransport(mission) {
-        const hospital = mission.incident.zielkrankenhaus;
-        
+    startTransport(mission, hospital) {
         // Finde RTW und NEF
         const rtws = mission.vehicleIds
             .map(id => window.GAME_DATA?.vehicles?.find(v => v.id === id))
@@ -183,7 +211,7 @@ class MissionTimer {
             window.vehicleMovement.updateVehicleStatus(rtw.id, 7);
             window.vehicleMovement.moveVehicleToPosition(
                 rtw.id,
-                hospital.position,
+                hospital.location, // ✅ FIX: Nutze hospital.location statt hospital.position
                 () => {
                     console.log(`🏥 ${rtw.name} am Krankenhaus angekommen`);
                     window.vehicleMovement.updateVehicleStatus(rtw.id, 8);
@@ -203,7 +231,7 @@ class MissionTimer {
                 window.vehicleMovement.updateVehicleStatus(nef.id, 7);
                 window.vehicleMovement.moveVehicleToPosition(
                     nef.id,
-                    hospital.position,
+                    hospital.location, // ✅ FIX: Nutze hospital.location
                     () => {
                         console.log(`🏥 ${nef.name} am Krankenhaus, fährt zurück`);
                         window.vehicleMovement.updateVehicleStatus(nef.id, 1);
@@ -274,4 +302,4 @@ class MissionTimer {
 // Globale Instanz
 window.MissionTimer = MissionTimer;
 
-console.log('⏱️ Mission Timer geladen');
+console.log('⏱️ Mission Timer v1.0.1 geladen - ✅ HospitalService Fix!');
