@@ -51,6 +51,7 @@ const VERSION_CONFIG = {
      * ✅ v7.0.0: Phase 1 Kompositions-System hinzugefügt!
      * 🆕 severity-bases.js, incident-types.js, incident-modifiers.js
      * 🆕 incident-composer.js, conversation-pools.js
+     * 🆕 conversation-engine.js (Phase 2 Teil 3)
      */
     JS_FILES: [
         // Core
@@ -83,10 +84,11 @@ const VERSION_CONFIG = {
         // Systems
         'js/systems/weather-system.js',
         'js/systems/ai-incident-generator.js',
-        'js/systems/mission-timer.js',
         'js/systems/escalation-system.js',
         'js/systems/groq-validator.js',
         'js/systems/call-system.js',
+        'js/systems/conversation-engine.js',  // 🆕 Phase 2 Teil 3 - NACH call-system.js!
+        'js/systems/mission-timer.js',
         'js/systems/vehicle-movement.js',
         'js/systems/status-0-5-system.js',
         'js/systems/radio-system.js',
