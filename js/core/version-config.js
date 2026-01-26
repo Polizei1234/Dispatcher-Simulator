@@ -1,12 +1,13 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.1
+// CENTRAL VERSION MANAGER v2.2
 // SINGLE SOURCE OF TRUTH für Version
 // ✅ FIX: Verhindert doppeltes Script-Laden
+// ✅ NEU: Light Theme Support
 // =========================
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '6.2.0',
+    VERSION: '6.3.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -30,9 +31,11 @@ const VERSION_CONFIG = {
     
     /**
      * CSS-Dateien die geladen werden müssen
+     * ✅ NEU: Light Theme CSS hinzugefügt
      */
     CSS_FILES: [
-        'css/style.css', // ✅ FIX: Korrigierter Dateiname
+        'css/style.css', // Dark Theme (Standard)
+        'css/theme-light.css', // 🆕 Light Theme (Whitemode)
         'css/map-icons.css',
         'css/draggable.css',
         'css/tabs.css',
@@ -45,9 +48,11 @@ const VERSION_CONFIG = {
     
     /**
      * JavaScript-Dateien in Ladereihenfolge
+     * ✅ NEU: Theme Manager hinzugefügt (früh laden!)
      */
     JS_FILES: [
-        // Core
+        // Core (Theme Manager ZUERST!)
+        'js/systems/theme-manager.js', // 🆕 Theme Manager
         'js/core/config.js',
         'js/core/incident-manager.js',
         
@@ -293,6 +298,7 @@ const VERSION_CONFIG = {
             'app_version',
             'groq_api_key',
             'game_difficulty',
+            'dispatcher_theme', // 🆕 Theme-Präferenz behalten!
             'ui_theme',
             'sound_enabled',
             'notifications_enabled',
@@ -369,11 +375,11 @@ const VERSION_CONFIG = {
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
                 <p><strong>Neu in dieser Version:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>🌞 <strong>Light Mode hinzugefügt!</strong> (In Einstellungen umschaltbar)</li>
+                    <li>🎨 Theme Manager mit Smooth Transitions</li>
                     <li>✅ Doppeltes Script-Laden behoben</li>
-                    <li>✅ CSS-Dateipfad korrigiert</li>
-                    <li>✅ Bessere Duplikat-Prüfung</li>
-                    <li>✅ Verbesserte Fehlerbehandlung</li>
                     <li>✅ Performance optimiert</li>
+                    <li>💾 Theme-Präferenz wird gespeichert</li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
@@ -409,11 +415,14 @@ const VERSION_CONFIG = {
         console.log(`%c📦 Version: ${this.VERSION}`, 'color: #48bb78; font-weight: bold');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
+        console.log('%c🎨 Features: Dark Mode, Light Mode, Theme Manager', 'color: #fbbf24');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
         console.log('%c💡 Befehle:', 'color: #ffc107; font-weight: bold');
         console.log('%c   VERSION_CONFIG.VERSION        ', 'color: #a0aec0');
         console.log('%c   VERSION_CONFIG.checkForUpdate()', 'color: #a0aec0');
         console.log('%c   VERSION_CONFIG.clearCache()   ', 'color: #a0aec0');
+        console.log('%c   themeManager.toggleTheme()    ', 'color: #a0aec0');
+        console.log('%c   themeManager.getCurrentTheme()', 'color: #a0aec0');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
@@ -434,4 +443,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.1 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.2 geladen - Version: ${VERSION_CONFIG.VERSION}`);
