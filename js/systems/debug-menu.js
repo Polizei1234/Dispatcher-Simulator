@@ -1,7 +1,6 @@
 // =========================
-// DEBUG-MENÜ SYSTEM v1.1
+// DEBUG-MENÜ SYSTEM v1.0
 // Erweiterte Debug-Funktionen für Entwickler
-// ✅ FIX: DebugMenu als Klasse exportiert
 // =========================
 
 class DebugMenu {
@@ -17,16 +16,6 @@ class DebugMenu {
             radio: true,
             errors: true
         };
-    }
-
-    /**
-     * ✅ STATIC METHOD - Kann direkt aufgerufen werden
-     */
-    static toggle() {
-        if (!window.debugMenu) {
-            window.debugMenu = new DebugMenu();
-        }
-        window.debugMenu.toggle();
     }
 
     /**
@@ -717,20 +706,19 @@ class DebugMenu {
     }
 }
 
-// ✅ Erstelle globale Instanz SOFORT
-if (typeof window !== 'undefined') {
-    window.DebugMenu = DebugMenu; // Klasse exportieren
-    window.debugMenu = new DebugMenu(); // Instanz erstellen
-}
+// Globale Instanz
+const debugMenu = new DebugMenu();
 
 // Keyboard Shortcut: Strg + Shift + D
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === 'D') {
         e.preventDefault();
-        if (window.debugMenu) {
-            window.debugMenu.toggle();
-        }
+        debugMenu.toggle();
     }
 });
 
 console.log('✅ Debug-Menü geladen - Drücke Strg+Shift+D zum Öffnen');
+
+if (typeof window !== 'undefined') {
+    window.debugMenu = debugMenu;
+}
