@@ -1,5 +1,5 @@
 // =========================
-// KARTENLOGIK v5.1
+// KARTENLOGIK v5.1.1
 // + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge IMMER anklickbar (auch während Fahrt)
 // + Fahrzeuge in Wache unsichtbar
@@ -8,6 +8,7 @@
 // + ✅ Routen werden beim Löschen entfernt
 // + ✅ Phase 3.1: Marker-Updates ohne Neuerstellen
 // + ✅ FIX: Bessere FMS-Status-Anzeige in Wachen
+// + ✅ FIX v5.1.1: hospital.location statt hospital.position
 // =========================
 
 let map = null;
@@ -75,7 +76,7 @@ function initMap() {
     }
 }
 
-// ✅ FIXED: Funktion zum Anzeigen der Krankenhäuser
+// ✅ FIX v5.1.1: Funktion zum Anzeigen der Krankenhäuser mit .location
 function createHospitalMarkers() {
     if (typeof HOSPITALS === 'undefined') {
         console.warn('⚠️ HOSPITALS nicht definiert');
@@ -84,11 +85,19 @@ function createHospitalMarkers() {
     
     console.group('🏥 ERSTELLE KRANKENHAUS-MARKER');
     
-    Object.values(HOSPITALS).forEach(hospital => {
+    // ✅ FIX: Iteriere über Array (nicht Object.values)
+    HOSPITALS.forEach(hospital => {
+        // ✅ FIX: Nutze hospital.location statt hospital.position!
+        if (!hospital.location || !Array.isArray(hospital.location) || hospital.location.length !== 2) {
+            console.warn(`⚠️ Ungültige Location für ${hospital.name}:`, hospital.location);
+            return;
+        }
+        
         const iconHtml = createHospitalPixelIcon();
         
         try {
-            const marker = L.marker([hospital.position[0], hospital.position[1]], {
+            // ✅ FIX: hospital.location[0] und hospital.location[1]
+            const marker = L.marker([hospital.location[0], hospital.location[1]], {
                 icon: L.divIcon({
                     html: iconHtml,
                     className: 'hospital-marker',
@@ -112,7 +121,7 @@ function createHospitalMarkers() {
             
             marker.addTo(map);
             hospitalMarkers[hospital.id] = marker;
-            console.log(`✅ ${hospital.name} platziert bei [${hospital.position[0]}, ${hospital.position[1]}]`);
+            console.log(`✅ ${hospital.name} platziert bei [${hospital.location[0]}, ${hospital.location[1]}]`);
         } catch (error) {
             console.error(`❌ Fehler beim Erstellen von Krankenhaus-Marker ${hospital.name}:`, error);
         }
@@ -141,17 +150,25 @@ function createHospitalPixelIcon() {
 }
 
 function generateHospitalPopupContent(hospital) {
+    // ✅ FIX: Hospital hat specialties statt departments
+    const specialtiesList = hospital.specialties || [];
+    
     return `
         <div style="min-width: 250px;">
             <strong style="font-size: 1.1em;">🏥 ${hospital.name}</strong><br>
             <small style="color: #a0a0a0;">${hospital.address}</small><br>
             <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
-                <strong>🏥 Abteilungen:</strong><br>
+                <strong>🏥 Fachbereiche:</strong><br>
                 <div style="margin-top: 5px;">
-                    ${hospital.departments.map(dept => `
-                        <div style="padding: 2px 0; font-size: 0.9em;">• ${dept}</div>
+                    ${specialtiesList.map(spec => `
+                        <div style="padding: 2px 0; font-size: 0.9em;">• ${spec}</div>
                     `).join('')}
                 </div>
+            </div>
+            <div style="margin-top: 8px; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 4px; font-size: 0.85em;">
+                <strong>Typ:</strong> ${hospital.type}<br>
+                <strong>Notaufnahme:</strong> ${hospital.emergencyRoom ? '✅ Ja' : '❌ Nein'}<br>
+                <strong>Hubschrauberlandeplatz:</strong> ${hospital.helicopterLanding ? '✅ Ja' : '❌ Nein'}
             </div>
         </div>
     `;
