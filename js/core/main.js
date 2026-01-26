@@ -1,6 +1,7 @@
 // =========================
-// HAUPTSTEUERUNG v4.10.0 - SPEED INDICATOR FIX
-// + ✅ Spielgeschwindigkeit-Anzeige korrigiert
+// HAUPTSTEUERUNG v4.11.0 - VEHICLE MOVEMENT FIX
+// + ✅ VehicleMovement.initialize() wird jetzt aufgerufen
+// + ✅ Fahrzeuge fahren wieder los!
 // =========================
 
 let gamePaused = false;
@@ -171,6 +172,14 @@ function initializeNewSystems() {
             console.log('✅ Escalation System initialisiert');
         } else {
             console.warn('⚠️ EscalationSystem nicht gefunden');
+        }
+        
+        // ✅ 5. VEHICLE MOVEMENT SYSTEM - KRITISCH!
+        if (typeof VehicleMovement !== 'undefined') {
+            VehicleMovement.initialize();
+            console.log('✅ Vehicle Movement System initialisiert - Fahrzeuge können fahren!');
+        } else {
+            console.error('❌ VehicleMovement nicht gefunden - Fahrzeuge werden nicht fahren!');
         }
         
         console.log('✅ Alle neuen Systeme erfolgreich initialisiert!');
@@ -421,7 +430,7 @@ function startTutorial() {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v4.10.0 geladen');
+    console.log('🚀 ILS Waiblingen Simulator v4.11.0 geladen (VEHICLE MOVEMENT FIX)');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
