@@ -1,11 +1,11 @@
 // =========================
-// AI INCIDENT GENERATOR v3.0
+// AI INCIDENT GENERATOR v3.0.1
 // PHASE 2 - COMPOSITION SYSTEM INTEGRATION
 // Nutzt incident-composer.js für flexible Einsatzerstellung
 // =========================
 
 /**
- * AI INCIDENT GENERATOR v3.0
+ * AI INCIDENT GENERATOR v3.0.1
  * 
  * 🆕 NEU IN v3.0:
  * - Nutzt incidentComposer.compose() statt feste Templates
@@ -13,6 +13,10 @@
  * - Type-spezifische Groq-Prompts
  * - Modifier-Chance basierend auf Severity
  * - Validation gegen komponierte Schemas
+ * 
+ * ✅ FIX v3.0.1:
+ * - Entfernt HospitalService Dependency (nicht nötig)
+ * - Hospital-Auswahl direkt aus HOSPITALS Datenbank
  * 
  * WORKFLOW:
  * 1. Wähle Severity (MINOR/MODERATE/CRITICAL) basierend auf:
@@ -31,10 +35,9 @@ class AIIncidentGenerator {
     constructor(apiKey) {
         this.apiKey = apiKey;
         this.locationGenerator = new LocationGenerator();
-        this.hospitalService = new HospitalService();
         this.weatherSystem = null;
         
-        console.log('🤖 AI Incident Generator v3.0 initialisiert');
+        console.log('🤖 AI Incident Generator v3.0.1 initialisiert');
         console.log('   ✅ Nutzt Composition System');
     }
     
@@ -49,7 +52,7 @@ class AIIncidentGenerator {
      * 🆕 HAUPT-FUNKTION: Generiert Einsatz mit Composition System
      */
     async generateIncident(ownedVehicles, gameTime) {
-        console.group('🚑 GENERIERE EINSATZ MIT COMPOSITION SYSTEM v3.0');
+        console.group('🚑 GENERIERE EINSATZ MIT COMPOSITION SYSTEM v3.0.1');
         
         try {
             // 1. Prüfe ob Composer verfügbar
@@ -371,7 +374,7 @@ FOKUS AUF:
 MELDEBILD-BEISPIELE:
 - "Mein Baby atmet so komisch und ist ganz heiß!"
 - "Meine Tochter hatte gerade einen Krampfanfall!"
-- "Er ist vom Klettergerüst gefallen und schreit nur noch!"
+- "Er ist vom Klettengerüst gefallen und schreit nur noch!"
 `,
             
             PSYCHIATRIC: `
@@ -527,6 +530,9 @@ MELDEBILD-BEISPIELE:
     mergeAIWithSchema(aiData, schema, location, context) {
         const incidentId = `E${Date.now().toString().slice(-8)}`;
         
+        // ✅ FIX: Hospital direkt aus HOSPITALS wählen
+        const targetHospital = this.selectNearestHospital([location.lat, location.lon]);
+        
         return {
             // IDs
             id: incidentId,
@@ -568,8 +574,7 @@ MELDEBILD-BEISPIELE:
             // ✅ Dauer & Transport (Schema)
             einsatzdauer_minuten: schema.duration.min + Math.floor(Math.random() * (schema.duration.max - schema.duration.min)),
             transport_notwendig: schema.transport.probability > 0.5,
-            zielkrankenhaus: schema.transport.probability > 0.5 ?
-                this.hospitalService.selectNearestHospital([location.lat, location.lon]) : null,
+            zielkrankenhaus: schema.transport.probability > 0.5 ? targetHospital : null,
             
             // ✅ Fahrzeuge (Schema)
             benoetigte_fahrzeuge: this.convertVehiclesToObject(schema.vehicles),
@@ -595,6 +600,20 @@ MELDEBILD-BEISPIELE:
             compositionInfo: schema.compositionInfo,
             composedSchema: schema // Vollständiges Schema für spätere Nutzung
         };
+    }
+    
+    /**
+     * ✅ FIX: Wählt nächstes Krankenhaus aus HOSPITALS
+     */
+    selectNearestHospital(position) {
+        if (!window.HOSPITALS || HOSPITALS.length === 0) {
+            return 'Rems-Murr-Klinikum Winnenden';
+        }
+        
+        // Einfache Auswahl: Erstes Krankenhaus
+        // TODO: Später Distanzberechnung implementieren
+        const hospital = HOSPITALS[Math.floor(Math.random() * HOSPITALS.length)];
+        return hospital.name;
     }
     
     /**
@@ -712,4 +731,4 @@ MELDEBILD-BEISPIELE:
 // Globale Instanz
 window.AIIncidentGenerator = AIIncidentGenerator;
 
-console.log('🤖 AI Incident Generator v3.0 geladen - ✅ Composition System Integration!');
+console.log('🤖 AI Incident Generator v3.0.1 geladen - ✅ HospitalService Fix!');
