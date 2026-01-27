@@ -1,10 +1,11 @@
 // =========================
-// UNIFIED STATUS SYSTEM v1.0
-// Fusioniertes System für FMS-Statusmeldungen
+// UNIFIED STATUS SYSTEM v2.0 - FUNKVERKEHR LOGGING
+// Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
 // + Visuelle Status-Kästchen mit Farbcodierung
 // + Korrekte Workflow-Logik (Status 5/0 = Sprechwunsch)
+// + ✅ NEU: Funkverkehr-Logging mit Uhrzeit im Tab "Funkverkehr"
 // =========================
 
 class UnifiedStatusSystem {
@@ -12,7 +13,7 @@ class UnifiedStatusSystem {
         this.pendingTransmissions = new Map(); // vehicleId -> {type, oldStatus, newStatus, timestamp}
         this.waitingForPermission = new Map(); // vehicleId -> {type: 'status5' | 'status0', message, timestamp}
         
-        console.log('📡 Unified Status System v1.0 initialisiert');
+        console.log('📡 Unified Status System v2.0 initialisiert');
     }
 
     /**
@@ -56,24 +57,44 @@ class UnifiedStatusSystem {
     }
 
     /**
-     * Sendet Status-Meldung ins Funkfenster
+     * ✅ NEU: Loggt Status-Änderung im Funkverkehr-Tab mit Uhrzeit
+     * @param {string} callsign - Fahrzeug-Rufzeichen
+     * @param {number|string} oldStatus - Alter Status
+     * @param {number|string} newStatus - Neuer Status
+     * @param {string} additionalText - Optional: Zusatztext
+     */
+    logStatusToRadio(callsign, oldStatus, newStatus, additionalText = '') {
+        // Hole aktuelle Uhrzeit aus GameTime
+        const timestamp = window.GameTime ? 
+            window.GameTime.simulated.toLocaleTimeString('de-DE') : 
+            new Date().toLocaleTimeString('de-DE');
+        
+        // Status-Transition mit Kästchen
+        const transition = this.createStatusTransition(oldStatus, newStatus);
+        const statusInfo = CONFIG.getFMSStatus(newStatus);
+        const text = additionalText || statusInfo.shortName;
+        
+        // Format: [Uhrzeit] Fahrzeug: [Alt]→[Neu] Statustext
+        const messageHTML = `<span style="color: #6c757d; margin-right: 8px;">[${timestamp}]</span> ${callsign}: ${transition} <span style="margin-left: 8px; color: #6c757d;">${text}</span>`;
+        
+        // Sende ins Radio-System
+        if (typeof addRadioMessage !== 'undefined') {
+            addRadioMessage(callsign, messageHTML, 'status-change', true); // true = isHTML
+        }
+        
+        console.log(`📻 [${timestamp}] ${callsign}: Status ${oldStatus}→${newStatus}`);
+    }
+
+    /**
+     * Sendet Status-Meldung ins Funkfenster (LEGACY COMPATIBILITY)
      * @param {string} callsign - Fahrzeug-Rufzeichen
      * @param {number|string} oldStatus - Alter Status
      * @param {number|string} newStatus - Neuer Status
      * @param {string} additionalText - Optional: Zusatztext
      */
     sendStatusMessage(callsign, oldStatus, newStatus, additionalText = '') {
-        const transition = this.createStatusTransition(oldStatus, newStatus);
-        const statusInfo = CONFIG.getFMSStatus(newStatus);
-        const text = additionalText || statusInfo.shortName;
-        
-        const messageHTML = `${callsign}: ${transition} <span style="margin-left: 8px; color: #6c757d;">${text}</span>`;
-        
-        if (typeof addRadioMessage !== 'undefined') {
-            addRadioMessage(callsign, messageHTML, 'status-change', true); // true = isHTML
-        }
-        
-        console.log(`📻 Status-Meldung: ${callsign} ${oldStatus}→${newStatus}`);
+        // Nutze neue Log-Funktion
+        this.logStatusToRadio(callsign, oldStatus, newStatus, additionalText);
     }
 
     /**
@@ -86,9 +107,15 @@ class UnifiedStatusSystem {
         if (!vehicle) return;
 
         const oldStatus = vehicle.currentStatus;
+        
+        // Hole aktuelle Uhrzeit
+        const timestamp = window.GameTime ? 
+            window.GameTime.simulated.toLocaleTimeString('de-DE') : 
+            new Date().toLocaleTimeString('de-DE');
+        
         const badge = this.createStatusBadge(5);
         
-        const messageHTML = `${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #dc3545; font-weight: bold;">Sprechwunsch</span>`;
+        const messageHTML = `<span style="color: #6c757d; margin-right: 8px;">[${timestamp}]</span> ${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #dc3545; font-weight: bold;">Sprechwunsch</span>`;
         
         if (typeof addRadioMessage !== 'undefined') {
             addRadioMessage(vehicle.callsign, messageHTML, 'status-5-request', true);
@@ -106,7 +133,7 @@ class UnifiedStatusSystem {
         vehicle.currentStatus = 5;
         this.updateVehicleDisplay(vehicle);
 
-        console.log(`📞 ${vehicle.callsign} meldet Sprechwunsch (Status 5)`);
+        console.log(`📞 [${timestamp}] ${vehicle.callsign} meldet Sprechwunsch (Status 5)`);
     }
 
     /**
@@ -119,9 +146,15 @@ class UnifiedStatusSystem {
         if (!vehicle) return;
 
         const oldStatus = vehicle.currentStatus;
+        
+        // Hole aktuelle Uhrzeit
+        const timestamp = window.GameTime ? 
+            window.GameTime.simulated.toLocaleTimeString('de-DE') : 
+            new Date().toLocaleTimeString('de-DE');
+        
         const badge = this.createStatusBadge(0);
         
-        const messageHTML = `${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #dc3545; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
+        const messageHTML = `<span style="color: #6c757d; margin-right: 8px;">[${timestamp}]</span> ${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #dc3545; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
         
         if (typeof addRadioMessage !== 'undefined') {
             addRadioMessage(vehicle.callsign, messageHTML, 'status-0-emergency', true);
@@ -144,7 +177,7 @@ class UnifiedStatusSystem {
         vehicle.currentStatus = 0;
         this.updateVehicleDisplay(vehicle);
 
-        console.log(`🚨 ${vehicle.callsign} sendet NOTFALL (Status 0)!`);
+        console.log(`🚨 [${timestamp}] ${vehicle.callsign} sendet NOTFALL (Status 0)!`);
     }
 
     /**
@@ -203,8 +236,8 @@ class UnifiedStatusSystem {
         // Status aktualisieren
         vehicle.currentStatus = newStatus;
 
-        // Visuelle Status-Meldung senden
-        this.sendStatusMessage(vehicle.callsign, oldStatus, newStatus, reason);
+        // ✅ Logge Status-Änderung im Funkverkehr mit Uhrzeit
+        this.logStatusToRadio(vehicle.callsign, oldStatus, newStatus, reason);
 
         // UI aktualisieren
         this.updateVehicleDisplay(vehicle);
@@ -380,9 +413,11 @@ const unifiedStatusSystem = new UnifiedStatusSystem();
 
 if (typeof window !== 'undefined') {
     window.unifiedStatusSystem = unifiedStatusSystem;
+    window.UnifiedStatusSystem = UnifiedStatusSystem; // Class export
 }
 
-console.log('✅ Unified Status System v1.0 geladen');
+console.log('✅ Unified Status System v2.0 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
+console.log('✅ Funkverkehr-Logging mit Uhrzeit aktiviert');
