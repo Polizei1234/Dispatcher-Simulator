@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.4.1 - BUGFIX: MEMORY LEAK
+// VEHICLE MOVEMENT SYSTEM v7.4.2 - BUGFIX: API ERROR HANDLING
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -14,6 +14,7 @@
 // + ✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP (-30% CPU idle, -10% active!)
 // + 📻 v7.4: Nutzt unified-status-system.js für Chat-Logging
 // + 🐛 FIX v7.4.1: Memory Leak in arrivalReported & onSceneTimers behoben
+// + 🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry-Logik
 // =========================
 
 const VehicleMovement = {
@@ -77,7 +78,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.4.1 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.4.2 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -91,6 +92,7 @@ const VehicleMovement = {
         console.log('✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP - Schläft wenn idle!');
         console.log('📻 v7.4: Nutzt unified-status-system.js für Chat-Logging!');
         console.log('🐛 FIX v7.4.1: Memory Leak behoben - arrivalReported & onSceneTimers cleanup!');
+        console.log('🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry & Timeout!');
         
         this.startIdleCheck();
     },
@@ -656,9 +658,21 @@ const VehicleMovement = {
         }
     },
 
-    async calculateTreatmentTimeWithAI(incident, vehicle) {
+    /**
+     * 🐛 FIX #3: Robuste API-Fehlerbehandlung mit Retry-Logik
+     * @param {object} incident - Einsatz-Objekt
+     * @param {object} vehicle - Fahrzeug-Objekt
+     * @param {number} retryCount - Aktueller Retry-Versuch (0-2)
+     * @returns {Promise<object|null>} { time: {min, max}, reason } oder null
+     */
+    async calculateTreatmentTimeWithAI(incident, vehicle, retryCount = 0) {
+        const MAX_RETRIES = 2;
+        const RETRY_DELAY_MS = 1000;
+        const API_TIMEOUT_MS = 10000;
+        
         const apiKey = localStorage.getItem('groqApiKey');
         if (!apiKey) {
+            console.log('ℹ️ Kein Groq API Key - nutze Fallback-Zeiten');
             return null;
         }
 
@@ -704,6 +718,10 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
   "begruendung": "<Kurze medizinische Begründung>"
 }`;
 
+            // 🐛 FIX #3: 10 Sekunden Timeout mit AbortController
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -718,16 +736,42 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
                     ],
                     temperature: 0.3,
                     max_tokens: 300
-                })
+                }),
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
+
+            // 🐛 FIX #3: Spezifische Fehlerbehandlung
             if (!response.ok) {
-                return null;
+                const errorData = await response.json().catch(() => ({}));
+                const errorMsg = errorData.error?.message || response.statusText;
+                
+                // 401: Ungültiger API Key - Kein Retry
+                if (response.status === 401) {
+                    console.error('❌ Ungültiger Groq API Key!');
+                    this.notifyUser('⚠️ Groq API Key ungültig - bitte in Einstellungen prüfen', 'error');
+                    return null;
+                }
+                
+                // 429: Rate Limit - Retry mit Delay
+                if (response.status === 429) {
+                    console.warn('⚠️ Groq Rate Limit erreicht');
+                    if (retryCount < MAX_RETRIES) {
+                        const delay = RETRY_DELAY_MS * (retryCount + 1);
+                        console.log(`🔄 Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
+                        await this.sleep(delay);
+                        return this.calculateTreatmentTimeWithAI(incident, vehicle, retryCount + 1);
+                    }
+                }
+                
+                throw new Error(`API Error ${response.status}: ${errorMsg}`);
             }
 
             const data = await response.json();
             const content = data.choices[0].message.content.trim();
 
+            // Parse JSON
             let cleanContent = content;
             if (content.includes('```')) {
                 cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -744,8 +788,52 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             };
 
         } catch (error) {
-            console.error('❌ Groq AI Fehler:', error);
+            // 🐛 FIX #3: Detailliertes Error-Logging
+            if (error.name === 'AbortError') {
+                console.error(`❌ Groq API Timeout (${API_TIMEOUT_MS/1000}s)`);
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.error('❌ Netzwerkfehler - keine Verbindung zu Groq API');
+            } else if (error instanceof SyntaxError) {
+                console.error('❌ JSON Parse Fehler - ungültige API-Antwort:', error.message);
+            } else {
+                console.error('❌ Groq AI Fehler:', error.message || error);
+            }
+            
+            // 🐛 FIX #3: Retry-Logik (außer bei JSON-Parse-Error)
+            if (retryCount < MAX_RETRIES && !(error instanceof SyntaxError)) {
+                const delay = RETRY_DELAY_MS * (retryCount + 1);
+                console.log(`🔄 Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
+                await this.sleep(delay);
+                return this.calculateTreatmentTimeWithAI(incident, vehicle, retryCount + 1);
+            }
+            
+            // 🐛 FIX #3: User-Notification bei finalem Fehler
+            if (retryCount >= MAX_RETRIES) {
+                this.notifyUser('⚠️ KI-Zeitberechnung fehlgeschlagen - nutze Standardzeiten', 'warning');
+            }
+            
             return null;
+        }
+    },
+
+    /**
+     * 🐛 FIX #3: Helper - Sleep-Funktion für Retry-Delays
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    /**
+     * 🐛 FIX #3: Helper - User-Notifications
+     */
+    notifyUser(message, type = 'info') {
+        // Nutze bestehendes Notification-System falls vorhanden
+        if (typeof window.notificationSystem !== 'undefined' && window.notificationSystem.show) {
+            window.notificationSystem.show(message, type);
+        } else {
+            // Fallback: Console Log
+            const emoji = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            console.log(`${emoji} [${type.toUpperCase()}] ${message}`);
         }
     },
 
@@ -881,4 +969,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.4.1 geladen - MEMORY LEAK FIXED! 🐛');
+console.log('✅✅✅ Vehicle Movement System v7.4.2 geladen - ALLE BUGFIXES AKTIV! 🐛');
