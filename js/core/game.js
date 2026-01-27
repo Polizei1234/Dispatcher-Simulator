@@ -1,7 +1,8 @@
 // =========================
-// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.0.2
+// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.0.3
 // Nutzt window.GameTime aus main.js!
 // ✅ FIX: vehicle.status als String für Karten-Kompatibilität
+// ✅ v5.0.3: Nutzt VehicleMovement.setVehicleStatus() für Status-Änderungen
 // =========================
 
 class Game {
@@ -20,7 +21,7 @@ class Game {
         // Nächster Anruf (nutzt GameTime.elapsed)
         this.nextIncidentGameTime = this.getRandomIncidentInterval();
         
-        console.log(`🎮 Game initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
+        console.log(`🎮 Game v5.0.3 initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
     }
     
     /**
@@ -186,7 +187,17 @@ class Game {
         }
         
         vehicle.status = 'dispatched'; // String-Status für Karte
-        vehicle.currentStatus = 4; // FMS 4: Anfahrt
+        
+        // ✅ v5.0.3 FIX: Nutze VehicleMovement.setVehicleStatus() statt direkter Zuweisung!
+        if (typeof VehicleMovement !== 'undefined' && VehicleMovement.setVehicleStatus) {
+            VehicleMovement.setVehicleStatus(vehicle, 4); // FMS 4: Anfahrt
+            console.log(`✅ ${vehicle.callsign} Status über VehicleMovement.setVehicleStatus() gesetzt`);
+        } else {
+            // Fallback wenn VehicleMovement nicht verfügbar
+            vehicle.currentStatus = 4;
+            console.warn(`⚠️ VehicleMovement nicht verfügbar - Fallback zu direkter Zuweisung`);
+        }
+        
         vehicle.targetIncident = incidentId;
         
         if (!incident.assignedVehicles) incident.assignedVehicles = [];
