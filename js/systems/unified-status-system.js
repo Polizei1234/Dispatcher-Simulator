@@ -1,5 +1,5 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.2 - MIT ROBUSTEM VEHICLE-FINDING
+// UNIFIED STATUS SYSTEM v2.3 - OLDSTATUS PARAMETER FIX
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
@@ -8,6 +8,7 @@
 // + ✅ Funkverkehr-Logging mit Uhrzeit im Tab "Funkverkehr"
 // + ✅ TEST: Sendet Demo-Nachricht beim Laden
 // + 🔧 v2.2: Robustes Vehicle-Finding (game.vehicles || GAME_DATA.vehicles)
+// + 🔥 v2.3: Nutzt oldStatus-Parameter statt vehicle.currentStatus!
 // =========================
 
 class UnifiedStatusSystem {
@@ -15,8 +16,9 @@ class UnifiedStatusSystem {
         this.pendingTransmissions = new Map();
         this.waitingForPermission = new Map();
         
-        console.log('📡 Unified Status System v2.2 initialisiert');
+        console.log('📡 Unified Status System v2.3 initialisiert');
         console.log('🔧 Robustes Vehicle-Finding: game.vehicles || GAME_DATA.vehicles');
+        console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
         
         // ✅ TEST: Sende Demo-Nachricht nach 2 Sekunden
         setTimeout(() => this.sendTestMessage(), 2000);
@@ -44,7 +46,7 @@ class UnifiedStatusSystem {
             console.log('🎭 Sende Test-Nachricht ins Radio-System...');
             
             // Test 1: Normale Textnachricht
-            addRadioMessage('System', 'Unified Status System v2.2 geladen und bereit!', 'system', false);
+            addRadioMessage('System', 'Unified Status System v2.3 geladen und bereit!', 'system', false);
             
             // Test 2: Status-Änderung mit Kästchen
             setTimeout(() => {
@@ -228,12 +230,13 @@ class UnifiedStatusSystem {
 
     /**
      * 🎯 HAUPTFUNKTION: Automatische Status-Änderung mit Chat-Logging
+     * 🔥 v2.3 FIX: Nutzt oldStatusOverride-Parameter!
      * @param {string} vehicleId - Fahrzeug-ID
      * @param {number} newStatus - Neuer Status
-     * @param {string} reason - Optional: Grund für Statuswechsel
+     * @param {number|undefined} oldStatusOverride - EXPLIZITER alter Status (wenn vom Caller übergeben)
      */
-    changeVehicleStatus(vehicleId, newStatus, reason = '') {
-        console.log(`🔄 changeVehicleStatus() aufgerufen: ${vehicleId} -> Status ${newStatus}`);
+    changeVehicleStatus(vehicleId, newStatus, oldStatusOverride = undefined) {
+        console.log(`🔄 changeVehicleStatus() aufgerufen: ${vehicleId} -> Status ${newStatus}, oldOverride: ${oldStatusOverride}`);
         
         const vehicles = this.getVehicles();
         const vehicle = vehicles.find(v => v.id === vehicleId);
@@ -244,19 +247,21 @@ class UnifiedStatusSystem {
             return;
         }
 
-        const oldStatus = vehicle.currentStatus;
+        // 🔥 v2.3 FIX: Nutze oldStatusOverride wenn vorhanden, sonst vehicle.currentStatus
+        const oldStatus = oldStatusOverride !== undefined ? oldStatusOverride : vehicle.currentStatus;
+        
+        console.log(`🔍 oldStatus bestimmt: ${oldStatus} (Override: ${oldStatusOverride !== undefined ? 'JA' : 'NEIN'})`);
 
         if (oldStatus === newStatus) {
             console.log(`⏭️ Status gleich geblieben (${newStatus}), überspringe Logging`);
             return;
         }
 
-        // Status aktualisieren
-        vehicle.currentStatus = newStatus;
-        console.log(`✅ Status aktualisiert: ${vehicle.callsign} ${oldStatus}→${newStatus}`);
+        // Status ist BEREITS vom Caller geändert worden - wir loggen nur!
+        console.log(`✅ Status-Wechsel erkannt: ${vehicle.callsign} ${oldStatus}→${newStatus}`);
 
         // ✅ Logge Status-Änderung im Funkverkehr mit Uhrzeit
-        this.logStatusToRadio(vehicle.callsign, oldStatus, newStatus, reason);
+        this.logStatusToRadio(vehicle.callsign, oldStatus, newStatus, '');
 
         // UI aktualisieren
         this.updateVehicleDisplay(vehicle);
@@ -331,29 +336,29 @@ class UnifiedStatusSystem {
     }
 
     onIncidentAssigned(vehicleId, incident) {
-        this.changeVehicleStatus(vehicleId, 3, 'Einsatz übernommen');
+        this.changeVehicleStatus(vehicleId, 3, undefined);
     }
 
     onDepartingToIncident(vehicleId, incident) {
         setTimeout(() => {
-            this.changeVehicleStatus(vehicleId, 4, `Anfahrt nach ${incident.location}`);
+            this.changeVehicleStatus(vehicleId, 4, undefined);
         }, 500);
     }
 
     onArrivedAtScene(vehicleId) {
-        this.changeVehicleStatus(vehicleId, 6, 'Vor Ort');
+        this.changeVehicleStatus(vehicleId, 6, undefined);
     }
 
     onPatientLoaded(vehicleId) {
-        this.changeVehicleStatus(vehicleId, 7, 'Patient an Bord');
+        this.changeVehicleStatus(vehicleId, 7, undefined);
     }
 
     onDepartingToHospital(vehicleId, hospital) {
-        this.changeVehicleStatus(vehicleId, 8, `Transport nach ${hospital}`);
+        this.changeVehicleStatus(vehicleId, 8, undefined);
     }
 
     onReturnedToStation(vehicleId) {
-        this.changeVehicleStatus(vehicleId, 2, 'Einsatzbereit auf Wache');
+        this.changeVehicleStatus(vehicleId, 2, undefined);
     }
 
     triggerRandomStatus5(vehicleId) {
@@ -386,10 +391,11 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem;
 }
 
-console.log('✅ Unified Status System v2.2 geladen');
+console.log('✅ Unified Status System v2.3 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
 console.log('✅ Funkverkehr-Logging mit Uhrzeit aktiviert');
 console.log('🔧 Robustes Vehicle-Finding aktiviert');
+console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
 console.log('🎭 Test-Nachrichten werden in 2 Sekunden gesendet...');
