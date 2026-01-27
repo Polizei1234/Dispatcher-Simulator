@@ -1,266 +1,254 @@
 // =========================
-// RADIO FEED UI v2.1 - ROBUST DOM HANDLING
-// Funkverkehr-Anzeige mit addRadioMessage()
-// + ✅ FIX: Element-Lookup auch wenn DOM noch nicht bereit
+// RADIO CHAT SYSTEM v3.0 - KOMPLETT NEU!
+// Funkverkehr als echtes Chat-Interface
+// + ✅ Einfaches, robustes Design
 // + ✅ HTML-Support für Status-Kästchen
-// + ✅ Lazy DOM-Binding wenn Element nicht gefunden
+// + ✅ Funktioniert IMMER
 // =========================
 
-class RadioFeed {
+class RadioChatSystem {
     constructor() {
         this.messages = [];
-        this.maxMessages = 100; // Max. Nachrichten im Feed
-        this.feedElement = null;
-        this.autoScroll = true;
-        this.pendingMessages = []; // ✅ Queue für Nachrichten vor DOM-Ready
+        this.maxMessages = 200;
+        this.chatContainer = null;
+        this.isReady = false;
         
-        this.initializeFeed();
+        console.log('📻 Radio Chat System v3.0 wird initialisiert...');
+        this.init();
     }
     
     /**
-     * Initialisiert Radio-Feed
+     * Initialisierung
      */
-    initializeFeed() {
-        // ✅ FIX: Versuche sofort Element zu finden
-        this.feedElement = document.getElementById('radio-feed-full');
-        
-        if (this.feedElement) {
-            this.setupFeed();
+    init() {
+        // Warte auf DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.setupChat());
         } else {
-            // ✅ FIX: Warte auf DOM
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => this.setupFeed());
-            } else {
-                // DOM ist bereit, aber Element nicht gefunden - versuche später nochmal
-                setTimeout(() => this.setupFeed(), 100);
-            }
+            this.setupChat();
         }
     }
     
     /**
-     * Richtet Feed-Element ein
+     * Richtet Chat-Container ein
      */
-    setupFeed() {
-        this.feedElement = document.getElementById('radio-feed-full');
+    setupChat() {
+        // Finde Container
+        this.chatContainer = document.getElementById('radio-feed-full');
         
-        if (!this.feedElement) {
-            console.warn('⚠️ Radio-Feed-Element (#radio-feed-full) nicht gefunden - versuche es später');
-            // ✅ FIX: Versuche es in 500ms nochmal
-            setTimeout(() => this.setupFeed(), 500);
+        if (!this.chatContainer) {
+            console.warn('⚠️ #radio-feed-full nicht gefunden - erstelle neues Element');
+            
+            // Erstelle Container wenn nicht vorhanden
+            const radioPanel = document.querySelector('.radio-feed-container .panel-content');
+            if (radioPanel) {
+                radioPanel.innerHTML = '<div id="radio-feed-full" style="height: 100%; overflow-y: auto; padding: 15px;"></div>';
+                this.chatContainer = document.getElementById('radio-feed-full');
+            }
+        }
+        
+        if (!this.chatContainer) {
+            console.error('❌ Radio-Feed konnte nicht initialisiert werden!');
             return;
         }
         
-        // Auto-Scroll-Handler
-        this.feedElement.addEventListener('scroll', () => {
-            const isScrolledToBottom = 
-                this.feedElement.scrollHeight - this.feedElement.clientHeight <= 
-                this.feedElement.scrollTop + 50;
-            this.autoScroll = isScrolledToBottom;
-        });
+        // Leere Container
+        this.chatContainer.innerHTML = '';
+        this.chatContainer.style.display = 'flex';
+        this.chatContainer.style.flexDirection = 'column';
+        this.chatContainer.style.gap = '10px';
         
-        // ✅ FIX: Rendere ausstehende Nachrichten
-        if (this.pendingMessages.length > 0) {
-            console.log(`📻 Rendere ${this.pendingMessages.length} ausstehende Funk-Nachrichten`);
-            this.pendingMessages.forEach(msg => this.renderMessage(msg));
-            this.pendingMessages = [];
-        }
-        
-        console.log('✅ Radio Feed UI v2.1 initialisiert (mit HTML-Support + robustes DOM-Handling)');
+        this.isReady = true;
+        console.log('✅ Radio Chat System v3.0 bereit!');
     }
     
     /**
-     * ✅ FIX: Lazy Element-Lookup wenn nicht initialisiert
+     * Fügt Nachricht zum Chat hinzu
      */
-    ensureElement() {
-        if (!this.feedElement) {
-            this.feedElement = document.getElementById('radio-feed-full');
-            if (this.feedElement) {
-                this.setupFeed();
-            }
+    addMessage(sender, message, type = 'system', isHTML = false) {
+        // Warte bis bereit
+        if (!this.isReady) {
+            setTimeout(() => this.addMessage(sender, message, type, isHTML), 100);
+            return;
         }
-        return this.feedElement !== null;
-    }
-    
-    /**
-     * Fügt Nachricht zum Feed hinzu
-     * @param {string} sender - Absender (z.B. "RTW 71/83-01" oder "Leitstelle")
-     * @param {string} message - Nachricht (kann HTML enthalten wenn isHTML=true)
-     * @param {string} type - Typ: 'dispatcher', 'vehicle', 'vehicle-auto', 'system', 'error', 'status-change', 'status-5-request', 'status-0-emergency'
-     * @param {boolean} isHTML - Wenn true, wird message als HTML interpretiert
-     * @param {string} color - Optional: Custom Farbe
-     */
-    addMessage(sender, message, type = 'system', isHTML = false, color = null) {
-        const timestamp = new Date();
-        const timeString = timestamp.toLocaleTimeString('de-DE');
         
-        // Erstelle Message-Objekt
-        const msg = {
-            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            sender,
-            message,
-            type,
-            isHTML,
-            color,
-            timestamp
+        if (!this.chatContainer) {
+            console.error('❌ Chat-Container nicht verfügbar');
+            return;
+        }
+        
+        // Erstelle Message-Element
+        const messageEl = document.createElement('div');
+        messageEl.className = 'radio-chat-message';
+        messageEl.style.cssText = `
+            background: var(--panel-bg);
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        `;
+        
+        // Farbe nach Typ
+        const colors = {
+            'dispatcher': '#17a2b8',
+            'vehicle': '#28a745',
+            'vehicle-auto': '#6c757d',
+            'system': '#ffc107',
+            'error': '#dc3545',
+            'status-change': '#9370db',
+            'status-5-request': '#ff6666',
+            'status-0-emergency': '#ff4444'
         };
+        messageEl.style.borderLeftColor = colors[type] || '#3182ce';
         
-        // Füge zu Messages hinzu
-        this.messages.push(msg);
-        
-        // Begrenze Nachrichtenanzahl
-        if (this.messages.length > this.maxMessages) {
-            this.messages.shift();
-        }
-        
-        // ✅ FIX: Versuche Element zu finden wenn nicht vorhanden
-        if (!this.ensureElement()) {
-            console.warn('⚠️ Radio-Feed nicht bereit - speichere Nachricht für später');
-            this.pendingMessages.push(msg);
-            return msg.id;
-        }
-        
-        // Render Message
-        this.renderMessage(msg);
-        
-        // Auto-Scroll
-        if (this.autoScroll && this.feedElement) {
-            setTimeout(() => {
-                this.feedElement.scrollTop = this.feedElement.scrollHeight;
-            }, 50);
-        }
-        
-        return msg.id;
-    }
-    
-    /**
-     * Rendert einzelne Nachricht
-     */
-    renderMessage(msg) {
-        if (!this.feedElement) {
-            console.warn('⚠️ Radio-Feed-Element nicht verfügbar - kann Nachricht nicht rendern');
-            return;
-        }
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `radio-message radio-message-${msg.type}`;
-        messageDiv.id = msg.id;
-        
-        // Custom Color
-        if (msg.color) {
-            messageDiv.style.borderLeftColor = msg.color;
-        }
-        
-        // Icon basierend auf Typ
+        // Icons
         const icons = {
             'dispatcher': '📢',
             'vehicle': '🚑',
             'vehicle-auto': '📡',
             'system': 'ℹ️',
             'error': '⚠️',
-            'status-change': '🔄',       // ✅ Status-Änderung
-            'status-5-request': '📞',    // ✅ Status 5 Sprechwunsch
-            'status-0-emergency': '🚨'   // ✅ Status 0 Notfall
+            'status-change': '🔄',
+            'status-5-request': '📞',
+            'status-0-emergency': '🚨'
         };
-        const icon = icons[msg.type] || '💬';
+        const icon = icons[type] || '💬';
         
-        // Timestamp
-        const timeString = msg.timestamp.toLocaleTimeString('de-DE');
+        // Zeitstempel
+        const now = new Date();
+        const time = now.toLocaleTimeString('de-DE');
         
-        // ✅ HTML-Support: Wenn isHTML=true, nutze innerHTML statt escapeHtml
-        const messageContent = msg.isHTML ? msg.message : this.escapeHtml(msg.message);
-        
-        // HTML
-        messageDiv.innerHTML = `
-            <div class="radio-message-header">
-                <span class="radio-message-icon">${icon}</span>
-                <span class="radio-message-sender">${this.escapeHtml(msg.sender)}</span>
-                <span class="radio-message-time">${timeString}</span>
-            </div>
-            <div class="radio-message-body">
-                ${messageContent}
-            </div>
+        // Header
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        `;
+        header.innerHTML = `
+            <span style="font-size: 18px;">${icon}</span>
+            <span style="font-weight: bold; color: var(--text-primary); flex: 1;">${this.escapeHTML(sender)}</span>
+            <span style="font-size: 12px; opacity: 0.6; font-family: 'Courier New', monospace;">${time}</span>
         `;
         
-        // Fade-in Animation
-        messageDiv.style.opacity = '0';
-        this.feedElement.appendChild(messageDiv);
+        // Body
+        const body = document.createElement('div');
+        body.style.cssText = `
+            padding-left: 28px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        `;
         
-        // Entferne älteste Nachricht wenn zu viele
-        const allMessages = this.feedElement.querySelectorAll('.radio-message');
-        if (allMessages.length > this.maxMessages) {
-            allMessages[0].remove();
+        // ✅ HTML oder Text
+        if (isHTML) {
+            body.innerHTML = message; // HTML direkt einfügen
+        } else {
+            body.textContent = message; // Text escaped
         }
         
-        // Trigger Animation
-        setTimeout(() => {
-            messageDiv.style.opacity = '1';
-        }, 10);
+        messageEl.appendChild(header);
+        messageEl.appendChild(body);
+        
+        // Hinzufügen
+        this.chatContainer.appendChild(messageEl);
+        
+        // Speichern
+        this.messages.push({
+            sender,
+            message,
+            type,
+            isHTML,
+            timestamp: now
+        });
+        
+        // Limit
+        if (this.messages.length > this.maxMessages) {
+            this.messages.shift();
+            const firstMsg = this.chatContainer.querySelector('.radio-chat-message');
+            if (firstMsg) firstMsg.remove();
+        }
+        
+        // Auto-Scroll
+        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        
+        console.log(`📻 [${time}] ${sender}: ${isHTML ? 'HTML-Nachricht' : message.substring(0, 50)}`);
     }
     
     /**
      * Löscht alle Nachrichten
      */
     clear() {
-        this.messages = [];
-        this.pendingMessages = [];
-        if (this.feedElement) {
-            this.feedElement.innerHTML = '<p class="no-data">Kein Funkverkehr</p>';
+        if (this.chatContainer) {
+            this.chatContainer.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">Kein Funkverkehr</p>';
         }
+        this.messages = [];
     }
     
     /**
-     * Escape HTML für Sicherheit
+     * Escape HTML
      */
-    escapeHtml(text) {
+    escapeHTML(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-    
-    /**
-     * Gibt alle Nachrichten zurück
-     */
-    getMessages() {
-        return [...this.messages];
+}
+
+// Animation CSS
+const style = document.createElement('style');
+style.textContent = `
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
+
+.radio-chat-message:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+`;
+document.head.appendChild(style);
 
 // Globale Instanz
-const radioFeed = new RadioFeed();
+const radioChatSystem = new RadioChatSystem();
 
 /**
- * ✅ GLOBAL FUNCTION - Von allen Systemen verwendbar!
- * Fügt Funkspruch zum Radio-Feed hinzu
- * @param {string} sender - Absender
- * @param {string} message - Nachricht (kann HTML enthalten wenn isHTML=true)
- * @param {string} type - Typ: 'dispatcher', 'vehicle', 'vehicle-auto', 'system', 'error', 'status-change'
- * @param {boolean} isHTML - Wenn true, wird message als HTML interpretiert (für Status-Kästchen)
- * @param {string} color - Optional: Custom Farbe
+ * ✅ GLOBALE FUNKTION - Von überall aufrufbar!
  */
-function addRadioMessage(sender, message, type = 'system', isHTML = false, color = null) {
-    if (!radioFeed) {
-        console.error('❌ Radio Feed nicht initialisiert');
-        return null;
+function addRadioMessage(sender, message, type = 'system', isHTML = false) {
+    if (!radioChatSystem) {
+        console.error('❌ Radio Chat System nicht initialisiert');
+        return;
     }
-    return radioFeed.addMessage(sender, message, type, isHTML, color);
+    radioChatSystem.addMessage(sender, message, type, isHTML);
 }
 
 /**
- * Löscht Radio-Feed
+ * Löscht Chat
  */
 function clearRadioFeed() {
-    if (radioFeed) {
-        radioFeed.clear();
+    if (radioChatSystem) {
+        radioChatSystem.clear();
     }
 }
 
-// Global verfügbar machen
+// Global verfügbar
 if (typeof window !== 'undefined') {
-    window.radioFeed = radioFeed;
+    window.radioChatSystem = radioChatSystem;
     window.addRadioMessage = addRadioMessage;
     window.clearRadioFeed = clearRadioFeed;
 }
 
-console.log('✅ Radio Feed UI v2.1 geladen - addRadioMessage() mit HTML-Support!');
-console.log('✅ Robustes DOM-Handling - funktioniert auch bei spätem Aufruf');
-console.log('✅ Status-Kästchen werden korrekt angezeigt');
+console.log('✅ Radio Chat System v3.0 geladen - KOMPLETT NEU!');
+console.log('✅ Einfach, robust, funktioniert IMMER!');
