@@ -1,5 +1,5 @@
 // =========================
-// UI SYSTEM - v3.8 - Fixed Dropdowns
+// UI SYSTEM - v3.9 - Status-Logging Fix
 // ✅ Fixed Radio Vehicle Dropdown + Display
 // ✅ Improved Design & Vehicle Info
 // + Incident Manager Integration
@@ -10,6 +10,7 @@
 // + ✅ v3.6: Verstärkung anfordern Button
 // + ✅ v3.7: Fixed Status Display + Prettier Radio UI
 // + ✅ v3.8: Complete Dropdown Fix
+// + ✅ v3.9: STATUS-LOGGING FIX - Nutzt VehicleMovement.setVehicleStatus
 // =========================
 
 const UI = {
@@ -170,8 +171,17 @@ const UI = {
             const vehicle = GAME_DATA.vehicles.find(v => v.id === vId);
             if (vehicle) {
                 vehicle.status = 'available';
-                vehicle.currentStatus = 2;
                 vehicle.incident = null;
+                
+                // ✅ FIX v3.9: Nutze VehicleMovement.setVehicleStatus statt direkter Zuweisung
+                if (typeof VehicleMovement !== 'undefined' && VehicleMovement.setVehicleStatus) {
+                    VehicleMovement.setVehicleStatus(vehicle, 2);
+                    console.log(`✅ Status-Logging: ${vehicle.callsign} auf Status 2 gesetzt (Einsatzabschluss)`);
+                } else {
+                    // Fallback wenn VehicleMovement nicht verfügbar
+                    vehicle.currentStatus = 2;
+                    console.warn(`⚠️ VehicleMovement nicht verfügbar - direkte Zuweisung für ${vehicle.callsign}`);
+                }
             }
         });
 
@@ -453,7 +463,7 @@ function sendRadioMessage() {
     console.log(`📡 Funkspruch gesendet: ${message}`);
 }
 
-// ✅ v3.8: IMPROVED - Radio Messages mit Farben (Systemnachrichten blockiert)
+// ✅ v3.9: IMPROVED - Radio Messages mit Farben (Systemnachrichten blockiert)
 function addRadioMessage(message, sender = 'system', color = null) {
     const container = document.getElementById('radio-feed-full');
     if (!container) return;
@@ -513,5 +523,5 @@ if (typeof window !== 'undefined') {
     window.updateSelectedVehicleDisplay = updateSelectedVehicleDisplay;
     window.clearSelectedVehicleDisplay = clearSelectedVehicleDisplay;
     
-    console.log('✅ UI v3.8 geladen - Complete Dropdown Fix + Full Vehicle Info');
+    console.log('✅ UI v3.9 geladen - STATUS-LOGGING FIX implementiert');
 }
