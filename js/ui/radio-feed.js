@@ -1,10 +1,13 @@
 // =========================
-// RADIO CHAT SYSTEM v3.0 - KOMPLETT NEU!
+// RADIO CHAT SYSTEM v3.1 - MIT DEBUG
 // Funkverkehr als echtes Chat-Interface
 // + ✅ Einfaches, robustes Design
 // + ✅ HTML-Support für Status-Kästchen
 // + ✅ Funktioniert IMMER
+// + 🚨 DEBUG: Sofortige Sichtbarkeit
 // =========================
+
+console.log('%c📻 RADIO CHAT SYSTEM WIRD GELADEN...', 'background: #3182ce; color: white; padding: 5px 10px; font-size: 14px; font-weight: bold;');
 
 class RadioChatSystem {
     constructor() {
@@ -13,7 +16,7 @@ class RadioChatSystem {
         this.chatContainer = null;
         this.isReady = false;
         
-        console.log('📻 Radio Chat System v3.0 wird initialisiert...');
+        console.log('📻 Radio Chat System v3.1 wird initialisiert...');
         this.init();
     }
     
@@ -33,24 +36,18 @@ class RadioChatSystem {
      * Richtet Chat-Container ein
      */
     setupChat() {
+        console.log('🔍 Suche #radio-feed-full Element...');
+        
         // Finde Container
         this.chatContainer = document.getElementById('radio-feed-full');
         
         if (!this.chatContainer) {
-            console.warn('⚠️ #radio-feed-full nicht gefunden - erstelle neues Element');
-            
-            // Erstelle Container wenn nicht vorhanden
-            const radioPanel = document.querySelector('.radio-feed-container .panel-content');
-            if (radioPanel) {
-                radioPanel.innerHTML = '<div id="radio-feed-full" style="height: 100%; overflow-y: auto; padding: 15px;"></div>';
-                this.chatContainer = document.getElementById('radio-feed-full');
-            }
-        }
-        
-        if (!this.chatContainer) {
-            console.error('❌ Radio-Feed konnte nicht initialisiert werden!');
+            console.warn('⚠️ #radio-feed-full nicht gefunden - warte 1 Sekunde');
+            setTimeout(() => this.setupChat(), 1000);
             return;
         }
+        
+        console.log('✅ #radio-feed-full gefunden!');
         
         // Leere Container
         this.chatContainer.innerHTML = '';
@@ -59,7 +56,24 @@ class RadioChatSystem {
         this.chatContainer.style.gap = '10px';
         
         this.isReady = true;
-        console.log('✅ Radio Chat System v3.0 bereit!');
+        console.log('%c✅ RADIO CHAT SYSTEM BEREIT!', 'background: #48bb78; color: white; padding: 5px 10px; font-size: 16px; font-weight: bold;');
+        
+        // 🚨 SOFORTIGE TEST-NACHRICHT
+        setTimeout(() => {
+            console.log('🚨 Sende SOFORTIGE Test-Nachricht...');
+            this.addMessage(
+                'System', 
+                '✅ Radio Chat System v3.1 ist geladen und funktioniert!', 
+                'system', 
+                false
+            );
+            
+            // Test 2: HTML mit Status-Kästchen
+            setTimeout(() => {
+                const html = '<span style="color: #6c757d;">[TEST]</span> Status-Kästchen: <span class="status-badge" style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">2</span> → <span class="status-badge" style="background: #8b0000; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">4</span>';
+                this.addMessage('Test-Fahrzeug', html, 'status-change', true);
+            }, 500);
+        }, 100);
     }
     
     /**
@@ -68,6 +82,7 @@ class RadioChatSystem {
     addMessage(sender, message, type = 'system', isHTML = false) {
         // Warte bis bereit
         if (!this.isReady) {
+            console.warn('⚠️ Chat noch nicht bereit - warte...');
             setTimeout(() => this.addMessage(sender, message, type, isHTML), 100);
             return;
         }
@@ -77,11 +92,13 @@ class RadioChatSystem {
             return;
         }
         
+        console.log(`💬 Nachricht wird hinzugefügt: ${sender}`);
+        
         // Erstelle Message-Element
         const messageEl = document.createElement('div');
         messageEl.className = 'radio-chat-message';
         messageEl.style.cssText = `
-            background: var(--panel-bg);
+            background: var(--panel-bg, #1a202c);
             border-left: 4px solid;
             border-radius: 8px;
             padding: 12px 15px;
@@ -132,7 +149,7 @@ class RadioChatSystem {
         `;
         header.innerHTML = `
             <span style="font-size: 18px;">${icon}</span>
-            <span style="font-weight: bold; color: var(--text-primary); flex: 1;">${this.escapeHTML(sender)}</span>
+            <span style="font-weight: bold; color: var(--text-primary, white); flex: 1;">${this.escapeHTML(sender)}</span>
             <span style="font-size: 12px; opacity: 0.6; font-family: 'Courier New', monospace;">${time}</span>
         `;
         
@@ -141,7 +158,7 @@ class RadioChatSystem {
         body.style.cssText = `
             padding-left: 28px;
             line-height: 1.5;
-            color: var(--text-secondary);
+            color: var(--text-secondary, #cbd5e0);
         `;
         
         // ✅ HTML oder Text
@@ -176,7 +193,7 @@ class RadioChatSystem {
         // Auto-Scroll
         this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
         
-        console.log(`📻 [${time}] ${sender}: ${isHTML ? 'HTML-Nachricht' : message.substring(0, 50)}`);
+        console.log(`✅ Nachricht hinzugefügt: [${time}] ${sender}`);
     }
     
     /**
@@ -250,5 +267,5 @@ if (typeof window !== 'undefined') {
     window.clearRadioFeed = clearRadioFeed;
 }
 
-console.log('✅ Radio Chat System v3.0 geladen - KOMPLETT NEU!');
-console.log('✅ Einfach, robust, funktioniert IMMER!');
+console.log('%c✅ RADIO CHAT SYSTEM V3.1 GELADEN!', 'background: #48bb78; color: white; padding: 8px 15px; font-size: 16px; font-weight: bold;');
+console.log('%c🚨 Test-Nachrichten werden automatisch gesendet!', 'color: #fbbf24; font-size: 14px; font-weight: bold;');
