@@ -1,7 +1,8 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.7
+// CENTRAL VERSION MANAGER v2.7.1
 // SINGLE SOURCE OF TRUTH für Version
 // ✅ v7.2.0: CSS-Reorganisation Phase 3 abgeschlossen!
+// ✅ v2.7.1: notification-system.js entfernt (existiert nicht)
 // =========================
 
 const VERSION_CONFIG = {
@@ -86,7 +87,7 @@ const VERSION_CONFIG = {
         'js/utils/incident-numbering.js',
         'js/utils/vehicle-analyzer.js',
         'js/utils/address-service.js',
-        'js/utils/notification-system.js',
+        // ❌ 'js/utils/notification-system.js', - ENTFERNT (existiert nicht!)
         'js/utils/scoring-system.js',
         'js/utils/tutorial.js',
         
@@ -466,4 +467,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.7 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.7.1 geladen - Version: ${VERSION_CONFIG.VERSION}`);
