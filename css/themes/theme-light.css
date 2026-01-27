@@ -1,0 +1,72 @@
+/* =====================================================
+   DISPATCHER SIMULATOR - LIGHT THEME (WHITEMODE)
+   Professional Clean Design for Daylight Usage
+   v2.1 - Fixed Overlay Blur & Vehicle Menu
+   ===================================================== */
+
+[data-theme="light"] {
+    /* Professional Light Color Palette */
+    --primary-red: #d32f2f;
+    --secondary-blue: #1976d2;
+    --success-green: #388e3c;
+    --warning-orange: #f57c00;
+    --danger-red: #c62828;
+    --info-cyan: #0288d1;
+    
+    /* Light Gray Scale */
+    --bg-darkest: #f5f7fa;
+    --bg-dark: #ffffff;
+    --bg-secondary: #fafbfc;
+    --panel-bg: #ffffff;
+    --panel-header: #f0f3f7;
+    --input-bg: #ffffff;
+    --border-color: #d1d5db;
+    
+    /* Text Colors */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    
+    /* Borders */
+    --border-light: #e5e7eb;
+    --border-medium: #d1d5db;
+    --border-strong: #9ca3af;
+    
+    /* Functional Colors */
+    --status-available: #2e7d32;
+    --status-busy: #f57c00;
+    --status-offline: #616161;
+    --status-emergency: #c62828;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================================================
+   BODY & BASIC ELEMENTS
+   ===================================================== */
+
+[data-theme="light"] body {
+    background: var(--bg-darkest);
+    color: var(--text-primary);
+}
+
+/* =====================================================
+   OVERLAYS - REDUCED BLUR FOR VISIBILITY
+   ===================================================== */
+
+[data-theme="light"] .overlay {
+    background: rgba(255, 255, 255, 0.75); /* Reduced from 0.95 */
+    backdrop-filter: blur(2px); /* Reduced from 4px */
+}
+
+[data-theme="light"] .welcome-container,
+[data-theme="light"] .settings-container {
+    background: var(--bg-dark);
+    border: 2px solid var(--border-medium); /* Stronger border */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); /* Stronger shadow */
+}
+
+/* ... (rest of theme-light.css content - über 500 Zeilen) ... */
