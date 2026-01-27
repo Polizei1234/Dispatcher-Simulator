@@ -1,12 +1,12 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.5
+// CENTRAL VERSION MANAGER v2.6
 // SINGLE SOURCE OF TRUTH für Version
-// ✅ v7.1.0: Phase 2 - AI Integration & Dynamische Systeme!
+// ✅ v7.2.0: Unified Status System - Alte Systeme entfernt!
 // =========================
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '7.1.0',
+    VERSION: '7.2.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -30,7 +30,7 @@ const VERSION_CONFIG = {
     
     /**
      * CSS-Dateien die geladen werden müssen
-     * ✅ v7.1.0: Keine Änderungen
+     * ✅ v7.2.0: Keine Änderungen
      */
     CSS_FILES: [
         'css/style.css',
@@ -57,6 +57,11 @@ const VERSION_CONFIG = {
      *   - ai-incident-generator.js v3.0 (nutzt Composer)
      *   - escalation-system.js v2.0 (Schema-basiert)
      *   - conversation-engine.js v1.0 (dynamische Fragen)
+     * 
+     * ✅ v7.2.0 (Phase 3): Unified Status System
+     *   - unified-status-system.js (EINZIGES Status-System!)
+     *   - ❌ status-0-5-system.js ENTFERNT
+     *   - ❌ status-integration.js ENTFERNT
      */
     JS_FILES: [
         // Core
@@ -95,7 +100,7 @@ const VERSION_CONFIG = {
         'js/systems/conversation-engine.js',     // 🆕 v7.1.0: Dynamische Fragen & Follow-Ups!
         'js/systems/mission-timer.js',
         'js/systems/vehicle-movement.js',
-        'js/systems/status-0-5-system.js',
+        'js/systems/unified-status-system.js',   // ✅ v7.2.0: EINZIGES Status-System!
         'js/systems/radio-system.js',
         'js/systems/vehicle-radio-requests.js',
         
@@ -366,23 +371,23 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🎉</span>
+                <span style="font-size: 2em;">🧹</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🚀 PHASE 2 ABGESCHLOSSEN!</strong></p>
-                <p style="margin: 8px 0; color: #cbd5e0;">🤖 <strong>AI Integration & Dynamische Systeme:</strong></p>
+                <p><strong>📻 UNIFIED STATUS SYSTEM!</strong></p>
+                <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>System-Konsolidierung:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>🤖 <strong>AI Generator v3.0</strong> - Nutzt Composer für Einsatz-Generierung</li>
-                    <li>🚨 <strong>Escalation System v2.0</strong> - Schema-basierte Eskalationen</li>
-                    <li>💬 <strong>Conversation Engine v1.0</strong> - Dynamische Fragen & Follow-Ups</li>
-                    <li>⚡ Type-spezifische Groq-Prompts</li>
-                    <li>🔺 Intelligente Priority-Upgrades</li>
-                    <li>🎯 Kritische Antworten triggern Actions</li>
+                    <li>✅ <strong>Unified Status System v2.0</strong> - Ein einziges Status-System!</li>
+                    <li>🗑️ <strong>Alte Systeme entfernt</strong> - status-0-5-system.js & status-integration.js</li>
+                    <li>📻 <strong>Funkverkehr-Logging</strong> - Status-Änderungen mit Uhrzeit im Funk-Tab</li>
+                    <li>🎲 <strong>Status-Kästchen</strong> - Visuelle Alt→Neu Transitionen</li>
+                    <li>🚨 <strong>Status 0</strong> - NUR für Notfälle der Besatzung</li>
+                    <li>📞 <strong>Status 5</strong> - Sprechwunsch mit "J"-Workflow</li>
                 </ul>
                 <div style="margin-top: 12px; padding: 10px; background: rgba(72, 187, 120, 0.1); border-left: 3px solid #48bb78; border-radius: 4px;">
                     <p style="margin: 0; font-size: 0.9em; color: #68d391;">
-                        <strong>✨ Neu:</strong> Einsätze werden jetzt intelligent komponiert und können dynamisch eskalieren!
+                        <strong>✨ Neu:</strong> Alle Status-Meldungen werden jetzt mit Uhrzeit und Kästchen im Funkverkehr geloggt!
                     </p>
                 </div>
             </div>
@@ -415,12 +420,18 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🎉 NEU IN v7.1.0 - PHASE 2!', 'color: #fbbf24; font-weight: bold; font-size: 1.1em');
-        console.log('%c   🤖 AI Generator v3.0 - Nutzt Composer', 'color: #68d391');
-        console.log('%c   🚨 Escalation System v2.0 - Schema-basiert', 'color: #68d391');
-        console.log('%c   💬 Conversation Engine v1.0 - Dynamische Fragen', 'color: #68d391');
+        console.log('%c🧹 NEU IN v7.2.0 - UNIFIED STATUS SYSTEM!', 'color: #fbbf24; font-weight: bold; font-size: 1.1em');
+        console.log('%c   ✅ Unified Status System v2.0 - EINZIGES System!', 'color: #68d391');
+        console.log('%c   🗑️ Alte Systeme entfernt (status-0-5, status-integration)', 'color: #68d391');
+        console.log('%c   📻 Funkverkehr-Logging mit Uhrzeit', 'color: #68d391');
+        console.log('%c   🎲 Status-Kästchen mit Alt→Neu Transitionen', 'color: #68d391');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c✅ PHASE 1 (v7.0.0) - Kompositions-System:', 'color: #4299e1; font-weight: bold');
+        console.log('%c🆕 PHASE 2 (v7.1.0) - AI Integration:', 'color: #4299e1; font-weight: bold');
+        console.log('%c   🤖 AI Generator v3.0 - Nutzt Composer', 'color: #a0aec0');
+        console.log('%c   🚨 Escalation System v2.0 - Schema-basiert', 'color: #a0aec0');
+        console.log('%c   💬 Conversation Engine v1.0 - Dynamische Fragen', 'color: #a0aec0');
+        console.log('%c', 'color: #a0aec0');
+        console.log('%c🆕 PHASE 1 (v7.0.0) - Kompositions-System:', 'color: #4299e1; font-weight: bold');
         console.log('%c   ⚖️ 3 Severity Bases (MINOR/MODERATE/CRITICAL)', 'color: #a0aec0');
         console.log('%c   🎭 8 Incident Types (MEDICAL/TRAFFIC/BIRTH/...)', 'color: #a0aec0');
         console.log('%c   ⚙️ 5 Modifiers (ENTRAPMENT/FIRE/...)', 'color: #a0aec0');
@@ -444,4 +455,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.5 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.6 geladen - Version: ${VERSION_CONFIG.VERSION}`);
