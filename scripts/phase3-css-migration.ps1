@@ -1,5 +1,5 @@
 # Phase 3: CSS-Reorganisation - Windows PowerShell Script
-# Version: 1.0
+# Version: 1.1 (Fixed)
 # Datum: 27. Januar 2026
 
 $ErrorActionPreference = "Stop"
@@ -93,40 +93,42 @@ try {
     # Lese die Datei
     $content = Get-Content "js/core/version-config.js" -Raw
 
-    # Neues CSS_FILES Array
-    $newCssFiles = @'
-    CSS_FILES: [
-        'css/style.css',
-        'css/layout.css',
-        
-        // Components
-        'css/components/call-system.css',
-        'css/components/draggable.css',
-        'css/components/tabs.css',
-        
-        // Dropdowns
-        'css/components/dropdowns/keywords-dropdown.css',
-        'css/components/dropdowns/priority-dropdown.css',
-        'css/components/dropdowns/universal-dropdown.css',
-        
-        // Radio
-        'css/radio/radio.css',
-        'css/radio/radio-feed.css',
-        'css/radio/radio-tab.css',
-        
-        // Themes
-        'css/themes/theme-light.css',
-        
-        // Map
-        'css/map/map-icons.css'
-    ],
-'@
+    # Neues CSS_FILES Array (OHNE Kommentare im String)
+    $newCssFiles = "    CSS_FILES: [`n" +
+        "        'css/style.css',`n" +
+        "        'css/layout.css',`n" +
+        "        `n" +
+        "        'css/components/call-system.css',`n" +
+        "        'css/components/draggable.css',`n" +
+        "        'css/components/tabs.css',`n" +
+        "        `n" +
+        "        'css/components/dropdowns/keywords-dropdown.css',`n" +
+        "        'css/components/dropdowns/priority-dropdown.css',`n" +
+        "        'css/components/dropdowns/universal-dropdown.css',`n" +
+        "        `n" +
+        "        'css/radio/radio.css',`n" +
+        "        'css/radio/radio-feed.css',`n" +
+        "        'css/radio/radio-tab.css',`n" +
+        "        `n" +
+        "        'css/themes/theme-light.css',`n" +
+        "        `n" +
+        "        'css/map/map-icons.css'`n" +
+        "    ],"
 
-    # Ersetze CSS_FILES Block
+    # Ersetze CSS_FILES Block (Regex mit Singleline mode)
     $pattern = '(?s)CSS_FILES: \[.*?\],'
     $content = $content -replace $pattern, $newCssFiles
 
     # Schreibe zurück
+    Set-Content "js/core/version-config.js" -Value $content -NoNewline
+
+    # Füge Kommentare manuell hinzu (separater Durchlauf)
+    $content = Get-Content "js/core/version-config.js" -Raw
+    $content = $content -replace "        'css/components/call-system.css',", "        // Components`n        'css/components/call-system.css',"
+    $content = $content -replace "        'css/components/dropdowns/keywords-dropdown.css',", "        // Dropdowns`n        'css/components/dropdowns/keywords-dropdown.css',"
+    $content = $content -replace "        'css/radio/radio.css',", "        // Radio`n        'css/radio/radio.css',"
+    $content = $content -replace "        'css/themes/theme-light.css',", "        // Themes`n        'css/themes/theme-light.css',"
+    $content = $content -replace "        'css/map/map-icons.css'", "        // Map`n        'css/map/map-icons.css'"
     Set-Content "js/core/version-config.js" -Value $content -NoNewline
 
     Write-Host "✅ version-config.js aktualisiert" -ForegroundColor Green
@@ -143,33 +145,31 @@ Write-Host "Step 4/4: Erstelle Commit..." -ForegroundColor Cyan
 
 try {
     git add .
-    git commit -m @"
-refactor(css): Phase 3 - CSS-Reorganisation abgeschlossen
+    git commit -m "refactor(css): Phase 3 - CSS-Reorganisation abgeschlossen
 
-🎨 Neue Struktur:
-- css/components/ für UI-Komponenten (call-system, draggable, tabs)
-- css/components/dropdowns/ für Dropdown-Styles
-- css/radio/ für Radio-System-Styles
-- css/themes/ für Theme-Dateien
-- css/map/ für Karten-Icons
+Neue Struktur:
+- css/components/ fuer UI-Komponenten (call-system, draggable, tabs)
+- css/components/dropdowns/ fuer Dropdown-Styles
+- css/radio/ fuer Radio-System-Styles
+- css/themes/ fuer Theme-Dateien
+- css/map/ fuer Karten-Icons
 
-✅ Vorteile:
+Vorteile:
 - Thematische Gruppierung
 - Einfachere Wartung
 - Bessere Skalierbarkeit
-- Kein visueller Unterschied
-"@
+- Kein visueller Unterschied"
 
     Write-Host ""
     Write-Host "✅✅✅ Phase 3 ERFOLGREICH! ✅✅✅" -ForegroundColor Green
     Write-Host ""
-    Write-Host "👀 Nächste Schritte:" -ForegroundColor Cyan
+    Write-Host "👀 Naechste Schritte:" -ForegroundColor Cyan
     Write-Host "   1. git push origin main"
-    Write-Host "   2. Simulator öffnen und testen"
+    Write-Host "   2. Simulator oeffnen und testen"
     Write-Host "   3. Browser-Cache leeren (Strg+Shift+R)"
-    Write-Host "   4. Alle Features prüfen"
+    Write-Host "   4. Alle Features pruefen"
     Write-Host ""
-    Write-Host "🔙 Rollback (falls nötig):" -ForegroundColor Yellow
+    Write-Host "🔙 Rollback (falls noetig):" -ForegroundColor Yellow
     Write-Host "   git reset --hard HEAD~1"
     Write-Host ""
 } catch {
