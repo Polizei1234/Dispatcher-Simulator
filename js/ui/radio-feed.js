@@ -1,6 +1,8 @@
 // =========================
-// RADIO FEED UI v1.0
+// RADIO FEED UI v2.0 - HTML SUPPORT
 // Funkverkehr-Anzeige mit addRadioMessage()
+// + ✅ FIX: Unterstützt HTML-Nachrichten (isHTML Parameter)
+// + ✅ Status-Kästchen werden korrekt angezeigt
 // =========================
 
 class RadioFeed {
@@ -44,17 +46,18 @@ class RadioFeed {
             this.autoScroll = isScrolledToBottom;
         });
         
-        console.log('✅ Radio Feed UI initialisiert');
+        console.log('✅ Radio Feed UI v2.0 initialisiert (mit HTML-Support)');
     }
     
     /**
      * Fügt Nachricht zum Feed hinzu
      * @param {string} sender - Absender (z.B. "RTW 71/83-01" oder "Leitstelle")
-     * @param {string} message - Nachricht
-     * @param {string} type - Typ: 'dispatcher', 'vehicle', 'vehicle-auto', 'system', 'error'
+     * @param {string} message - Nachricht (kann HTML enthalten wenn isHTML=true)
+     * @param {string} type - Typ: 'dispatcher', 'vehicle', 'vehicle-auto', 'system', 'error', 'status-change', 'status-5-request', 'status-0-emergency'
+     * @param {boolean} isHTML - Wenn true, wird message als HTML interpretiert
      * @param {string} color - Optional: Custom Farbe
      */
-    addMessage(sender, message, type = 'system', color = null) {
+    addMessage(sender, message, type = 'system', isHTML = false, color = null) {
         const timestamp = new Date();
         const timeString = timestamp.toLocaleTimeString('de-DE');
         
@@ -64,6 +67,7 @@ class RadioFeed {
             sender,
             message,
             type,
+            isHTML,
             color,
             timestamp
         };
@@ -110,12 +114,18 @@ class RadioFeed {
             'vehicle': '🚑',
             'vehicle-auto': '📡',
             'system': 'ℹ️',
-            'error': '⚠️'
+            'error': '⚠️',
+            'status-change': '🔄',       // ✅ Status-Änderung
+            'status-5-request': '📞',    // ✅ Status 5 Sprechwunsch
+            'status-0-emergency': '🚨'   // ✅ Status 0 Notfall
         };
         const icon = icons[msg.type] || '💬';
         
         // Timestamp
         const timeString = msg.timestamp.toLocaleTimeString('de-DE');
+        
+        // ✅ HTML-Support: Wenn isHTML=true, nutze innerHTML statt escapeHtml
+        const messageContent = msg.isHTML ? msg.message : this.escapeHtml(msg.message);
         
         // HTML
         messageDiv.innerHTML = `
@@ -125,7 +135,7 @@ class RadioFeed {
                 <span class="radio-message-time">${timeString}</span>
             </div>
             <div class="radio-message-body">
-                ${this.escapeHtml(msg.message)}
+                ${messageContent}
             </div>
         `;
         
@@ -179,16 +189,17 @@ const radioFeed = new RadioFeed();
  * ✅ GLOBAL FUNCTION - Von allen Systemen verwendbar!
  * Fügt Funkspruch zum Radio-Feed hinzu
  * @param {string} sender - Absender
- * @param {string} message - Nachricht
- * @param {string} type - Typ: 'dispatcher', 'vehicle', 'vehicle-auto', 'system', 'error'
+ * @param {string} message - Nachricht (kann HTML enthalten wenn isHTML=true)
+ * @param {string} type - Typ: 'dispatcher', 'vehicle', 'vehicle-auto', 'system', 'error', 'status-change'
+ * @param {boolean} isHTML - Wenn true, wird message als HTML interpretiert (für Status-Kästchen)
  * @param {string} color - Optional: Custom Farbe
  */
-function addRadioMessage(sender, message, type = 'system', color = null) {
+function addRadioMessage(sender, message, type = 'system', isHTML = false, color = null) {
     if (!radioFeed) {
         console.error('❌ Radio Feed nicht initialisiert');
         return null;
     }
-    return radioFeed.addMessage(sender, message, type, color);
+    return radioFeed.addMessage(sender, message, type, isHTML, color);
 }
 
 /**
@@ -207,4 +218,5 @@ if (typeof window !== 'undefined') {
     window.clearRadioFeed = clearRadioFeed;
 }
 
-console.log('✅ Radio Feed UI geladen - addRadioMessage() global verfügbar');
+console.log('✅ Radio Feed UI v2.0 geladen - addRadioMessage() mit HTML-Support!');
+console.log('✅ Status-Kästchen werden korrekt angezeigt');
