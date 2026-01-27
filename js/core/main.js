@@ -1,8 +1,10 @@
 // =========================
-// HAUPTSTEUERUNG v4.12 - CONDITIONAL UI UPDATES
+// HAUPTSTEUERUNG v4.13 - BUGFIXES: PAUSE + NULL-CHECKS
 // + ✅ VehicleMovement.initialize() wird jetzt aufgerufen
 // + ✅ Fahrzeuge fahren wieder los!
 // + ✅✅✅ PHASE 3.1.1 v4.12: CONDITIONAL UI UPDATES (-80% DOM Operations!)
+// + 🐛 FIX v4.13: Game Loop stoppt bei Pause (CPU-Savings!)
+// + 🐛 FIX v4.13: Null-Checks in updateUI (keine Runtime-Errors!)
 // =========================
 
 let gamePaused = false;
@@ -14,6 +16,7 @@ window.GameTime = {
     elapsed: 0,               // Verstrichene Spielzeit in ms (für Einsatz-Timing)
     speed: 1, // Default 1x (Echtzeit)
     lastTick: Date.now(),
+    pausedAt: null,           // 🐛 FIX: Timestamp für Pause-Berechnung
     
     // Hilfsfunktionen
     tick: function(deltaMs) {
@@ -28,6 +31,7 @@ window.GameTime = {
         this.elapsed = 0;
         this.speed = CONFIG?.GAME_SPEED?.DEFAULT || 1;
         this.lastTick = Date.now();
+        this.pausedAt = null;
         const timeStr = this.simulated.toLocaleTimeString('de-DE');
         console.log(`⏰ Zeit gestartet mit aktueller Uhrzeit: ${timeStr}`);
         
@@ -271,6 +275,7 @@ function initializeNewSystems() {
     console.groupEnd();
 }
 
+// 🐛 FIX #5: Verbesserte togglePause - Stoppt Game Loop komplett!
 function togglePause() {
     gamePaused = !gamePaused;
     
@@ -278,12 +283,39 @@ function togglePause() {
     const btn = document.getElementById('pause-btn');
     
     if (gamePaused) {
+        // 🐛 FIX: Stoppe Game Loop bei Pause
+        if (gameLoopInterval) {
+            clearInterval(gameLoopInterval);
+            gameLoopInterval = null;
+            console.log('⏸️ Game Loop gestoppt (Pause)');
+        }
+        
+        // 🐛 FIX: Speichere letzten Tick-Timestamp
+        if (GameTime) {
+            GameTime.pausedAt = Date.now();
+        }
+        
         icon.classList.remove('fa-pause');
         icon.classList.add('fa-play');
         btn.title = 'Fortsetzen';
         btn.style.background = '#28a745';
         console.log('⏸️ Spiel pausiert');
+        
     } else {
+        // 🐛 FIX: Starte Game Loop bei Resume
+        if (!gameLoopInterval) {
+            // 🐛 FIX: Korrigiere Zeit-Offset
+            if (GameTime && GameTime.pausedAt) {
+                const pauseDuration = Date.now() - GameTime.pausedAt;
+                console.log(`⏱️ Pause-Dauer: ${Math.round(pauseDuration/1000)}s (übersprungen)`);
+                GameTime.lastTick = Date.now();  // Reset lastTick um Zeit-Sprung zu vermeiden
+                delete GameTime.pausedAt;
+            }
+            
+            startGameLoop();
+            console.log('▶️ Game Loop neu gestartet');
+        }
+        
         icon.classList.remove('fa-play');
         icon.classList.add('fa-pause');
         btn.title = 'Pausieren';
@@ -294,23 +326,37 @@ function togglePause() {
 
 let gameLoopInterval = null;
 
+// 🐛 FIX #5: Verbesserte startGameLoop - Doppel-Start Prevention!
 function startGameLoop() {
+    // 🐛 FIX: Doppel-Start Prevention
     if (gameLoopInterval) {
-        clearInterval(gameLoopInterval);
-        console.log('🗑️ Alter Game Loop gestoppt');
+        console.warn('⚠️ Game Loop läuft bereits, überspringe Start');
+        return;
     }
     
-    console.log('🔄 Starte neuen Game Loop (1000ms Intervall)...');
+    // 🐛 FIX: Nur starten wenn nicht pausiert
+    if (gamePaused) {
+        console.log('⏸️ Game Loop Start übersprungen (Spiel ist pausiert)');
+        return;
+    }
+    
+    console.log('🔄 Starte Game Loop (1000ms Intervall)...');
     
     gameLoopInterval = setInterval(() => {
         gameTickCounter++;
         
-        // ✅✅✅ PHASE 3.1.1: Reduziere Debug-Logs (nur alle 10s statt 5s)
-        if (gameTickCounter % 10 === 0) {
-            console.log(`⏱️ Tick #${gameTickCounter} | Pause: ${gamePaused} | Einsätze: ${game?.incidents?.length || 0} | Speed: ${GameTime.speed}x | Spielzeit: ${Math.round(GameTime.elapsed/1000)}s`);
+        // 🐛 FIX: Zusätzliche Safety-Check (sollte nie eintreten)
+        if (gamePaused) {
+            console.error('❌ Game Loop läuft trotz Pause - stoppe!');
+            clearInterval(gameLoopInterval);
+            gameLoopInterval = null;
+            return;
         }
         
-        if (gamePaused) return;
+        // ✅✅✅ PHASE 3.1.1: Reduziere Debug-Logs (nur alle 10s statt 5s)
+        if (gameTickCounter % 10 === 0) {
+            console.log(`⏱️ Tick #${gameTickCounter} | Einsätze: ${game?.incidents?.length || 0} | Speed: ${GameTime.speed}x | Spielzeit: ${Math.round(GameTime.elapsed/1000)}s`);
+        }
         
         // Aktualisiere ZENTRALES Zeitsystem
         GameTime.tick(1000);
@@ -333,12 +379,18 @@ function startGameLoop() {
 }
 
 // ✅✅✅ PHASE 3.1.1: OPTIMIERTE updateUI - Nur Updates bei Änderungen!
+// 🐛 FIX #4: Erweiterte Null-Checks!
 function updateUI() {
-    if (!game) return;
+    // 🐛 FIX #4: Erweiterte Validierung
+    if (!game || !game.vehicles || !Array.isArray(game.vehicles)) {
+        console.warn('⚠️ updateUI: Game oder Vehicles nicht bereit');
+        return;
+    }
     
     // 1. VEHICLE COUNTS - Nur bei Änderung updaten
-    const ownedVehicles = game.vehicles.filter(v => v.owned);
-    const availableVehicles = ownedVehicles.filter(v => v.status === 'available');
+    // 🐛 FIX #4: Safe array operations
+    const ownedVehicles = game.vehicles.filter(v => v && v.owned) || [];
+    const availableVehicles = ownedVehicles.filter(v => v && v.status === 'available') || [];
     
     if (UIUpdateTracker.hasVehicleCountChanged(ownedVehicles.length, availableVehicles.length)) {
         const totalEl = document.getElementById('total-vehicles');
@@ -352,7 +404,7 @@ function updateUI() {
     }
     
     // 2. TIME DISPLAY - Nur bei Änderung updaten
-    if (GameTime.simulated) {
+    if (GameTime && GameTime.simulated) {
         const hours = String(GameTime.simulated.getHours()).padStart(2, '0');
         const minutes = String(GameTime.simulated.getMinutes()).padStart(2, '0');
         const seconds = String(GameTime.simulated.getSeconds()).padStart(2, '0');
@@ -375,13 +427,19 @@ function updateUI() {
     }
     
     // 5. INCIDENT LIST - Nur bei Änderung updaten
-    const activeIncidents = GAME_DATA.incidents.filter(i => !i.completed);
-    if (UIUpdateTracker.hasIncidentCountChanged(activeIncidents.length)) {
-        if (typeof UI !== 'undefined' && UI.updateIncidentList) {
-            UI.updateIncidentList();
-        } else {
-            updateIncidentListFallback();
+    // 🐛 FIX #4: Safe GAME_DATA Zugriff
+    if (GAME_DATA && Array.isArray(GAME_DATA.incidents)) {
+        const activeIncidents = GAME_DATA.incidents.filter(i => i && !i.completed) || [];
+        
+        if (UIUpdateTracker.hasIncidentCountChanged(activeIncidents.length)) {
+            if (typeof UI !== 'undefined' && UI.updateIncidentList) {
+                UI.updateIncidentList();
+            } else {
+                updateIncidentListFallback();
+            }
         }
+    } else {
+        console.warn('⚠️ updateUI: GAME_DATA.incidents nicht verfügbar');
     }
     
     // 6. MAP - ✅✅✅ PHASE 3.1.1: Nur bei aktiven Fahrzeugen updaten
@@ -391,22 +449,27 @@ function updateUI() {
     // Nur bei neuen Einsatzmarkern updaten
     if (GAME_DATA && GAME_DATA.incidents && typeof addIncidentToMap === 'function') {
         GAME_DATA.incidents.forEach(incident => {
-            if (!incident.completed && !incidentMarkers[incident.id]) {
+            if (incident && !incident.completed && !incidentMarkers[incident.id]) {
                 addIncidentToMap(incident);
             }
         });
     }
 }
 
+// 🐛 FIX #4: Safe Fallback mit Null-Checks!
 function updateIncidentListFallback() {
     if (!game) return;
     
     const container = document.getElementById('incident-list');
     const countBadge = document.getElementById('incident-count');
     
-    if (!container || !countBadge) return;
+    if (!container || !countBadge) {
+        console.warn('⚠️ Incident-List Container nicht gefunden');
+        return;
+    }
     
-    const activeIncidents = GAME_DATA.incidents.filter(i => !i.completed);
+    // 🐛 FIX #4: Safe array access mit Nullish Coalescing
+    const activeIncidents = (GAME_DATA?.incidents || []).filter(i => i && !i.completed);
     countBadge.textContent = activeIncidents.length;
     
     if (activeIncidents.length === 0) {
@@ -414,17 +477,25 @@ function updateIncidentListFallback() {
         return;
     }
     
-    container.innerHTML = activeIncidents.map(incident => `
-        <div class="incident-item" onclick="selectIncident('${incident.id}')">
-            <div class="incident-header">
-                <span class="incident-badge">🚨</span>
-                <span class="incident-number">${incident.id}</span>
+    // 🐛 FIX #4: Safe property access mit Nullish Coalescing
+    container.innerHTML = activeIncidents.map(incident => {
+        const id = incident?.id ?? 'unknown';
+        const keyword = incident?.stichwort ?? incident?.keyword ?? 'Einsatz';
+        const location = incident?.ort ?? incident?.location ?? 'Unbekannt';
+        const time = incident?.zeitstempel ?? 'Keine Zeit';
+        
+        return `
+            <div class="incident-item" onclick="selectIncident('${id}')">
+                <div class="incident-header">
+                    <span class="incident-badge">🚨</span>
+                    <span class="incident-number">${id}</span>
+                </div>
+                <div class="incident-keyword">${keyword}</div>
+                <div class="incident-location">📍 ${location}</div>
+                <div class="incident-time">🕒 ${time}</div>
             </div>
-            <div class="incident-keyword">${incident.stichwort || incident.keyword || 'Einsatz'}</div>
-            <div class="incident-location">📍 ${incident.ort || incident.location || 'Unbekannt'}</div>
-            <div class="incident-time">🕒 ${incident.zeitstempel || 'Keine Zeit'}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function selectIncident(incidentId) {
@@ -533,8 +604,10 @@ function startTutorial() {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v4.12 geladen (CONDITIONAL UI UPDATES)');
+    console.log('🚀 ILS Waiblingen Simulator v4.13 geladen (BUGFIXES: PAUSE + NULL-CHECKS)');
     console.log('✅✅✅ PHASE 3.1.1: Optimierte UI Updates - Nur bei Änderungen!');
+    console.log('🐛 FIX: Game Loop stoppt bei Pause - CPU-Savings!');
+    console.log('🐛 FIX: Null-Checks in updateUI - keine Runtime-Errors!');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
@@ -552,4 +625,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-console.log('✅✅✅ main.js v4.12 geladen - CONDITIONAL UI UPDATES! (-80% DOM Operations)');
+console.log('✅✅✅ main.js v4.13 geladen - BUGFIXES: PAUSE STOPPT LOOP + NULL-CHECKS! 🐛');
