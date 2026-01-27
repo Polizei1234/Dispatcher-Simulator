@@ -1,11 +1,12 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.0 - FUNKVERKEHR LOGGING
+// UNIFIED STATUS SYSTEM v2.1 - MIT TEST
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
 // + Visuelle Status-Kästchen mit Farbcodierung
 // + Korrekte Workflow-Logik (Status 5/0 = Sprechwunsch)
-// + ✅ NEU: Funkverkehr-Logging mit Uhrzeit im Tab "Funkverkehr"
+// + ✅ Funkverkehr-Logging mit Uhrzeit im Tab "Funkverkehr"
+// + ✅ TEST: Sendet Demo-Nachricht beim Laden
 // =========================
 
 class UnifiedStatusSystem {
@@ -13,7 +14,40 @@ class UnifiedStatusSystem {
         this.pendingTransmissions = new Map(); // vehicleId -> {type, oldStatus, newStatus, timestamp}
         this.waitingForPermission = new Map(); // vehicleId -> {type: 'status5' | 'status0', message, timestamp}
         
-        console.log('📡 Unified Status System v2.0 initialisiert');
+        console.log('📡 Unified Status System v2.1 initialisiert');
+        
+        // ✅ TEST: Sende Demo-Nachricht nach 2 Sekunden
+        setTimeout(() => this.sendTestMessage(), 2000);
+    }
+
+    /**
+     * ✅ TEST-FUNKTION: Sendet Demo-Nachricht
+     */
+    sendTestMessage() {
+        if (typeof addRadioMessage !== 'undefined') {
+            console.log('🎭 Sende Test-Nachricht ins Radio-System...');
+            
+            // Test 1: Normale Textnachricht
+            addRadioMessage('System', 'Unified Status System v2.1 geladen und bereit!', 'system', false);
+            
+            // Test 2: Status-Änderung mit Kästchen
+            setTimeout(() => {
+                const transition = this.createStatusTransition(2, 4);
+                const messageHTML = `<span style="color: #6c757d; margin-right: 8px;">[10:00:00]</span> Florian WN 1-83-1: ${transition} <span style="margin-left: 8px; color: #6c757d;">Anfahrt nach Hauptstraße 42</span>`;
+                addRadioMessage('Florian WN 1-83-1', messageHTML, 'status-change', true);
+            }, 1000);
+            
+            // Test 3: Sprechwunsch
+            setTimeout(() => {
+                const badge = this.createStatusBadge(5);
+                const messageHTML = `<span style="color: #6c757d; margin-right: 8px;">[10:05:30]</span> Florian WN 1-47-1: ${badge} <span style="margin-left: 8px; color: #dc3545; font-weight: bold;">Sprechwunsch</span>`;
+                addRadioMessage('Florian WN 1-47-1', messageHTML, 'status-5-request', true);
+            }, 2000);
+            
+            console.log('✅ Test-Nachrichten gesendet!');
+        } else {
+            console.warn('⚠️ addRadioMessage() nicht verfügbar - Radio-System noch nicht geladen');
+        }
     }
 
     /**
@@ -57,7 +91,7 @@ class UnifiedStatusSystem {
     }
 
     /**
-     * ✅ NEU: Loggt Status-Änderung im Funkverkehr-Tab mit Uhrzeit
+     * ✅ Loggt Status-Änderung im Funkverkehr-Tab mit Uhrzeit
      * @param {string} callsign - Fahrzeug-Rufzeichen
      * @param {number|string} oldStatus - Alter Status
      * @param {number|string} newStatus - Neuer Status
@@ -416,8 +450,9 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem; // Class export
 }
 
-console.log('✅ Unified Status System v2.0 geladen');
+console.log('✅ Unified Status System v2.1 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
 console.log('✅ Funkverkehr-Logging mit Uhrzeit aktiviert');
+console.log('🎭 Test-Nachrichten werden in 2 Sekunden gesendet...');
