@@ -1,8 +1,9 @@
 // =========================
-// RADIO FEED UI v2.0 - HTML SUPPORT
+// RADIO FEED UI v2.1 - ROBUST DOM HANDLING
 // Funkverkehr-Anzeige mit addRadioMessage()
-// + ✅ FIX: Unterstützt HTML-Nachrichten (isHTML Parameter)
-// + ✅ Status-Kästchen werden korrekt angezeigt
+// + ✅ FIX: Element-Lookup auch wenn DOM noch nicht bereit
+// + ✅ HTML-Support für Status-Kästchen
+// + ✅ Lazy DOM-Binding wenn Element nicht gefunden
 // =========================
 
 class RadioFeed {
@@ -11,6 +12,7 @@ class RadioFeed {
         this.maxMessages = 100; // Max. Nachrichten im Feed
         this.feedElement = null;
         this.autoScroll = true;
+        this.pendingMessages = []; // ✅ Queue für Nachrichten vor DOM-Ready
         
         this.initializeFeed();
     }
@@ -19,11 +21,19 @@ class RadioFeed {
      * Initialisiert Radio-Feed
      */
     initializeFeed() {
-        // Warte bis DOM geladen ist
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.setupFeed());
-        } else {
+        // ✅ FIX: Versuche sofort Element zu finden
+        this.feedElement = document.getElementById('radio-feed-full');
+        
+        if (this.feedElement) {
             this.setupFeed();
+        } else {
+            // ✅ FIX: Warte auf DOM
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => this.setupFeed());
+            } else {
+                // DOM ist bereit, aber Element nicht gefunden - versuche später nochmal
+                setTimeout(() => this.setupFeed(), 100);
+            }
         }
     }
     
@@ -34,7 +44,9 @@ class RadioFeed {
         this.feedElement = document.getElementById('radio-feed-full');
         
         if (!this.feedElement) {
-            console.warn('⚠️ Radio-Feed-Element nicht gefunden');
+            console.warn('⚠️ Radio-Feed-Element (#radio-feed-full) nicht gefunden - versuche es später');
+            // ✅ FIX: Versuche es in 500ms nochmal
+            setTimeout(() => this.setupFeed(), 500);
             return;
         }
         
@@ -46,7 +58,27 @@ class RadioFeed {
             this.autoScroll = isScrolledToBottom;
         });
         
-        console.log('✅ Radio Feed UI v2.0 initialisiert (mit HTML-Support)');
+        // ✅ FIX: Rendere ausstehende Nachrichten
+        if (this.pendingMessages.length > 0) {
+            console.log(`📻 Rendere ${this.pendingMessages.length} ausstehende Funk-Nachrichten`);
+            this.pendingMessages.forEach(msg => this.renderMessage(msg));
+            this.pendingMessages = [];
+        }
+        
+        console.log('✅ Radio Feed UI v2.1 initialisiert (mit HTML-Support + robustes DOM-Handling)');
+    }
+    
+    /**
+     * ✅ FIX: Lazy Element-Lookup wenn nicht initialisiert
+     */
+    ensureElement() {
+        if (!this.feedElement) {
+            this.feedElement = document.getElementById('radio-feed-full');
+            if (this.feedElement) {
+                this.setupFeed();
+            }
+        }
+        return this.feedElement !== null;
     }
     
     /**
@@ -80,6 +112,13 @@ class RadioFeed {
             this.messages.shift();
         }
         
+        // ✅ FIX: Versuche Element zu finden wenn nicht vorhanden
+        if (!this.ensureElement()) {
+            console.warn('⚠️ Radio-Feed nicht bereit - speichere Nachricht für später');
+            this.pendingMessages.push(msg);
+            return msg.id;
+        }
+        
         // Render Message
         this.renderMessage(msg);
         
@@ -97,7 +136,10 @@ class RadioFeed {
      * Rendert einzelne Nachricht
      */
     renderMessage(msg) {
-        if (!this.feedElement) return;
+        if (!this.feedElement) {
+            console.warn('⚠️ Radio-Feed-Element nicht verfügbar - kann Nachricht nicht rendern');
+            return;
+        }
         
         const messageDiv = document.createElement('div');
         messageDiv.className = `radio-message radio-message-${msg.type}`;
@@ -160,6 +202,7 @@ class RadioFeed {
      */
     clear() {
         this.messages = [];
+        this.pendingMessages = [];
         if (this.feedElement) {
             this.feedElement.innerHTML = '<p class="no-data">Kein Funkverkehr</p>';
         }
@@ -218,5 +261,6 @@ if (typeof window !== 'undefined') {
     window.clearRadioFeed = clearRadioFeed;
 }
 
-console.log('✅ Radio Feed UI v2.0 geladen - addRadioMessage() mit HTML-Support!');
+console.log('✅ Radio Feed UI v2.1 geladen - addRadioMessage() mit HTML-Support!');
+console.log('✅ Robustes DOM-Handling - funktioniert auch bei spätem Aufruf');
 console.log('✅ Status-Kästchen werden korrekt angezeigt');
