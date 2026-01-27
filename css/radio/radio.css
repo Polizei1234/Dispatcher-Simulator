@@ -1,0 +1,104 @@
+/* =========================
+   RADIO CHAT STYLES v4.0 - MINIMAL
+   Nur noch Chat-Styling, kein komplexes Layout
+   ========================= */
+
+/* Radio Chat Message */
+.radio-chat-message {
+    background: var(--panel-bg);
+    border-left: 4px solid #3182ce;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.radio-chat-message:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ✅ STATUS-BADGES */
+.status-badge {
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    display: inline-block;
+    min-width: 28px;
+    text-align: center;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ✅ STATUS-TRANSITION (Alt → Neu) */
+.status-transition {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    vertical-align: middle;
+}
+
+/* Scrollbar */
+#radio-feed-full::-webkit-scrollbar {
+    width: 8px;
+}
+
+#radio-feed-full::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+#radio-feed-full::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+#radio-feed-full::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Dark Theme */
+body.theme-dark .radio-chat-message {
+    background: rgba(30, 30, 30, 0.8);
+}
+
+/* Light Theme */
+body.theme-light .radio-chat-message {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-light .status-badge {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .status-badge {
+        font-size: 11px;
+        padding: 3px 6px;
+        min-width: 24px;
+    }
+}
