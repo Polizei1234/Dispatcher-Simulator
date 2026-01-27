@@ -1,121 +1,97 @@
 # 📚 Dispatcher-Simulator Dokumentation
 
-> Vollständige Dokumentation für den Dispatcher-Simulator
+> Willkommen zur zentralen Dokumentations-Übersicht des Dispatcher-Simulators!
 
 ---
 
 ## 📖 Schnellstart
 
-- [Haupt-README](../README.md) - Projekt-Übersicht und Installation
-- [Changelog](../CHANGELOG.md) - Versionshistorie
-- [Roadmap](../ROADMAP.md) - Geplante Features
+- **Erste Schritte:** Siehe [../README.md](../README.md) im Root-Verzeichnis
+- **Changelog:** [../CHANGELOG.md](../CHANGELOG.md)
+- **Roadmap:** [../ROADMAP.md](../ROADMAP.md)
 
 ---
 
-## 🏗️ Technische Dokumentation
+## 🗂️ Dokumentations-Kategorien
 
-### Architektur & Systeme
-- [**Architektur-Übersicht**](technical/ARCHITECTURE.md) - Gesamtsystem-Architektur
-- [**Build-System**](technical/BUILD_SYSTEM.md) - Webpack & Build-Prozess
-- [**Cache-Clearing**](technical/CACHE_CLEAR.md) - Cache-Management
-- [**Unified Status System**](technical/UNIFIED_STATUS_SYSTEM.md) - FMS-Status-Verwaltung
+### 🔧 [Technical](technical/)
+Technische Dokumentation zu Architektur und Build-System
 
-### System-Komponenten
-- [**Icon-System v6.0.0**](systems/ICON_SYSTEM_v6.0.0.md) - Karten-Icons & Marker
-- [**Radio-System**](systems/RADIO_SYSTEM_COMPLETE.md) - Funkverkehr & Kommunikation
-- [**Phase 2 Dokumentation**](systems/PHASE_2_DOCUMENTATION.md) - Entwicklungsphase 2
+- [ARCHITECTURE.md](technical/ARCHITECTURE.md) - System-Architektur und Komponenten
+- [BUILD_SYSTEM.md](technical/BUILD_SYSTEM.md) - Webpack-Konfiguration und Build-Prozess
+- [CACHE_CLEAR.md](technical/CACHE_CLEAR.md) - Cache-Management und Problembehebung
+- [UNIFIED_STATUS_SYSTEM.md](technical/UNIFIED_STATUS_SYSTEM.md) - FMS-Status-System Dokumentation
 
----
+### 🎮 [Systems](systems/)
+Spezifische System-Dokumentationen
 
-## 📘 Anleitungen
+- [ICON_SYSTEM_v6.0.0.md](systems/ICON_SYSTEM_v6.0.0.md) - Icon-System v6.0.0
+- [RADIO_SYSTEM_COMPLETE.md](systems/RADIO_SYSTEM_COMPLETE.md) - Funk-System Komplett-Dokumentation
+- [PHASE_2_DOCUMENTATION.md](systems/PHASE_2_DOCUMENTATION.md) - Phase 2 Entwicklungs-Dokumentation
 
-- [**Integration Guide**](guides/INTEGRATION_GUIDE.md) - Integration neuer Systeme
-- [**Migration Guide**](guides/MIGRATION_GUIDE.md) - Migrations-Anleitungen
+### 📘 [Guides](guides/)
+Anleitungen für Integration und Migration
 
----
+- [INTEGRATION_GUIDE.md](guides/INTEGRATION_GUIDE.md) - Integration neuer Komponenten
+- [MIGRATION_GUIDE.md](guides/MIGRATION_GUIDE.md) - Migrations-Anleitung zwischen Versionen
 
-## 🐛 Bugfixes & Fehlerbehebung
+### 🚀 [Releases](releases/)
+Release Notes und Version History
 
-- [**Bugfixes**](bugfixes/BUGFIXES.md) - Behobene Bugs
-- [**Kritische Bugfixes**](bugfixes/CRITICAL_BUGFIXES.md) - Kritische Fehlerbehebungen
+- [RELEASE_NOTES_v6.3.0.md](releases/RELEASE_NOTES_v6.3.0.md) - Neueste Version
+- [RELEASE_NOTES_v6.2.0.md](releases/RELEASE_NOTES_v6.2.0.md)
+- [RELEASE_NOTES_v6.1.0.md](releases/RELEASE_NOTES_v6.1.0.md)
+- [RELEASE_NOTES_v6.0.0.md](releases/RELEASE_NOTES_v6.0.0.md)
+- [COMMITS_v6.2.0.md](releases/COMMITS_v6.2.0.md) - Detaillierte Commit-Historie
+- [FINAL_STATUS_v5.0.0.md](releases/FINAL_STATUS_v5.0.0.md) - v5.0.0 Abschluss-Status
 
----
+### 🐛 [Bugfixes](bugfixes/)
+Bugfix-Dokumentation und kritische Patches
 
-## 📦 Release-Informationen
-
-### Version 6.x
-- [Release Notes v6.3.0](releases/RELEASE_NOTES_v6.3.0.md)
-- [Release Notes v6.2.0](releases/RELEASE_NOTES_v6.2.0.md) | [Commits](releases/COMMITS_v6.2.0.md)
-- [Release Notes v6.1.0](releases/RELEASE_NOTES_v6.1.0.md)
-- [Release Notes v6.0.0](releases/RELEASE_NOTES_v6.0.0.md)
-
-### Version 5.x
-- [Final Status v5.0.0](releases/FINAL_STATUS_v5.0.0.md)
-
----
-
-## 🔧 Für Entwickler
-
-### Code-Struktur
-```
-js/
-├── core/          # Kernfunktionalität (Game Loop, Config)
-├── systems/       # Systeme (Radio, Notifications, Bewegung)
-├── ui/            # UI-Komponenten (Tabs, Dropdowns, Formulare)
-├── data/          # Daten (Incidents, FMS-Codes, Templates)
-└── utils/         # Hilfsfunktionen (Scoring, Location-Generator)
-```
-
-### Module-Übersicht
-
-#### Core (`js/core/`)
-- `main.js` - Haupt-Einstiegspunkt
-- `game.js` - Game Loop & Spiellogik
-- `bridge.js` - Kommunikation zwischen Modulen
-- `config.js` - Konfigurationsverwaltung
-- `incident-manager.js` - Einsatz-Verwaltung
-- `incident-composer.js` - Einsatz-Generierung
-
-#### Systems (`js/systems/`)
-- `vehicle-movement.js` - Fahrzeug-Bewegung & Routing
-- `unified-status-system.js` - FMS-Status-Verwaltung
-- `radio-system.js` - Funkverkehr
-- `call-system.js` - Anruf-System
-- `notification-system.js` - Benachrichtigungen
-- `ai-incident-generator.js` - KI-Einsatzgenerierung
-
-#### UI (`js/ui/`)
-- `ui.js` - Haupt-UI-Controller
-- `tabs.js` - Tab-Verwaltung
-- `manual-incident.js` - Manuelle Einsatzerstellung
-- `assignment-ui.js` - Fahrzeugzuweisungs-UI
-- `radio-feed.js` - Funkfeed-Anzeige
+- [BUGFIXES.md](bugfixes/BUGFIXES.md) - Alle behobenen Bugs
+- [CRITICAL_BUGFIXES.md](bugfixes/CRITICAL_BUGFIXES.md) - Kritische Bugfixes
 
 ---
 
-## 📝 Dokumentations-Konventionen
+## 🔍 Suche nach Themen
 
-### Dateinamen
-- `UPPERCASE.md` - Haupt-Dokumentation
-- `lowercase.md` - Modul-spezifische Docs
-- Versionsnummern im Format: `v{MAJOR}.{MINOR}.{PATCH}`
+### Architektur & Struktur
+→ [technical/ARCHITECTURE.md](technical/ARCHITECTURE.md)
 
-### Struktur
-- Jedes System sollte eine eigene Dokumentation haben
-- Release Notes immer mit Datum versehen
-- Bugfixes mit Issue-Nummern verknüpfen (falls vorhanden)
+### Build & Deployment
+→ [technical/BUILD_SYSTEM.md](technical/BUILD_SYSTEM.md)
 
----
+### Neue Funktionen integrieren
+→ [guides/INTEGRATION_GUIDE.md](guides/INTEGRATION_GUIDE.md)
 
-## 🤝 Beiträge zur Dokumentation
+### Von alter Version migrieren
+→ [guides/MIGRATION_GUIDE.md](guides/MIGRATION_GUIDE.md)
 
-Bei Änderungen an der Dokumentation:
-1. Prüfe, ob die Änderung in die richtige Kategorie passt
-2. Aktualisiere diesen Index bei neuen Dokumenten
-3. Verwende klare, beschreibende Commit-Messages
-4. Verlinke verwandte Dokumente
+### Was ist neu?
+→ [releases/RELEASE_NOTES_v6.3.0.md](releases/RELEASE_NOTES_v6.3.0.md)
+
+### Bekannte Probleme?
+→ [bugfixes/CRITICAL_BUGFIXES.md](bugfixes/CRITICAL_BUGFIXES.md)
 
 ---
 
-**Letzte Aktualisierung:** 27. Januar 2026  
-**Version:** 7.5.0
+## 📝 Beitragen zur Dokumentation
+
+Bitte halte die Dokumentation aktuell:
+
+1. **Neue Features** → Release Notes aktualisieren
+2. **Architektur-Änderungen** → ARCHITECTURE.md anpassen
+3. **Kritische Bugs** → CRITICAL_BUGFIXES.md ergänzen
+4. **Breaking Changes** → MIGRATION_GUIDE.md erweitern
+
+---
+
+## 📅 Letzte Aktualisierung
+
+**Datum:** 27. Januar 2026  
+**Version:** v7.4.2  
+**Status:** 🟢 Aktiv entwickelt
+
+---
+
+**Zurück zum [Hauptprojekt](../README.md)**
