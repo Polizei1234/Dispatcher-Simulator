@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.4.2 - BUGFIX: API ERROR HANDLING
+// VEHICLE MOVEMENT SYSTEM v7.5.0 - STATUS-SYSTEM CLEANUP
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -15,6 +15,7 @@
 // + 📻 v7.4: Nutzt unified-status-system.js für Chat-Logging
 // + 🐛 FIX v7.4.1: Memory Leak in arrivalReported & onSceneTimers behoben
 // + 🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry-Logik
+// + 🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!
 // =========================
 
 const VehicleMovement = {
@@ -78,7 +79,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.4.2 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.5.0 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -93,6 +94,7 @@ const VehicleMovement = {
         console.log('📻 v7.4: Nutzt unified-status-system.js für Chat-Logging!');
         console.log('🐛 FIX v7.4.1: Memory Leak behoben - arrivalReported & onSceneTimers cleanup!');
         console.log('🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry & Timeout!');
+        console.log('🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!');
         
         this.startIdleCheck();
     },
@@ -183,7 +185,7 @@ const VehicleMovement = {
 
         if (phase === 'to_scene') {
             console.log(`⏱️ ${vehicle.callsign} - Ausrückzeit 10s...`);
-            vehicle.status = 'preparing';
+            // 🔥 NUR currentStatus verwenden!
             this.setVehicleStatus(vehicle, 3);
             
             if (!this.isLoopActive) {
@@ -215,7 +217,7 @@ const VehicleMovement = {
         
         console.log(`${speedIcon} ${vehicle.callsign} fährt los von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}] mit ${speedKmh} km/h`);
 
-        vehicle.status = phase === 'to_scene' ? 'dispatched' : phase === 'to_hospital' ? 'transporting' : 'returning';
+        // 🔥 KEIN vehicle.status mehr!
         vehicle.incident = incidentId;
         vehicle.position = [startPos[0], startPos[1]];
         vehicle.targetLocation = [targetCoords.lat, targetCoords.lon];
@@ -542,7 +544,6 @@ const VehicleMovement = {
         switch (phase) {
             case 'to_scene':
                 this.setVehicleStatus(vehicle, 4);
-                vehicle.status = 'on-scene';
                 delete this.movingVehicles[vehicleId];
 
                 this.startTreatmentTimer(vehicleId);
@@ -550,7 +551,6 @@ const VehicleMovement = {
 
             case 'to_hospital':
                 this.setVehicleStatus(vehicle, 8);
-                vehicle.status = 'at-hospital';
                 delete this.movingVehicles[vehicleId];
 
                 setTimeout(() => {
@@ -560,18 +560,17 @@ const VehicleMovement = {
 
             case 'returning':
                 this.setVehicleStatus(vehicle, 2);
-                vehicle.status = 'available';
                 vehicle.targetLocation = null;
                 vehicle.incident = null;
                 delete this.movingVehicles[vehicleId];
                 
-                // 🐛 FIX #1: Memory Leak - Cleanup arrivalReported Keys
+                // 🐛 FIX: Memory Leak - Cleanup arrivalReported Keys
                 delete this.arrivalReported[`${vehicleId}_to_scene`];
                 delete this.arrivalReported[`${vehicleId}_to_hospital`];
                 delete this.arrivalReported[`${vehicleId}_returning`];
                 console.log(`🗑️ Cleanup: arrivalReported Keys für ${vehicle.callsign} entfernt`);
                 
-                // 🐛 FIX #1: Cleanup onSceneTimers falls noch vorhanden
+                // 🐛 FIX: Cleanup onSceneTimers falls noch vorhanden
                 if (this.onSceneTimers[vehicleId]) {
                     clearTimeout(this.onSceneTimers[vehicleId]);
                     delete this.onSceneTimers[vehicleId];
@@ -658,13 +657,6 @@ const VehicleMovement = {
         }
     },
 
-    /**
-     * 🐛 FIX #3: Robuste API-Fehlerbehandlung mit Retry-Logik
-     * @param {object} incident - Einsatz-Objekt
-     * @param {object} vehicle - Fahrzeug-Objekt
-     * @param {number} retryCount - Aktueller Retry-Versuch (0-2)
-     * @returns {Promise<object|null>} { time: {min, max}, reason } oder null
-     */
     async calculateTreatmentTimeWithAI(incident, vehicle, retryCount = 0) {
         const MAX_RETRIES = 2;
         const RETRY_DELAY_MS = 1000;
@@ -718,7 +710,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
   "begruendung": "<Kurze medizinische Begründung>"
 }`;
 
-            // 🐛 FIX #3: 10 Sekunden Timeout mit AbortController
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
@@ -742,19 +733,16 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
 
             clearTimeout(timeoutId);
 
-            // 🐛 FIX #3: Spezifische Fehlerbehandlung
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const errorMsg = errorData.error?.message || response.statusText;
                 
-                // 401: Ungültiger API Key - Kein Retry
                 if (response.status === 401) {
                     console.error('❌ Ungültiger Groq API Key!');
                     this.notifyUser('⚠️ Groq API Key ungültig - bitte in Einstellungen prüfen', 'error');
                     return null;
                 }
                 
-                // 429: Rate Limit - Retry mit Delay
                 if (response.status === 429) {
                     console.warn('⚠️ Groq Rate Limit erreicht');
                     if (retryCount < MAX_RETRIES) {
@@ -771,7 +759,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             const data = await response.json();
             const content = data.choices[0].message.content.trim();
 
-            // Parse JSON
             let cleanContent = content;
             if (content.includes('```')) {
                 cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -788,7 +775,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             };
 
         } catch (error) {
-            // 🐛 FIX #3: Detailliertes Error-Logging
             if (error.name === 'AbortError') {
                 console.error(`❌ Groq API Timeout (${API_TIMEOUT_MS/1000}s)`);
             } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
@@ -799,7 +785,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
                 console.error('❌ Groq AI Fehler:', error.message || error);
             }
             
-            // 🐛 FIX #3: Retry-Logik (außer bei JSON-Parse-Error)
             if (retryCount < MAX_RETRIES && !(error instanceof SyntaxError)) {
                 const delay = RETRY_DELAY_MS * (retryCount + 1);
                 console.log(`🔄 Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
@@ -807,7 +792,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
                 return this.calculateTreatmentTimeWithAI(incident, vehicle, retryCount + 1);
             }
             
-            // 🐛 FIX #3: User-Notification bei finalem Fehler
             if (retryCount >= MAX_RETRIES) {
                 this.notifyUser('⚠️ KI-Zeitberechnung fehlgeschlagen - nutze Standardzeiten', 'warning');
             }
@@ -816,22 +800,14 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
         }
     },
 
-    /**
-     * 🐛 FIX #3: Helper - Sleep-Funktion für Retry-Delays
-     */
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     },
 
-    /**
-     * 🐛 FIX #3: Helper - User-Notifications
-     */
     notifyUser(message, type = 'info') {
-        // Nutze bestehendes Notification-System falls vorhanden
         if (typeof window.notificationSystem !== 'undefined' && window.notificationSystem.show) {
             window.notificationSystem.show(message, type);
         } else {
-            // Fallback: Console Log
             const emoji = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
             console.log(`${emoji} [${type.toUpperCase()}] ${message}`);
         }
@@ -859,7 +835,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
         if (!vehicle || vehicle.type !== 'RTW') return;
 
         this.setVehicleStatus(vehicle, 7);
-        vehicle.status = 'transporting';
 
         const hospitalCoords = this.findNearestHospital(vehicle.position);
         console.log(`🏥 ${vehicle.callsign} fährt ins Krankenhaus`);
@@ -875,7 +850,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
         if (!vehicle) return;
 
         this.setVehicleStatus(vehicle, 1);
-        vehicle.status = 'returning';
 
         const station = STATIONS[vehicle.station];
         if (!station) return;
@@ -908,8 +882,8 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
     },
 
     /**
-     * 📻 v7.4: Nutzt unified-status-system für Chat-Logging
-     * Statusänderung wird automatisch ins Chat-System geloggt
+     * 🔥 v7.5.0: ZENTRALE Status-Funktion - NUR DIESE NUTZEN!
+     * Alle Status-Änderungen MÜSSEN durch diese Funktion laufen!
      */
     setVehicleStatus(vehicle, fmsCode) {
         const oldStatus = vehicle.currentStatus;
@@ -924,7 +898,6 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             console.log(`📻 Nutze unified-status-system für ${vehicle.callsign}`);
             window.unifiedStatusSystem.changeVehicleStatus(vehicle.id, fmsCode);
         } else {
-            // Fallback: Direkter Radio-Call
             console.warn('⚠️ unified-status-system nicht verfügbar, nutze Fallback');
             
             if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS) {
@@ -969,4 +942,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.4.2 geladen - ALLE BUGFIXES AKTIV! 🐛');
+console.log('✅✅✅ Vehicle Movement System v7.5.0 geladen - STATUS-SYSTEM CLEANUP! 🔥');
