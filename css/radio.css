@@ -1,6 +1,9 @@
 /* =========================
-   RADIO UI STYLES v1.0
+   RADIO UI STYLES v2.0
    Funkverkehr-Interface
+   + ✅ Status-Badges Styling
+   + ✅ Status-Transition Styling
+   + ✅ Status-Meldungen Farben
    ========================= */
 
 /* Radio Overview Layout */
@@ -110,6 +113,76 @@
 .radio-message-error {
     border-left-color: #dc3545;
     background: linear-gradient(to right, rgba(220, 53, 69, 0.05), transparent);
+}
+
+/* ✅ Status-Meldungen Types */
+.radio-message-status-change {
+    border-left-color: #9370db;
+    background: linear-gradient(to right, rgba(147, 112, 219, 0.08), transparent);
+}
+
+.radio-message-status-5-request {
+    border-left-color: #ff6666;
+    background: linear-gradient(to right, rgba(255, 102, 102, 0.08), transparent);
+}
+
+.radio-message-status-0-emergency {
+    border-left-color: #ff4444;
+    background: linear-gradient(to right, rgba(255, 68, 68, 0.15), transparent);
+    animation: pulseEmergency 2s infinite;
+}
+
+@keyframes pulseEmergency {
+    0%, 100% {
+        box-shadow: 0 0 0 rgba(255, 68, 68, 0);
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(255, 68, 68, 0.6);
+    }
+}
+
+/* ✅ STATUS-BADGES IN RADIO-FEED */
+.radio-message-body .status-badge {
+    background-color: inherit; /* Wird durch inline-style überschrieben */
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    display: inline-block;
+    min-width: 28px;
+    text-align: center;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.radio-message-body .status-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ✅ STATUS-TRANSITION (Alt → Neu) */
+.radio-message-body .status-transition {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    vertical-align: middle;
+}
+
+/* Pfeil zwischen Status-Badges */
+.status-transition span:not(.status-badge) {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+/* ✅ Zusätzlicher Text nach Status */
+.radio-message-body span[style*="color: #6c757d"] {
+    margin-left: 8px;
+    opacity: 0.8;
+    font-style: italic;
 }
 
 /* Radio Vehicle Selection Panel */
@@ -348,6 +421,13 @@
     .radio-message-body {
         padding-left: 0;
     }
+    
+    /* Status-Badges kleiner auf Mobile */
+    .radio-message-body .status-badge {
+        font-size: 11px;
+        padding: 3px 6px;
+        min-width: 24px;
+    }
 }
 
 /* Dark Theme Adjustments */
@@ -371,6 +451,11 @@ body.theme-light #radio-vehicle-message-input {
     background: rgba(255, 255, 255, 0.9);
 }
 
+/* Light Theme Status-Badges */
+body.theme-light .radio-message-body .status-badge {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
 /* Scrollbar Styling für Radio Feed */
 .radio-log::-webkit-scrollbar {
     width: 8px;
@@ -387,5 +472,24 @@ body.theme-light #radio-vehicle-message-input {
 }
 
 .radio-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ✅ Panel Content Scrollbar */
+.radio-feed-container .panel-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.radio-feed-container .panel-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.radio-feed-container .panel-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.radio-feed-container .panel-content::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
