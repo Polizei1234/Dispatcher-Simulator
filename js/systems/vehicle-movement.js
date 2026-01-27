@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.4 - MIT UNIFIED STATUS LOGGING
+// VEHICLE MOVEMENT SYSTEM v7.4.1 - BUGFIX: MEMORY LEAK
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -13,6 +13,7 @@
 // + ✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung
 // + ✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP (-30% CPU idle, -10% active!)
 // + 📻 v7.4: Nutzt unified-status-system.js für Chat-Logging
+// + 🐛 FIX v7.4.1: Memory Leak in arrivalReported & onSceneTimers behoben
 // =========================
 
 const VehicleMovement = {
@@ -76,7 +77,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.4 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.4.1 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -89,6 +90,7 @@ const VehicleMovement = {
         console.log('✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung');
         console.log('✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP - Schläft wenn idle!');
         console.log('📻 v7.4: Nutzt unified-status-system.js für Chat-Logging!');
+        console.log('🐛 FIX v7.4.1: Memory Leak behoben - arrivalReported & onSceneTimers cleanup!');
         
         this.startIdleCheck();
     },
@@ -561,9 +563,18 @@ const VehicleMovement = {
                 vehicle.incident = null;
                 delete this.movingVehicles[vehicleId];
                 
+                // 🐛 FIX #1: Memory Leak - Cleanup arrivalReported Keys
                 delete this.arrivalReported[`${vehicleId}_to_scene`];
                 delete this.arrivalReported[`${vehicleId}_to_hospital`];
                 delete this.arrivalReported[`${vehicleId}_returning`];
+                console.log(`🗑️ Cleanup: arrivalReported Keys für ${vehicle.callsign} entfernt`);
+                
+                // 🐛 FIX #1: Cleanup onSceneTimers falls noch vorhanden
+                if (this.onSceneTimers[vehicleId]) {
+                    clearTimeout(this.onSceneTimers[vehicleId]);
+                    delete this.onSceneTimers[vehicleId];
+                    console.log(`🗑️ Cleanup: onSceneTimer für ${vehicle.callsign} entfernt`);
+                }
 
                 if (typeof clearVehicleRoute === 'function') {
                     clearVehicleRoute(vehicleId);
@@ -870,4 +881,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.4 geladen - MIT UNIFIED STATUS LOGGING! 📻');
+console.log('✅✅✅ Vehicle Movement System v7.4.1 geladen - MEMORY LEAK FIXED! 🐛');
