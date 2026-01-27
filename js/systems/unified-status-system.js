@@ -1,5 +1,5 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.3 - OLDSTATUS PARAMETER FIX
+// UNIFIED STATUS SYSTEM v2.3.1 - LOGSTATUSTORADIO DEBUG FIX
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
@@ -9,6 +9,7 @@
 // + ✅ TEST: Sendet Demo-Nachricht beim Laden
 // + 🔧 v2.2: Robustes Vehicle-Finding (game.vehicles || GAME_DATA.vehicles)
 // + 🔥 v2.3: Nutzt oldStatus-Parameter statt vehicle.currentStatus!
+// + 🔥 v2.3.1: Verbesserte logStatusToRadio() mit Debug!
 // =========================
 
 class UnifiedStatusSystem {
@@ -16,9 +17,10 @@ class UnifiedStatusSystem {
         this.pendingTransmissions = new Map();
         this.waitingForPermission = new Map();
         
-        console.log('📡 Unified Status System v2.3 initialisiert');
+        console.log('📡 Unified Status System v2.3.1 initialisiert');
         console.log('🔧 Robustes Vehicle-Finding: game.vehicles || GAME_DATA.vehicles');
         console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
+        console.log('🐛 Verbesserte logStatusToRadio() mit Debug!');
         
         // ✅ TEST: Sende Demo-Nachricht nach 2 Sekunden
         setTimeout(() => this.sendTestMessage(), 2000);
@@ -46,7 +48,7 @@ class UnifiedStatusSystem {
             console.log('🎭 Sende Test-Nachricht ins Radio-System...');
             
             // Test 1: Normale Textnachricht
-            addRadioMessage('System', 'Unified Status System v2.3 geladen und bereit!', 'system', false);
+            addRadioMessage('System', 'Unified Status System v2.3.1 geladen und bereit!', 'system', false);
             
             // Test 2: Status-Änderung mit Kästchen
             setTimeout(() => {
@@ -94,28 +96,61 @@ class UnifiedStatusSystem {
         return `<div class="status-transition" style="display: inline-flex; align-items: center;">${oldBadge}${arrow}${newBadge}</div>`;
     }
 
+    /**
+     * 🔥 v2.3.1: Verbesserte Funktion mit Debug-Output!
+     */
     logStatusToRadio(callsign, oldStatus, newStatus, additionalText = '') {
+        console.log('🎯 logStatusToRadio() START');
+        console.log(`   Callsign: ${callsign}`);
+        console.log(`   Status: ${oldStatus} → ${newStatus}`);
+        console.log(`   Text: "${additionalText}"`);
+        
         const timestamp = window.GameTime ? 
             window.GameTime.simulated.toLocaleTimeString('de-DE') : 
             new Date().toLocaleTimeString('de-DE');
         
+        console.log(`   Timestamp: ${timestamp}`);
+        
         const transition = this.createStatusTransition(oldStatus, newStatus);
+        console.log(`   Transition HTML erstellt: ${transition.substring(0, 50)}...`);
         
         // Versuche Status-Info zu holen
         let text = additionalText;
         if (!text && typeof CONFIG !== 'undefined' && CONFIG.getFMSStatus) {
             const statusInfo = CONFIG.getFMSStatus(newStatus);
             text = statusInfo ? statusInfo.shortName : `Status ${newStatus}`;
+            console.log(`   Status-Info aus CONFIG: "${text}"`);
+        } else if (!text) {
+            text = `Status ${newStatus}`;
+            console.log(`   Fallback Status-Text: "${text}"`);
         }
         
         const messageHTML = `<span style="color: #6c757d; margin-right: 8px;">[${timestamp}]</span> ${callsign}: ${transition} <span style="margin-left: 8px; color: #6c757d;">${text}</span>`;
         
-        if (typeof addRadioMessage !== 'undefined') {
-            addRadioMessage(callsign, messageHTML, 'status-change', true);
-            console.log(`📻✅ [${timestamp}] ${callsign}: Status ${oldStatus}→${newStatus} GELOGGT!`);
+        console.log(`   messageHTML: ${messageHTML.substring(0, 100)}...`);
+        
+        // 🔥 PRÜFE ob addRadioMessage existiert UND eine Funktion ist
+        if (typeof addRadioMessage !== 'undefined' && typeof addRadioMessage === 'function') {
+            console.log('✅ addRadioMessage() gefunden - rufe auf...');
+            console.log(`   Parameter 1 (sender): "${callsign}"`);
+            console.log(`   Parameter 2 (message): "${messageHTML.substring(0, 80)}..."`);
+            console.log(`   Parameter 3 (type): "status-change"`);
+            console.log(`   Parameter 4 (isHTML): true`);
+            
+            try {
+                addRadioMessage(callsign, messageHTML, 'status-change', true);
+                console.log(`📻✅ addRadioMessage() ERFOLGREICH aufgerufen!`);
+                console.log(`📻✅ [${timestamp}] ${callsign}: Status ${oldStatus}→${newStatus} GELOGGT!`);
+            } catch (error) {
+                console.error('❌ FEHLER beim Aufruf von addRadioMessage():', error);
+                console.error('   Stacktrace:', error.stack);
+            }
         } else {
             console.error('❌ addRadioMessage() nicht verfügbar!');
+            console.error(`   typeof addRadioMessage: ${typeof addRadioMessage}`);
         }
+        
+        console.log('🎯 logStatusToRadio() ENDE');
     }
 
     sendStatusMessage(callsign, oldStatus, newStatus, additionalText = '') {
@@ -250,7 +285,7 @@ class UnifiedStatusSystem {
         // 🔥 v2.3 FIX: Nutze oldStatusOverride wenn vorhanden, sonst vehicle.currentStatus
         const oldStatus = oldStatusOverride !== undefined ? oldStatusOverride : vehicle.currentStatus;
         
-        console.log(`🔍 oldStatus bestimmt: ${oldStatus} (Override: ${oldStatusOverride !== undefined ? 'JA' : 'NEIN'})`);
+        console.log(`🔍 oldStatus bestimmt: ${oldStatus} (Override: ${oldStatusOverride !== undefined ? 'JA' : 'NEIN'}`);
 
         if (oldStatus === newStatus) {
             console.log(`⏭️ Status gleich geblieben (${newStatus}), überspringe Logging`);
@@ -391,11 +426,12 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem;
 }
 
-console.log('✅ Unified Status System v2.3 geladen');
+console.log('✅ Unified Status System v2.3.1 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
 console.log('✅ Funkverkehr-Logging mit Uhrzeit aktiviert');
 console.log('🔧 Robustes Vehicle-Finding aktiviert');
 console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
+console.log('🐛 Verbesserte logStatusToRadio() mit Debug-Output!');
 console.log('🎭 Test-Nachrichten werden in 2 Sekunden gesendet...');
