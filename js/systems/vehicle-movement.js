@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.3 - SMART UPDATE LOOP
+// VEHICLE MOVEMENT SYSTEM v7.4 - MIT UNIFIED STATUS LOGGING
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -12,6 +12,7 @@
 // + ✅ PHASE 3.2.2: Groq AI für dynamische Maßnahmendauer
 // + ✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung
 // + ✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP (-30% CPU idle, -10% active!)
+// + 📻 v7.4: Nutzt unified-status-system.js für Chat-Logging
 // =========================
 
 const VehicleMovement = {
@@ -24,19 +25,17 @@ const VehicleMovement = {
     lastStatusReports: {},
     arrivalReported: {},
     routingControls: {},
-    routeCache: new Map(), // ✅✅✅ PHASE 3.1.1: Map statt Object für bessere Performance
-    MAX_CACHE_SIZE: 100,   // ✅✅✅ PHASE 3.1.1: Limit für Cache
+    routeCache: new Map(),
+    MAX_CACHE_SIZE: 100,
     pendingMapUpdates: [],
     activeRouteLines: {},
     onSceneTimers: {},
     
-    // ✅✅✅ PHASE 3.1.1: Smart Loop State
     isLoopActive: false,
     idleCheckInterval: null,
-    IDLE_CHECK_INTERVAL_MS: 5000, // Prüfe alle 5s ob Loop gebraucht wird
+    IDLE_CHECK_INTERVAL_MS: 5000,
     lastUpdateCount: 0,
 
-    // ✅ PHASE 3.2: Maßnahmenzeiten je Fahrzeugtyp (Fallback)
     TREATMENT_TIMES: {
         'RTW': { min: 180, max: 480 },
         'NEF': { min: 300, max: 720 },
@@ -45,7 +44,6 @@ const VehicleMovement = {
         'GW-San': { min: 180, max: 360 }
     },
 
-    // ✅ PHASE 3.2.1: Einsatztyp-spezifische Zeiten (Fallback)
     INCIDENT_TREATMENT_TIMES: {
         'herzinfarkt': { min: 480, max: 900 },
         'herz': { min: 420, max: 780 },
@@ -78,7 +76,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.3 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.4 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -90,12 +88,11 @@ const VehicleMovement = {
         console.log('✅ Phase 3.2.2: Groq AI für dynamische Maßnahmendauer');
         console.log('✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung');
         console.log('✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP - Schläft wenn idle!');
+        console.log('📻 v7.4: Nutzt unified-status-system.js für Chat-Logging!');
         
-        // ✅✅✅ PHASE 3.1.1: Starte Smart Idle Check statt permanenten Loop
         this.startIdleCheck();
     },
 
-    // ✅✅✅ PHASE 3.1.1: Smart Idle Check - Startet Loop nur wenn nötig
     startIdleCheck() {
         if (this.idleCheckInterval) {
             clearInterval(this.idleCheckInterval);
@@ -118,7 +115,6 @@ const VehicleMovement = {
                 this.stopUpdateLoop();
             }
             
-            // Debug: Zeige Status alle 30s
             if (Date.now() % 30000 < this.IDLE_CHECK_INTERVAL_MS) {
                 console.log(`📊 Smart Loop Status: ${this.isLoopActive ? 'AKTIV' : 'IDLE'} | Fahrzeuge: ${vehicleCount} | Timer: ${timerCount}`);
             }
@@ -127,7 +123,7 @@ const VehicleMovement = {
 
     startUpdateLoop() {
         if (this.updateInterval) {
-            return; // Loop läuft bereits
+            return;
         }
         
         this.isLoopActive = true;
@@ -138,7 +134,6 @@ const VehicleMovement = {
             this.processBatchMapUpdates();
             this.lastUpdateCount++;
             
-            // ✅✅✅ PHASE 3.1.1: Auto-Stop wenn 10 Updates lang nichts zu tun
             if (this.lastUpdateCount > 10 && 
                 Object.keys(this.movingVehicles).length === 0 && 
                 Object.keys(this.onSceneTimers).length === 0 &&
@@ -151,7 +146,6 @@ const VehicleMovement = {
         console.log(`⚡ Update Loop GESTARTET (${this.UPDATE_INTERVAL_MS}ms Intervall)`);
     },
     
-    // ✅✅✅ PHASE 3.1.1: Stoppe Loop wenn idle
     stopUpdateLoop() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
@@ -188,7 +182,6 @@ const VehicleMovement = {
             vehicle.status = 'preparing';
             this.setVehicleStatus(vehicle, 3);
             
-            // ✅✅✅ PHASE 3.1.1: Ensure loop is active for dispatch
             if (!this.isLoopActive) {
                 this.startUpdateLoop();
             }
@@ -223,7 +216,6 @@ const VehicleMovement = {
         vehicle.position = [startPos[0], startPos[1]];
         vehicle.targetLocation = [targetCoords.lat, targetCoords.lon];
 
-        // ✅✅✅ PHASE 3.1.1: Prüfe Cache (Map statt Object)
         const cacheKey = `${startPos[0]}_${startPos[1]}_${targetCoords.lat}_${targetCoords.lon}_${phase}`;
         if (this.routeCache.has(cacheKey)) {
             console.log(`📦 Cache-Hit für Route`);
@@ -247,7 +239,6 @@ const VehicleMovement = {
             
             this.createInitialRouteLine(vehicleId, cached.coords, phase);
             
-            // ✅✅✅ PHASE 3.1.1: Ensure loop is running
             if (!this.isLoopActive) {
                 this.startUpdateLoop();
             }
@@ -286,7 +277,6 @@ const VehicleMovement = {
                 
                 const routeCoords = route.coordinates.map(c => ({ lat: c.lat, lon: c.lng }));
                 
-                // ✅✅✅ PHASE 3.1.1: Cache mit Limit (FIFO)
                 this.addToCache(cacheKey, {
                     coords: routeCoords,
                     distance: distanceKm,
@@ -312,7 +302,6 @@ const VehicleMovement = {
                 
                 this.createInitialRouteLine(vehicleId, routeCoords, phase);
                 
-                // ✅✅✅ PHASE 3.1.1: Ensure loop is running
                 if (!this.isLoopActive) {
                     this.startUpdateLoop();
                 }
@@ -340,9 +329,7 @@ const VehicleMovement = {
         }
     },
     
-    // ✅✅✅ PHASE 3.1.1: Smart Cache Management mit FIFO
     addToCache(key, value) {
-        // Entferne ältesten Eintrag wenn Cache voll
         if (this.routeCache.size >= this.MAX_CACHE_SIZE) {
             const firstKey = this.routeCache.keys().next().value;
             this.routeCache.delete(firstKey);
@@ -389,7 +376,6 @@ const VehicleMovement = {
             eta: eta
         };
         
-        // ✅✅✅ PHASE 3.1.1: Ensure loop is running
         if (!this.isLoopActive) {
             this.startUpdateLoop();
         }
@@ -419,7 +405,6 @@ const VehicleMovement = {
     },
 
     updateAllVehicles() {
-        // ✅✅✅ PHASE 3.1.1: Frühe Rückkehr wenn nichts zu tun
         if (Object.keys(this.movingVehicles).length === 0) {
             return;
         }
@@ -523,7 +508,6 @@ const VehicleMovement = {
     },
 
     processBatchMapUpdates() {
-        // ✅✅✅ PHASE 3.1.1: Frühe Rückkehr wenn nichts zu updaten
         if (this.pendingMapUpdates.length === 0) return;
         
         if (typeof updateVehicleOnMap === 'function') {
@@ -656,7 +640,6 @@ const VehicleMovement = {
             this.completeTreatment(vehicleId);
         }, randomTime * 1000);
         
-        // ✅✅✅ PHASE 3.1.1: Ensure loop stays active for timers
         if (!this.isLoopActive) {
             this.startUpdateLoop();
         }
@@ -825,6 +808,10 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
         return [48.8700, 9.3922];
     },
 
+    /**
+     * 📻 v7.4: Nutzt unified-status-system für Chat-Logging
+     * Statusänderung wird automatisch ins Chat-System geloggt
+     */
     setVehicleStatus(vehicle, fmsCode) {
         const oldStatus = vehicle.currentStatus;
         vehicle.currentStatus = fmsCode;
@@ -833,39 +820,24 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             return;
         }
 
-        if (typeof CONFIG === 'undefined' || !CONFIG.FMS_STATUS) {
-            const fallbackStatus = {
-                0: { name: 'Notruf/Hilferuf', color: '#dc3545', icon: '⚠️' },
-                1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
-                2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
-                3: { name: 'Einsatz übernommen', color: '#ffc107', icon: '🟡' },
-                4: { name: 'Anfahrt Einsatzstelle', color: '#fd7e14', icon: '🟠' },
-                5: { name: 'Ankunft Einsatzstelle', color: '#dc3545', icon: '🔴' },
-                6: { name: 'Sprechwunsch', color: '#6c757d', icon: '⚪' },
-                7: { name: 'Patient aufgenommen', color: '#17a2b8', icon: '🔵' },
-                8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
-                9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' }
-            };
+        // 📻 NUTZE UNIFIED STATUS SYSTEM für Logging!
+        if (typeof window.unifiedStatusSystem !== 'undefined' && window.unifiedStatusSystem.changeVehicleStatus) {
+            console.log(`📻 Nutze unified-status-system für ${vehicle.callsign}`);
+            window.unifiedStatusSystem.changeVehicleStatus(vehicle.id, fmsCode);
+        } else {
+            // Fallback: Direkter Radio-Call
+            console.warn('⚠️ unified-status-system nicht verfügbar, nutze Fallback');
             
-            const fmsInfo = fallbackStatus[fmsCode] || { name: 'Unbekannt', color: '#6c757d', icon: '🚑' };
-            
-            const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
-            if (typeof addRadioMessage === 'function') {
-                addRadioMessage(message, 'vehicle', fmsInfo.color);
+            if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS) {
+                const fmsInfo = CONFIG.FMS_STATUS[fmsCode];
+                if (fmsInfo && typeof addRadioMessage === 'function') {
+                    const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
+                    addRadioMessage(vehicle.callsign, message, 'vehicle', false);
+                }
             }
-            return;
         }
 
-        const fmsInfo = CONFIG.FMS_STATUS[fmsCode];
-        if (!fmsInfo) {
-            return;
-        }
-
-        const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
-        if (typeof addRadioMessage === 'function') {
-            addRadioMessage(message, 'vehicle', fmsInfo.color);
-        }
-
+        // UI aktualisieren
         if (typeof UI !== 'undefined' && UI.updateVehicleList) {
             UI.updateVehicleList();
         }
@@ -898,4 +870,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.3 geladen - SMART UPDATE LOOP! (-30% CPU idle)');
+console.log('✅✅✅ Vehicle Movement System v7.4 geladen - MIT UNIFIED STATUS LOGGING! 📻');
