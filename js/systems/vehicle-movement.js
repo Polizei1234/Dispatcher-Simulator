@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.5.1 - LOGGING FIX
+// VEHICLE MOVEMENT SYSTEM v7.5.2 - OLDSTATUS PARAMETER FIX
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -17,6 +17,7 @@
 // + 🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry-Logik
 // + 🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!
 // + 🔥 FIX v7.5.1: Status-Logging IMMER ausführen, auch wenn Status gleich!
+// + 🔥 FIX v7.5.2: Übergebe oldStatus EXPLIZIT an changeVehicleStatus()!
 // =========================
 
 const VehicleMovement = {
@@ -80,7 +81,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.5.1 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.5.2 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -97,6 +98,7 @@ const VehicleMovement = {
         console.log('🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry & Timeout!');
         console.log('🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!');
         console.log('🔥 FIX v7.5.1: Status-Logging IMMER ausführen - kein verschlucken mehr!');
+        console.log('🔥 FIX v7.5.2: Übergebe oldStatus EXPLIZIT an changeVehicleStatus()!');
         
         this.startIdleCheck();
     },
@@ -884,22 +886,23 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
     },
 
     /**
-     * 🔥 v7.5.1 FIX: Status-Logging IMMER ausführen!
-     * Diese Funktion MUSS für ALLE Status-Änderungen genutzt werden!
+     * 🔥 v7.5.2 FIX: Übergebe oldStatus EXPLIZIT!
+     * DIESE Funktion MUSS für ALLE Status-Änderungen genutzt werden!
      */
     setVehicleStatus(vehicle, fmsCode) {
+        // 🔥 FIX v7.5.2: Speichere oldStatus BEVOR vehicle.currentStatus geändert wird!
         const oldStatus = vehicle.currentStatus;
-        vehicle.currentStatus = fmsCode;
-
-        // 🔥 FIX v7.5.1: KEIN frühzeitiger Return mehr!
-        // Logging MUSS IMMER erfolgen, auch wenn Status gleich bleibt!
         
         console.log(`🔄 setVehicleStatus: ${vehicle.callsign} ${oldStatus} → ${fmsCode}`);
 
-        // 📻 NUTZE UNIFIED STATUS SYSTEM für Logging - IMMER!
+        // JETZT erst Status ändern
+        vehicle.currentStatus = fmsCode;
+
+        // 📻 NUTZE UNIFIED STATUS SYSTEM mit EXPLIZITEM oldStatus!
         if (typeof window.unifiedStatusSystem !== 'undefined' && window.unifiedStatusSystem.changeVehicleStatus) {
-            console.log(`📻 Rufe unified-status-system.changeVehicleStatus() für ${vehicle.callsign}`);
-            window.unifiedStatusSystem.changeVehicleStatus(vehicle.id, fmsCode, '');
+            console.log(`📻 Rufe unified-status-system.changeVehicleStatus(${vehicle.id}, ${fmsCode}, ${oldStatus})`);
+            // 🔥 Übergebe oldStatus als DRITTEN Parameter!
+            window.unifiedStatusSystem.changeVehicleStatus(vehicle.id, fmsCode, oldStatus);
         } else {
             console.warn('⚠️ unified-status-system nicht verfügbar, nutze Fallback');
             
@@ -945,4 +948,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.5.1 geladen - STATUS-LOGGING FIX! 🔥');
+console.log('✅✅✅ Vehicle Movement System v7.5.2 geladen - OLDSTATUS PARAMETER FIX! 🔥');
