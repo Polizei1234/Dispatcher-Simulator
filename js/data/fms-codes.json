@@ -7,7 +7,7 @@
     "description": "Statusmeldungen vom Fahrzeug zur Leitstelle",
     "codes": {
       "0": {
-        "name": "Sprechwunsch",
+        "name": "Priorisierter Sprechwunsch",
         "description": "Fahrzeug möchte mit der Leitstelle sprechen (priorisiert)",
         "color": "#8b4513",
         "icon": "🟤",
@@ -15,7 +15,7 @@
       },
       "1": {
         "name": "Einsatzbereit über Funk",
-        "description": "Fahrzeug ist einsatzbereit und über Funk erreichbar (unterwegs/auf Anfahrt)",
+        "description": "Fahrzeug ist einsatzbereit und über Funk erreichbar",
         "color": "#28a745",
         "icon": "🟢",
         "priority": "normal"
@@ -49,32 +49,32 @@
         "priority": "medium"
       },
       "6": {
-        "name": "Ankunft am Zielort (Transport)",
-        "description": "Fahrzeug ist am Zielort (z.B. Krankenhaus) angekommen",
+        "name": "Nicht Einsatzbereit",
+        "description": "Fahrzeug ist aus verscheidenen Gründen nicht einsatzbereit und kann keinen Einsatzauftrag übernehmen",
         "color": "#6f42c1",
         "icon": "🟣",
         "priority": "active"
       },
       "7": {
-        "name": "Patient aufgenommen / Am Sprechwunschort",
+        "name": "Einsatzgebunden (Patient aufgenommen)",
         "description": "Patient wurde aufgenommen und Transport beginnt",
         "color": "#e83e8c",
         "icon": "🟣",
         "priority": "active"
       },
       "8": {
-        "name": "Am Standort",
-        "description": "Fahrzeug ist an einem bestimmten Standort (nicht Wache)",
+        "name": "Bedingt Einsatzbereit (Am Zielort)",
+        "description": "Fahrzeug ist bedingt/ in Kürze für Einsätze bereit. Gegebenfalls sind vorher andere Maßnahmen (Patientenübergabe, Auffüllen von Materialen, Desinfektion, ...) nötig. Bspw. das Fahrzeug befindet sich am Krankenhaus",
         "color": "#6610f2",
         "icon": "🟣",
         "priority": "normal"
       },
       "9": {
-        "name": "Notfall / Sondersignal",
-        "description": "Fahrzeug fährt mit Sondersignal oder meldet Notfall",
+        "name": "Quittung/ Fremdanmeldung",
+        "description": "Das Fahrzeug quittiert manuell eine von der Leitstelle über erhaltene Anweisung oder meldet sich in einem fremden Leitstellenbereich/ Funkverkehrskreis an",
         "color": "#dc3545",
         "icon": "🔴",
-        "priority": "emergency"
+        "priority": "normal"
       },
       "C": {
         "name": "Lagemeldung",
@@ -83,6 +83,18 @@
         "icon": "ℹ️",
         "priority": "info"
       },
+
+    }
+  },
+  
+  "dispatch_to_vehicle": {
+    "description": "Statusmeldungen von der Leitstelle zum Fahrzeug",
+    "codes": {
+      "A": {
+        "name": "Alarm",
+        "description": "Alarmierung des Fahrzeugs zu einem Einsatz",
+        "priority": "emergency"
+      },
       "E": {
         "name": "Nicht einsatzbereit",
         "description": "Fahrzeug ist nicht einsatzbereit (z.B. Pause, Tanken, Wartung)",
@@ -90,27 +102,6 @@
         "icon": "⚫",
         "priority": "unavailable"
       }
-    }
-  },
-  
-  "dispatch_to_vehicle": {
-    "description": "Statusmeldungen von der Leitstelle zum Fahrzeug",
-    "codes": {
-      "0": {
-        "name": "Sammelruf",
-        "description": "Alle Fahrzeuge sollen sich melden",
-        "priority": "broadcast"
-      },
-      "A": {
-        "name": "Alarm",
-        "description": "Alarmierung des Fahrzeugs zu einem Einsatz",
-        "priority": "emergency"
-      },
-      "B": {
-        "name": "Bereitstellung",
-        "description": "Fahrzeug soll sich an einem bestimmten Ort bereitstellen",
-        "priority": "high"
-      },
       "C": {
         "name": "Durchsage",
         "description": "Wichtige Information für das Fahrzeug",
@@ -148,43 +139,8 @@
       }
     }
   },
-  
-  "organization_codes": {
-    "description": "Organisationskennzahlen (BOS)",
-    "codes": {
-      "0": "Polizei",
-      "1": "Feuerwehr",
-      "2": "Rettungsdienst (DRK)",
-      "3": "Rettungsdienst (ASB)",
-      "4": "Rettungsdienst (JUH)",
-      "5": "Rettungsdienst (MHD)",
-      "6": "THW",
-      "7": "Wasserwacht",
-      "8": "DLRG",
-      "9": "Sonstige"
-    }
   },
   
-  "state_codes": {
-    "description": "Länderkennung Deutschland",
-    "codes": {
-      "1": "Baden-Württemberg",
-      "2": "Bayern",
-      "3": "Berlin",
-      "4": "Brandenburg",
-      "5": "Bremen",
-      "6": "Hamburg",
-      "7": "Hessen",
-      "8": "Mecklenburg-Vorpommern",
-      "9": "Niedersachsen",
-      "10": "Nordrhein-Westfalen",
-      "11": "Rheinland-Pfalz",
-      "12": "Saarland",
-      "13": "Sachsen",
-      "14": "Sachsen-Anhalt",
-      "15": "Schleswig-Holstein",
-      "16": "Thüringen"
-    }
   },
   
   "notes": {
