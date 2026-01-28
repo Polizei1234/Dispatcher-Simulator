@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.5.3 - FALLBACK FIX
+// VEHICLE MOVEMENT SYSTEM v8.0.0 - RADIO SYSTEM REMOVED
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -12,13 +12,12 @@
 // + ✅ PHASE 3.2.2: Groq AI für dynamische Maßnahmendauer
 // + ✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung
 // + ✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP (-30% CPU idle, -10% active!)
-// + 📻 v7.4: Nutzt unified-status-system.js für Chat-Logging
 // + 🐛 FIX v7.4.1: Memory Leak in arrivalReported & onSceneTimers behoben
 // + 🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry-Logik
 // + 🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!
 // + 🔥 FIX v7.5.1: Status-Logging IMMER ausführen, auch wenn Status gleich!
 // + 🔥 FIX v7.5.2: Übergebe oldStatus EXPLIZIT an changeVehicleStatus()!
-// + 🔥 FIX v7.5.3: Fallback nutzt jetzt AUCH unified-status-system korrekt!
+// + 🔥 FIX v8.0.0: RADIO SYSTEM VOLLSTÄNDIG ENTFERNT!
 // =========================
 
 const VehicleMovement = {
@@ -82,7 +81,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.5.3 initialisiert');
+        console.log('🚑 Vehicle Movement System v8.0.0 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -94,13 +93,12 @@ const VehicleMovement = {
         console.log('✅ Phase 3.2.2: Groq AI für dynamische Maßnahmendauer');
         console.log('✅ FIX v7.2.1: Sichere FMS_STATUS Prüfung');
         console.log('✅✅✅ PHASE 3.1.1 v7.3: SMART UPDATE LOOP - Schläft wenn idle!');
-        console.log('📻 v7.4: Nutzt unified-status-system.js für Chat-Logging!');
         console.log('🐛 FIX v7.4.1: Memory Leak behoben - arrivalReported & onSceneTimers cleanup!');
         console.log('🐛 FIX v7.4.2: Robuste API-Fehlerbehandlung mit Retry & Timeout!');
         console.log('🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!');
         console.log('🔥 FIX v7.5.1: Status-Logging IMMER ausführen - kein verschlucken mehr!');
         console.log('🔥 FIX v7.5.2: Übergebe oldStatus EXPLIZIT an changeVehicleStatus()!');
-        console.log('🔥 FIX v7.5.3: Fallback nutzt unified-status-system korrekt!');
+        console.log('🔥 FIX v8.0.0: RADIO SYSTEM VOLLSTÄNDIG ENTFERNT!');
         
         this.startIdleCheck();
     },
@@ -191,7 +189,6 @@ const VehicleMovement = {
 
         if (phase === 'to_scene') {
             console.log(`⏱️ ${vehicle.callsign} - Ausrückzeit 10s...`);
-            // 🔥 NUR currentStatus verwenden!
             this.setVehicleStatus(vehicle, 3);
             
             if (!this.isLoopActive) {
@@ -223,7 +220,6 @@ const VehicleMovement = {
         
         console.log(`${speedIcon} ${vehicle.callsign} fährt los von [${startPos}] nach [${targetCoords.lat}, ${targetCoords.lon}] mit ${speedKmh} km/h`);
 
-        // 🔥 KEIN vehicle.status mehr!
         vehicle.incident = incidentId;
         vehicle.position = [startPos[0], startPos[1]];
         vehicle.targetLocation = [targetCoords.lat, targetCoords.lon];
@@ -570,13 +566,11 @@ const VehicleMovement = {
                 vehicle.incident = null;
                 delete this.movingVehicles[vehicleId];
                 
-                // 🐛 FIX: Memory Leak - Cleanup arrivalReported Keys
                 delete this.arrivalReported[`${vehicleId}_to_scene`];
                 delete this.arrivalReported[`${vehicleId}_to_hospital`];
                 delete this.arrivalReported[`${vehicleId}_returning`];
                 console.log(`🗑️ Cleanup: arrivalReported Keys für ${vehicle.callsign} entfernt`);
                 
-                // 🐛 FIX: Cleanup onSceneTimers falls noch vorhanden
                 if (this.onSceneTimers[vehicleId]) {
                     clearTimeout(this.onSceneTimers[vehicleId]);
                     delete this.onSceneTimers[vehicleId];
@@ -611,7 +605,7 @@ const VehicleMovement = {
                 treatmentTime = aiTime.time;
                 timeSource = aiTime.reason;
                 console.log(`✅ Groq AI Ergebnis: ${aiTime.time.min/60}-${aiTime.time.max/60} Min`);
-                console.log(`📝 Begründung: ${aiTime.reason}`);
+                console.log(`📏 Begründung: ${aiTime.reason}`);
             } else {
                 console.log(`⚠️ Groq AI nicht verfügbar, nutze Keyword-Matching`);
                 
@@ -888,27 +882,15 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
     },
 
     /**
-     * 🔥 v7.5.3 FIX: Nutzt IMMER unified-status-system!
-     * DIESE Funktion MUSS für ALLE Status-Änderungen genutzt werden!
+     * 🔥 v8.0.0 FIX: KEINE Radio-Referenzen mehr!
+     * Status-Änderungen erfolgen direkt ohne Funk-System.
      */
     setVehicleStatus(vehicle, fmsCode) {
-        // 🔥 FIX v7.5.2: Speichere oldStatus BEVOR vehicle.currentStatus geändert wird!
         const oldStatus = vehicle.currentStatus;
         
         console.log(`🔄 setVehicleStatus: ${vehicle.callsign} ${oldStatus} → ${fmsCode}`);
 
-        // JETZT erst Status ändern
         vehicle.currentStatus = fmsCode;
-
-        // 📻 NUTZE UNIFIED STATUS SYSTEM mit EXPLIZITEM oldStatus!
-        if (typeof window.unifiedStatusSystem !== 'undefined' && window.unifiedStatusSystem.changeVehicleStatus) {
-            console.log(`📻 Rufe unified-status-system.changeVehicleStatus(${vehicle.id}, ${fmsCode}, ${oldStatus})`);
-            // 🔥 Übergebe oldStatus als DRITTEN Parameter!
-            window.unifiedStatusSystem.changeVehicleStatus(vehicle.id, fmsCode, oldStatus);
-        } else {
-            // 🔥 v7.5.3 FIX: KEIN FALLBACK MEHR - WARTE AUF unified-status-system!
-            console.warn('⚠️ unified-status-system nicht verfügbar - Status-Änderung OHNE Logging!');
-        }
 
         // UI aktualisieren
         if (typeof UI !== 'undefined' && UI.updateVehicleList) {
@@ -943,4 +925,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.5.3 geladen - FALLBACK FIX! 🔥');
+console.log('✅✅✅ Vehicle Movement System v8.0.0 geladen - RADIO SYSTEM ENTFERNT! 🔥');
