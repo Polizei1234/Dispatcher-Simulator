@@ -1,19 +1,17 @@
 // =========================
-// RADIO MESSAGES SYSTEM v4.0 - OPTIMIERT & UNIFIED
-// Funkverkehr-Nachrichten mit Chat-Interface
-// 
-// ✅ Merge von: radio-feed.js + radio-ui-enhancements.js
-// ✅ Eine einzige addRadioMessage() Funktion
-// ✅ HTML-Support für Status-Badges
-// ✅ J-Button für Sprechfreigabe
-// ✅ Alle Styles integriert
-// ✅ Sound-System
+// RADIO MESSAGES SYSTEM v4.0 - OPTIMIERT
+// Unified: Funkverkehr + UI-Enhancements
+// + ✅ RadioChatSystem (Nachrichten-Management)
+// + ✅ HTML-Support für Status-Badges
+// + ✅ J-Button für Sprechfreigabe
+// + ✅ Sound-System
+// + ✅ Alle Styles integriert
 // =========================
 
-console.log('%c📻 RADIO MESSAGES SYSTEM v4.0 WIRD GELADEN...', 'background: #3182ce; color: white; padding: 5px 10px; font-size: 14px; font-weight: bold;');
+console.log('%c📻 RADIO MESSAGES SYSTEM v4.0 wird geladen...', 'background: #3182ce; color: white; padding: 5px 10px; font-size: 14px; font-weight: bold;');
 
 /**
- * RadioChatSystem - Zentrale Nachrichten-Verwaltung
+ * Radio Chat System - Verwaltet alle Funk-Nachrichten
  */
 class RadioChatSystem {
     constructor() {
@@ -22,7 +20,7 @@ class RadioChatSystem {
         this.chatContainer = null;
         this.isReady = false;
         
-        console.log('📻 Radio Messages System v4.0 wird initialisiert...');
+        console.log('📻 Radio Chat System v4.0 wird initialisiert...');
         this.init();
     }
     
@@ -30,14 +28,15 @@ class RadioChatSystem {
      * Initialisierung
      */
     init() {
+        // Injiziere Styles sofort
+        this.injectStyles();
+        
+        // Warte auf DOM
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.setupChat());
         } else {
             this.setupChat();
         }
-        
-        // Injiziere Styles
-        this.injectStyles();
     }
     
     /**
@@ -46,6 +45,7 @@ class RadioChatSystem {
     setupChat() {
         console.log('🔍 Suche #radio-feed-full Element...');
         
+        // Finde Container
         this.chatContainer = document.getElementById('radio-feed-full');
         
         if (!this.chatContainer) {
@@ -56,7 +56,7 @@ class RadioChatSystem {
         
         console.log('✅ #radio-feed-full gefunden!');
         
-        // Leere Container
+        // Setup Container
         this.chatContainer.innerHTML = '';
         this.chatContainer.style.display = 'flex';
         this.chatContainer.style.flexDirection = 'column';
@@ -67,8 +67,8 @@ class RadioChatSystem {
     }
     
     /**
-     * ✅ HAUPTFUNKTION: Fügt Nachricht zum Chat hinzu
-     * @param {string} sender - Absender (Rufzeichen oder "Leitstelle")
+     * Fügt Nachricht zum Chat hinzu
+     * @param {string} sender - Absender (Callsign oder 'Leitstelle')
      * @param {string} message - Nachricht (Text oder HTML)
      * @param {string} type - Nachrichtentyp
      * @param {boolean} isHTML - Wenn true, wird message als HTML gerendert
@@ -86,9 +86,16 @@ class RadioChatSystem {
             return;
         }
         
+        // Blockiere reine System-Nachrichten (außer errors)
+        if (type === 'system' && !message.includes('✅') && !message.includes('⚠️')) {
+            return;
+        }
+        
+        console.log(`💬 Nachricht: [${type}] ${sender}`);
+        
         // Erstelle Message-Element
         const messageEl = document.createElement('div');
-        messageEl.className = 'radio-chat-message';
+        messageEl.className = `radio-message radio-message-${type}`;
         
         // Farbe nach Typ
         const colors = {
@@ -119,20 +126,12 @@ class RadioChatSystem {
         // Zeitstempel
         const timestamp = this.getTimestamp();
         
-        // Animations-Klasse für wichtige Nachrichten
-        let animClass = '';
-        if (type === 'status-5-request') animClass = 'pulse-animation';
-        if (type === 'status-0-emergency') animClass = 'emergency-animation';
-        
-        messageEl.className = `radio-chat-message ${animClass}`;
-        messageEl.style.borderLeftColor = borderColor;
-        
         // Header
         const header = document.createElement('div');
         header.className = 'radio-message-header';
         header.innerHTML = `
             <span class="radio-icon">${icon}</span>
-            <span class="radio-sender" style="color: ${borderColor};">${this.escapeHTML(sender)}</span>
+            <span class="radio-sender radio-sender-${type}">${this.escapeHTML(sender)}</span>
             <span class="radio-timestamp">${timestamp}</span>
         `;
         
@@ -146,15 +145,16 @@ class RadioChatSystem {
             body.textContent = message;
         }
         
+        messageEl.style.borderLeftColor = borderColor;
         messageEl.appendChild(header);
         messageEl.appendChild(body);
         
-        // J-Button für Status 5/0
+        // Füge J-Button hinzu für Status 5/0
         if (type === 'status-5-request' || type === 'status-0-emergency') {
             const vehicleId = this.findVehicleIdByCallsign(sender);
             if (vehicleId) {
                 const jButton = this.createJButton(vehicleId, type === 'status-0-emergency');
-                messageEl.appendChild(jButton);
+                body.appendChild(jButton);
             }
         }
         
@@ -173,7 +173,7 @@ class RadioChatSystem {
         // Limit
         if (this.messages.length > this.maxMessages) {
             this.messages.shift();
-            const firstMsg = this.chatContainer.querySelector('.radio-chat-message');
+            const firstMsg = this.chatContainer.querySelector('.radio-message');
             if (firstMsg) firstMsg.remove();
         }
         
@@ -187,7 +187,7 @@ class RadioChatSystem {
     /**
      * Erstellt "J"-Button für Sprechfreigabe
      * @param {string} vehicleId - Fahrzeug-ID
-     * @param {boolean} isEmergency - Ist Notfall?
+     * @param {boolean} isEmergency - Notfall-Button (rot)
      * @returns {HTMLElement} Button-Element
      */
     createJButton(vehicleId, isEmergency = false) {
@@ -197,20 +197,24 @@ class RadioChatSystem {
         button.title = 'Sprechfreigabe erteilen (Kommen, sprechen Sie)';
         
         if (isEmergency) {
-            button.classList.add('j-button-emergency');
+            button.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
         }
         
         button.addEventListener('click', () => {
             // Sprechfreigabe erteilen
             if (window.unifiedStatusSystem) {
                 window.unifiedStatusSystem.sendSprechfreigabe(vehicleId);
+            } else {
+                console.warn('⚠️ unifiedStatusSystem nicht gefunden');
             }
             
             // Button deaktivieren
             button.disabled = true;
+            button.style.background = '#6c757d';
+            button.style.cursor = 'not-allowed';
             button.textContent = '✓';
-            button.classList.add('j-button-used');
             
+            // Sound
             this.playSound('send');
         });
         
@@ -236,12 +240,13 @@ class RadioChatSystem {
         if (!window.game || !window.game.settings || !window.game.settings.soundEnabled) return;
         
         const sounds = {
-            'dispatcher': 'radio-send.mp3',
+            'send': 'radio-send.mp3',
+            'receive': 'radio-receive.mp3',
             'vehicle': 'radio-receive.mp3',
             'vehicle-auto': 'radio-receive.mp3',
+            'dispatcher': 'radio-send.mp3',
             'status-5-request': 'radio-beep.mp3',
-            'status-0-emergency': 'emergency-alert.mp3',
-            'send': 'radio-send.mp3'
+            'status-0-emergency': 'emergency-alert.mp3'
         };
         
         const soundFile = sounds[type];
@@ -251,10 +256,10 @@ class RadioChatSystem {
             const audio = new Audio(`sounds/${soundFile}`);
             audio.volume = 0.4;
             audio.play().catch(err => {
-                // Sound-Fehler ignorieren (z.B. wenn Browser Autoplay blockt)
+                // Sound-Fehler ignorieren (häufig bei Browser-Autoplay-Policies)
             });
         } catch (err) {
-            // Stille Fehlerbehandlung
+            // Ignorieren
         }
     }
     
@@ -266,14 +271,16 @@ class RadioChatSystem {
             this.chatContainer.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">Kein Funkverkehr</p>';
         }
         this.messages = [];
+        console.log('🗑️ Radio-Feed geleert');
     }
     
     /**
      * Hole Zeitstempel
+     * @returns {string} Formatierter Zeitstempel
      */
     getTimestamp() {
-        if (typeof window.IncidentNumbering !== 'undefined' && window.IncidentNumbering.getCurrentTimestamp) {
-            return window.IncidentNumbering.getCurrentTimestamp();
+        if (typeof IncidentNumbering !== 'undefined' && IncidentNumbering.getCurrentTimestamp) {
+            return IncidentNumbering.getCurrentTimestamp();
         }
         return new Date().toLocaleTimeString('de-DE', { 
             hour: '2-digit', 
@@ -283,7 +290,9 @@ class RadioChatSystem {
     }
     
     /**
-     * Escape HTML für sicheres Rendering
+     * Escape HTML
+     * @param {string} text - Text
+     * @returns {string} Escaped Text
      */
     escapeHTML(text) {
         const div = document.createElement('div');
@@ -292,7 +301,7 @@ class RadioChatSystem {
     }
     
     /**
-     * Injiziert alle benötigten Styles
+     * Injiziert CSS-Styles für Radio-UI
      */
     injectStyles() {
         const styleId = 'radio-messages-styles';
@@ -301,8 +310,8 @@ class RadioChatSystem {
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
-            /* Radio Chat Message Base */
-            .radio-chat-message {
+            /* Radio Message Base Styles */
+            .radio-message {
                 background: var(--panel-bg, #1a202c);
                 border-left: 4px solid;
                 border-radius: 8px;
@@ -313,9 +322,103 @@ class RadioChatSystem {
                 animation: fadeIn 0.3s ease forwards;
             }
             
-            .radio-chat-message:hover {
+            .radio-message:hover {
                 transform: translateX(3px);
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+            
+            /* Message Header */
+            .radio-message-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+            
+            .radio-icon {
+                font-size: 18px;
+            }
+            
+            .radio-sender {
+                font-weight: bold;
+                flex: 1;
+            }
+            
+            .radio-sender-dispatcher { color: #17a2b8; }
+            .radio-sender-vehicle { color: #28a745; }
+            .radio-sender-vehicle-auto { color: #6c757d; }
+            .radio-sender-system { color: #ffc107; }
+            .radio-sender-error { color: #dc3545; }
+            .radio-sender-status-change { color: #9370db; }
+            .radio-sender-status-5-request { color: #ff6666; animation: text-flash 1.5s infinite; }
+            .radio-sender-status-0-emergency { color: #ff4444; animation: text-flash 1s infinite; }
+            
+            .radio-timestamp {
+                font-size: 12px;
+                opacity: 0.6;
+                font-family: 'Courier New', monospace;
+            }
+            
+            /* Message Body */
+            .radio-message-body {
+                padding-left: 28px;
+                line-height: 1.5;
+                color: var(--text-secondary, #cbd5e0);
+            }
+            
+            /* Special Message Types */
+            .radio-message-status-change {
+                background: rgba(147, 112, 219, 0.1);
+            }
+            
+            .radio-message-status-5-request {
+                background: rgba(255, 102, 102, 0.15);
+                animation: pulse 2s infinite;
+            }
+            
+            .radio-message-status-0-emergency {
+                background: rgba(255, 68, 68, 0.2);
+                animation: emergency-pulse 1s infinite;
+            }
+            
+            /* Status Badge */
+            .status-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 28px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            
+            /* J-Button */
+            .j-button {
+                margin-left: 12px;
+                padding: 6px 16px;
+                background: linear-gradient(135deg, #28a745, #20c997);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            
+            .j-button:hover:not(:disabled) {
+                transform: scale(1.05);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            }
+            
+            .j-button:disabled {
+                background: #6c757d;
+                cursor: not-allowed;
+                opacity: 0.6;
             }
             
             /* Animations */
@@ -346,100 +449,9 @@ class RadioChatSystem {
                 }
             }
             
-            .pulse-animation {
-                animation: fadeIn 0.3s ease forwards, pulse 2s infinite;
-            }
-            
-            .emergency-animation {
-                animation: fadeIn 0.3s ease forwards, emergency-pulse 1s infinite;
-            }
-            
-            /* Message Header */
-            .radio-message-header {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 8px;
-                font-size: 14px;
-            }
-            
-            .radio-icon {
-                font-size: 18px;
-            }
-            
-            .radio-sender {
-                font-weight: bold;
-                flex: 1;
-            }
-            
-            .radio-timestamp {
-                font-size: 12px;
-                opacity: 0.6;
-                font-family: 'Courier New', monospace;
-            }
-            
-            /* Message Body */
-            .radio-message-body {
-                padding-left: 28px;
-                line-height: 1.5;
-                color: var(--text-secondary, #cbd5e0);
-            }
-            
-            /* Status Badges */
-            .status-badge {
-                display: inline-block;
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-weight: bold;
-                font-size: 14px;
-                min-width: 28px;
-                text-align: center;
-                color: white;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            }
-            
-            .status-transition {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-            }
-            
-            /* J-Button für Sprechfreigabe */
-            .j-button {
-                margin-left: 12px;
-                padding: 8px 20px;
-                background: linear-gradient(135deg, #28a745, #20c997);
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 16px;
-                cursor: pointer;
-                transition: all 0.2s;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            }
-            
-            .j-button:hover:not(:disabled) {
-                transform: scale(1.05);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            }
-            
-            .j-button-emergency {
-                background: linear-gradient(135deg, #ff4444, #cc0000);
-                animation: button-pulse 1.5s infinite;
-            }
-            
-            @keyframes button-pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-            }
-            
-            .j-button-used,
-            .j-button:disabled {
-                background: #6c757d;
-                cursor: not-allowed;
-                opacity: 0.6;
-                transform: scale(1) !important;
+            @keyframes text-flash {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.6; }
             }
             
             /* Radio Feed Container */
@@ -475,20 +487,18 @@ class RadioChatSystem {
     }
 }
 
-// =============================
+// =========================
 // GLOBALE INSTANZ & FUNKTIONEN
-// =============================
+// =========================
 
 const radioChatSystem = new RadioChatSystem();
 
 /**
- * ✅ GLOBALE FUNKTION - Einzige addRadioMessage() im ganzen Projekt!
- * Von überall aufrufbar!
- * 
- * @param {string} sender - Absender (z.B. Rufzeichen oder "Leitstelle")
- * @param {string} message - Nachricht (Text oder HTML)
- * @param {string} type - Nachrichtentyp ('dispatcher', 'vehicle', 'status-change', etc.)
- * @param {boolean} isHTML - Wenn true, wird message als HTML gerendert
+ * ✅ GLOBALE FUNKTION - Von überall aufrufbar!
+ * @param {string} sender - Absender
+ * @param {string} message - Nachricht
+ * @param {string} type - Nachrichtentyp
+ * @param {boolean} isHTML - HTML-Modus
  */
 function addRadioMessage(sender, message, type = 'system', isHTML = false) {
     if (!radioChatSystem) {
@@ -499,11 +509,21 @@ function addRadioMessage(sender, message, type = 'system', isHTML = false) {
 }
 
 /**
- * Löscht kompletten Funkverkehr
+ * Löscht Radio-Feed
  */
 function clearRadioFeed() {
     if (radioChatSystem) {
         radioChatSystem.clear();
+    }
+}
+
+/**
+ * Spielt Radio-Sound ab
+ * @param {string} type - Sound-Typ
+ */
+function playRadioSound(type) {
+    if (radioChatSystem) {
+        radioChatSystem.playSound(type);
     }
 }
 
@@ -512,8 +532,9 @@ if (typeof window !== 'undefined') {
     window.radioChatSystem = radioChatSystem;
     window.addRadioMessage = addRadioMessage;
     window.clearRadioFeed = clearRadioFeed;
+    window.playRadioSound = playRadioSound;
 }
 
 console.log('%c✅ RADIO MESSAGES SYSTEM V4.0 GELADEN!', 'background: #48bb78; color: white; padding: 8px 15px; font-size: 16px; font-weight: bold;');
-console.log('📻 Funktionen verfügbar: addRadioMessage(), clearRadioFeed()');
-console.log('✅ HTML-Support, J-Button, Sounds & Animations aktiv');
+console.log('✅ Merged: radio-feed.js + radio-ui-enhancements.js');
+console.log('✅ Features: Chat-System, HTML-Support, J-Button, Sounds, Styles');
