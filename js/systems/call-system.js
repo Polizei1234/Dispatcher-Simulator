@@ -1,6 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.6
-// + 🐛 FIX: Automatischer Tab-Wechsel bei eingehendem Anruf
+// EMERGENCY CALL SYSTEM v7.7
+// + 🔙 REVERT: Automatischer Tab-Wechsel entfernt
 // + FIX: Abbruch-Logik bei mehrfachen Anrufen
 // + Verhindert Überschreibung aktiver Calls
 // + Verbesserte Queue-Verwaltung
@@ -38,12 +38,12 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.6 initialisiert');
+        console.log('📞 Call System v7.7 initialisiert');
         console.log('✅ Vordefinierte Fragen = callData.antworten');
         console.log('✅ Custom Questions = Groq AI');
         console.log('✅ Rate Limiting aktiv');
         console.log('✅ Abbruch-Logik für Überlappung aktiviert');
-        console.log('🐛 FIX: Automatischer Tab-Wechsel bei Anruf');
+        console.log('🔙 REVERT: Automatischer Tab-Wechsel entfernt');
         this.setupRingtone();
     },
 
@@ -507,15 +507,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
 
         this.playRingtone();
         
-        // 🐛 FIX BUG #4.3: Automatischer Tab-Wechsel zu "Notruf"
-        console.log('🐛 FIX: Wechsle automatisch zum Notruf-Tab');
-        if (typeof switchTab === 'function') {
-            switchTab('call');
-        } else {
-            console.warn('⚠️ switchTab() nicht verfügbar - manueller Wechsel erforderlich');
-        }
-        
-        console.log('🚨 Incoming Call in Sidebar angezeigt + Tab gewechselt');
+        console.log('🚨 Incoming Call in Sidebar angezeigt (ohne automatischen Tab-Wechsel)');
     },
 
     playRingtone() {
@@ -914,5 +906,5 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ Call System v7.6 geladen');
-console.log('🐛 FIX Bug #4.3: Automatischer Tab-Wechsel bei Anruf');
+console.log('✅ Call System v7.7 geladen');
+console.log('🔙 REVERT: Automatischer Tab-Wechsel entfernt');
