@@ -1,16 +1,17 @@
 // =========================
-// CONFIG v6.3.0 - UNIFIED STATUS SYSTEM UPDATE
+// CONFIG v6.4.0 - RADIO SYSTEM REMOVED
 // Global game configuration
 // + ✅ FMS_STATUS Farben angepasst (gemäß Anforderung)
 // + ✅ Status 9 entfernt (nicht verwendet)
 // + ✅ Status 0: NUR für Besatzungs-Notfälle
 // + ✅ Status 5: Für alle Fahrzeug-Anfragen
+// + ✅ v6.4.0: RADIO-Sektion komplett entfernt
 // =========================
 
 const CONFIG = {
     // Version wird zentral aus VERSION_CONFIG geladen
     get VERSION() {
-        return window.VERSION_CONFIG ? window.VERSION_CONFIG.VERSION : '6.3.0';
+        return window.VERSION_CONFIG ? window.VERSION_CONFIG.VERSION : '6.4.0';
     },
     get BUILD_DATE() {
         return window.VERSION_CONFIG ? window.VERSION_CONFIG.BUILD_DATE : new Date().toLocaleString('de-DE');
@@ -67,18 +68,6 @@ const CONFIG = {
         AUTO_ZOOM_TO_INCIDENT: true
     },
     
-    // Radio System Constants
-    RADIO: {
-        REQUEST_CHANCE: 0.02,           // 2% Chance dass Fahrzeug Status 5 sendet
-        CHECK_INTERVAL_MS: 30000,       // 30 Sekunden zwischen Checks
-        EMERGENCY_CHANCE: 0.001,        // 0.1% Chance für Status 0 (SEHR SELTEN!)
-        RESPONSE_DELAY_MIN_MS: 800,     // Min. Verzögerung bei Antwort
-        RESPONSE_DELAY_MAX_MS: 1400,    // Max. Verzögerung bei Antwort
-        CONVERSATION_HISTORY_LIMIT: 10, // Max. Nachrichten in History
-        API_TIMEOUT_MS: 10000,          // 10 Sekunden Timeout für API-Calls
-        TEMPLATE_COVERAGE: 0.98         // 98% Coverage durch Templates
-    },
-    
     // Game Mode
     GAME_MODE: 'free',  // 'free' oder 'career'
     
@@ -110,7 +99,6 @@ const CONFIG = {
         AI_INCIDENTS: true,
         AI_CALLS: true,
         WEATHER: true,
-        RADIO: true,
         DEBUG_MENU: true,
         CAREER_MODE: false  // Kommt bald!
     },
@@ -287,3 +275,4 @@ console.log('✅ FMS_STATUS Farben aktualisiert (gemäß Anforderung)');
 console.log('✅ Status 9 entfernt');
 console.log('✅ Status 0: NUR für Besatzungs-Notfälle');
 console.log('✅ Status 5: Für alle Fahrzeug-Anfragen');
+console.log('✅ v6.4.0: RADIO-Sektion komplett entfernt');

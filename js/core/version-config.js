@@ -57,16 +57,8 @@ const VERSION_CONFIG = {
      * JavaScript-Dateien in Ladereihenfolge
      * 
      * ✅ v8.0.0: FUNKSYSTEM KOMPLETT ENTFERNT!
-     *   - Entfernt: unified-status-system.js
-     *   - Entfernt: radio-messages.js
-     *   - Entfernt: radio-controls.js
-     *   - Entfernt: radio-system.js
-     *   - Entfernt: vehicle-radio-requests.js
      * 
      * ✅ v7.3.0 (Phase 4): Radio-System Optimierung
-     *   - radio-messages.js (merged: radio-feed.js + radio-ui-enhancements.js)
-     *   - radio-controls.js (renamed: radio-vehicle-control.js)
-     *   - Alte Dateien entfernt: ui-radio.js, radio-ui-enhancements.js, radio-feed.js, radio-vehicle-control.js
      * 
      * ✅ v7.0.0 (Phase 1): Kompositions-System
      *   - severity-bases.js, incident-types.js, incident-modifiers.js
@@ -387,8 +379,7 @@ const VERSION_CONFIG = {
                     <li>❌ <strong>Funkverkehr-Tab</strong></li>
                     <li>❌ <strong>Status-Meldungen im Funk</strong></li>
                     <li>❌ <strong>Radio-Steuerung</strong></li>
-                    <li>❌ <strong>5 JS-Dateien entfernt</strong></li>
-                    <li>❌ <strong>3 CSS-Dateien entfernt</strong></li>
+                    <li>❌ <strong>Alle Radio-Dateien entfernt</strong></li>
                 </ul>
                 <div style="margin-top: 12px; padding: 10px; background: rgba(229, 62, 62, 0.1); border-left: 3px solid #e53e3e; border-radius: 4px;">
                     <p style="margin: 0; font-size: 0.9em; color: #fc8181;">
@@ -427,11 +418,7 @@ const VERSION_CONFIG = {
         console.log('%c', 'color: #a0aec0');
         console.log('%c🚨 NEU IN v8.0.0 - FUNKSYSTEM ENTFERNT!', 'color: #e53e3e; font-weight: bold; font-size: 1.1em');
         console.log('%c   ❌ Funkverkehr-Tab komplett entfernt', 'color: #fc8181');
-        console.log('%c   ❌ unified-status-system.js gelöscht', 'color: #fc8181');
-        console.log('%c   ❌ radio-messages.js gelöscht', 'color: #fc8181');
-        console.log('%c   ❌ radio-controls.js gelöscht', 'color: #fc8181');
-        console.log('%c   ❌ radio-system.js gelöscht', 'color: #fc8181');
-        console.log('%c   ❌ vehicle-radio-requests.js gelöscht', 'color: #fc8181');
+        console.log('%c   ❌ Radio-System Dateien gelöscht', 'color: #fc8181');
         console.log('%c   ❌ Radio-CSS-Dateien gelöscht', 'color: #fc8181');
         console.log('%c   ✅ Fokus auf Leitstellensimulation!', 'color: #68d391');
         console.log('%c', 'color: #a0aec0');
