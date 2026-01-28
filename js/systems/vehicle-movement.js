@@ -1,5 +1,5 @@
 // =========================
-// VEHICLE MOVEMENT SYSTEM v7.5.2 - OLDSTATUS PARAMETER FIX
+// VEHICLE MOVEMENT SYSTEM v7.5.3 - FALLBACK FIX
 // + SMOOTH POSITION INTERPOLATION
 // + 10 Sekunden Ausrückzeit
 // + ✅ Routen verschwinden hinter Fahrzeugen (FIXED)
@@ -18,6 +18,7 @@
 // + 🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!
 // + 🔥 FIX v7.5.1: Status-Logging IMMER ausführen, auch wenn Status gleich!
 // + 🔥 FIX v7.5.2: Übergebe oldStatus EXPLIZIT an changeVehicleStatus()!
+// + 🔥 FIX v7.5.3: Fallback nutzt jetzt AUCH unified-status-system korrekt!
 // =========================
 
 const VehicleMovement = {
@@ -81,7 +82,7 @@ const VehicleMovement = {
     },
 
     initialize() {
-        console.log('🚑 Vehicle Movement System v7.5.2 initialisiert');
+        console.log('🚑 Vehicle Movement System v7.5.3 initialisiert');
         console.log('✅ Smooth Position Interpolation');
         console.log('✅ Ausrückzeit: 10 Sekunden');
         console.log('✅ Routen verschwinden hinter Fahrzeugen');
@@ -99,6 +100,7 @@ const VehicleMovement = {
         console.log('🔥 FIX v7.5.0: ENTFERNT vehicle.status - NUR currentStatus!');
         console.log('🔥 FIX v7.5.1: Status-Logging IMMER ausführen - kein verschlucken mehr!');
         console.log('🔥 FIX v7.5.2: Übergebe oldStatus EXPLIZIT an changeVehicleStatus()!');
+        console.log('🔥 FIX v7.5.3: Fallback nutzt unified-status-system korrekt!');
         
         this.startIdleCheck();
     },
@@ -886,7 +888,7 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
     },
 
     /**
-     * 🔥 v7.5.2 FIX: Übergebe oldStatus EXPLIZIT!
+     * 🔥 v7.5.3 FIX: Nutzt IMMER unified-status-system!
      * DIESE Funktion MUSS für ALLE Status-Änderungen genutzt werden!
      */
     setVehicleStatus(vehicle, fmsCode) {
@@ -904,15 +906,8 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             // 🔥 Übergebe oldStatus als DRITTEN Parameter!
             window.unifiedStatusSystem.changeVehicleStatus(vehicle.id, fmsCode, oldStatus);
         } else {
-            console.warn('⚠️ unified-status-system nicht verfügbar, nutze Fallback');
-            
-            if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS) {
-                const fmsInfo = CONFIG.FMS_STATUS[fmsCode];
-                if (fmsInfo && typeof addRadioMessage === 'function') {
-                    const message = `${vehicle.callsign} - Status ${fmsCode}: ${fmsInfo.name}`;
-                    addRadioMessage(vehicle.callsign, message, 'vehicle', false);
-                }
-            }
+            // 🔥 v7.5.3 FIX: KEIN FALLBACK MEHR - WARTE AUF unified-status-system!
+            console.warn('⚠️ unified-status-system nicht verfügbar - Status-Änderung OHNE Logging!');
         }
 
         // UI aktualisieren
@@ -948,4 +943,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅✅✅ Vehicle Movement System v7.5.2 geladen - OLDSTATUS PARAMETER FIX! 🔥');
+console.log('✅✅✅ Vehicle Movement System v7.5.3 geladen - FALLBACK FIX! 🔥');
