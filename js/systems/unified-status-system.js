@@ -1,32 +1,80 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.3.3 - IMPROVED RADIO LOGGING FORMAT
+// UNIFIED STATUS SYSTEM v2.4.0 - PRODUCTION-READY
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
 // + Visuelle Status-Kästchen mit Farbcodierung
 // + Korrekte Workflow-Logik (Status 5/0 = Sprechwunsch)
 // + ✅ Funkverkehr-Logging mit Uhrzeit im Tab "Funkverkehr"
-// + ✅ TEST: Sendet Demo-Nachricht beim Laden
 // + 🔧 v2.2: Robustes Vehicle-Finding (game.vehicles || GAME_DATA.vehicles)
 // + 🔥 v2.3: Nutzt oldStatus-Parameter statt vehicle.currentStatus!
-// + 🔥 v2.3.1: Verbesserte logStatusToRadio() mit Debug!
-// + 🔥 v2.3.2: Wartet auf addRadioMessage() mit Retry!
-// + 🔥 v2.3.3: VERBESSERTES FORMAT - Funkrufname ZUERST, dann Status-Kästchen!
+// + 🔥 v2.3.3: Verbessertes Format - Funkrufname ZUERST!
+// + 🚀 v2.4.0: EVENT-BASIERTES SYSTEM + Production-Ready!
 // =========================
 
 class UnifiedStatusSystem {
     constructor() {
         this.pendingTransmissions = new Map();
         this.waitingForPermission = new Map();
+        this.isRadioSystemReady = false;
+        this.messageQueue = [];
         
-        console.log('📡 Unified Status System v2.3.3 initialisiert');
+        console.log('📡 Unified Status System v2.4.0 initialisiert');
+        console.log('🚀 EVENT-BASIERTES SYSTEM - Keine Retries mehr!');
         console.log('🔧 Robustes Vehicle-Finding: game.vehicles || GAME_DATA.vehicles');
         console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
-        console.log('🔥 Wartet auf addRadioMessage() mit Retry-Logik!');
-        console.log('🔥 NEUES FORMAT: Funkrufname → Status-Kästchen → Text');
+        console.log('🔥 PRODUCTION: Test-Nachrichten deaktiviert!');
         
-        // ✅ TEST: Sende Demo-Nachricht nach 2 Sekunden (damit radio-feed.js geladen ist)
-        setTimeout(() => this.sendTestMessage(), 2000);
+        // 🚀 EVENT-BASIERT: Warte auf Radio-System
+        this.waitForRadioSystem();
+    }
+
+    /**
+     * 🚀 EVENT-BASIERT: Wartet auf Radio-System statt Retry-Loop
+     */
+    waitForRadioSystem() {
+        // Prüfe ob bereits verfügbar
+        if (typeof addRadioMessage === 'function') {
+            this.onRadioSystemReady();
+            return;
+        }
+        
+        // Höre auf Custom-Event
+        document.addEventListener('radioSystemReady', () => {
+            this.onRadioSystemReady();
+        });
+        
+        // Fallback: Polling mit Timeout (max 5 Sekunden)
+        let attempts = 0;
+        const maxAttempts = 50;
+        const pollInterval = setInterval(() => {
+            attempts++;
+            
+            if (typeof addRadioMessage === 'function') {
+                clearInterval(pollInterval);
+                this.onRadioSystemReady();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+                console.warn('⚠️ Radio-System nicht verfügbar nach 5 Sekunden - Logging deaktiviert');
+            }
+        }, 100);
+    }
+
+    /**
+     * 🚀 Callback wenn Radio-System bereit ist
+     */
+    onRadioSystemReady() {
+        this.isRadioSystemReady = true;
+        console.log('✅ Radio-System bereit - Status-Logging aktiviert!');
+        
+        // Arbeite Message-Queue ab
+        if (this.messageQueue.length > 0) {
+            console.log(`📦 Arbeite ${this.messageQueue.length} wartende Nachrichten ab...`);
+            this.messageQueue.forEach(msg => {
+                this.logStatusToRadioImmediate(msg.callsign, msg.oldStatus, msg.newStatus, msg.additionalText);
+            });
+            this.messageQueue = [];
+        }
     }
 
     /**
@@ -41,37 +89,6 @@ class UnifiedStatusSystem {
         }
         console.error('❌ Keine Fahrzeug-Daten gefunden!');
         return [];
-    }
-
-    /**
-     * ✅ TEST-FUNKTION: Sendet Demo-Nachricht
-     */
-    sendTestMessage() {
-        if (typeof addRadioMessage !== 'undefined') {
-            console.log('🎭 Sende Test-Nachricht ins Radio-System...');
-            
-            // Test 1: Normale Textnachricht
-            addRadioMessage('System', 'Unified Status System v2.3.3 geladen und bereit!', 'system', false);
-            
-            // Test 2: Status-Änderung mit Kästchen - NEUES FORMAT
-            setTimeout(() => {
-                const transition = this.createStatusTransition(2, 4);
-                const timestamp = new Date().toLocaleTimeString('de-DE');
-                const messageHTML = `Florian WN 1-83-1: ${transition} <span style="margin-left: 8px; color: #a0aec0; font-style: italic;">Anfahrt zur Einsatzstelle</span>`;
-                addRadioMessage('Florian WN 1-83-1', messageHTML, 'status-change', true);
-            }, 1000);
-            
-            // Test 3: Sprechwunsch
-            setTimeout(() => {
-                const badge = this.createStatusBadge(5);
-                const messageHTML = `Florian WN 1-47-1: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold;">Sprechwunsch</span>`;
-                addRadioMessage('Florian WN 1-47-1', messageHTML, 'status-5-request', true);
-            }, 2000);
-            
-            console.log('✅ Test-Nachrichten gesendet!');
-        } else {
-            console.warn('⚠️ addRadioMessage() nicht verfügbar - Radio-System noch nicht geladen');
-        }
     }
 
     STATUS_COLORS = {
@@ -112,65 +129,49 @@ class UnifiedStatusSystem {
     }
 
     /**
-     * 🔥 v2.3.3: VERBESSERTES FORMAT!
+     * 🚀 PRODUCTION-READY: Loggt Status ins Radio (mit Event-System)
      * Format: FUNKRUFNAME: [Status-Alt → Status-Neu] Status-Text
      */
-    async logStatusToRadio(callsign, oldStatus, newStatus, additionalText = '', retryCount = 0) {
-        const MAX_RETRIES = 10;
-        const RETRY_DELAY_MS = 100;
-        
-        console.log('🎯 logStatusToRadio() START');
-        console.log(`   Callsign: ${callsign}`);
-        console.log(`   Status: ${oldStatus} → ${newStatus}`);
-        console.log(`   Retry: ${retryCount}/${MAX_RETRIES}`);
-        
-        // 🔥 PRÜFE ob addRadioMessage verfügbar ist
-        if (typeof addRadioMessage === 'undefined' || typeof addRadioMessage !== 'function') {
-            if (retryCount < MAX_RETRIES) {
-                console.warn(`⏳ addRadioMessage() noch nicht verfügbar - Retry ${retryCount + 1}/${MAX_RETRIES} in ${RETRY_DELAY_MS}ms...`);
-                setTimeout(() => {
-                    this.logStatusToRadio(callsign, oldStatus, newStatus, additionalText, retryCount + 1);
-                }, RETRY_DELAY_MS);
-                return;
-            } else {
-                console.error('❌ addRadioMessage() nicht verfügbar nach 10 Retries!');
-                console.error(`   typeof addRadioMessage: ${typeof addRadioMessage}`);
-                return;
-            }
+    logStatusToRadio(callsign, oldStatus, newStatus, additionalText = '') {
+        // Wenn Radio-System noch nicht bereit: In Queue packen
+        if (!this.isRadioSystemReady) {
+            this.messageQueue.push({ callsign, oldStatus, newStatus, additionalText });
+            return;
         }
         
-        console.log('✅ addRadioMessage() verfügbar!');
+        this.logStatusToRadioImmediate(callsign, oldStatus, newStatus, additionalText);
+    }
+
+    /**
+     * 🚀 Interne Funktion: Loggt sofort (wenn System bereit)
+     */
+    logStatusToRadioImmediate(callsign, oldStatus, newStatus, additionalText = '') {
+        if (typeof addRadioMessage !== 'function') {
+            console.warn('⚠️ addRadioMessage() nicht verfügbar - Nachricht verworfen');
+            return;
+        }
         
         // Erstelle Status-Übergang (farbige Kästchen mit Pfeil)
         const transition = this.createStatusTransition(oldStatus, newStatus);
-        console.log(`   Transition HTML erstellt`);
         
         // Hole Status-Text aus CONFIG (falls verfügbar)
         let statusText = additionalText;
         if (!statusText && typeof CONFIG !== 'undefined' && CONFIG.getFMSStatus) {
             const statusInfo = CONFIG.getFMSStatus(newStatus);
             statusText = statusInfo ? statusInfo.name : `Status ${newStatus}`;
-            console.log(`   Status-Text aus CONFIG: "${statusText}"`);
         } else if (!statusText) {
             statusText = `Status ${newStatus}`;
-            console.log(`   Fallback Status-Text: "${statusText}"`);
         }
         
-        // 🔥 NEUES FORMAT: Funkrufname: [Alt → Neu] Status-Text
+        // 🔥 FORMAT: Funkrufname: [Alt → Neu] Status-Text
         const messageHTML = `${callsign}: ${transition} <span style="margin-left: 8px; color: #a0aec0; font-style: italic;">${statusText}</span>`;
-        
-        console.log(`   messageHTML: ${messageHTML.substring(0, 100)}...`);
         
         try {
             // Sende Nachricht an Radio-System
             addRadioMessage(callsign, messageHTML, 'status-change', true);
-            console.log(`📻✅ [${callsign}] Status ${oldStatus}→${newStatus} GELOGGT!`);
         } catch (error) {
             console.error('❌ FEHLER beim Aufruf von addRadioMessage():', error);
-            console.error('   Stacktrace:', error.stack);
         }
-        
-        console.log('🎯 logStatusToRadio() ENDE');
     }
 
     sendStatusMessage(callsign, oldStatus, newStatus, additionalText = '') {
@@ -192,10 +193,10 @@ class UnifiedStatusSystem {
         
         const badge = this.createStatusBadge(5);
         
-        // 🔥 NEUES FORMAT: Funkrufname: [Badge] Sprechwunsch
+        // 🔥 FORMAT: Funkrufname: [Badge] Sprechwunsch
         const messageHTML = `${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold;">Sprechwunsch</span>`;
         
-        if (typeof addRadioMessage !== 'undefined') {
+        if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
             addRadioMessage(vehicle.callsign, messageHTML, 'status-5-request', true);
         }
 
@@ -227,10 +228,10 @@ class UnifiedStatusSystem {
         
         const badge = this.createStatusBadge(0);
         
-        // 🔥 NEUES FORMAT: Funkrufname: [Badge] NOTFALL BESATZUNG!
+        // 🔥 FORMAT: Funkrufname: [Badge] NOTFALL BESATZUNG!
         const messageHTML = `${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
         
-        if (typeof addRadioMessage !== 'undefined') {
+        if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
             addRadioMessage(vehicle.callsign, messageHTML, 'status-0-emergency', true);
             
             if (typeof playSound !== 'undefined') {
@@ -265,12 +266,12 @@ class UnifiedStatusSystem {
         const vehicle = vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
 
-        if (typeof addRadioMessage !== 'undefined') {
+        if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
             addRadioMessage('Leitstelle', `An ${vehicle.callsign}: <strong style="color: #48bb78; font-size: 18px;">J</strong> - Kommen, sprechen Sie.`, 'dispatcher');
         }
 
         setTimeout(() => {
-            if (typeof addRadioMessage !== 'undefined') {
+            if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
                 addRadioMessage(vehicle.callsign, request.message, 'vehicle');
             }
 
@@ -288,37 +289,27 @@ class UnifiedStatusSystem {
 
     /**
      * 🎯 HAUPTFUNKTION: Automatische Status-Änderung mit Chat-Logging
-     * 🔥 v2.3 FIX: Nutzt oldStatusOverride-Parameter!
      * @param {string} vehicleId - Fahrzeug-ID
      * @param {number} newStatus - Neuer Status
      * @param {number|undefined} oldStatusOverride - EXPLIZITER alter Status (wenn vom Caller übergeben)
      */
     changeVehicleStatus(vehicleId, newStatus, oldStatusOverride = undefined) {
-        console.log(`🔄 changeVehicleStatus() aufgerufen: ${vehicleId} -> Status ${newStatus}, oldOverride: ${oldStatusOverride}`);
-        
         const vehicles = this.getVehicles();
         const vehicle = vehicles.find(v => v.id === vehicleId);
         
         if (!vehicle) {
             console.error(`❌ Fahrzeug ${vehicleId} nicht gefunden!`);
-            console.log(`📋 Verfügbare Fahrzeuge: ${vehicles.length}`);
             return;
         }
 
-        // 🔥 v2.3 FIX: Nutze oldStatusOverride wenn vorhanden, sonst vehicle.currentStatus
+        // Nutze oldStatusOverride wenn vorhanden, sonst vehicle.currentStatus
         const oldStatus = oldStatusOverride !== undefined ? oldStatusOverride : vehicle.currentStatus;
-        
-        console.log(`🔍 oldStatus bestimmt: ${oldStatus} (Override: ${oldStatusOverride !== undefined ? 'JA' : 'NEIN'}`);
 
         if (oldStatus === newStatus) {
-            console.log(`⏭️ Status gleich geblieben (${newStatus}), überspringe Logging`);
             return;
         }
 
-        // Status ist BEREITS vom Caller geändert worden - wir loggen nur!
-        console.log(`✅ Status-Wechsel erkannt: ${vehicle.callsign} ${oldStatus}→${newStatus}`);
-
-        // ✅ Logge Status-Änderung im Funkverkehr
+        // Logge Status-Änderung im Funkverkehr
         this.logStatusToRadio(vehicle.callsign, oldStatus, newStatus, '');
 
         // UI aktualisieren
@@ -453,13 +444,10 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem;
 }
 
-console.log('✅ Unified Status System v2.3.3 geladen');
+console.log('✅ Unified Status System v2.4.0 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
-console.log('✅ Funkverkehr-Logging mit Uhrzeit aktiviert');
+console.log('🚀 EVENT-BASIERTES SYSTEM - Production-Ready!');
 console.log('🔧 Robustes Vehicle-Finding aktiviert');
-console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
-console.log('🔥 Wartet auf addRadioMessage() mit Retry-Logik!');
-console.log('🔥 NEUES FORMAT: Funkrufname → Status-Kästchen → Text!');
-console.log('🎭 Test-Nachrichten werden in 2 Sekunden gesendet...');
+console.log('🔥 OPTIMIERTES FORMAT: Funkrufname → Status-Kästchen → Text!');
