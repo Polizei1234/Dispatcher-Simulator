@@ -1,5 +1,5 @@
 // =========================
-// KARTENLOGIK v6.0 - PERFORMANCE OPTIMIERUNG
+// KARTENLOGIK v6.1 - BUG FIX: Marker Popups
 // + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge IMMER anklickbar (auch während Fahrt)
 // + Fahrzeuge in Wache unsichtbar
@@ -10,6 +10,7 @@
 // + ✅ FIX: Bessere FMS-Status-Anzeige in Wachen
 // + ✅ FIX v5.1.1: hospital.location statt hospital.position
 // + ✅✅✅ PHASE 3.1.1 v6.0: ICON-CACHING SYSTEM (-90% SVG Generation!)
+// + ✅✅✅ BUG FIX v6.1: Marker Popups jetzt dauerhaft klickbar!
 // =========================
 
 let map = null;
@@ -228,7 +229,7 @@ function createHospitalMarkers() {
         return;
     }
     
-    console.group('🏥 ERSTELLE KRANKENHAUS-MARKER');
+    console.group('🏭 ERSTELLE KRANKENHAUS-MARKER');
     
     HOSPITALS.forEach(hospital => {
         if (!hospital.location || !Array.isArray(hospital.location) || hospital.location.length !== 2) {
@@ -250,10 +251,16 @@ function createHospitalMarkers() {
                 zIndexOffset: 500
             });
             
+            // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
+            marker.unbindPopup();
+            
             marker.on('click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 
                 const popupContent = generateHospitalPopupContent(hospital);
+                
+                // ✅✅✅ BUG FIX: Unbind vorher, dann neu binden!
+                marker.unbindPopup();
                 marker.bindPopup(popupContent, {
                     maxWidth: 350,
                     className: 'hospital-popup',
@@ -279,10 +286,10 @@ function generateHospitalPopupContent(hospital) {
     
     return `
         <div style="min-width: 250px;">
-            <strong style="font-size: 1.1em;">🏥 ${hospital.name}</strong><br>
+            <strong style="font-size: 1.1em;">🏭 ${hospital.name}</strong><br>
             <small style="color: #a0a0a0;">${hospital.address}</small><br>
             <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
-                <strong>🏥 Fachbereiche:</strong><br>
+                <strong>🏭 Fachbereiche:</strong><br>
                 <div style="margin-top: 5px;">
                     ${specialtiesList.map(spec => `
                         <div style="padding: 2px 0; font-size: 0.9em;">• ${spec}</div>
@@ -361,10 +368,16 @@ function createStationMarkers() {
                 })
             });
             
+            // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
+            marker.unbindPopup();
+            
             marker.on('click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 
                 const popupContent = generateStationPopupContent(station);
+                
+                // ✅✅✅ BUG FIX: Unbind vorher, dann neu binden!
+                marker.unbindPopup();
                 marker.bindPopup(popupContent, {
                     maxWidth: 350,
                     className: 'station-popup',
@@ -472,7 +485,7 @@ function toggleStations() {
         }
     });
     
-    console.log(`🏥 Wachen ${stationsVisible ? 'eingeblendet' : 'ausgeblendet'}`);
+    console.log(`🏭 Wachen ${stationsVisible ? 'eingeblendet' : 'ausgeblendet'}`);
 }
 
 function createVehiclePopupContent(vehicle) {
@@ -531,6 +544,9 @@ function addIncidentToMap(incident) {
         zIndexOffset: 2000
     });
 
+    // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
+    marker.unbindPopup();
+    
     marker.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
     });
@@ -613,10 +629,16 @@ function updateVehicleOnMap(vehicle) {
         zIndexOffset: 1000
     });
 
+    // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
+    marker.unbindPopup();
+    
     marker.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
         
         const popupContent = createVehiclePopupContent(vehicle);
+        
+        // ✅✅✅ BUG FIX: Unbind vorher, dann neu binden!
+        marker.unbindPopup();
         marker.bindPopup(popupContent, {
             maxWidth: 250,
             autoClose: true,
@@ -703,4 +725,4 @@ function addIncidentMarker(incident) {
     addIncidentToMap(incident);
 }
 
-console.log('✅✅✅ map.js v6.0 geladen - ICON-CACHING SYSTEM aktiv! (-90% SVG Generation)');
+console.log('✅✅✅ map.js v6.1 geladen - ICON-CACHING + BUG FIX: Marker Popups!');
