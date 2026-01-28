@@ -1,7 +1,8 @@
 // =========================
-// DEBUG-MENÜ SYSTEM v1.1 - TEST CALL FIX
+// DEBUG-MENÜ SYSTEM v1.2 - BUG FIX: Toggle Logic
 // Erweiterte Debug-Funktionen für Entwickler
 // ✅ FIX: Test-Einsatz startet jetzt Anruf über CallSystem
+// ✅✅✅ BUG FIX v1.2: Menü öffnet jetzt beim ERSTEN Klick!
 // =========================
 
 class DebugMenu {
@@ -21,21 +22,30 @@ class DebugMenu {
 
     /**
      * Toggle Debug-Menü
+     * ✅✅✅ BUG FIX v1.2: Menu wird SOFORT erstellt beim ersten Toggle!
      */
     toggle() {
-        this.isVisible = !this.isVisible;
         const menu = document.getElementById('debug-menu');
         
+        // ✅ FIX: Wenn Menü NICHT existiert, erstelle es UND zeige es an!
         if (!menu) {
+            console.log('🔧 Debug-Menü existiert noch nicht - erstelle es...');
             this.create();
-            this.isVisible = true;
-        } else {
-            menu.style.display = this.isVisible ? 'block' : 'none';
+            this.isVisible = true; // 🔥 WICHTIG: Setze auf true!
+            this.update();
+            console.log('✅ Debug-Menü erstellt und angezeigt!');
+            return;
         }
+        
+        // Menü existiert bereits - toggle Sichtbarkeit
+        this.isVisible = !this.isVisible;
+        menu.style.display = this.isVisible ? 'block' : 'none';
         
         if (this.isVisible) {
             this.update();
         }
+        
+        console.log(`🔧 Debug-Menü ${this.isVisible ? 'geöffnet' : 'geschlossen'}`);
     }
 
     /**
@@ -45,6 +55,7 @@ class DebugMenu {
         const menu = document.createElement('div');
         menu.id = 'debug-menu';
         menu.className = 'debug-menu';
+        menu.style.display = 'block'; // 🔥 WICHTIG: Sofort sichtbar!
         menu.innerHTML = `
             <div class="debug-header">
                 <h3>🐛 Debug-Menü</h3>
@@ -70,6 +81,8 @@ class DebugMenu {
         
         document.body.appendChild(menu);
         this.addStyles();
+        
+        console.log('✅ Debug-Menü HTML erstellt und in DOM eingefügt');
     }
 
     /**
@@ -544,7 +557,6 @@ class DebugMenu {
                 border-radius: 12px;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.5);
                 z-index: 10000;
-                display: none;
                 overflow: hidden;
             }
             
@@ -746,7 +758,8 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-console.log('✅ Debug-Menü v1.1 geladen - Drücke Strg+Shift+D zum Öffnen');
+console.log('✅ Debug-Menü v1.2 geladen - Drücke Strg+Shift+D zum Öffnen');
+console.log('✅✅✅ BUG FIX: Menü öffnet jetzt beim ERSTEN Klick!');
 
 if (typeof window !== 'undefined') {
     window.debugMenu = debugMenu;
