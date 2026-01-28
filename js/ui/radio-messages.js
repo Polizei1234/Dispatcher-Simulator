@@ -1,14 +1,15 @@
 // =========================
-// RADIO MESSAGES SYSTEM v4.0 - OPTIMIERT
+// RADIO MESSAGES SYSTEM v4.1 - EVENT-BASIERT
 // Unified: Funkverkehr + UI-Enhancements
 // + ✅ RadioChatSystem (Nachrichten-Management)
 // + ✅ HTML-Support für Status-Badges
 // + ✅ J-Button für Sprechfreigabe
 // + ✅ Sound-System
 // + ✅ Alle Styles integriert
+// + 🚀 v4.1: Feuert 'radioSystemReady' Event!
 // =========================
 
-console.log('%c📻 RADIO MESSAGES SYSTEM v4.0 wird geladen...', 'background: #3182ce; color: white; padding: 5px 10px; font-size: 14px; font-weight: bold;');
+console.log('%c📻 RADIO MESSAGES SYSTEM v4.1 wird geladen...', 'background: #3182ce; color: white; padding: 5px 10px; font-size: 14px; font-weight: bold;');
 
 /**
  * Radio Chat System - Verwaltet alle Funk-Nachrichten
@@ -20,7 +21,7 @@ class RadioChatSystem {
         this.chatContainer = null;
         this.isReady = false;
         
-        console.log('📻 Radio Chat System v4.0 wird initialisiert...');
+        console.log('📻 Radio Chat System v4.1 wird initialisiert...');
         this.init();
     }
     
@@ -63,7 +64,17 @@ class RadioChatSystem {
         this.chatContainer.style.gap = '10px';
         
         this.isReady = true;
+        
+        // 🚀 FEUERE CUSTOM-EVENT!
+        document.dispatchEvent(new CustomEvent('radioSystemReady', {
+            detail: { 
+                version: '4.1',
+                timestamp: Date.now()
+            }
+        }));
+        
         console.log('%c✅ RADIO MESSAGES SYSTEM BEREIT!', 'background: #48bb78; color: white; padding: 5px 10px; font-size: 16px; font-weight: bold;');
+        console.log('🚀 Custom-Event "radioSystemReady" gefeuert!');
     }
     
     /**
@@ -90,8 +101,6 @@ class RadioChatSystem {
         if (type === 'system' && !message.includes('✅') && !message.includes('⚠️')) {
             return;
         }
-        
-        console.log(`💬 Nachricht: [${type}] ${sender}`);
         
         // Erstelle Message-Element
         const messageEl = document.createElement('div');
@@ -535,6 +544,7 @@ if (typeof window !== 'undefined') {
     window.playRadioSound = playRadioSound;
 }
 
-console.log('%c✅ RADIO MESSAGES SYSTEM V4.0 GELADEN!', 'background: #48bb78; color: white; padding: 8px 15px; font-size: 16px; font-weight: bold;');
+console.log('%c✅ RADIO MESSAGES SYSTEM V4.1 GELADEN!', 'background: #48bb78; color: white; padding: 8px 15px; font-size: 16px; font-weight: bold;');
 console.log('✅ Merged: radio-feed.js + radio-ui-enhancements.js');
 console.log('✅ Features: Chat-System, HTML-Support, J-Button, Sounds, Styles');
+console.log('🚀 Feuert Custom-Event "radioSystemReady" für andere Systeme!');
