@@ -1,5 +1,5 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.4.1 - PRODUCTION-READY
+// UNIFIED STATUS SYSTEM v2.4.2 - PRODUCTION-READY
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
@@ -11,6 +11,7 @@
 // + 🔥 v2.3.3: Verbessertes Format - Funkrufname ZUERST!
 // + 🚀 v2.4.0: EVENT-BASIERTES SYSTEM + Production-Ready!
 // + 🐛 v2.4.1: FIX - updateRadioVehicleDropdown nur wenn Element existiert
+// + 🎯 v2.4.2: FIX - Fahrzeugnummern im Funk-Tab anzeigen!
 // =========================
 
 class UnifiedStatusSystem {
@@ -20,12 +21,13 @@ class UnifiedStatusSystem {
         this.isRadioSystemReady = false;
         this.messageQueue = [];
         
-        console.log('📡 Unified Status System v2.4.1 initialisiert');
+        console.log('📡 Unified Status System v2.4.2 initialisiert');
         console.log('🚀 EVENT-BASIERTES SYSTEM - Keine Retries mehr!');
         console.log('🔧 Robustes Vehicle-Finding: game.vehicles || GAME_DATA.vehicles');
         console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
         console.log('🔥 PRODUCTION: Test-Nachrichten deaktiviert!');
         console.log('🐛 FIX: Prüft ob Dropdown existiert vor Update');
+        console.log('🎯 FIX: Fahrzeugnummern werden jetzt im Funk-Tab angezeigt!');
         
         // 🚀 EVENT-BASIERT: Warte auf Radio-System
         this.waitForRadioSystem();
@@ -73,7 +75,7 @@ class UnifiedStatusSystem {
         if (this.messageQueue.length > 0) {
             console.log(`📦 Arbeite ${this.messageQueue.length} wartende Nachrichten ab...`);
             this.messageQueue.forEach(msg => {
-                this.logStatusToRadioImmediate(msg.callsign, msg.oldStatus, msg.newStatus, msg.additionalText);
+                this.logStatusToRadioImmediate(msg.displayCallsign, msg.oldStatus, msg.newStatus, msg.additionalText);
             });
             this.messageQueue = [];
         }
@@ -91,6 +93,38 @@ class UnifiedStatusSystem {
         }
         console.error('❌ Keine Fahrzeug-Daten gefunden!');
         return [];
+    }
+
+    /**
+     * 🎯 NEU: Extrahiert vollständige Anzeige-Kennung aus Fahrzeugnamen
+     * Format: "Nummer Rufname" (z.B. "4/82-1 Florian Stuttgart")
+     * @param {Object} vehicle - Fahrzeug-Objekt
+     * @returns {string} Vollständige Anzeige-Kennung
+     */
+    getDisplayCallsign(vehicle) {
+        if (!vehicle) return 'Unbekannt';
+        
+        // Fahrzeugname enthält bereits die vollständige Kennung
+        // z.B. "RTW Rotkreuz Rems Murr 1/83-2" oder "NEF Rotkreuz Rems Murr 4/82-1"
+        const name = vehicle.name || vehicle.callsign || 'Unbekannt';
+        
+        // Extrahiere Nummer und Rufname
+        // Muster: "Typ Organisation Nummer"
+        // Wir wollen: "Nummer Rufname"
+        const match = name.match(/([\d\/\-]+)\s*$/);
+        
+        if (match) {
+            const number = match[1]; // z.B. "4/82-1"
+            // Entferne den Fahrzeugtyp am Anfang (RTW, NEF, KTW, etc.)
+            const withoutType = name.replace(/^(RTW|NEF|KTW|Kdow|GW-San)\s+/, '');
+            // Entferne die Nummer am Ende
+            const orgName = withoutType.replace(/\s+[\d\/\-]+\s*$/, '').trim();
+            
+            return `${number} ${orgName}`;
+        }
+        
+        // Fallback: Verwende den vollständigen Namen
+        return name;
     }
 
     STATUS_COLORS = {
@@ -132,22 +166,22 @@ class UnifiedStatusSystem {
 
     /**
      * 🚀 PRODUCTION-READY: Loggt Status ins Radio (mit Event-System)
-     * Format: FUNKRUFNAME: [Status-Alt → Status-Neu] Status-Text
+     * Format: NUMMER RUFNAME: [Status-Alt → Status-Neu] Status-Text
      */
-    logStatusToRadio(callsign, oldStatus, newStatus, additionalText = '') {
+    logStatusToRadio(displayCallsign, oldStatus, newStatus, additionalText = '') {
         // Wenn Radio-System noch nicht bereit: In Queue packen
         if (!this.isRadioSystemReady) {
-            this.messageQueue.push({ callsign, oldStatus, newStatus, additionalText });
+            this.messageQueue.push({ displayCallsign, oldStatus, newStatus, additionalText });
             return;
         }
         
-        this.logStatusToRadioImmediate(callsign, oldStatus, newStatus, additionalText);
+        this.logStatusToRadioImmediate(displayCallsign, oldStatus, newStatus, additionalText);
     }
 
     /**
      * 🚀 Interne Funktion: Loggt sofort (wenn System bereit)
      */
-    logStatusToRadioImmediate(callsign, oldStatus, newStatus, additionalText = '') {
+    logStatusToRadioImmediate(displayCallsign, oldStatus, newStatus, additionalText = '') {
         if (typeof addRadioMessage !== 'function') {
             console.warn('⚠️ addRadioMessage() nicht verfügbar - Nachricht verworfen');
             return;
@@ -165,19 +199,20 @@ class UnifiedStatusSystem {
             statusText = `Status ${newStatus}`;
         }
         
-        // 🔥 FORMAT: Funkrufname: [Alt → Neu] Status-Text
-        const messageHTML = `${callsign}: ${transition} <span style="margin-left: 8px; color: #a0aec0; font-style: italic;">${statusText}</span>`;
+        // 🔥 FORMAT: Nummer Rufname: [Alt → Neu] Status-Text
+        const messageHTML = `${displayCallsign}: ${transition} <span style="margin-left: 8px; color: #a0aec0; font-style: italic;">${statusText}</span>`;
         
         try {
             // Sende Nachricht an Radio-System
-            addRadioMessage(callsign, messageHTML, 'status-change', true);
+            addRadioMessage(displayCallsign, messageHTML, 'status-change', true);
         } catch (error) {
             console.error('❌ FEHLER beim Aufruf von addRadioMessage():', error);
         }
     }
 
-    sendStatusMessage(callsign, oldStatus, newStatus, additionalText = '') {
-        this.logStatusToRadio(callsign, oldStatus, newStatus, additionalText);
+    sendStatusMessage(vehicle, oldStatus, newStatus, additionalText = '') {
+        const displayCallsign = this.getDisplayCallsign(vehicle);
+        this.logStatusToRadio(displayCallsign, oldStatus, newStatus, additionalText);
     }
 
     /**
@@ -192,14 +227,15 @@ class UnifiedStatusSystem {
         }
 
         const oldStatus = vehicle.currentStatus;
+        const displayCallsign = this.getDisplayCallsign(vehicle);
         
         const badge = this.createStatusBadge(5);
         
-        // 🔥 FORMAT: Funkrufname: [Badge] Sprechwunsch
-        const messageHTML = `${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold;">Sprechwunsch</span>`;
+        // 🔥 FORMAT: Nummer Rufname: [Badge] Sprechwunsch
+        const messageHTML = `${displayCallsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold;">Sprechwunsch</span>`;
         
         if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
-            addRadioMessage(vehicle.callsign, messageHTML, 'status-5-request', true);
+            addRadioMessage(displayCallsign, messageHTML, 'status-5-request', true);
         }
 
         this.waitingForPermission.set(vehicleId, {
@@ -212,7 +248,7 @@ class UnifiedStatusSystem {
         vehicle.currentStatus = 5;
         this.updateVehicleDisplay(vehicle);
 
-        console.log(`📞 ${vehicle.callsign} meldet Sprechwunsch (Status 5)`);
+        console.log(`📞 ${displayCallsign} meldet Sprechwunsch (Status 5)`);
     }
 
     /**
@@ -227,14 +263,15 @@ class UnifiedStatusSystem {
         }
 
         const oldStatus = vehicle.currentStatus;
+        const displayCallsign = this.getDisplayCallsign(vehicle);
         
         const badge = this.createStatusBadge(0);
         
-        // 🔥 FORMAT: Funkrufname: [Badge] NOTFALL BESATZUNG!
-        const messageHTML = `${vehicle.callsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
+        // 🔥 FORMAT: Nummer Rufname: [Badge] NOTFALL BESATZUNG!
+        const messageHTML = `${displayCallsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
         
         if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
-            addRadioMessage(vehicle.callsign, messageHTML, 'status-0-emergency', true);
+            addRadioMessage(displayCallsign, messageHTML, 'status-0-emergency', true);
             
             if (typeof playSound !== 'undefined') {
                 playSound('emergency');
@@ -251,7 +288,7 @@ class UnifiedStatusSystem {
         vehicle.currentStatus = 0;
         this.updateVehicleDisplay(vehicle);
 
-        console.log(`🚨 ${vehicle.callsign} sendet NOTFALL (Status 0)!`);
+        console.log(`🚨 ${displayCallsign} sendet NOTFALL (Status 0)!`);
     }
 
     /**
@@ -268,13 +305,15 @@ class UnifiedStatusSystem {
         const vehicle = vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
 
+        const displayCallsign = this.getDisplayCallsign(vehicle);
+
         if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
-            addRadioMessage('Leitstelle', `An ${vehicle.callsign}: <strong style="color: #48bb78; font-size: 18px;">J</strong> - Kommen, sprechen Sie.`, 'dispatcher');
+            addRadioMessage('Leitstelle', `An ${displayCallsign}: <strong style="color: #48bb78; font-size: 18px;">J</strong> - Kommen, sprechen Sie.`, 'dispatcher');
         }
 
         setTimeout(() => {
             if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
-                addRadioMessage(vehicle.callsign, request.message, 'vehicle');
+                addRadioMessage(displayCallsign, request.message, 'vehicle');
             }
 
             setTimeout(() => {
@@ -282,11 +321,11 @@ class UnifiedStatusSystem {
                 this.updateVehicleDisplay(vehicle);
                 this.waitingForPermission.delete(vehicleId);
                 
-                console.log(`✅ ${vehicle.callsign} Status zurück auf ${request.oldStatus}`);
+                console.log(`✅ ${displayCallsign} Status zurück auf ${request.oldStatus}`);
             }, 2000);
         }, 800);
 
-        console.log(`📻 Sprechfreigabe erteilt an ${vehicle.callsign}`);
+        console.log(`📻 Sprechfreigabe erteilt an ${displayCallsign}`);
     }
 
     /**
@@ -311,8 +350,11 @@ class UnifiedStatusSystem {
             return;
         }
 
+        // Hole vollständige Kennung
+        const displayCallsign = this.getDisplayCallsign(vehicle);
+
         // Logge Status-Änderung im Funkverkehr
-        this.logStatusToRadio(vehicle.callsign, oldStatus, newStatus, '');
+        this.logStatusToRadio(displayCallsign, oldStatus, newStatus, '');
 
         // UI aktualisieren
         this.updateVehicleDisplay(vehicle);
@@ -330,24 +372,26 @@ class UnifiedStatusSystem {
             i.assignedVehicles && i.assignedVehicles.includes(vehicle.id)
         );
 
+        const displayCallsign = this.getDisplayCallsign(vehicle);
+
         const messages = {
             4: [
-                `${vehicle.callsign}, können Sie uns die genaue Adresse nochmal durchgeben? Kommen.`,
-                `${vehicle.callsign}, benötigen Rückfrage zur Zufahrt, kommen.`,
-                `${vehicle.callsign}, ist die Einsatzstelle barrierefrei erreichbar? Kommen.`
+                `${displayCallsign}, können Sie uns die genaue Adresse nochmal durchgeben? Kommen.`,
+                `${displayCallsign}, benötigen Rückfrage zur Zufahrt, kommen.`,
+                `${displayCallsign}, ist die Einsatzstelle barrierefrei erreichbar? Kommen.`
             ],
             6: [
-                `${vehicle.callsign}, Patient zeigt Symptome, benötigen Rücksprache mit NEF, kommen.`,
-                `${vehicle.callsign}, benötigen Nachforderung weiterer Kräfte, kommen.`,
-                `${vehicle.callsign}, Lage vor Ort unklar, benötigen weitere Informationen, kommen.`
+                `${displayCallsign}, Patient zeigt Symptome, benötigen Rücksprache mit NEF, kommen.`,
+                `${displayCallsign}, benötigen Nachforderung weiterer Kräfte, kommen.`,
+                `${displayCallsign}, Lage vor Ort unklar, benötigen weitere Informationen, kommen.`
             ],
             7: [
-                `${vehicle.callsign}, benötigen Zielkrankenhaus-Zuweisung, kommen.`,
-                `${vehicle.callsign}, Patient instabil, welche Klinik ist am nächsten? Kommen.`
+                `${displayCallsign}, benötigen Zielkrankenhaus-Zuweisung, kommen.`,
+                `${displayCallsign}, Patient instabil, welche Klinik ist am nächsten? Kommen.`
             ],
             8: [
-                `${vehicle.callsign}, Verkehrslage, benötigen alternative Route, kommen.`,
-                `${vehicle.callsign}, Patientenzustand verschlechtert sich, benötigen Notarzt-Konsil, kommen.`
+                `${displayCallsign}, Verkehrslage, benötigen alternative Route, kommen.`,
+                `${displayCallsign}, Patientenzustand verschlechtert sich, benötigen Notarzt-Konsil, kommen.`
             ]
         };
 
@@ -356,7 +400,7 @@ class UnifiedStatusSystem {
             return statusMessages[Math.floor(Math.random() * statusMessages.length)];
         }
 
-        return `${vehicle.callsign}, benötigen Rücksprache, kommen.`;
+        return `${displayCallsign}, benötigen Rücksprache, kommen.`;
     }
 
     isWaitingForPermission(vehicleId) {
@@ -453,11 +497,12 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem;
 }
 
-console.log('✅ Unified Status System v2.4.1 geladen');
+console.log('✅ Unified Status System v2.4.2 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
 console.log('🚀 EVENT-BASIERTES SYSTEM - Production-Ready!');
 console.log('🔧 Robustes Vehicle-Finding aktiviert');
-console.log('🔥 OPTIMIERTES FORMAT: Funkrufname → Status-Kästchen → Text!');
+console.log('🔥 OPTIMIERTES FORMAT: Nummer Rufname → Status-Kästchen → Text!');
 console.log('🐛 FIX: Dropdown-Update nur wenn Element existiert!');
+console.log('🎯 FIX: Fahrzeugnummern werden jetzt im Funk-Tab angezeigt!');
