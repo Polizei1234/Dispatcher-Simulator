@@ -8,63 +8,63 @@
       "0": {
         "name": "Priorisierter Sprechwunsch",
         "description": "Fahrzeug möchte mit der Leitstelle sprechen (priorisiert)",
-        "color": "#8b4513",
-        "icon": "🟤",
+        "color": "#ff6b6b",
+        "icon": "🔴",
         "priority": "high"
       },
       "1": {
         "name": "Einsatzbereit über Funk",
         "description": "Fahrzeug ist einsatzbereit und über Funk erreichbar",
-        "color": "#28a745",
+        "color": "#90ee90",
         "icon": "🟢",
         "priority": "normal"
       },
       "2": {
         "name": "Einsatzbereit auf Wache",
         "description": "Fahrzeug ist auf der Wache und einsatzbereit",
-        "color": "#1e7e34",
+        "color": "#228b22",
         "icon": "🟢",
         "priority": "normal"
       },
       "3": {
         "name": "Einsatzauftrag übernommen",
         "description": "Fahrzeug hat den Einsatzauftrag erhalten und fährt zur Einsatzstelle",
-        "color": "#ffc107",
-        "icon": "🟡",
+        "color": "#ffa500",
+        "icon": "🟠",
         "priority": "active"
       },
       "4": {
         "name": "Ankunft am Einsatzort",
         "description": "Fahrzeug ist am Einsatzort eingetroffen",
-        "color": "#fd7e14",
-        "icon": "🟠",
+        "color": "#8b0000",
+        "icon": "🔴",
         "priority": "active"
       },
       "5": {
         "name": "Sprechwunsch",
         "description": "Fahrzeug möchte mit der Leitstelle sprechen (normal)",
-        "color": "#17a2b8",
-        "icon": "🔵",
+        "color": "#ff6b6b",
+        "icon": "🔴",
         "priority": "medium"
       },
       "6": {
         "name": "Nicht Einsatzbereit",
         "description": "Fahrzeug ist aus verscheidenen Gründen nicht einsatzbereit und kann keinen Einsatzauftrag übernehmen",
-        "color": "#6f42c1",
-        "icon": "🟣",
+        "color": "#808080",
+        "icon": "⚫",
         "priority": "active"
       },
       "7": {
         "name": "Einsatzgebunden (Patient aufgenommen)",
         "description": "Patient wurde aufgenommen und Transport beginnt",
-        "color": "#e83e8c",
+        "color": "#ffb6c1",
         "icon": "🟣",
         "priority": "active"
       },
       "8": {
         "name": "Bedingt Einsatzbereit (Am Zielort)",
         "description": "Fahrzeug ist bedingt/ in Kürze für Einsätze bereit. Gegebenfalls sind vorher andere Maßnahmen (Patientenübergabe, Auffüllen von Materialen, Desinfektion, ...) nötig. Bspw. das Fahrzeug befindet sich am Krankenhaus",
-        "color": "#6610f2",
+        "color": "#9370db",
         "icon": "🟣",
         "priority": "normal"
       },
