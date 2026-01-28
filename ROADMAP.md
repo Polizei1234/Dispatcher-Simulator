@@ -1,4 +1,4 @@
-# 🗺️ ROADMAP - ILS Waiblingen Dispatcher Simulator
+# 🗺️ ROADMAP - Dispatcher Simulator
 
 > **Vollständige Entwicklungs-Roadmap mit allen geplanten Features und Phasen**
 
