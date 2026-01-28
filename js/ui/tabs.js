@@ -1,10 +1,10 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v5.0.1 - SILENT FIX
+// TAB NAVIGATION & VEHICLE OVERVIEW v5.1.0 - RADIO REMOVED
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
 // ✅ Kompakte Card-Darstellung
-// 🔧 FIX v5.0.1: Stumme Prüfung in updateRadioVehicleDropdown
+// 🗑️ v5.1.0: Radio-Tab komplett entfernt
 // =========================
 
 let currentTab = 'map';
@@ -19,13 +19,12 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
-    // Tab-Shortcuts (1-5)
+    // Tab-Shortcuts (1-4) - Radio entfernt
     const tabMap = {
         '1': 'map',
         '2': 'vehicles',
         '3': 'incidents',
-        '4': 'radio',
-        '5': 'stats'
+        '4': 'stats'
     };
     
     if (tabMap[e.key]) {
@@ -95,16 +94,8 @@ function switchTab(tabName) {
         updateVehiclesOverview();
     } else if (tabName === 'incidents') {
         updateIncidentsOverview();
-    } else if (tabName === 'radio') {
-        syncRadioFeed();
-        // 🔧 Stumme Prüfung
-        if (typeof updateRadioVehicleDropdown === 'function') {
-            const dropdown = document.getElementById('radio-vehicle-dropdown');
-            if (dropdown) {
-                updateRadioVehicleDropdown();
-            }
-        }
     }
+    // Radio-Tab Handling entfernt
 }
 
 // ✅ FIX: Hole FMS Status (nutzt CONFIG.FMS_STATUS)
@@ -238,7 +229,7 @@ function updateVehiclesOverview() {
             </div>
             <div class="shortcuts-hint">
                 <i class="fas fa-keyboard"></i> 
-                <span>Shortcuts: <kbd>1-5</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
+                <span>Shortcuts: <kbd>1-4</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
             </div>
         </div>
     `;
@@ -413,37 +404,16 @@ function updateIncidentsOverview() {
     container.innerHTML = html;
 }
 
-// Funkverkehr synchronisieren
-function syncRadioFeed() {
-    const mainFeed = document.getElementById('radio-feed');
-    const fullFeed = document.getElementById('radio-feed-full');
-    
-    if (mainFeed && fullFeed) {
-        fullFeed.innerHTML = mainFeed.innerHTML;
-    }
-}
-
-// 🔧 FIX v5.0.1: STUMME PRÜFUNG - Kein warn() mehr!
-// Auto-Update wenn Tab aktiv
+// Auto-Update wenn Tab aktiv (Radio entfernt)
 setInterval(() => {
     if (currentTab === 'vehicles') {
         updateVehiclesOverview();
     } else if (currentTab === 'incidents') {
         updateIncidentsOverview();
-    } else if (currentTab === 'radio') {
-        syncRadioFeed();
-        // 🔧 SILENT CHECK - Prüfe ob Element existiert BEVOR Funktion aufgerufen wird
-        if (typeof updateRadioVehicleDropdown === 'function') {
-            const dropdown = document.getElementById('radio-vehicle-dropdown');
-            if (dropdown) {
-                updateRadioVehicleDropdown();
-            }
-            // KEIN warn() mehr wenn Dropdown fehlt!
-        }
     }
 }, 3000);
 
-console.log('✅ Tabs v5.0.1 geladen - Kompakte UI mit Shortcuts + Silent Fix');
+console.log('✅ Tabs v5.1.0 geladen - Kompakte UI mit Shortcuts (Radio entfernt)');
 
 // Helper functions
 function getVehicleIcon(type) {
