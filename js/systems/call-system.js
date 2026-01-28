@@ -1,5 +1,6 @@
 // =========================
-// EMERGENCY CALL SYSTEM v7.5
+// EMERGENCY CALL SYSTEM v7.6
+// + 🐛 FIX: Automatischer Tab-Wechsel bei eingehendem Anruf
 // + FIX: Abbruch-Logik bei mehrfachen Anrufen
 // + Verhindert Überschreibung aktiver Calls
 // + Verbesserte Queue-Verwaltung
@@ -14,11 +15,10 @@ const CallSystem = {
     askedQuestions: [],
     geocodeCache: {},
     lastGeocodeRequest: 0,
-    pendingGeneration: null, // ✅ NEU: AbortController für Anruf-Generierung
+    pendingGeneration: null,
     
-    // 🆕 RATE LIMITING
     lastGroqRequest: 0,
-    minGroqDelay: 2000, // 2 Sekunden zwischen Groq-Calls
+    minGroqDelay: 2000,
     groqRetries: 0,
     maxGroqRetries: 3,
 
@@ -38,11 +38,12 @@ const CallSystem = {
     ],
 
     initialize() {
-        console.log('📞 Call System v7.5 initialisiert');
+        console.log('📞 Call System v7.6 initialisiert');
         console.log('✅ Vordefinierte Fragen = callData.antworten');
         console.log('✅ Custom Questions = Groq AI');
         console.log('✅ Rate Limiting aktiv');
         console.log('✅ Abbruch-Logik für Überlappung aktiviert');
+        console.log('🐛 FIX: Automatischer Tab-Wechsel bei Anruf');
         this.setupRingtone();
     },
 
@@ -51,7 +52,6 @@ const CallSystem = {
             this.ringtoneAudio = new Audio('sounds/ringtone.mp3');
             this.ringtoneAudio.loop = true;
             
-            // ✅ FIX: Prüfe ob Sound geladen werden kann
             this.ringtoneAudio.addEventListener('error', (e) => {
                 console.warn('⚠️ Klingelton nicht gefunden - Stummschaltung aktiv');
                 this.ringtoneAudio = null;
@@ -97,20 +97,17 @@ const CallSystem = {
     },
 
     async generateIncomingCall() {
-        // ✅ FIX: Prüfe ob bereits ein Anruf aktiv ist oder gerade generiert wird
         if (this.activeCall || this.isGenerating) {
             console.warn('⚠️ Anruf wird übersprungen - Leitung besetzt oder Generierung läuft');
             return;
         }
 
-        // ✅ FIX: Breche vorherige Generierung ab falls noch laufend
         if (this.pendingGeneration) {
             console.log('🛑 Breche vorherige Anruf-Generierung ab');
             this.pendingGeneration.abort();
             this.pendingGeneration = null;
         }
 
-        // Erstelle neuen AbortController
         this.pendingGeneration = new AbortController();
         const signal = this.pendingGeneration.signal;
 
@@ -118,7 +115,6 @@ const CallSystem = {
         console.group('📞 GENERATING CALL WITH GEOCODING');
 
         try {
-            // Prüfe ob abgebrochen
             if (signal.aborted) {
                 throw new Error('Generation aborted');
             }
@@ -127,7 +123,6 @@ const CallSystem = {
             console.log('🗺️ Hole echte Adresse für Koordinaten:', location);
             const realAddress = await this.reverseGeocode(location.lat, location.lon);
             
-            // Prüfe erneut ob abgebrochen
             if (signal.aborted) {
                 throw new Error('Generation aborted after geocode');
             }
@@ -140,7 +135,6 @@ const CallSystem = {
 
             const callData = await this.createCallWithGroq(location, realAddress, signal);
             
-            // Finale Prüfung vor Anzeige
             if (signal.aborted) {
                 throw new Error('Generation aborted after call creation');
             }
@@ -315,7 +309,6 @@ const CallSystem = {
             await new Promise(resolve => setTimeout(resolve, waitTime));
         }
 
-        // ✅ FIX: Prüfe Abort-Signal
         if (signal && signal.aborted) {
             throw new Error('Call creation aborted');
         }
@@ -417,9 +410,8 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
             this.groqRetries = 0;
             return response;
         } catch (error) {
-            // ✅ FIX: Unterscheide Abort von echtem Fehler
             if (error.message === 'Call creation aborted') {
-                throw error; // Propagiere Abort nach oben
+                throw error;
             }
             
             console.error('❌ Groq Fehler:', error);
@@ -468,7 +460,7 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                 temperature: 1.3,
                 response_format: { type: 'json_object' }
             }),
-            signal: signal // ✅ FIX: Nutze Signal zum Abbrechen
+            signal: signal
         });
 
         if (!response.ok) {
@@ -480,7 +472,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
     },
 
     showIncomingCallInSidebar(callData) {
-        // ✅ FIX: Doppelte Prüfung ob bereits ein Anruf aktiv ist
         if (this.activeCall) {
             console.warn('⚠️ Ignoriere neuen Anruf - bereits ein Anruf aktiv');
             return;
@@ -515,7 +506,16 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         }
 
         this.playRingtone();
-        console.log('🚨 Incoming Call in Sidebar angezeigt');
+        
+        // 🐛 FIX BUG #4.3: Automatischer Tab-Wechsel zu "Notruf"
+        console.log('🐛 FIX: Wechsle automatisch zum Notruf-Tab');
+        if (typeof switchTab === 'function') {
+            switchTab('call');
+        } else {
+            console.warn('⚠️ switchTab() nicht verfügbar - manueller Wechsel erforderlich');
+        }
+        
+        console.log('🚨 Incoming Call in Sidebar angezeigt + Tab gewechselt');
     },
 
     playRingtone() {
@@ -688,7 +688,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         ];
 
         container.innerHTML = `
-            <!-- 🆕 FREITEXTFELD -->
             <div style="margin-bottom: 20px; padding: 15px; background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px;">
                 <div style="display: flex; align-items: center; margin-bottom: 10px;">
                     <i class="fas fa-keyboard" style="color: #2196F3; margin-right: 8px;"></i>
@@ -704,7 +703,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
                 </div>
             </div>
             
-            <!-- VORDEFINIERTE FRAGEN -->
             ${categories.map(cat => `
                 <div class="question-cat">
                     <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('open')">
@@ -722,25 +720,21 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         `;
     },
 
-    // ✅ FIX: Neue Funktion für vordefinierte Fragen
     askPredefinedQuestion(key, text) {
         console.log(`❓ Vordefinierte Frage: ${key}`);
         
         const container = document.getElementById('caller-messages');
         
-        // Zeige Frage
         const qDiv = document.createElement('div');
         qDiv.className = 'msg-dispatcher';
         qDiv.innerHTML = `<strong>👨‍💻 Sie:</strong> ${text}`;
         container.appendChild(qDiv);
         container.scrollTop = container.scrollHeight;
 
-        // Markiere als gefragt
         if (!this.askedQuestions.includes(key)) {
             this.askedQuestions.push(key);
         }
 
-        // ✅ NUTZE VORDEFINIERTE ANTWORT aus activeCall.antworten
         setTimeout(() => {
             const answer = this.activeCall.antworten[key] || 'Keine Angabe';
             console.log(`✅ Antwort aus callData: ${answer}`);
@@ -753,7 +747,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
             this.typeText(aDiv.querySelector('.typing'), answer);
             container.scrollTop = container.scrollHeight;
 
-            // Update Manual Incident Formular
             if (typeof ManualIncident !== 'undefined' && ManualIncident.updateFromCallAnswer) {
                 setTimeout(() => {
                     ManualIncident.updateFromCallAnswer(key, answer, this.activeCall);
@@ -762,7 +755,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         }, 1000);
     },
 
-    // ✅ Custom Questions nutzen GROQ AI
     async askCustomQuestion() {
         const input = document.getElementById('custom-question-input');
         if (!input || !input.value.trim()) return;
@@ -780,7 +772,6 @@ ANTWORTE NUR ALS JSON (ohne Markdown!):
         container.appendChild(qDiv);
         container.scrollTop = container.scrollHeight;
         
-        // Rate Limiting
         const now = Date.now();
         const timeSinceLastGroq = now - this.lastGroqRequest;
         if (timeSinceLastGroq < this.minGroqDelay) {
@@ -871,7 +862,6 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
         console.log('📞 Gespräch beendet');
         this.stopRingtone();
         
-        // ✅ FIX: Breche aktive Generierung ab falls vorhanden
         if (this.pendingGeneration) {
             this.pendingGeneration.abort();
             this.pendingGeneration = null;
@@ -904,7 +894,6 @@ Antworte NUR mit der direkten Antwort, kein JSON.`;
         }
     },
 
-    // ✅ NEU: Cleanup-Methode
     cleanup() {
         if (this.pendingGeneration) {
             this.pendingGeneration.abort();
@@ -920,10 +909,10 @@ if (typeof window !== 'undefined') {
         CallSystem.initialize();
     });
     
-    // Cleanup bei Seitenwechsel
     window.addEventListener('beforeunload', () => {
         if (CallSystem) CallSystem.cleanup();
     });
 }
 
-console.log('✅ Call System v7.5 geladen - FIX: Abbruch-Logik für mehrfache Anrufe');
+console.log('✅ Call System v7.6 geladen');
+console.log('🐛 FIX Bug #4.3: Automatischer Tab-Wechsel bei Anruf');
