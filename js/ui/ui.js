@@ -1,16 +1,7 @@
 // =========================
-// UI SYSTEM - v3.9 - Status-Logging Fix
-// ✅ Fixed Radio Vehicle Dropdown + Display
-// ✅ Improved Design & Vehicle Info
-// + Incident Manager Integration
-// + ✅ Phase 3: Radio Interface KOMPLETT NEU
-// + ✅ Fahrzeug-Dropdown mit vollständigen Infos
-// + ✅ Intelligente Fahrzeugantworten
-// + ✅ Phase 3.1: Dropdown behält Auswahl bei Update
-// + ✅ v3.6: Verstärkung anfordern Button
-// + ✅ v3.7: Fixed Status Display + Prettier Radio UI
-// + ✅ v3.8: Complete Dropdown Fix
-// + ✅ v3.9: STATUS-LOGGING FIX - Nutzt VehicleMovement.setVehicleStatus
+// UI SYSTEM - v4.0 - Radio System Removed
+// ✅ All radio references removed
+// ✅ Status-Logging via VehicleMovement
 // =========================
 
 const UI = {
@@ -125,7 +116,6 @@ const UI = {
         }
     },
 
-    // ✅ NEU: Verstärkung anfordern
     requestReinforcement(incidentId) {
         const incident = GAME_DATA.incidents.find(i => i.id === incidentId || i.nummer === incidentId);
         if (!incident) {
@@ -135,7 +125,6 @@ const UI = {
 
         console.log(`🚑 Verstärkung angefordert für Einsatz: ${incidentId}`);
 
-        // ✅ Öffne Vehicle Modal mit Kontext
         if (typeof ManualIncident !== 'undefined' && ManualIncident.openVehicleModalForReinforcement) {
             ManualIncident.openVehicleModalForReinforcement(incident);
         } else {
@@ -173,12 +162,10 @@ const UI = {
                 vehicle.status = 'available';
                 vehicle.incident = null;
                 
-                // ✅ FIX v3.9: Nutze VehicleMovement.setVehicleStatus statt direkter Zuweisung
                 if (typeof VehicleMovement !== 'undefined' && VehicleMovement.setVehicleStatus) {
                     VehicleMovement.setVehicleStatus(vehicle, 2);
                     console.log(`✅ Status-Logging: ${vehicle.callsign} auf Status 2 gesetzt (Einsatzabschluss)`);
                 } else {
-                    // Fallback wenn VehicleMovement nicht verfügbar
                     vehicle.currentStatus = 2;
                     console.warn(`⚠️ VehicleMovement nicht verfügbar - direkte Zuweisung für ${vehicle.callsign}`);
                 }
@@ -207,321 +194,7 @@ const UI = {
     }
 };
 
-// ✅ v3.8: COMPLETE DROPDOWN FIX - Fahrzeug-Dropdown mit vollständigen Infos
-let selectedVehicleForRadio = null;
-
-function updateRadioVehicleDropdown() {
-    const dropdown = document.getElementById('radio-vehicle-dropdown');
-    if (!dropdown) {
-        console.warn('⚠️ Radio-Dropdown nicht gefunden');
-        return;
-    }
-    
-    // ✅ Behalte aktuelle Auswahl!
-    const currentValue = dropdown.value;
-    
-    const vehicles = GAME_DATA?.vehicles || [];
-    
-    // ✅ FIX: Filtere korrekt nach owned UND Status != 2
-    const activeVehicles = vehicles.filter(v => {
-        // Prüfe ob Fahrzeug dem Spieler gehört
-        if (!v.owned) return false;
-        
-        // Status 2 = Auf Wache (nicht anfunkbar)
-        const status = v.currentStatus || v.status || 2;
-        if (status === 2) return false;
-        
-        return true;
-    });
-    
-    console.log(`📡 Radio-Dropdown Update: ${activeVehicles.length} von ${vehicles.filter(v => v.owned).length} Fahrzeugen verfügbar`);
-    
-    // ✅ v3.8: Verbessertes Design mit Fahrzeuganzahl
-    dropdown.innerHTML = `<option value="" style="color: #9aa0a6;">-- ${activeVehicles.length} Fahrzeug(e) verfügbar --</option>`;
-    
-    activeVehicles.forEach(vehicle => {
-        const fms = UI.getFMSStatus(vehicle);
-        const option = document.createElement('option');
-        option.value = vehicle.id;
-        
-        // ✅ FIX: Sichere Status-Ermittlung
-        const statusCode = vehicle.currentStatus || vehicle.status || 2;
-        const statusName = fms.name || 'Unbekannt';
-        
-        // ✅ v3.8: Vollständige Info mit Icon, Rufzeichen, Typ, FMS
-        option.textContent = `${fms.icon} ${vehicle.callsign} (${vehicle.type}) | FMS ${statusCode} - ${statusName}`;
-        option.dataset.fmsColor = fms.color;
-        option.dataset.statusCode = statusCode;
-        option.dataset.vehicleType = vehicle.type;
-        option.dataset.station = vehicle.station;
-        
-        dropdown.appendChild(option);
-    });
-    
-    // ✅ Setze Auswahl zurück wenn noch vorhanden
-    if (currentValue && activeVehicles.find(v => v.id === currentValue)) {
-        dropdown.value = currentValue;
-        // Aktualisiere auch das selectedVehicleForRadio Objekt
-        const vehicle = GAME_DATA.vehicles.find(v => v.id === currentValue);
-        if (vehicle) {
-            selectedVehicleForRadio = vehicle;
-            updateSelectedVehicleDisplay(vehicle);
-        }
-    } else if (currentValue) {
-        // Fahrzeug ist nicht mehr aktiv (z.B. Status 2 erreicht)
-        selectedVehicleForRadio = null;
-        dropdown.value = '';
-        clearSelectedVehicleDisplay();
-        console.log('⚠️ Ausgewähltes Fahrzeug nicht mehr verfügbar');
-    }
-}
-
-function selectVehicleFromDropdown() {
-    const dropdown = document.getElementById('radio-vehicle-dropdown');
-    if (!dropdown) return;
-    
-    const vehicleId = dropdown.value;
-    if (!vehicleId) {
-        selectedVehicleForRadio = null;
-        clearSelectedVehicleDisplay();
-        return;
-    }
-    
-    const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
-    if (vehicle) {
-        selectedVehicleForRadio = vehicle;
-        console.log(`📡 Fahrzeug ausgewählt: ${vehicle.callsign} (${vehicle.type})`);
-        
-        // ✅ v3.8: Zeige ausgewähltes Fahrzeug mit allen Infos
-        updateSelectedVehicleDisplay(vehicle);
-    }
-}
-
-// ✅ v3.8: IMPROVED - Zeige ausgewähltes Fahrzeug mit vollständigen Infos
-function updateSelectedVehicleDisplay(vehicle) {
-    const container = document.getElementById('selected-vehicle-info');
-    if (!container) return;
-    
-    const fms = UI.getFMSStatus(vehicle);
-    const statusCode = vehicle.currentStatus || vehicle.status || 2;
-    
-    container.innerHTML = `
-        <div style="padding: 14px; background: linear-gradient(135deg, ${fms.color}20 0%, ${fms.color}10 100%); border: 2px solid ${fms.color}; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 8px ${fms.color}30;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                <span style="font-size: 2em;">${fms.icon}</span>
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; color: #e2e8f0; font-size: 1.15em; font-family: 'Consolas', monospace;">${vehicle.callsign}</div>
-                    <div style="color: #a0aec0; font-size: 0.9em;">${vehicle.name} • ${vehicle.type}</div>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <div style="padding: 8px 12px; background: ${fms.color}25; border-radius: 6px; border-left: 3px solid ${fms.color};">
-                    <div style="font-size: 0.75em; color: #a0aec0; margin-bottom: 2px;">FMS Status</div>
-                    <div style="font-weight: bold; color: ${fms.color};">${statusCode} - ${fms.name}</div>
-                </div>
-                <div style="padding: 8px 12px; background: rgba(66,153,225,0.15); border-radius: 6px; border-left: 3px solid #4299e1;">
-                    <div style="font-size: 0.75em; color: #a0aec0; margin-bottom: 2px;">Standort</div>
-                    <div style="font-weight: bold; color: #63b3ed;">${vehicle.station || 'Unbekannt'}</div>
-                </div>
-            </div>
-        </div>
-    `;
-    container.style.display = 'block';
-}
-
-function clearSelectedVehicleDisplay() {
-    const container = document.getElementById('selected-vehicle-info');
-    if (container) {
-        container.innerHTML = '';
-        container.style.display = 'none';
-    }
-}
-
-// ✅ PHASE 3 FIX 2.3: Funkspruch an ausgewähltes Fahrzeug mit intelligenter Antwort
-function sendRadioToVehicle() {
-    const input = document.getElementById('radio-vehicle-message-input');
-    if (!input) return;
-    
-    const message = input.value.trim();
-    if (!message) {
-        alert('⚠️ Bitte geben Sie eine Nachricht ein!');
-        return;
-    }
-    
-    if (!selectedVehicleForRadio) {
-        alert('⚠️ Bitte wählen Sie zuerst ein Fahrzeug aus!');
-        return;
-    }
-    
-    const vehicle = selectedVehicleForRadio;
-    const fms = UI.getFMSStatus(vehicle);
-    
-    // Sende Nachricht der Leitstelle
-    addRadioMessage(`Leitstelle → ${vehicle.callsign}: ${message}`, 'dispatcher', '#17a2b8');
-    
-    // ✅ INTELLIGENTE FAHRZEUG-ANTWORT
-    setTimeout(() => {
-        const response = generateIntelligentVehicleResponse(vehicle, message.toLowerCase());
-        addRadioMessage(`${vehicle.callsign}: ${response}`, 'vehicle', fms.color);
-    }, 1500 + Math.random() * 1000); // 1.5-2.5 Sekunden Verzögerung
-    
-    // Leere Eingabefeld
-    input.value = '';
-    input.focus();
-    
-    console.log(`📡 Funkspruch an ${vehicle.callsign} gesendet`);
-}
-
-// ✅ PHASE 3 FIX 2.3: Intelligente kontextabhängige Antworten
-function generateIntelligentVehicleResponse(vehicle, message) {
-    const fms = UI.getFMSStatus(vehicle);
-    
-    // Status-Abfrage
-    if (message.includes('status') || message.includes('melden')) {
-        return `Kommen, Status ${vehicle.currentStatus || 2} - ${fms.name}`;
-    }
-    
-    // Position-Abfrage
-    if (message.includes('position') || message.includes('standort') || message.includes('wo')) {
-        if (vehicle.status === 'available') {
-            return `Kommen, auf der Wache ${vehicle.station}`;
-        } else if (vehicle.status === 'on-scene') {
-            return `Kommen, am Einsatzort`;
-        } else if (vehicle.status === 'transporting') {
-            return `Kommen, Fahrt zum Krankenhaus`;
-        } else if (vehicle.status === 'dispatched') {
-            return `Kommen, Anfahrt zum Einsatzort`;
-        } else {
-            return `Kommen, unterwegs`;
-        }
-    }
-    
-    // ETA-Abfrage
-    if (message.includes('eta') || message.includes('ankunft') || message.includes('wann')) {
-        if (vehicle.status === 'dispatched' || vehicle.status === 'transporting') {
-            const eta = Math.ceil(Math.random() * 8) + 2; // 2-10 Minuten
-            return `Kommen, ETA ${eta} Minuten`;
-        } else {
-            return `Kommen, bereits am Ziel`;
-        }
-    }
-    
-    // Bestätigung von Anweisungen
-    if (message.includes('fahren') || message.includes('kommen') || message.includes('anfahr')) {
-        return `Verstanden, sind unterwegs`;
-    }
-    
-    if (message.includes('warten') || message.includes('bleib')) {
-        return `Verstanden, warten ab`;
-    }
-    
-    if (message.includes('zurück') || message.includes('einrücken')) {
-        return `Verstanden, rücken ein`;
-    }
-    
-    // Patient-Status
-    if (message.includes('patient') || message.includes('verletzte')) {
-        if (vehicle.type === 'RTW') {
-            if (vehicle.status === 'on-scene') {
-                return `Kommen, Patient wird versorgt`;
-            } else if (vehicle.status === 'transporting') {
-                return `Kommen, Patient an Bord, Fahrt ins Krankenhaus`;
-            }
-        }
-        return `Verstanden`;
-    }
-    
-    // Allgemeine Bestätigung
-    const confirmations = [
-        'Verstanden',
-        'Kommen, verstanden',
-        'Alles klar',
-        'Roger'
-    ];
-    
-    return confirmations[Math.floor(Math.random() * confirmations.length)];
-}
-
-// ✅ PHASE 3 FIX 2: Funkspruch an Leitstelle senden
-function sendRadioMessage() {
-    const input = document.getElementById('radio-message-input');
-    if (!input) return;
-    
-    const message = input.value.trim();
-    if (!message) {
-        alert('⚠️ Bitte geben Sie eine Nachricht ein!');
-        return;
-    }
-    
-    // Sende als Leitstelle
-    addRadioMessage(message, 'dispatcher', '#17a2b8');
-    
-    // Leere Eingabefeld
-    input.value = '';
-    input.focus();
-    
-    console.log(`📡 Funkspruch gesendet: ${message}`);
-}
-
-// ✅ v3.9: IMPROVED - Radio Messages mit Farben (Systemnachrichten blockiert)
-function addRadioMessage(message, sender = 'system', color = null) {
-    const container = document.getElementById('radio-feed-full');
-    if (!container) return;
-
-    // ✅ KEINE System-Meldungen!
-    if (sender === 'system') {
-        return; // Skip system messages
-    }
-
-    const timestamp = typeof IncidentNumbering !== 'undefined' && IncidentNumbering.getCurrentTimestamp ? 
-        IncidentNumbering.getCurrentTimestamp() : 
-        new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
-    const senderIcons = {
-        'dispatcher': '👨‍💻 Leitstelle',
-        'vehicle': '🚑',
-        'Leitstelle': '👨‍💻 Leitstelle'
-    };
-
-    const icon = senderIcons[sender] || '📡';
-    
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'radio-message';
-    
-    // Farbe für Status-Meldungen
-    let style = '';
-    if (color) {
-        style = `border-left: 4px solid ${color}; background: ${color}15; padding-left: 12px;`;
-    } else {
-        style = 'border-left: 4px solid #17a2b8; padding-left: 12px;';
-    }
-    
-    msgDiv.style.cssText = style + ' margin-bottom: 8px; padding: 10px; border-radius: 4px;';
-    msgDiv.innerHTML = `
-        <span style="color: #666; font-size: 0.85em; margin-right: 8px;">[${timestamp}]</span>
-        <span style="margin-right: 8px; font-weight: 600;">${icon}</span>
-        <span>${message}</span>
-    `;
-
-    container.appendChild(msgDiv);
-    container.scrollTop = container.scrollHeight;
-
-    // Limitiere auf 100 Einträge
-    while (container.children.length > 100) {
-        container.removeChild(container.firstChild);
-    }
-}
-
 if (typeof window !== 'undefined') {
     window.UI = UI;
-    window.addRadioMessage = addRadioMessage;
-    window.sendRadioMessage = sendRadioMessage;
-    window.sendRadioToVehicle = sendRadioToVehicle;
-    window.updateRadioVehicleDropdown = updateRadioVehicleDropdown;
-    window.selectVehicleFromDropdown = selectVehicleFromDropdown;
-    window.generateIntelligentVehicleResponse = generateIntelligentVehicleResponse;
-    window.updateSelectedVehicleDisplay = updateSelectedVehicleDisplay;
-    window.clearSelectedVehicleDisplay = clearSelectedVehicleDisplay;
-    
-    console.log('✅ UI v3.9 geladen - STATUS-LOGGING FIX implementiert');
+    console.log('✅ UI v4.0 geladen - Radio System entfernt');
 }

@@ -1,8 +1,9 @@
 // =========================
-// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.0.3
+// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.0.4
 // Nutzt window.GameTime aus main.js!
 // ✅ FIX: vehicle.status als String für Karten-Kompatibilität
 // ✅ v5.0.3: Nutzt VehicleMovement.setVehicleStatus() für Status-Änderungen
+// ✅ v5.0.4: Radio-System Referenzen entfernt
 // =========================
 
 class Game {
@@ -21,7 +22,7 @@ class Game {
         // Nächster Anruf (nutzt GameTime.elapsed)
         this.nextIncidentGameTime = this.getRandomIncidentInterval();
         
-        console.log(`🎮 Game v5.0.3 initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
+        console.log(`🎮 Game v5.0.4 initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
     }
     
     /**
@@ -148,9 +149,7 @@ class Game {
                 const reward = this.calculateReward(incident.keyword || incident.stichwort);
                 this.money += reward;
                 incident.rewarded = true;
-                if (typeof addRadioMessage !== 'undefined') {
-                    addRadioMessage('System', `€ ${reward} für ${incident.keyword || incident.stichwort} erhalten`, 'system');
-                }
+                console.log(`💰 ${reward}€ für ${incident.keyword || incident.stichwort} erhalten`);
                 const creditsEl = document.getElementById('credits');
                 if (creditsEl) {
                     creditsEl.textContent = this.money.toLocaleString();
@@ -204,11 +203,6 @@ class Game {
         incident.assignedVehicles.push(vehicleId);
         
         console.log(`🚑 ${vehicle.callsign} disponiert zu ${incidentId}`);
-        
-        // Sende Auto-Status Update über Radio
-        if (typeof radioSystem !== 'undefined' && radioSystem.sendAutoStatusUpdate) {
-            radioSystem.sendAutoStatusUpdate(vehicle, 4, incident);
-        }
     }
 }
 
