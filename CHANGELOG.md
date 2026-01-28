@@ -1,5 +1,41 @@
 # Changelog - Dispatcher Simulator
 
+## [7.0.0] - 2026-01-28
+
+### 🌟 Hauptfeatures
+
+#### Phase 3 Start & Radio-/Status-System
+- Neues **Unified Status System v2.3.2** mit robuster Logging-Logik
+- Funk-System weiter stabilisiert (Radio-System v4.0 Grundlage)
+- Vorbereitung für umfangreiche Template-V2-Überarbeitung
+
+#### Dokumentations-Refactor
+- Docs-Struktur aufgeräumt und verschlankt
+- Veraltete Release-Notes in `docs/releases/` zur Entfernung markiert
+- Technische Alt-Guides als obsolet markiert
+- Zentrales `docs/README.md` mit Übersicht & Cleanup-Hinweisen
+
+### ➕ Hinzugefügt
+- `docs/technical/UNIFIED_STATUS_SYSTEM.md` – Dokumentation für das Status-System
+- `docs/releases/CLEANUP_NEEDED.md` – Markiert alte v5–v6 Release-Notes
+- `docs/technical/CLEANUP_NEEDED.md` – Markiert obsolete technische Dokumente
+- `docs/systems/CLEANUP_NEEDED.md` – Markiert veraltete System-Doku
+
+### ⚙️ Geändert
+- `docs/README.md` komplett neu strukturiert (Fokus auf aktuelle Docs)
+- `ROADMAP.md` auf neuen Produktnamen **"Dispatcher Simulator"** aktualisiert
+
+### 📊 Verbesserungen
+- Deutlich weniger Dokumentations-Ballast
+- Schnellere Orientierung für neue Contributor
+- Klarer Unterschied zwischen aktueller und historischer Doku
+
+### 🛠️ Technisch
+- Keine Breaking Changes im Frontend-Verhalten
+- Nur Dokumentation & Status-/Radio-Grundlagen betroffen
+
+---
+
 ## [6.1.0] - 2026-01-25
 
 ### 🌟 Hauptfeatures
