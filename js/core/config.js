@@ -4,7 +4,6 @@
 // + ✅ FMS_STATUS Farben angepasst (gemäß Anforderung)
 // + ✅ Status 9 entfernt (nicht verwendet)
 // + ✅ Status 0: NUR für Besatzungs-Notfälle
-// + ✅ v6.4.0: RADIO-Sektion komplett entfernt
 // + ✅ v6.5.0: FMS-Status-Beschreibungen bereinigt (kein Funk mehr erwähnt)
 // =========================
 
