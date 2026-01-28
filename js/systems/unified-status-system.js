@@ -1,5 +1,5 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.4.2 - PRODUCTION-READY
+// UNIFIED STATUS SYSTEM v2.4.3 - PRODUCTION-READY
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
@@ -12,6 +12,7 @@
 // + 🚀 v2.4.0: EVENT-BASIERTES SYSTEM + Production-Ready!
 // + 🐛 v2.4.1: FIX - updateRadioVehicleDropdown nur wenn Element existiert
 // + 🎯 v2.4.2: FIX - Fahrzeugnummern im Funk-Tab anzeigen!
+// + ✅ v2.4.3: FIX - Status-Badges werden jetzt korrekt angezeigt!
 // =========================
 
 class UnifiedStatusSystem {
@@ -21,13 +22,14 @@ class UnifiedStatusSystem {
         this.isRadioSystemReady = false;
         this.messageQueue = [];
         
-        console.log('📡 Unified Status System v2.4.2 initialisiert');
+        console.log('📡 Unified Status System v2.4.3 initialisiert');
         console.log('🚀 EVENT-BASIERTES SYSTEM - Keine Retries mehr!');
         console.log('🔧 Robustes Vehicle-Finding: game.vehicles || GAME_DATA.vehicles');
         console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
         console.log('🔥 PRODUCTION: Test-Nachrichten deaktiviert!');
         console.log('🐛 FIX: Prüft ob Dropdown existiert vor Update');
         console.log('🎯 FIX: Fahrzeugnummern werden jetzt im Funk-Tab angezeigt!');
+        console.log('✅ FIX: Status-Badges werden jetzt korrekt im Body angezeigt!');
         
         // 🚀 EVENT-BASIERT: Warte auf Radio-System
         this.waitForRadioSystem();
@@ -96,8 +98,8 @@ class UnifiedStatusSystem {
     }
 
     /**
-     * 🎯 NEU: Extrahiert vollständige Anzeige-Kennung aus Fahrzeugnamen
-     * Format: "Nummer Rufname" (z.B. "4/82-1 Florian Stuttgart")
+     * 🎯 Extrahiert vollständige Anzeige-Kennung aus Fahrzeugnamen
+     * Format: "Nummer Rufname" (z.B. "4/82-1 Rotkreuz Rems Murr")
      * @param {Object} vehicle - Fahrzeug-Objekt
      * @returns {string} Vollständige Anzeige-Kennung
      */
@@ -166,7 +168,9 @@ class UnifiedStatusSystem {
 
     /**
      * 🚀 PRODUCTION-READY: Loggt Status ins Radio (mit Event-System)
-     * Format: NUMMER RUFNAME: [Status-Alt → Status-Neu] Status-Text
+     * Format:
+     * - Sender (Header): Nur die Fahrzeugkennung
+     * - Message (Body): Status-Übergang + Text
      */
     logStatusToRadio(displayCallsign, oldStatus, newStatus, additionalText = '') {
         // Wenn Radio-System noch nicht bereit: In Queue packen
@@ -199,11 +203,14 @@ class UnifiedStatusSystem {
             statusText = `Status ${newStatus}`;
         }
         
-        // 🔥 FORMAT: Nummer Rufname: [Alt → Neu] Status-Text
-        const messageHTML = `${displayCallsign}: ${transition} <span style="margin-left: 8px; color: #a0aec0; font-style: italic;">${statusText}</span>`;
+        // ✅ KORRIGIERTES FORMAT:
+        // - Sender: Nur Kennung (erscheint im Header)
+        // - Message: Status-Badges + Text (erscheint im Body)
+        const messageHTML = `${transition} <span style="margin-left: 8px; color: #cbd5e0;">${statusText}</span>`;
         
         try {
             // Sende Nachricht an Radio-System
+            // Parameter: sender (Header), message (Body), type, isHTML
             addRadioMessage(displayCallsign, messageHTML, 'status-change', true);
         } catch (error) {
             console.error('❌ FEHLER beim Aufruf von addRadioMessage():', error);
@@ -231,8 +238,8 @@ class UnifiedStatusSystem {
         
         const badge = this.createStatusBadge(5);
         
-        // 🔥 FORMAT: Nummer Rufname: [Badge] Sprechwunsch
-        const messageHTML = `${displayCallsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold;">Sprechwunsch</span>`;
+        // ✅ KORRIGIERTES FORMAT: Nur Badge + Text im Body
+        const messageHTML = `${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold;">Sprechwunsch</span>`;
         
         if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
             addRadioMessage(displayCallsign, messageHTML, 'status-5-request', true);
@@ -267,8 +274,8 @@ class UnifiedStatusSystem {
         
         const badge = this.createStatusBadge(0);
         
-        // 🔥 FORMAT: Nummer Rufname: [Badge] NOTFALL BESATZUNG!
-        const messageHTML = `${displayCallsign}: ${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
+        // ✅ KORRIGIERTES FORMAT: Nur Badge + Text im Body
+        const messageHTML = `${badge} <span style="margin-left: 8px; color: #fc8181; font-weight: bold; text-transform: uppercase;">NOTFALL BESATZUNG!</span>`;
         
         if (this.isRadioSystemReady && typeof addRadioMessage === 'function') {
             addRadioMessage(displayCallsign, messageHTML, 'status-0-emergency', true);
@@ -376,22 +383,22 @@ class UnifiedStatusSystem {
 
         const messages = {
             4: [
-                `${displayCallsign}, können Sie uns die genaue Adresse nochmal durchgeben? Kommen.`,
-                `${displayCallsign}, benötigen Rückfrage zur Zufahrt, kommen.`,
-                `${displayCallsign}, ist die Einsatzstelle barrierefrei erreichbar? Kommen.`
+                `Können Sie uns die genaue Adresse nochmal durchgeben? Kommen.`,
+                `Benötigen Rückfrage zur Zufahrt, kommen.`,
+                `Ist die Einsatzstelle barrierefrei erreichbar? Kommen.`
             ],
             6: [
-                `${displayCallsign}, Patient zeigt Symptome, benötigen Rücksprache mit NEF, kommen.`,
-                `${displayCallsign}, benötigen Nachforderung weiterer Kräfte, kommen.`,
-                `${displayCallsign}, Lage vor Ort unklar, benötigen weitere Informationen, kommen.`
+                `Patient zeigt Symptome, benötigen Rücksprache mit NEF, kommen.`,
+                `Benötigen Nachforderung weiterer Kräfte, kommen.`,
+                `Lage vor Ort unklar, benötigen weitere Informationen, kommen.`
             ],
             7: [
-                `${displayCallsign}, benötigen Zielkrankenhaus-Zuweisung, kommen.`,
-                `${displayCallsign}, Patient instabil, welche Klinik ist am nächsten? Kommen.`
+                `Benötigen Zielkrankenhaus-Zuweisung, kommen.`,
+                `Patient instabil, welche Klinik ist am nächsten? Kommen.`
             ],
             8: [
-                `${displayCallsign}, Verkehrslage, benötigen alternative Route, kommen.`,
-                `${displayCallsign}, Patientenzustand verschlechtert sich, benötigen Notarzt-Konsil, kommen.`
+                `Verkehrslage, benötigen alternative Route, kommen.`,
+                `Patientenzustand verschlechtert sich, benötigen Notarzt-Konsil, kommen.`
             ]
         };
 
@@ -400,7 +407,7 @@ class UnifiedStatusSystem {
             return statusMessages[Math.floor(Math.random() * statusMessages.length)];
         }
 
-        return `${displayCallsign}, benötigen Rücksprache, kommen.`;
+        return `Benötigen Rücksprache, kommen.`;
     }
 
     isWaitingForPermission(vehicleId) {
@@ -497,12 +504,11 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem;
 }
 
-console.log('✅ Unified Status System v2.4.2 geladen');
+console.log('✅ Unified Status System v2.4.3 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
 console.log('🚀 EVENT-BASIERTES SYSTEM - Production-Ready!');
 console.log('🔧 Robustes Vehicle-Finding aktiviert');
-console.log('🔥 OPTIMIERTES FORMAT: Nummer Rufname → Status-Kästchen → Text!');
-console.log('🐛 FIX: Dropdown-Update nur wenn Element existiert!');
-console.log('🎯 FIX: Fahrzeugnummern werden jetzt im Funk-Tab angezeigt!');
+console.log('🎯 Fahrzeugnummern im Header, Status-Badges im Body!');
+console.log('✅ FIX: Status-Änderungen werden jetzt korrekt angezeigt!');
