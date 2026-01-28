@@ -1,9 +1,10 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v5.0
+// TAB NAVIGATION & VEHICLE OVERVIEW v5.0.1 - SILENT FIX
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
 // ✅ Kompakte Card-Darstellung
+// 🔧 FIX v5.0.1: Stumme Prüfung in updateRadioVehicleDropdown
 // =========================
 
 let currentTab = 'map';
@@ -96,8 +97,12 @@ function switchTab(tabName) {
         updateIncidentsOverview();
     } else if (tabName === 'radio') {
         syncRadioFeed();
+        // 🔧 Stumme Prüfung
         if (typeof updateRadioVehicleDropdown === 'function') {
-            updateRadioVehicleDropdown();
+            const dropdown = document.getElementById('radio-vehicle-dropdown');
+            if (dropdown) {
+                updateRadioVehicleDropdown();
+            }
         }
     }
 }
@@ -418,6 +423,7 @@ function syncRadioFeed() {
     }
 }
 
+// 🔧 FIX v5.0.1: STUMME PRÜFUNG - Kein warn() mehr!
 // Auto-Update wenn Tab aktiv
 setInterval(() => {
     if (currentTab === 'vehicles') {
@@ -426,13 +432,18 @@ setInterval(() => {
         updateIncidentsOverview();
     } else if (currentTab === 'radio') {
         syncRadioFeed();
+        // 🔧 SILENT CHECK - Prüfe ob Element existiert BEVOR Funktion aufgerufen wird
         if (typeof updateRadioVehicleDropdown === 'function') {
-            updateRadioVehicleDropdown();
+            const dropdown = document.getElementById('radio-vehicle-dropdown');
+            if (dropdown) {
+                updateRadioVehicleDropdown();
+            }
+            // KEIN warn() mehr wenn Dropdown fehlt!
         }
     }
 }, 3000);
 
-console.log('✅ Tabs v5.0 geladen - Kompakte UI mit Shortcuts');
+console.log('✅ Tabs v5.0.1 geladen - Kompakte UI mit Shortcuts + Silent Fix');
 
 // Helper functions
 function getVehicleIcon(type) {
