@@ -39,8 +39,6 @@ import './systems/escalation-system.js';
 import './systems/groq-validator.js';
 import './systems/call-system.js';
 import './systems/vehicle-movement.js';
-import './systems/radio-system.js';
-import './systems/vehicle-radio-requests.js';
 
 // 📺 UI MODULES
 import './ui/ui-helpers.js';
