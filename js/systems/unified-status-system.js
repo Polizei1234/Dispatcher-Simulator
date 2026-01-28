@@ -1,5 +1,5 @@
 // =========================
-// UNIFIED STATUS SYSTEM v2.4.0 - PRODUCTION-READY
+// UNIFIED STATUS SYSTEM v2.4.1 - PRODUCTION-READY
 // Das EINZIGE Status-System - Fusioniert aus allen alten Systemen
 // + Status 0: NUR für Notfälle der Besatzung
 // + Status 5: Für alle Anfragen Fahrzeug→Leitstelle
@@ -10,6 +10,7 @@
 // + 🔥 v2.3: Nutzt oldStatus-Parameter statt vehicle.currentStatus!
 // + 🔥 v2.3.3: Verbessertes Format - Funkrufname ZUERST!
 // + 🚀 v2.4.0: EVENT-BASIERTES SYSTEM + Production-Ready!
+// + 🐛 v2.4.1: FIX - updateRadioVehicleDropdown nur wenn Element existiert
 // =========================
 
 class UnifiedStatusSystem {
@@ -19,11 +20,12 @@ class UnifiedStatusSystem {
         this.isRadioSystemReady = false;
         this.messageQueue = [];
         
-        console.log('📡 Unified Status System v2.4.0 initialisiert');
+        console.log('📡 Unified Status System v2.4.1 initialisiert');
         console.log('🚀 EVENT-BASIERTES SYSTEM - Keine Retries mehr!');
         console.log('🔧 Robustes Vehicle-Finding: game.vehicles || GAME_DATA.vehicles');
         console.log('🔥 Nutzt oldStatus-Parameter für korrektes Logging!');
         console.log('🔥 PRODUCTION: Test-Nachrichten deaktiviert!');
+        console.log('🐛 FIX: Prüft ob Dropdown existiert vor Update');
         
         // 🚀 EVENT-BASIERT: Warte auf Radio-System
         this.waitForRadioSystem();
@@ -373,6 +375,9 @@ class UnifiedStatusSystem {
         });
     }
 
+    /**
+     * 🐛 FIX: Aktualisiert Vehicle-Display nur wenn Elemente existieren
+     */
     updateVehicleDisplay(vehicle) {
         if (typeof updateVehicleMarkers === 'function') {
             updateVehicleMarkers();
@@ -382,8 +387,12 @@ class UnifiedStatusSystem {
             updateVehicleList();
         }
 
+        // 🐛 NUR wenn Dropdown existiert!
         if (typeof updateRadioVehicleDropdown === 'function') {
-            updateRadioVehicleDropdown();
+            const dropdown = document.getElementById('radio-vehicle-dropdown');
+            if (dropdown) {
+                updateRadioVehicleDropdown();
+            }
         }
     }
 
@@ -444,10 +453,11 @@ if (typeof window !== 'undefined') {
     window.UnifiedStatusSystem = UnifiedStatusSystem;
 }
 
-console.log('✅ Unified Status System v2.4.0 geladen');
+console.log('✅ Unified Status System v2.4.1 geladen');
 console.log('✅ Status 0: NUR Notfälle der Besatzung');
 console.log('✅ Status 5: Sprechwunsch mit "J"-Workflow');
 console.log('✅ Visuelle Status-Badges mit Farbcodierung');
 console.log('🚀 EVENT-BASIERTES SYSTEM - Production-Ready!');
 console.log('🔧 Robustes Vehicle-Finding aktiviert');
 console.log('🔥 OPTIMIERTES FORMAT: Funkrufname → Status-Kästchen → Text!');
+console.log('🐛 FIX: Dropdown-Update nur wenn Element existiert!');
