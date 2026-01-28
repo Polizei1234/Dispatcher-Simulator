@@ -4,74 +4,121 @@
 
 ---
 
-## 📖 Schnellstart
+## ⚠️ **AUFRÄUMEN ERFORDERLICH!**
 
-- **Erste Schritte:** Siehe [../README.md](../README.md) im Root-Verzeichnis
-- **Changelog:** [../CHANGELOG.md](../CHANGELOG.md)
-- **Roadmap:** [../ROADMAP.md](../ROADMAP.md)
+🧹 In jedem Ordner gibt es eine `CLEANUP_NEEDED.md` mit Anweisungen zum Löschen veralteter Dateien:
+- `docs/releases/CLEANUP_NEEDED.md` - 6 veraltete Release Notes
+- `docs/technical/CLEANUP_NEEDED.md` - 3 obsolete Guides
+- `docs/systems/CLEANUP_NEEDED.md` - 1 veraltete System-Doc
+
+**Nach dem Cleanup: Diese 3 CLEANUP_NEEDED.md Dateien auch löschen!**
 
 ---
 
-## 🗂️ Dokumentations-Kategorien
+## 📍 Dokumentations-Übersicht
 
-### 🔧 [Technical](technical/)
-Technische Dokumentation zu Architektur und Build-System
+### 💉 **Was du wissen musst:**
 
+| Typ | Ordner | Dateien | Status |
+|-----|--------|---------|--------|
+| Technisch | `/technical/` | 3 aktuell + 3 veraltet | ⚠️ Cleanup nötig |
+| Systeme | `/systems/` | 2 aktuell + 1 veraltet | ⚠️ Cleanup nötig |
+| Guides | `/guides/` | 2 aktuell | ✅ OK |
+| Releases | `/releases/` | 6 veraltet | 🛑 ALLE löschen |
+| Bugfixes | `/bugfixes/` | 2 (zusammenlegen) | ⚠️ Merge nötig |
+
+---
+
+## 📚 Dokumentation nach Kategorie
+
+### 🔧 [Technical](technical/) - Technische Dokumentation
+
+#### ✅ **AKTUELL (behalten):**
 - [ARCHITECTURE.md](technical/ARCHITECTURE.md) - System-Architektur und Komponenten
-- [BUILD_SYSTEM.md](technical/BUILD_SYSTEM.md) - Webpack-Konfiguration und Build-Prozess
-- [CACHE_CLEAR.md](technical/CACHE_CLEAR.md) - Cache-Management und Problembehebung
-- [UNIFIED_STATUS_SYSTEM.md](technical/UNIFIED_STATUS_SYSTEM.md) - FMS-Status-System Dokumentation
+- [BUILD_SYSTEM.md](technical/BUILD_SYSTEM.md) - Version-Management & Cache-System
+- [UNIFIED_STATUS_SYSTEM.md](technical/UNIFIED_STATUS_SYSTEM.md) - FMS-Status-System v2.3.2
 
-### 🎮 [Systems](systems/)
-Spezifische System-Dokumentationen
+#### ❌ **VERALTET (löschen):**
+- ~~CACHE_CLEAR.md~~ - Redundant zu BUILD_SYSTEM.md
+- ~~CSS_MIGRATION_GUIDE.md~~ - Migration bereits abgeschlossen (v7.2.0)
+- ~~RESTRUCTURING_PLAN.md~~ - Plan bereits umgesetzt
 
-- [ICON_SYSTEM_v6.0.0.md](systems/ICON_SYSTEM_v6.0.0.md) - Icon-System v6.0.0
-- [RADIO_SYSTEM_COMPLETE.md](systems/RADIO_SYSTEM_COMPLETE.md) - Funk-System Komplett-Dokumentation
-- [PHASE_2_DOCUMENTATION.md](systems/PHASE_2_DOCUMENTATION.md) - Phase 2 Entwicklungs-Dokumentation
+---
 
-### 📘 [Guides](guides/)
-Anleitungen für Integration und Migration
+### 🎮 [Systems](systems/) - System-Dokumentationen
 
+#### ✅ **AKTUELL (behalten):**
+- [PHASE_2_DOCUMENTATION.md](systems/PHASE_2_DOCUMENTATION.md) - AI Integration & Composition System (v7.0+)
+- [RADIO_SYSTEM_COMPLETE.md](systems/RADIO_SYSTEM_COMPLETE.md) - Funk-System v4.0
+
+#### ❌ **VERALTET (löschen):**
+- ~~ICON_SYSTEM_v6.0.0.md~~ - System jetzt v6.1 mit Icon-Cache
+
+---
+
+### 📘 [Guides](guides/) - Anleitungen
+
+#### ✅ **AKTUELL (behalten):**
 - [INTEGRATION_GUIDE.md](guides/INTEGRATION_GUIDE.md) - Integration neuer Komponenten
-- [MIGRATION_GUIDE.md](guides/MIGRATION_GUIDE.md) - Migrations-Anleitung zwischen Versionen
+- [MIGRATION_GUIDE.md](guides/MIGRATION_GUIDE.md) - Migration zwischen Versionen
 
-### 🚀 [Releases](releases/)
-Release Notes und Version History
+---
 
-- [RELEASE_NOTES_v6.3.0.md](releases/RELEASE_NOTES_v6.3.0.md) - Neueste Version
-- [RELEASE_NOTES_v6.2.0.md](releases/RELEASE_NOTES_v6.2.0.md)
-- [RELEASE_NOTES_v6.1.0.md](releases/RELEASE_NOTES_v6.1.0.md)
-- [RELEASE_NOTES_v6.0.0.md](releases/RELEASE_NOTES_v6.0.0.md)
-- [COMMITS_v6.2.0.md](releases/COMMITS_v6.2.0.md) - Detaillierte Commit-Historie
-- [FINAL_STATUS_v5.0.0.md](releases/FINAL_STATUS_v5.0.0.md) - v5.0.0 Abschluss-Status
+### 🚀 [Releases](releases/) - Release Notes
 
-### 🐛 [Bugfixes](bugfixes/)
-Bugfix-Dokumentation und kritische Patches
+#### ❌ **ALLE VERALTET (löschen):**
+- ~~FINAL_STATUS_v5.0.0.md~~
+- ~~COMMITS_v6.2.0.md~~
+- ~~RELEASE_NOTES_v6.0.0.md~~
+- ~~RELEASE_NOTES_v6.1.0.md~~
+- ~~RELEASE_NOTES_v6.2.0.md~~
+- ~~RELEASE_NOTES_v6.3.0.md~~
 
-- [BUGFIXES.md](bugfixes/BUGFIXES.md) - Alle behobenen Bugs
+**Grund:** Aktuell ist v7.3.0+, Release Notes sind in Git-History verfügbar.
+
+**Zukünftig:** Release Notes direkt als GitHub Releases veröffentlichen (keine separaten Dateien mehr).
+
+---
+
+### 🐛 [Bugfixes](bugfixes/) - Bugfix-Dokumentation
+
+#### ⚠️ **ZUSAMMENLEGEN:**
+- [BUGFIXES.md](bugfixes/BUGFIXES.md) - Allgemeine Bugfixes
 - [CRITICAL_BUGFIXES.md](bugfixes/CRITICAL_BUGFIXES.md) - Kritische Bugfixes
 
+**Empfehlung:** Beide Dateien zu einer `BUGFIX_HISTORY.md` zusammenlegen (chronologisch sortiert).
+
 ---
 
-## 🔍 Suche nach Themen
+## 🔍 Schnellsuche
 
-### Architektur & Struktur
-→ [technical/ARCHITECTURE.md](technical/ARCHITECTURE.md)
+### Du möchtest...
 
-### Build & Deployment
-→ [technical/BUILD_SYSTEM.md](technical/BUILD_SYSTEM.md)
+| Ziel | Dokumentation |
+|------|---------------|
+| System-Architektur verstehen | [ARCHITECTURE.md](technical/ARCHITECTURE.md) |
+| Neue Features integrieren | [INTEGRATION_GUIDE.md](guides/INTEGRATION_GUIDE.md) |
+| Status-System debuggen | [UNIFIED_STATUS_SYSTEM.md](technical/UNIFIED_STATUS_SYSTEM.md) |
+| Build-System nutzen | [BUILD_SYSTEM.md](technical/BUILD_SYSTEM.md) |
+| AI-System verstehen | [PHASE_2_DOCUMENTATION.md](systems/PHASE_2_DOCUMENTATION.md) |
+| Radio-System anpassen | [RADIO_SYSTEM_COMPLETE.md](systems/RADIO_SYSTEM_COMPLETE.md) |
+| Von alter Version migrieren | [MIGRATION_GUIDE.md](guides/MIGRATION_GUIDE.md) |
 
-### Neue Funktionen integrieren
-→ [guides/INTEGRATION_GUIDE.md](guides/INTEGRATION_GUIDE.md)
+---
 
-### Von alter Version migrieren
-→ [guides/MIGRATION_GUIDE.md](guides/MIGRATION_GUIDE.md)
+## 📊 Dokumentations-Statistik
 
-### Was ist neu?
-→ [releases/RELEASE_NOTES_v6.3.0.md](releases/RELEASE_NOTES_v6.3.0.md)
+### Aktueller Zustand:
+```
+📁 docs/
+  └─ 📂 technical/       (6 Dateien → 3 nach Cleanup)
+  └─ 📂 systems/         (3 Dateien → 2 nach Cleanup)
+  └─ 📂 guides/          (2 Dateien → bleiben)
+  └─ 📂 releases/        (6 Dateien → 0 nach Cleanup)
+  └─ 📂 bugfixes/        (2 Dateien → 1 nach Merge)
 
-### Bekannte Probleme?
-→ [bugfixes/CRITICAL_BUGFIXES.md](bugfixes/CRITICAL_BUGFIXES.md)
+∑ Gesamt: 19 Dateien → 8 Dateien nach Cleanup (-58%)
+```
 
 ---
 
@@ -79,18 +126,36 @@ Bugfix-Dokumentation und kritische Patches
 
 Bitte halte die Dokumentation aktuell:
 
-1. **Neue Features** → Release Notes aktualisieren
-2. **Architektur-Änderungen** → ARCHITECTURE.md anpassen
-3. **Kritische Bugs** → CRITICAL_BUGFIXES.md ergänzen
-4. **Breaking Changes** → MIGRATION_GUIDE.md erweitern
+### ✅ **DO:**
+1. Neue Features → In entsprechender System-Doc dokumentieren
+2. Architektur-Änderungen → ARCHITECTURE.md aktualisieren
+3. Breaking Changes → MIGRATION_GUIDE.md ergänzen
+4. Bug-Fixes → In Code-Kommentaren dokumentieren (nicht separate Datei)
+
+### ❌ **DON'T:**
+1. Keine separaten Release Note Dateien mehr anlegen
+2. Keine veralteten Versionen dokumentieren
+3. Keine redundanten Guides erstellen
+
+---
+
+## 💬 Support
+
+**Fragen zur Dokumentation?**  
+→ [GitHub Issues](https://github.com/Polizei1234/Dispatcher-Simulator/issues)
 
 ---
 
 ## 📅 Letzte Aktualisierung
 
-**Datum:** 27. Januar 2026  
-**Version:** v7.4.2  
-**Status:** 🟢 Aktiv entwickelt
+**Datum:** 28. Januar 2026  
+**Version:** v7.3.0  
+**Status:** 🟢 Aktiv entwickelt  
+
+**Nächste Schritte:**
+- ⚠️ Dokumentations-Cleanup durchführen
+- 🔄 BUGFIX_HISTORY.md erstellen (Merge)
+- 🐛 Bug #2 Status-Logging testen
 
 ---
 
