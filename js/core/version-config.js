@@ -1,13 +1,14 @@
 // =========================
-// CENTRAL VERSION MANAGER v2.7.1
+// CENTRAL VERSION MANAGER v2.8.0
 // SINGLE SOURCE OF TRUTH für Version
+// ✅ v7.3.0: Radio-System optimiert! (4 Dateien → 2 Dateien)
 // ✅ v7.2.0: CSS-Reorganisation Phase 3 abgeschlossen!
 // ✅ v2.7.1: notification-system.js entfernt (existiert nicht)
 // =========================
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '7.2.0',
+    VERSION: '7.3.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -62,6 +63,11 @@ const VERSION_CONFIG = {
     /**
      * JavaScript-Dateien in Ladereihenfolge
      * 
+     * ✅ v7.3.0 (Phase 4): Radio-System Optimierung
+     *   - radio-messages.js (merged: radio-feed.js + radio-ui-enhancements.js)
+     *   - radio-controls.js (renamed: radio-vehicle-control.js)
+     *   - Alte Dateien entfernt: ui-radio.js, radio-ui-enhancements.js, radio-feed.js, radio-vehicle-control.js
+     * 
      * ✅ v7.0.0 (Phase 1): Kompositions-System
      *   - severity-bases.js, incident-types.js, incident-modifiers.js
      *   - incident-composer.js, conversation-pools.js
@@ -87,7 +93,6 @@ const VERSION_CONFIG = {
         'js/utils/incident-numbering.js',
         'js/utils/vehicle-analyzer.js',
         'js/utils/address-service.js',
-        // ❌ 'js/utils/notification-system.js', - ENTFERNT (existiert nicht!)
         'js/utils/scoring-system.js',
         'js/utils/tutorial.js',
         
@@ -116,9 +121,9 @@ const VERSION_CONFIG = {
         'js/systems/radio-system.js',
         'js/systems/vehicle-radio-requests.js',
         
-        // UI - Radio zuerst!
-        'js/ui/radio-feed.js',
-        'js/ui/radio-vehicle-control.js',
+        // 🔥 UI - OPTIMIERTES RADIO-SYSTEM (v7.3.0)
+        'js/ui/radio-messages.js',      // ✅ NEU: Merged aus radio-feed.js + radio-ui-enhancements.js
+        'js/ui/radio-controls.js',      // ✅ NEU: Umbenannt von radio-vehicle-control.js
         'js/ui/ui-helpers.js',
         'js/ui/priority-dropdown.js',
         'js/ui/universal-dropdown.js',
@@ -129,8 +134,6 @@ const VERSION_CONFIG = {
         'js/ui/tabs.js',
         'js/ui/ui.js',
         'js/ui/draggable.js',
-        'js/ui/ui-radio.js',
-        'js/ui/radio-ui-enhancements.js',
         
         // Map & AI
         'js/map.js',
@@ -383,23 +386,22 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">📁</span>
+                <span style="font-size: 2em;">📡</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>📁 CSS-REORGANISATION PHASE 3!</strong></p>
-                <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Neue Struktur:</strong></p>
+                <p><strong>🔥 RADIO-SYSTEM OPTIMIERT!</strong></p>
+                <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Konsolidierung:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>📂 <strong>components/</strong> - UI-Komponenten gruppiert</li>
-                    <li>📂 <strong>components/dropdowns/</strong> - Alle Dropdowns</li>
-                    <li>📂 <strong>radio/</strong> - Funkverkehr-Styles</li>
-                    <li>📂 <strong>themes/</strong> - Theme-Dateien</li>
-                    <li>📂 <strong>map/</strong> - Karten-Icons</li>
-                    <li>🧹 <strong>Alte Dateien entfernt</strong> - Aufgeräumt!</li>
+                    <li>❌ <strong>4 alte Dateien entfernt</strong></li>
+                    <li>✅ <strong>2 neue optimierte Dateien</strong></li>
+                    <li>🔄 <strong>radio-messages.js</strong> - Chat-System</li>
+                    <li>🎮 <strong>radio-controls.js</strong> - Fahrzeugsteuerung</li>
+                    <li>🛡️ <strong>Keine Konflikte mehr!</strong></li>
                 </ul>
                 <div style="margin-top: 12px; padding: 10px; background: rgba(72, 187, 120, 0.1); border-left: 3px solid #48bb78; border-radius: 4px;">
                     <p style="margin: 0; font-size: 0.9em; color: #68d391;">
-                        <strong>✨ Ergebnis:</strong> Bessere Wartbarkeit, keine visuellen Änderungen!
+                        <strong>✨ Ergebnis:</strong> Sauberer Code, bessere Performance!
                     </p>
                 </div>
             </div>
@@ -432,11 +434,16 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c📁 NEU IN v7.2.0 - CSS-REORGANISATION!', 'color: #fbbf24; font-weight: bold; font-size: 1.1em');
-        console.log('%c   📂 Neue Ordnerstruktur: components/, radio/, themes/, map/', 'color: #68d391');
-        console.log('%c   ✅ Alle CSS-Dateien thematisch gruppiert', 'color: #68d391');
-        console.log('%c   🧹 Alte Root-Dateien entfernt', 'color: #68d391');
-        console.log('%c   🎯 Bessere Wartbarkeit & Skalierbarkeit', 'color: #68d391');
+        console.log('%c🔥 NEU IN v7.3.0 - RADIO-SYSTEM OPTIMIERT!', 'color: #fbbf24; font-weight: bold; font-size: 1.1em');
+        console.log('%c   ✅ 4 alte Dateien → 2 neue optimierte Dateien', 'color: #68d391');
+        console.log('%c   📡 radio-messages.js - Unified Chat-System', 'color: #68d391');
+        console.log('%c   🎮 radio-controls.js - Fahrzeugsteuerung', 'color: #68d391');
+        console.log('%c   🛡️ Keine Funktionskonflikte mehr!', 'color: #68d391');
+        console.log('%c', 'color: #a0aec0');
+        console.log('%c📁 PHASE 3 (v7.2.0) - CSS-REORGANISATION:', 'color: #4299e1; font-weight: bold');
+        console.log('%c   📂 Neue Ordnerstruktur: components/, radio/, themes/, map/', 'color: #a0aec0');
+        console.log('%c   ✅ Alle CSS-Dateien thematisch gruppiert', 'color: #a0aec0');
+        console.log('%c   🧹 Alte Root-Dateien entfernt', 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
         console.log('%c🆕 PHASE 2 (v7.1.0) - AI Integration:', 'color: #4299e1; font-weight: bold');
         console.log('%c   🤖 AI Generator v3.0 - Nutzt Composer', 'color: #a0aec0');
@@ -467,4 +474,4 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v2.7.1 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v2.8.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
