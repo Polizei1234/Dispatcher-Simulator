@@ -1,11 +1,7 @@
 // =========================
-// RADIO CONTROLS v2.0 - OPTIMIERT
+// RADIO CONTROLS v1.1 - OPTIMIERT
 // Fahrzeug-Auswahl & Funkspruch-Steuerung
-// 
-// ✅ Umbenannt von: radio-vehicle-control.js
-// ✅ Dropdown-Management für Fahrzeugauswahl
-// ✅ Fahrzeuginfo-Card mit Status-Anzeige
-// ✅ Integration mit Radio System
+// (Umbenannt von radio-vehicle-control.js)
 // =========================
 
 class RadioVehicleControl {
@@ -54,7 +50,7 @@ class RadioVehicleControl {
             }, 5000); // Update alle 5 Sekunden
         }
         
-        console.log('✅ Radio Controls v2.0 initialisiert');
+        console.log('✅ Radio Controls v1.1 initialisiert');
     }
     
     /**
@@ -293,4 +289,4 @@ if (typeof window !== 'undefined') {
     window.updateRadioVehicleDropdown = updateRadioVehicleDropdown;
 }
 
-console.log('✅ Radio Controls v2.0 geladen');
+console.log('✅ Radio Controls v1.1 geladen (umbenannt von radio-vehicle-control.js)');
