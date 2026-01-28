@@ -135,9 +135,9 @@ const VERSION_CONFIG = {
         'js/ui/ui.js',
         'js/ui/draggable.js',
         
-        // Map & AI
-        'js/map.js',
-        'js/ai.js',
+        // Map & AI Systems
+        'js/systems/map.js',
+        'js/systems/ai.js',
         
         // Core Game Logic
         'js/core/game.js',
