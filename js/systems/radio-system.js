@@ -1,10 +1,11 @@
 // =========================
-// RADIO SYSTEM v1.4.0
+// RADIO SYSTEM v1.5.0
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
 // 🎯 v1.3.0: Ready-Event für zuverlässige Init
 // 🔧 v1.4.0: Fallback-Config (funktioniert ohne JSON)
+// 🔧 v1.5.0: Auto-Init entfernt (wird von main.js aufgerufen)
 // =========================
 
 const RadioSystem = {
@@ -135,7 +136,7 @@ const RadioSystem = {
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.4.0 initialisiert');
+        console.log('📡 Radio System v1.5.0 initialisiert');
         
         // 🔧 v1.4.0: Lade Config mit Fallback
         try {
@@ -190,7 +191,7 @@ const RadioSystem = {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('radioSystemReady', {
                 detail: {
-                    version: '1.4.0',
+                    version: '1.5.0',
                     channels: Object.keys(this.channels).length,
                     timestamp: Date.now()
                 }
@@ -810,23 +811,10 @@ const RadioSystem = {
     }
 };
 
-// Auto-Initialize
-if (typeof window !== 'undefined') {
-    window.addEventListener('DOMContentLoaded', async () => {
-        try {
-            await RadioSystem.initialize();
-            console.log('✅ RadioSystem bereit');
-        } catch (error) {
-            console.error('❌ RadioSystem Initialisierung fehlgeschlagen:', error);
-        }
-    });
-    
-    // 🔧 v1.2.0: Cleanup bei Page Unload
-    window.addEventListener('beforeunload', () => {
-        if (RadioSystem) RadioSystem.cleanup();
-    });
-}
+// 🔧 v1.5.0: KEIN AUTO-INIT MEHR! Wird von main.js in initializeNewSystems() aufgerufen
+// Das löst das Problem, dass DOMContentLoaded zu früh feuert!
 
-console.log('✅ radio-system.js v1.4.0 geladen');
+console.log('✅ radio-system.js v1.5.0 geladen');
 console.log('🔧 Fallback-Config aktiviert - funktioniert ohne JSON-Dateien');
 console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
+console.log('🔧 v1.5.0: Wird von main.js initialisiert (kein Auto-Init)');
