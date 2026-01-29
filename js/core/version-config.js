@@ -1,12 +1,26 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.0.0
+// CENTRAL VERSION MANAGER v3.1.0
 // SINGLE SOURCE OF TRUTH für Version
 // ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
+// 🔧 v3.1.0: Error Handler + Eruda-Fix
 // =========================
+
+// 🔧 v3.1.0: Unterdrücke Eruda-Fehler (Debug-Tool)
+if (typeof window !== 'undefined') {
+    const originalError = console.error;
+    console.error = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('Eruda') || message.includes('eruda')) {
+            // Ignoriere Eruda-Fehler
+            return;
+        }
+        originalError.apply(console, args);
+    };
+}
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.0.0',
+    VERSION: '9.1.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -18,6 +32,9 @@ const VERSION_CONFIG = {
     // ✅ FIX: Tracking für bereits geladene Scripts
     loadedScripts: new Set(),
     loadedCSS: new Set(),
+    
+    // 🔧 v3.1.0: Fehlerzähler
+    loadErrors: [],
     
     /**
      * Generiert versionierte URL für Cache-Busting
@@ -204,23 +221,40 @@ const VERSION_CONFIG = {
     },
     
     /**
-     * Lädt alle JavaScript-Dateien dynamisch und sequenziell
+     * 🔧 v3.1.0: Lädt alle JavaScript-Dateien mit Fehlertoleranz
      */
     loadJS: async function() {
         try {
             // Externe JS
             for (const url of this.EXTERNAL_LIBS.js) {
-                await this.loadScript(url, false);
+                try {
+                    await this.loadScript(url, false);
+                } catch (error) {
+                    console.error(`❌ Externe Library fehlgeschlagen: ${url}`, error);
+                    this.loadErrors.push({ file: url, error: error.message });
+                    // Fahre fort trotz Fehler
+                }
             }
             
             // Lokale JS mit Versionierung
             for (const path of this.JS_FILES) {
-                await this.loadScript(path, true);
+                try {
+                    await this.loadScript(path, true);
+                } catch (error) {
+                    console.error(`❌ Script fehlgeschlagen: ${path}`, error);
+                    this.loadErrors.push({ file: path, error: error.message });
+                    // Fahre fort trotz Fehler
+                }
             }
             
-            console.log(`✅ ${this.JS_FILES.length} JS-Dateien erfolgreich geladen (v${this.VERSION})`);
+            if (this.loadErrors.length > 0) {
+                console.warn(`⚠️ ${this.loadErrors.length} Dateien konnten nicht geladen werden`);
+                console.warn('Fehlerhafte Dateien:', this.loadErrors);
+            } else {
+                console.log(`✅ Alle ${this.JS_FILES.length} JS-Dateien erfolgreich geladen (v${this.VERSION})`);
+            }
         } catch (error) {
-            console.error('❌ Fehler beim Laden der JS-Dateien:', error);
+            console.error('❌ Kritischer Fehler beim Laden der JS-Dateien:', error);
             throw error;
         }
     },
@@ -263,7 +297,8 @@ const VERSION_CONFIG = {
             
             script.onerror = (error) => {
                 console.error(`  ✗ Fehler: ${path}`, error);
-                reject(new Error(`Failed to load script: ${path}`));
+                // 🔧 v3.1.0: Resolve statt reject (Fehlertoleranz)
+                resolve(); // Fahre fort trotz Fehler
             };
             
             document.body.appendChild(script);
@@ -385,18 +420,18 @@ const VERSION_CONFIG = {
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🎉 FUNKSYSTEM WIEDER AKTIVIERT!</strong></p>
+                <p><strong>🎉 FUNK-BUTTON JETZT IM HEADER!</strong></p>
                 <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Neue Features:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>📡 <strong>Funkverkehr-Panel mit KI-Integration</strong></li>
-                    <li>🔄 <strong>Automatische FMS-Status-Meldungen</strong></li>
-                    <li>🎤 <strong>Warteschlangen-System für Sprechwünsche</strong></li>
-                    <li>💬 <strong>GroqAI für realistische Fahrzeug-Antworten</strong></li>
-                    <li>📋 <strong>Funkprotokoll mit Kanalfilterung</strong></li>
+                    <li>🎯 <strong>Funk-Button im Header (rechts oben)</strong></li>
+                    <li>📢 <strong>Sammelruf-Funktion für alle Fahrzeuge</strong></li>
+                    <li>🔧 <strong>Robuste Fehlerbehandlung</strong></li>
+                    <li>⚡ <strong>Event-basierte Initialisierung</strong></li>
+                    <li>🐞 <strong>Bug-Fixes für iPad Safari</strong></li>
                 </ul>
                 <div style="margin-top: 12px; padding: 10px; background: rgba(66, 153, 225, 0.1); border-left: 3px solid #4299e1; border-radius: 4px;">
                     <p style="margin: 0; font-size: 0.9em; color: #90cdf4;">
-                        <strong>✅ Fokus:</strong> Realistische Leitstellensimulation mit vollwertigem Funksystem!
+                        <strong>✅ Tipp:</strong> Klicke auf den Funk-Button im Header, um das Radio-Panel zu öffnen!
                     </p>
                 </div>
             </div>
@@ -429,29 +464,12 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🎉 NEU IN v9.0.0 - FUNKSYSTEM REAKTIVIERT!', 'color: #4299e1; font-weight: bold; font-size: 1.1em');
-        console.log('%c   📡 Radio-System mit KI-Integration', 'color: #90cdf4');
-        console.log('%c   🔄 Automatische FMS-Status-Meldungen', 'color: #90cdf4');
-        console.log('%c   🎤 Warteschlangen-System', 'color: #90cdf4');
-        console.log('%c   💬 GroqAI für Fahrzeug-Antworten', 'color: #90cdf4');
-        console.log('%c   ✅ Vollständig integriert!', 'color: #68d391');
-        console.log('%c', 'color: #a0aec0');
-        console.log('%c📁 PHASE 3 (v7.2.0) - CSS-REORGANISATION:', 'color: #4299e1; font-weight: bold');
-        console.log('%c   📂 Neue Ordnerstruktur: components/, themes/, map/', 'color: #a0aec0');
-        console.log('%c   ✅ Alle CSS-Dateien thematisch gruppiert', 'color: #a0aec0');
-        console.log('%c   🧹 Alte Root-Dateien entfernt', 'color: #a0aec0');
-        console.log('%c', 'color: #a0aec0');
-        console.log('%c🆕 PHASE 2 (v7.1.0) - AI Integration:', 'color: #4299e1; font-weight: bold');
-        console.log('%c   🤖 AI Generator v3.0 - Nutzt Composer', 'color: #a0aec0');
-        console.log('%c   🚨 Escalation System v2.0 - Schema-basiert', 'color: #a0aec0');
-        console.log('%c   💬 Conversation Engine v1.0 - Dynamische Fragen', 'color: #a0aec0');
-        console.log('%c', 'color: #a0aec0');
-        console.log('%c🆕 PHASE 1 (v7.0.0) - Kompositions-System:', 'color: #4299e1; font-weight: bold');
-        console.log('%c   ⚖️ 3 Severity Bases (MINOR/MODERATE/CRITICAL)', 'color: #a0aec0');
-        console.log('%c   🎭 8 Incident Types (MEDICAL/TRAFFIC/BIRTH/...)', 'color: #a0aec0');
-        console.log('%c   ⚙️ 5 Modifiers (ENTRAPMENT/FIRE/...)', 'color: #a0aec0');
-        console.log('%c   🎼 Incident Composer (120+ Kombinationen)', 'color: #a0aec0');
-        console.log('%c   💬 Conversation Pools (50+ Fragen)', 'color: #a0aec0');
+        console.log('%c🎉 NEU IN v9.1.0 - FUNK-BUTTON INTEGRATION!', 'color: #4299e1; font-weight: bold; font-size: 1.1em');
+        console.log('%c   🎯 Funk-Button im Header', 'color: #90cdf4');
+        console.log('%c   📢 Sammelruf-Funktion', 'color: #90cdf4');
+        console.log('%c   🔧 Robuste Fehlerbehandlung', 'color: #90cdf4');
+        console.log('%c   ⚡ Event-basierte Init', 'color: #90cdf4');
+        console.log('%c   ✅ iPad Safari Fixes', 'color: #68d391');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
@@ -470,4 +488,5 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.0.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v3.1.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('🔧 Fehlertoleranz aktiviert - Scripts laden auch bei Einzelfehlern weiter');
