@@ -1,0 +1,119 @@
+{
+  "description": "Konfiguration für das Funksystem",
+  "version": "1.0.0",
+  
+  "channels": {
+    "feuerwehr": {
+      "name": "Feuerwehr",
+      "color": "#dc3545",
+      "icon": "🚒",
+      "vehicle_types": ["FW-HLF", "FW-DLK", "FW-TLF", "FW-RW", "ELW"]
+    },
+    "rettungsdienst": {
+      "name": "Rettungsdienst",
+      "color": "#ffc107",
+      "icon": "🚑",
+      "vehicle_types": ["RTW", "NEF", "KTW", "NAW", "ITW", "Baby-NAW", "Kdow", "GW-San"]
+    },
+    "polizei": {
+      "name": "Polizei",
+      "color": "#007bff",
+      "icon": "🚓",
+      "vehicle_types": ["POL-FuStW", "POL-KRAD", "POL-BeFu"]
+    },
+    "gemeinsam": {
+      "name": "Gemeinsamer Kanal",
+      "color": "#6c757d",
+      "icon": "📡",
+      "vehicle_types": []
+    }
+  },
+
+  "fms_triggers": {
+    "0": {
+      "action": "add_to_queue",
+      "priority": "high",
+      "reason": "sprechwunsch_priorisiert",
+      "auto_message": false,
+      "requires_groq": true,
+      "groq_context": "Fahrzeug meldet priorisierten Sprechwunsch. Generiere eine dringende Funkmeldung."
+    },
+    "3": {
+      "action": "none",
+      "show_status_change": true,
+      "auto_message": false
+    },
+    "4": {
+      "action": "optional_message",
+      "show_status_change": true,
+      "auto_message": false,
+      "manual_trigger": "lagemeldung",
+      "requires_groq": true,
+      "groq_context": "Fahrzeug ist am Einsatzort eingetroffen. Generiere eine Lagemeldung mit Patienteninformationen."
+    },
+    "5": {
+      "action": "add_to_queue",
+      "priority": "normal",
+      "reason": "sprechwunsch",
+      "auto_message": false,
+      "requires_groq": true,
+      "groq_context": "Fahrzeug meldet normalen Sprechwunsch. Generiere eine Funkmeldung basierend auf aktuellem Kontext."
+    },
+    "7": {
+      "action": "optional_message",
+      "show_status_change": true,
+      "auto_message": false,
+      "manual_trigger": "transportziel_anfrage",
+      "requires_groq": true,
+      "groq_context": "Patient wurde aufgenommen. Generiere eine Funkmeldung zur Transportziel-Anfrage."
+    },
+    "8": {
+      "action": "none",
+      "show_status_change": true,
+      "auto_message": false
+    }
+  },
+
+  "priority_levels": {
+    "emergency": {
+      "name": "Notfall",
+      "color": "#dc3545",
+      "icon": "🔴",
+      "weight": 100
+    },
+    "high": {
+      "name": "Hoch",
+      "color": "#fd7e14",
+      "icon": "🟠",
+      "weight": 75
+    },
+    "normal": {
+      "name": "Normal",
+      "color": "#ffc107",
+      "icon": "🟡",
+      "weight": 50
+    },
+    "low": {
+      "name": "Niedrig",
+      "color": "#28a745",
+      "icon": "🟢",
+      "weight": 25
+    }
+  },
+
+  "ui_settings": {
+    "max_log_entries": 100,
+    "auto_scroll": true,
+    "show_timestamps": true,
+    "enable_sound": true,
+    "queue_notification": true
+  },
+
+  "groq_settings": {
+    "model": "llama-3.3-70b-versatile",
+    "temperature": 0.4,
+    "max_tokens": 200,
+    "timeout_ms": 10000,
+    "max_retries": 2
+  }
+}
