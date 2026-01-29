@@ -1,10 +1,11 @@
 // =========================
-// HAUPTSTEUERUNG v4.13 - BUGFIXES: PAUSE + NULL-CHECKS
+// HAUPTSTEUERUNG v4.14 - BUGFIXES + RADIO INIT
 // + ✅ VehicleMovement.initialize() wird jetzt aufgerufen
 // + ✅ Fahrzeuge fahren wieder los!
 // + ✅✅✅ PHASE 3.1.1 v4.12: CONDITIONAL UI UPDATES (-80% DOM Operations!)
 // + 🐛 FIX v4.13: Game Loop stoppt bei Pause (CPU-Savings!)
 // + 🐛 FIX v4.13: Null-Checks in updateUI (keine Runtime-Errors!)
+// + 🔧 FIX v4.14: RadioSystem wird in initializeNewSystems() initialisiert
 // =========================
 
 let gamePaused = false;
@@ -214,7 +215,7 @@ function startNewGame(mode) {
 }
 
 // 🆕 NEUE SYSTEME INITIALISIEREN
-function initializeNewSystems() {
+async function initializeNewSystems() {
     console.group('🆕 INITIALISIERE NEUE SYSTEME');
     
     try {
@@ -264,6 +265,14 @@ function initializeNewSystems() {
             console.log('✅ Vehicle Movement System initialisiert - Fahrzeuge können fahren!');
         } else {
             console.error('❌ VehicleMovement nicht gefunden - Fahrzeuge werden nicht fahren!');
+        }
+        
+        // 🔧 6. RADIO SYSTEM - KRITISCH FÜR FUNKVERKEHR!
+        if (typeof RadioSystem !== 'undefined') {
+            await RadioSystem.initialize();
+            console.log('✅ Radio System initialisiert - Funkverkehr bereit!');
+        } else {
+            console.error('❌ RadioSystem nicht gefunden - Funkverkehr nicht verfügbar!');
         }
         
         console.log('✅ Alle neuen Systeme erfolgreich initialisiert!');
@@ -604,10 +613,11 @@ function startTutorial() {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v4.13 geladen (BUGFIXES: PAUSE + NULL-CHECKS)');
+    console.log('🚀 ILS Waiblingen Simulator v4.14 geladen (BUGFIXES + RADIO INIT)');
     console.log('✅✅✅ PHASE 3.1.1: Optimierte UI Updates - Nur bei Änderungen!');
     console.log('🐛 FIX: Game Loop stoppt bei Pause - CPU-Savings!');
     console.log('🐛 FIX: Null-Checks in updateUI - keine Runtime-Errors!');
+    console.log('🔧 FIX: RadioSystem wird in initializeNewSystems() initialisiert');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
@@ -625,4 +635,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-console.log('✅✅✅ main.js v4.13 geladen - BUGFIXES: PAUSE STOPPT LOOP + NULL-CHECKS! 🐛');
+console.log('✅✅✅ main.js v4.14 geladen - RADIO INIT IN initializeNewSystems()! 🔧');
