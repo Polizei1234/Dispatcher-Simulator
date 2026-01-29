@@ -1,12 +1,12 @@
 // =========================
 // CENTRAL VERSION MANAGER v3.0.0
 // SINGLE SOURCE OF TRUTH für Version
-// ✅ v8.0.0: FUNKSYSTEM KOMPLETT ENTFERNT!
+// ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
 // =========================
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '8.0.0',
+    VERSION: '9.0.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -30,7 +30,7 @@ const VERSION_CONFIG = {
     
     /**
      * CSS-Dateien die geladen werden müssen
-     * ✅ v8.0.0: Radio-CSS komplett entfernt!
+     * ✅ v9.0.0: Radio-CSS wieder hinzugefügt!
      */
     CSS_FILES: [
         'css/style.css',
@@ -46,6 +46,9 @@ const VERSION_CONFIG = {
         'css/components/dropdowns/priority-dropdown.css',
         'css/components/dropdowns/universal-dropdown.css',
         
+        // 🆕 v9.0.0: Radio System CSS
+        'css/radio-panel.css',
+        
         // Themes
         'css/themes/theme-light.css',
         
@@ -56,7 +59,7 @@ const VERSION_CONFIG = {
     /**
      * JavaScript-Dateien in Ladereihenfolge
      * 
-     * ✅ v8.0.0: FUNKSYSTEM KOMPLETT ENTFERNT!
+     * ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
      * 
      * ✅ v7.3.0 (Phase 4): Radio-System Optimierung
      * 
@@ -84,6 +87,9 @@ const VERSION_CONFIG = {
         'js/utils/scoring-system.js',
         'js/utils/tutorial.js',
         
+        // 🆕 v9.0.0: Radio System Utils (VOR Data!)
+        'js/utils/radio-groq.js',
+        
         // 🆕 PHASE 1 (v7.0.0) - Kompositions-System
         'js/data/severity-bases.js',
         'js/data/incident-types.js',
@@ -106,6 +112,9 @@ const VERSION_CONFIG = {
         'js/systems/mission-timer.js',
         'js/systems/vehicle-movement.js',
         
+        // 🆕 v9.0.0: Radio System (NACH vehicle-movement!)
+        'js/systems/radio-system.js',
+        
         // UI
         'js/ui/ui-helpers.js',
         'js/ui/priority-dropdown.js',
@@ -117,6 +126,9 @@ const VERSION_CONFIG = {
         'js/ui/tabs.js',
         'js/ui/ui.js',
         'js/ui/draggable.js',
+        
+        // 🆕 v9.0.0: Radio Panel UI (NACH ui.js!)
+        'js/ui/radio-panel.js',
         
         // Map & AI Systems
         'js/systems/map.js',
@@ -357,7 +369,7 @@ const VERSION_CONFIG = {
             right: 20px;
             max-width: 450px;
             background: #2d3748;
-            border: 2px solid #e53e3e;
+            border: 2px solid #4299e1;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -369,28 +381,29 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🚨</span>
+                <span style="font-size: 2em;">📡</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🚨 FUNKSYSTEM KOMPLETT ENTFERNT!</strong></p>
-                <p style="margin: 8px 0; color: #cbd5e0;">❌ <strong>Entfernte Features:</strong></p>
+                <p><strong>🎉 FUNKSYSTEM WIEDER AKTIVIERT!</strong></p>
+                <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Neue Features:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>❌ <strong>Funkverkehr-Tab</strong></li>
-                    <li>❌ <strong>Status-Meldungen im Funk</strong></li>
-                    <li>❌ <strong>Radio-Steuerung</strong></li>
-                    <li>❌ <strong>Alle Radio-Dateien entfernt</strong></li>
+                    <li>📡 <strong>Funkverkehr-Panel mit KI-Integration</strong></li>
+                    <li>🔄 <strong>Automatische FMS-Status-Meldungen</strong></li>
+                    <li>🎤 <strong>Warteschlangen-System für Sprechwünsche</strong></li>
+                    <li>💬 <strong>GroqAI für realistische Fahrzeug-Antworten</strong></li>
+                    <li>📋 <strong>Funkprotokoll mit Kanalfilterung</strong></li>
                 </ul>
-                <div style="margin-top: 12px; padding: 10px; background: rgba(229, 62, 62, 0.1); border-left: 3px solid #e53e3e; border-radius: 4px;">
-                    <p style="margin: 0; font-size: 0.9em; color: #fc8181;">
-                        <strong>✅ Fokus:</strong> Leitstellensimulation ohne Funkverkehr!
+                <div style="margin-top: 12px; padding: 10px; background: rgba(66, 153, 225, 0.1); border-left: 3px solid #4299e1; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 0.9em; color: #90cdf4;">
+                        <strong>✅ Fokus:</strong> Realistische Leitstellensimulation mit vollwertigem Funksystem!
                     </p>
                 </div>
             </div>
             <button onclick="this.parentElement.remove()" style="
                 width: 100%;
                 padding: 10px;
-                background: #e53e3e;
+                background: #4299e1;
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -409,18 +422,19 @@ const VERSION_CONFIG = {
     },
     
     printInfo: function() {
-        console.log('%c═══════════════════════════════════', 'color: #e53e3e');
-        console.log('%c🎮 Dispatcher Simulator', 'color: #e53e3e; font-size: 1.5em; font-weight: bold');
-        console.log('%c═══════════════════════════════════', 'color: #e53e3e');
-        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #e53e3e; font-weight: bold; font-size: 1.1em');
+        console.log('%c═══════════════════════════════════', 'color: #4299e1');
+        console.log('%c🎮 Dispatcher Simulator', 'color: #4299e1; font-size: 1.5em; font-weight: bold');
+        console.log('%c═══════════════════════════════════', 'color: #4299e1');
+        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #4299e1; font-weight: bold; font-size: 1.1em');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🚨 NEU IN v8.0.0 - FUNKSYSTEM ENTFERNT!', 'color: #e53e3e; font-weight: bold; font-size: 1.1em');
-        console.log('%c   ❌ Funkverkehr-Tab komplett entfernt', 'color: #fc8181');
-        console.log('%c   ❌ Radio-System Dateien gelöscht', 'color: #fc8181');
-        console.log('%c   ❌ Radio-CSS-Dateien gelöscht', 'color: #fc8181');
-        console.log('%c   ✅ Fokus auf Leitstellensimulation!', 'color: #68d391');
+        console.log('%c🎉 NEU IN v9.0.0 - FUNKSYSTEM REAKTIVIERT!', 'color: #4299e1; font-weight: bold; font-size: 1.1em');
+        console.log('%c   📡 Radio-System mit KI-Integration', 'color: #90cdf4');
+        console.log('%c   🔄 Automatische FMS-Status-Meldungen', 'color: #90cdf4');
+        console.log('%c   🎤 Warteschlangen-System', 'color: #90cdf4');
+        console.log('%c   💬 GroqAI für Fahrzeug-Antworten', 'color: #90cdf4');
+        console.log('%c   ✅ Vollständig integriert!', 'color: #68d391');
         console.log('%c', 'color: #a0aec0');
         console.log('%c📁 PHASE 3 (v7.2.0) - CSS-REORGANISATION:', 'color: #4299e1; font-weight: bold');
         console.log('%c   📂 Neue Ordnerstruktur: components/, themes/, map/', 'color: #a0aec0');
@@ -438,7 +452,7 @@ const VERSION_CONFIG = {
         console.log('%c   ⚙️ 5 Modifiers (ENTRAPMENT/FIRE/...)', 'color: #a0aec0');
         console.log('%c   🎼 Incident Composer (120+ Kombinationen)', 'color: #a0aec0');
         console.log('%c   💬 Conversation Pools (50+ Fragen)', 'color: #a0aec0');
-        console.log('%c═══════════════════════════════════', 'color: #e53e3e');
+        console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
 
