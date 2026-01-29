@@ -1,6 +1,7 @@
 // =========================
-// RADIO SYSTEM v1.1.0
+// RADIO SYSTEM v1.2.0
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
+// 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
 // =========================
 
@@ -12,12 +13,13 @@ const RadioSystem = {
     fmsData: null,
     lastDispatchMessages: {},
     fmsListenerInstalled: false,
+    logCleanupInterval: null,
     
     /**
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.1.0 initialisiert');
+        console.log('📡 Radio System v1.2.0 initialisiert');
         
         // Lade Konfiguration
         try {
@@ -44,8 +46,31 @@ const RadioSystem = {
         // Event-Listener für FMS-Statusänderungen (warte auf VehicleMovement)
         this.setupFMSListener();
 
+        // 🔧 v1.2.0: Auto-Cleanup für Memory Leak Prevention
+        this.startLogCleanup();
+
         console.log('✅ Radio System bereit');
         console.log(`📻 Kanäle: ${Object.keys(this.channels).length}`);
+    },
+
+    /**
+     * 🔧 v1.2.0: Startet periodisches Log-Cleanup
+     */
+    startLogCleanup() {
+        if (this.logCleanupInterval) {
+            clearInterval(this.logCleanupInterval);
+        }
+        
+        this.logCleanupInterval = setInterval(() => {
+            const maxEntries = this.config?.ui_settings?.max_log_entries || 100;
+            if (this.log.length > maxEntries) {
+                const removed = this.log.length - maxEntries;
+                this.log = this.log.slice(0, maxEntries);
+                console.log(`🗑️ Auto-Cleanup: ${removed} alte Log-Einträge entfernt`);
+            }
+        }, 60000); // Alle 60 Sekunden
+        
+        console.log('✅ Log Auto-Cleanup aktiviert (60s Intervall)');
     },
 
     /**
@@ -360,9 +385,15 @@ const RadioSystem = {
     },
 
     /**
-     * Sendet Funkspruch von Leitstelle an Fahrzeug
+     * 🔧 v1.2.0: Sendet Funkspruch von Leitstelle an Fahrzeug (mit GAME_DATA Safety)
      */
     async sendDispatchMessage(vehicleId, message) {
+        // 🔧 GAME_DATA Safety Check
+        if (typeof GAME_DATA === 'undefined' || !GAME_DATA.vehicles) {
+            console.error('❌ GAME_DATA nicht verfügbar');
+            return;
+        }
+
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) {
             console.error(`❌ Fahrzeug ${vehicleId} nicht gefunden`);
@@ -388,9 +419,15 @@ const RadioSystem = {
     },
 
     /**
-     * Triggert manuelle Fahrzeug-Meldung (z.B. Lagemeldung)
+     * 🔧 v1.2.0: Triggert manuelle Fahrzeug-Meldung (mit GAME_DATA Safety)
      */
     async triggerManualVehicleMessage(vehicleId, triggerType) {
+        // 🔧 GAME_DATA Safety Check
+        if (typeof GAME_DATA === 'undefined' || !GAME_DATA.vehicles) {
+            console.error('❌ GAME_DATA nicht verfügbar');
+            return;
+        }
+
         const vehicle = GAME_DATA.vehicles.find(v => v.id === vehicleId);
         if (!vehicle) {
             console.error(`❌ Fahrzeug ${vehicleId} nicht gefunden`);
@@ -424,7 +461,7 @@ const RadioSystem = {
     },
 
     /**
-     * Sammelruf an alle Fahrzeuge eines Kanals
+     * 🔧 v1.2.0: Sammelruf an alle Fahrzeuge eines Kanals (mit GAME_DATA Safety)
      */
     sendBroadcast(channel, message) {
         console.log(`📢 Sammelruf auf Kanal ${channel}: "${message}"`);
@@ -436,6 +473,12 @@ const RadioSystem = {
             message: `📢 SAMMELRUF an alle (${this.channels[channel].name}): ${message}`,
             direction: 'broadcast'
         });
+
+        // 🔧 GAME_DATA Safety Check
+        if (typeof GAME_DATA === 'undefined' || !GAME_DATA.vehicles) {
+            console.warn('⚠️ GAME_DATA nicht verfügbar - Sammelruf nur protokolliert');
+            return;
+        }
 
         // Alle Fahrzeuge des Kanals müssen quittieren
         const channelVehicles = this.getVehiclesForChannel(channel);
@@ -455,11 +498,17 @@ const RadioSystem = {
     },
 
     /**
-     * Gibt alle Fahrzeuge eines Kanals zurück
+     * 🔧 v1.2.0: Gibt alle Fahrzeuge eines Kanals zurück (mit GAME_DATA Safety)
      */
     getVehiclesForChannel(channelKey) {
         const channel = this.channels[channelKey];
         if (!channel) return [];
+
+        // 🔧 GAME_DATA Safety Check
+        if (typeof GAME_DATA === 'undefined' || !GAME_DATA.vehicles) {
+            console.warn('⚠️ GAME_DATA nicht verfügbar');
+            return [];
+        }
 
         return GAME_DATA.vehicles.filter(vehicle => {
             // Wenn Kanal vehicle_types definiert hat
@@ -484,13 +533,16 @@ const RadioSystem = {
     },
 
     /**
-     * Baut Kontext für Funkspruch-Generierung
+     * 🔧 v1.2.0: Baut Kontext für Funkspruch-Generierung (mit GAME_DATA Safety)
      */
     buildContext(vehicle, reason) {
         let incident = null;
         
-        // Finde aktuellen Einsatz
-        if (vehicle.incident) {
+        // 🔧 GAME_DATA Safety Check
+        if (typeof GAME_DATA === 'undefined' || !GAME_DATA.incidents) {
+            console.warn('⚠️ GAME_DATA.incidents nicht verfügbar');
+        } else if (vehicle.incident) {
+            // Finde aktuellen Einsatz
             incident = GAME_DATA.incidents.find(i => 
                 (i.assignedVehicles && i.assignedVehicles.includes(vehicle.id)) ||
                 (i.vehicles && i.vehicles.includes(vehicle.id)) ||
@@ -518,44 +570,48 @@ const RadioSystem = {
 
         this.log.unshift(logEntry); // Neueste zuerst
 
-        // Begrenze Log-Größe
+        // 🔧 v1.2.0: Sofortiges Cleanup wenn zu groß
         const maxEntries = this.config?.ui_settings?.max_log_entries || 100;
-        if (this.log.length > maxEntries) {
+        if (this.log.length > maxEntries * 1.2) { // 20% Toleranz
             this.log = this.log.slice(0, maxEntries);
+            console.log(`🗑️ Log-Cleanup: Auf ${maxEntries} Einträge reduziert`);
         }
 
-        // Update UI
+        // Update UI (mit Debouncing in RadioUI)
         if (typeof RadioUI !== 'undefined') {
-            RadioUI.updateLog();
+            RadioUI.scheduleLogUpdate();
         }
     },
 
     /**
      * Gibt Funkprotokoll zurück (optional gefiltert)
+     * 🔧 v1.2.0: Optimierte Filterung ohne Array-Kopie
      */
     getLog(filter = {}) {
-        let filtered = [...this.log];
-
-        if (filter.channel) {
-            filtered = filtered.filter(entry => {
+        return this.log.filter(entry => {
+            // Channel-Filter
+            if (filter.channel) {
                 if (entry.vehicle) {
-                    return this.getChannelForVehicle(entry.vehicle) === filter.channel;
+                    if (this.getChannelForVehicle(entry.vehicle) !== filter.channel) {
+                        return false;
+                    }
+                } else if (entry.channel !== filter.channel) {
+                    return false;
                 }
-                return entry.channel === filter.channel;
-            });
-        }
+            }
 
-        if (filter.vehicleId) {
-            filtered = filtered.filter(entry => 
-                entry.vehicle && entry.vehicle.id === filter.vehicleId
-            );
-        }
+            // Vehicle-Filter
+            if (filter.vehicleId && (!entry.vehicle || entry.vehicle.id !== filter.vehicleId)) {
+                return false;
+            }
 
-        if (filter.type) {
-            filtered = filtered.filter(entry => entry.type === filter.type);
-        }
+            // Type-Filter
+            if (filter.type && entry.type !== filter.type) {
+                return false;
+            }
 
-        return filtered;
+            return true;
+        });
     },
 
     /**
@@ -594,6 +650,17 @@ const RadioSystem = {
         URL.revokeObjectURL(url);
         
         console.log('💾 Funkprotokoll exportiert');
+    },
+
+    /**
+     * 🔧 v1.2.0: Cleanup-Funktion
+     */
+    cleanup() {
+        if (this.logCleanupInterval) {
+            clearInterval(this.logCleanupInterval);
+            this.logCleanupInterval = null;
+        }
+        console.log('🗑️ Radio System cleanup ausgeführt');
     }
 };
 
@@ -603,6 +670,12 @@ if (typeof window !== 'undefined') {
         await RadioSystem.initialize();
         console.log('✅ RadioSystem bereit');
     });
+    
+    // 🔧 v1.2.0: Cleanup bei Page Unload
+    window.addEventListener('beforeunload', () => {
+        if (RadioSystem) RadioSystem.cleanup();
+    });
 }
 
-console.log('✅ radio-system.js v1.1.0 geladen');
+console.log('✅ radio-system.js v1.2.0 geladen');
+console.log('🔧 Kritische Fixes: GAME_DATA Safety, Memory Leak Prevention');
