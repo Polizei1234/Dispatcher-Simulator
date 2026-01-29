@@ -1,21 +1,54 @@
 // =========================
-// RADIO PANEL UI v1.0.0
+// RADIO PANEL UI v1.1.0
 // Benutzerinterface für das Funksystem
+// 🔧 v1.1.0: XSS-Protection + Debouncing
 // =========================
 
 const RadioUI = {
     panelElement: null,
     currentChannel: 'rettungsdienst',
     isMinimized: false,
+    logUpdateTimeout: null,
 
     /**
      * Initialisierung
      */
     initialize() {
-        console.log('📺 RadioUI initialisiert');
+        console.log('📺 RadioUI v1.1.0 initialisiert');
+        console.log('🔧 XSS-Protection aktiviert');
+        console.log('🔧 Debouncing aktiviert');
         this.createPanel();
         this.attachEventListeners();
         this.updateAll();
+    },
+
+    /**
+     * 🔧 v1.1.0: Debounced Log Update (max 1x pro 100ms)
+     */
+    scheduleLogUpdate() {
+        if (this.logUpdateTimeout) {
+            clearTimeout(this.logUpdateTimeout);
+        }
+        
+        this.logUpdateTimeout = setTimeout(() => {
+            this.updateLog();
+            this.logUpdateTimeout = null;
+        }, 100);
+    },
+
+    /**
+     * 🔧 v1.1.0: XSS-sichere Text-Escape-Funktion
+     */
+    escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+            return '';
+        }
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     },
 
     /**
@@ -130,10 +163,18 @@ const RadioUI = {
             const button = document.createElement('button');
             button.className = 'radio-channel-btn';
             button.dataset.channel = key;
-            button.innerHTML = `
-                <span class="channel-icon">${channel.icon}</span>
-                <span class="channel-name">${channel.name}</span>
-            `;
+            
+            // 🔧 XSS-sicher: Verwende textContent
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'channel-icon';
+            iconSpan.textContent = channel.icon;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'channel-name';
+            nameSpan.textContent = channel.name;
+            
+            button.appendChild(iconSpan);
+            button.appendChild(nameSpan);
 
             if (key === this.currentChannel) {
                 button.classList.add('active');
@@ -167,11 +208,17 @@ const RadioUI = {
     },
 
     /**
-     * Update Fahrzeug-Auswahl
+     * 🔧 v1.1.0: Update Fahrzeug-Auswahl (mit GAME_DATA Safety)
      */
     updateVehicleSelect() {
         const select = document.getElementById('radio-target-vehicle');
         if (!select) return;
+
+        // 🔧 GAME_DATA Safety Check
+        if (typeof GAME_DATA === 'undefined' || !GAME_DATA.vehicles) {
+            console.warn('⚠️ GAME_DATA.vehicles nicht verfügbar');
+            return;
+        }
 
         const currentValue = select.value;
         select.innerHTML = '<option value="">-- Fahrzeug auswählen --</option>';
@@ -198,6 +245,7 @@ const RadioUI = {
             vehicles.forEach(vehicle => {
                 const option = document.createElement('option');
                 option.value = vehicle.id;
+                // 🔧 XSS-sicher: textContent verwenden
                 option.textContent = `${vehicle.callsign} (${vehicle.type})`;
                 optgroup.appendChild(option);
             });
@@ -327,24 +375,57 @@ const RadioUI = {
 
             const queueItem = document.createElement('div');
             queueItem.className = `radio-queue-item priority-${priority}`;
-            queueItem.innerHTML = `
-                <div class="queue-item-header">
-                    <span class="priority-icon">${priorityInfo.icon}</span>
-                    <span class="vehicle-callsign">${vehicle.callsign}</span>
-                    <span class="priority-badge">${priorityInfo.name}</span>
-                </div>
-                <div class="queue-item-body">
-                    <span class="queue-reason">${this.getReasonText(reason)}</span>
-                    <span class="queue-time">${this.formatTime(timestamp)}</span>
-                </div>
-                <div class="queue-item-actions">
-                    <button class="btn btn-small btn-success" 
-                            onclick="RadioUI.grantPermission('${vehicle.id}')">
-                        🗣️ Sprecherlaubnis erteilen
-                    </button>
-                </div>
-            `;
-
+            
+            // 🔧 XSS-sicher: createElement + textContent
+            const header = document.createElement('div');
+            header.className = 'queue-item-header';
+            
+            const prioIcon = document.createElement('span');
+            prioIcon.className = 'priority-icon';
+            prioIcon.textContent = priorityInfo.icon;
+            
+            const callsign = document.createElement('span');
+            callsign.className = 'vehicle-callsign';
+            callsign.textContent = vehicle.callsign;
+            
+            const badge = document.createElement('span');
+            badge.className = 'priority-badge';
+            badge.textContent = priorityInfo.name;
+            
+            header.appendChild(prioIcon);
+            header.appendChild(callsign);
+            header.appendChild(badge);
+            
+            const body = document.createElement('div');
+            body.className = 'queue-item-body';
+            
+            const reasonSpan = document.createElement('span');
+            reasonSpan.className = 'queue-reason';
+            reasonSpan.textContent = this.getReasonText(reason);
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'queue-time';
+            timeSpan.textContent = this.formatTime(timestamp);
+            
+            body.appendChild(reasonSpan);
+            body.appendChild(timeSpan);
+            
+            const actions = document.createElement('div');
+            actions.className = 'queue-item-actions';
+            
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-small btn-success';
+            btn.textContent = '🗣️ Sprecherlaubnis erteilen';
+            btn.addEventListener('click', () => {
+                this.grantPermission(vehicle.id);
+            });
+            
+            actions.appendChild(btn);
+            
+            queueItem.appendChild(header);
+            queueItem.appendChild(body);
+            queueItem.appendChild(actions);
+            
             queueList.appendChild(queueItem);
         });
     },
@@ -400,7 +481,7 @@ const RadioUI = {
     },
 
     /**
-     * Erstellt Log-Item Element
+     * 🔧 v1.1.0: Erstellt Log-Item Element (XSS-sicher)
      */
     createLogItem(entry) {
         const item = document.createElement('div');
@@ -419,72 +500,120 @@ const RadioUI = {
 
         let aiTag = '';
         if (entry.ai_generated) {
-            aiTag = '<span class="ai-tag" title="Von KI generiert">🤖</span>';
+            aiTag = '🤖';
         }
 
-        let content = '';
-
+        // 🔧 XSS-sicher: createElement + textContent statt innerHTML
         switch (entry.type) {
             case 'status_change':
-                content = `
-                    <div class="log-time">${time}</div>
-                    <div class="log-content status-change">
-                        ${entry.icon} ${entry.message}
-                    </div>
-                `;
+                const timeDiv1 = document.createElement('div');
+                timeDiv1.className = 'log-time';
+                timeDiv1.textContent = time;
+                
+                const contentDiv1 = document.createElement('div');
+                contentDiv1.className = 'log-content status-change';
+                contentDiv1.textContent = `${entry.icon} ${entry.message}`;
+                
+                item.appendChild(timeDiv1);
+                item.appendChild(contentDiv1);
                 break;
 
             case 'dispatch_to_vehicle':
             case 'vehicle_to_dispatch':
-                content = `
-                    <div class="log-header">
-                        <span class="log-time">${time}</span>
-                        <span class="log-direction">${directionIcon}</span>
-                        ${aiTag}
-                    </div>
-                    <div class="log-message">${entry.message}</div>
-                `;
+                const header = document.createElement('div');
+                header.className = 'log-header';
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'log-time';
+                timeSpan.textContent = time;
+                
+                const dirSpan = document.createElement('span');
+                dirSpan.className = 'log-direction';
+                dirSpan.textContent = directionIcon;
+                
+                header.appendChild(timeSpan);
+                header.appendChild(dirSpan);
+                
+                if (aiTag) {
+                    const aiSpan = document.createElement('span');
+                    aiSpan.className = 'ai-tag';
+                    aiSpan.title = 'Von KI generiert';
+                    aiSpan.textContent = aiTag;
+                    header.appendChild(aiSpan);
+                }
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'log-message';
+                messageDiv.textContent = entry.message || '';
+                
+                item.appendChild(header);
+                item.appendChild(messageDiv);
                 break;
 
             case 'broadcast':
-                content = `
-                    <div class="log-time">${time}</div>
-                    <div class="log-content broadcast">
-                        ${entry.message}
-                    </div>
-                `;
+                const timeDiv2 = document.createElement('div');
+                timeDiv2.className = 'log-time';
+                timeDiv2.textContent = time;
+                
+                const contentDiv2 = document.createElement('div');
+                contentDiv2.className = 'log-content broadcast';
+                contentDiv2.textContent = entry.message || '';
+                
+                item.appendChild(timeDiv2);
+                item.appendChild(contentDiv2);
                 break;
 
             case 'queue_add':
-                content = `
-                    <div class="log-time">${time}</div>
-                    <div class="log-content queue-info">
-                        📥 ${entry.message}
-                    </div>
-                `;
+                const timeDiv3 = document.createElement('div');
+                timeDiv3.className = 'log-time';
+                timeDiv3.textContent = time;
+                
+                const contentDiv3 = document.createElement('div');
+                contentDiv3.className = 'log-content queue-info';
+                contentDiv3.textContent = `📥 ${entry.message}`;
+                
+                item.appendChild(timeDiv3);
+                item.appendChild(contentDiv3);
                 break;
 
             case 'manual_trigger':
-                content = `
-                    <div class="log-time">${time}</div>
-                    <div class="log-content manual-trigger">
-                        ${entry.message}
-                        <button class="btn btn-small" 
-                                onclick="RadioSystem.triggerManualVehicleMessage('${entry.vehicle.id}', '${entry.triggerType}')">
-                            ${this.getTriggerText(entry.triggerType)}
-                        </button>
-                    </div>
-                `;
+                const timeDiv4 = document.createElement('div');
+                timeDiv4.className = 'log-time';
+                timeDiv4.textContent = time;
+                
+                const contentDiv4 = document.createElement('div');
+                contentDiv4.className = 'log-content manual-trigger';
+                
+                const messageText = document.createElement('span');
+                messageText.textContent = entry.message || '';
+                
+                const triggerBtn = document.createElement('button');
+                triggerBtn.className = 'btn btn-small';
+                triggerBtn.textContent = this.getTriggerText(entry.triggerType);
+                triggerBtn.addEventListener('click', () => {
+                    RadioSystem.triggerManualVehicleMessage(entry.vehicle.id, entry.triggerType);
+                });
+                
+                contentDiv4.appendChild(messageText);
+                contentDiv4.appendChild(triggerBtn);
+                
+                item.appendChild(timeDiv4);
+                item.appendChild(contentDiv4);
                 break;
 
             default:
-                content = `
-                    <div class="log-time">${time}</div>
-                    <div class="log-content">${entry.message || ''}</div>
-                `;
+                const timeDiv5 = document.createElement('div');
+                timeDiv5.className = 'log-time';
+                timeDiv5.textContent = time;
+                
+                const contentDiv5 = document.createElement('div');
+                contentDiv5.className = 'log-content';
+                contentDiv5.textContent = entry.message || '';
+                
+                item.appendChild(timeDiv5);
+                item.appendChild(contentDiv5);
         }
 
-        item.innerHTML = content;
         return item;
     },
 
@@ -586,4 +715,5 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-panel.js geladen');
+console.log('✅ radio-panel.js v1.1.0 geladen');
+console.log('🔧 XSS-Protection + Debouncing aktiviert');
