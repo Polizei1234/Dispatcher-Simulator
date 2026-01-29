@@ -268,12 +268,43 @@
 
     <!-- 🐛 FIX #2: ROBUSTE INITIALISIERUNG MIT FEHLERBEHANDLUNG -->
     <script>
-    // 🆕 v9.1.0: Radio Panel Toggle Funktion
+    // 🆕 v9.1.0: ROBUSTE Radio Panel Toggle Funktion
     function toggleRadioPanel() {
+        console.log('📡 toggleRadioPanel() aufgerufen');
+        
+        // 🔧 FIX: Direkte DOM-Manipulation als Fallback
+        const panel = document.getElementById('radio-panel');
+        
+        if (!panel) {
+            console.error('❌ Radio Panel Element nicht gefunden!');
+            showRadioError('Radio Panel noch nicht geladen. Bitte warte einen Moment.');
+            return;
+        }
+        
+        // Prüfe ob RadioUI verfügbar ist
         if (typeof RadioUI !== 'undefined' && RadioUI.togglePanel) {
+            console.log('✅ RadioUI.togglePanel() wird aufgerufen');
             RadioUI.togglePanel();
         } else {
-            console.warn('⚠️ RadioUI noch nicht geladen');
+            // 🔧 Fallback: Direkte DOM-Manipulation
+            console.warn('⚠️ RadioUI noch nicht geladen - nutze Fallback');
+            
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+                console.log('✅ Panel geöffnet (Fallback)');
+            } else {
+                panel.style.display = 'none';
+                console.log('❌ Panel geschlossen (Fallback)');
+            }
+        }
+    }
+    
+    // 🔧 FIX: Zeige visuelle Fehlerwarnung
+    function showRadioError(message) {
+        if (typeof window.notificationSystem !== 'undefined') {
+            window.notificationSystem.show(message, 'warning');
+        } else {
+            alert(message);
         }
     }
     
@@ -296,7 +327,7 @@
             // ✅ FIX: CSS zuerst laden (blockierend)
             VERSION_CONFIG.loadCSS();
             
-            console.log('📜 Lade JavaScript-Dateien sequenziell...');
+            console.log('📋 Lade JavaScript-Dateien sequenziell...');
             // ✅ FIX: Dann JS sequenziell laden (mit await)
             await VERSION_CONFIG.loadJS();
             
