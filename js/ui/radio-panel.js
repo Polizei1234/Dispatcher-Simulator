@@ -1,9 +1,10 @@
 // =========================
-// RADIO PANEL UI v1.2.1
+// RADIO PANEL UI v1.2.2
 // Benutzerinterface für das Funksystem
 // 🔧 v1.1.0: XSS-Protection + Debouncing
 // 🎯 v1.2.0: Queue-Badge + Sammelruf-UI + Event-Init
 // 🔧 v1.2.1: FIX Panel standardmäßig hidden
+// 🔧 v1.2.2: FIX Robuste Initialisierung
 // =========================
 
 const RadioUI = {
@@ -12,18 +13,28 @@ const RadioUI = {
     isMinimized: false,
     isVisible: false,
     logUpdateTimeout: null,
+    initialized: false,
 
     /**
      * Initialisierung
      */
     initialize() {
-        console.log('📺 RadioUI v1.2.1 initialisiert');
+        if (this.initialized) {
+            console.warn('⚠️ RadioUI bereits initialisiert');
+            return;
+        }
+        
+        console.log('📺 RadioUI v1.2.2 initialisiert');
         console.log('🔧 XSS-Protection aktiviert');
         console.log('🔧 Debouncing aktiviert');
         console.log('🎯 Queue-Badge + Sammelruf-UI aktiviert');
+        
         this.createPanel();
         this.attachEventListeners();
         this.updateAll();
+        this.initialized = true;
+        
+        console.log('✅ RadioUI vollständig initialisiert');
     },
 
     /**
@@ -792,31 +803,52 @@ const RadioUI = {
     }
 };
 
-// 🎯 v1.2.0: Event-basierte Initialisierung
+// 🔧 v1.2.2: ROBUSTE INITIALISIERUNG mit mehrfachen Fallbacks
 if (typeof window !== 'undefined') {
-    // Warte auf RadioSystem-Ready-Event
+    let initAttempted = false;
+    
+    // Methode 1: RadioSystem Ready Event
     window.addEventListener('radioSystemReady', () => {
+        if (initAttempted) return;
         console.log('✅ RadioSystem bereit - initialisiere RadioUI...');
         RadioUI.initialize();
-        console.log('✅ RadioUI bereit');
+        initAttempted = true;
     });
     
-    // Fallback: DOMContentLoaded mit Timeout
+    // Methode 2: DOMContentLoaded mit Timeout
     window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
-            if (!RadioUI.panelElement) {
-                console.warn('⚠️ RadioUI noch nicht initialisiert - starte mit Timeout...');
-                if (typeof RadioSystem !== 'undefined' && RadioSystem.config) {
-                    RadioUI.initialize();
-                } else {
-                    console.error('❌ RadioSystem nicht verfügbar!');
-                }
+            if (initAttempted) return;
+            
+            console.log('⏳ DOMContentLoaded Timeout - versuche RadioUI zu initialisieren...');
+            
+            if (typeof RadioSystem !== 'undefined' && RadioSystem.config) {
+                RadioUI.initialize();
+                initAttempted = true;
+            } else {
+                console.warn('⚠️ RadioSystem noch nicht verfügbar - warte weiter...');
             }
-        }, 1000);
+        }, 2000); // 2 Sekunden warten
+    });
+    
+    // Methode 3: Window Load als letzter Fallback
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (initAttempted) return;
+            
+            console.log('⏳ Window Load Timeout - letzter Versuch RadioUI zu initialisieren...');
+            
+            if (typeof RadioSystem !== 'undefined' && RadioSystem.config) {
+                RadioUI.initialize();
+                initAttempted = true;
+            } else {
+                console.error('❌ RadioSystem konnte nicht geladen werden!');
+            }
+        }, 3000); // 3 Sekunden warten
     });
 }
 
-console.log('✅ radio-panel.js v1.2.1 geladen');
+console.log('✅ radio-panel.js v1.2.2 geladen');
 console.log('🔧 XSS-Protection + Debouncing aktiviert');
 console.log('🎯 Queue-Badge + Sammelruf-UI + Event-Init aktiviert');
-console.log('🔧 FIX: Panel standardmäßig versteckt, Toggle korrigiert');
+console.log('🔧 v1.2.2: Robuste Initialisierung mit 3 Fallback-Methoden');
