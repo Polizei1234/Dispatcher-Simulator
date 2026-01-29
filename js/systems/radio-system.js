@@ -1,8 +1,9 @@
 // =========================
-// RADIO SYSTEM v1.2.0
+// RADIO SYSTEM v1.3.0
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
+// 🎯 v1.3.0: Ready-Event für zuverlässige Init
 // =========================
 
 const RadioSystem = {
@@ -19,7 +20,7 @@ const RadioSystem = {
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.2.0 initialisiert');
+        console.log('📡 Radio System v1.3.0 initialisiert');
         
         // Lade Konfiguration
         try {
@@ -51,6 +52,25 @@ const RadioSystem = {
 
         console.log('✅ Radio System bereit');
         console.log(`📻 Kanäle: ${Object.keys(this.channels).length}`);
+        
+        // 🎯 v1.3.0: Feuere Ready-Event
+        this.fireReadyEvent();
+    },
+
+    /**
+     * 🎯 v1.3.0: Feuert Ready-Event für RadioUI
+     */
+    fireReadyEvent() {
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('radioSystemReady', {
+                detail: {
+                    version: '1.3.0',
+                    channels: Object.keys(this.channels).length,
+                    timestamp: Date.now()
+                }
+            }));
+            console.log('📡 radioSystemReady Event gefeuert');
+        }
     },
 
     /**
@@ -677,5 +697,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-system.js v1.2.0 geladen');
+console.log('✅ radio-system.js v1.3.0 geladen');
 console.log('🔧 Kritische Fixes: GAME_DATA Safety, Memory Leak Prevention');
+console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
