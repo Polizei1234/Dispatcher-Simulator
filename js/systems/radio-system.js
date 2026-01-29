@@ -1,9 +1,10 @@
 // =========================
-// RADIO SYSTEM v1.3.0
+// RADIO SYSTEM v1.4.0
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
 // 🎯 v1.3.0: Ready-Event für zuverlässige Init
+// 🔧 v1.4.0: Fallback-Config (funktioniert ohne JSON)
 // =========================
 
 const RadioSystem = {
@@ -17,28 +18,153 @@ const RadioSystem = {
     logCleanupInterval: null,
     
     /**
+     * 🔧 v1.4.0: Fallback-Konfiguration (falls JSON nicht lädt)
+     */
+    getFallbackConfig() {
+        return {
+            "channels": {
+                "rettungsdienst": {
+                    "name": "Rettungsdienst",
+                    "icon": "🚑",
+                    "vehicle_types": ["RTW", "KTW", "NEF"],
+                    "description": "Einsatzkanal für Rettungswagen"
+                },
+                "polizei": {
+                    "name": "Polizei",
+                    "icon": "🚓",
+                    "vehicle_types": ["FuStW", "MTF"],
+                    "description": "Einsatzkanal für Polizeifahrzeuge"
+                },
+                "feuerwehr": {
+                    "name": "Feuerwehr",
+                    "icon": "🚒",
+                    "vehicle_types": ["LF", "DLK", "TLF"],
+                    "description": "Einsatzkanal für Feuerwehrfahrzeuge"
+                },
+                "gemeinsam": {
+                    "name": "Gemeinsam",
+                    "icon": "🌐",
+                    "vehicle_types": [],
+                    "description": "Kanal für alle Organisationen"
+                }
+            },
+            "priority_levels": {
+                "high": {
+                    "name": "Hoch",
+                    "icon": "⚠️",
+                    "weight": 100,
+                    "color": "#ff4444"
+                },
+                "normal": {
+                    "name": "Normal",
+                    "icon": "➡️",
+                    "weight": 50,
+                    "color": "#4444ff"
+                },
+                "low": {
+                    "name": "Niedrig",
+                    "icon": "ℹ️",
+                    "weight": 10,
+                    "color": "#888888"
+                }
+            },
+            "fms_triggers": {
+                "1": {
+                    "action": "none",
+                    "priority": "low",
+                    "reason": "sprechwunsch"
+                },
+                "3": {
+                    "action": "add_to_queue",
+                    "priority": "high",
+                    "reason": "sprechwunsch_priorisiert"
+                },
+                "4": {
+                    "action": "optional_message",
+                    "manual_trigger": "lagemeldung",
+                    "priority": "normal",
+                    "reason": "lagemeldung"
+                },
+                "7": {
+                    "action": "none",
+                    "priority": "normal"
+                },
+                "8": {
+                    "action": "optional_message",
+                    "manual_trigger": "transportziel_anfrage",
+                    "priority": "normal",
+                    "reason": "transportziel_anfrage"
+                }
+            },
+            "ui_settings": {
+                "max_log_entries": 100,
+                "auto_scroll": true,
+                "show_timestamps": true
+            }
+        };
+    },
+    
+    /**
+     * 🔧 v1.4.0: Fallback FMS-Daten
+     */
+    getFallbackFMS() {
+        return {
+            "vehicle_to_dispatch": {
+                "codes": {
+                    "1": { "name": "Einsatzbereit auf Funkwache", "icon": "🏠" },
+                    "2": { "name": "Einsatzbereit auf Wache", "icon": "🏥" },
+                    "3": { "name": "Einsatzfahrt", "icon": "🚑" },
+                    "4": { "name": "Ankunft am Einsatzort", "icon": "🎯" },
+                    "5": { "name": "Sprechwunsch", "icon": "📢" },
+                    "6": { "name": "Nicht einsatzbereit", "icon": "⛔" },
+                    "7": { "name": "Patient aufgenommen", "icon": "🤕" },
+                    "8": { "name": "Transportfahrt", "icon": "🚑" },
+                    "9": { "name": "Ankunft am Zielort", "icon": "🏥" }
+                }
+            },
+            "dispatch_to_vehicle": {
+                "codes": {
+                    "A": { "name": "Sammelruf", "icon": "📢" },
+                    "J": { "name": "Sprechaufforderung", "icon": "🗣️" }
+                }
+            }
+        };
+    },
+    
+    /**
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.3.0 initialisiert');
+        console.log('📡 Radio System v1.4.0 initialisiert');
         
-        // Lade Konfiguration
+        // 🔧 v1.4.0: Lade Config mit Fallback
         try {
             const response = await fetch('js/data/radio-config.json');
-            this.config = await response.json();
-            console.log('✅ Radio-Config geladen');
+            if (response.ok) {
+                this.config = await response.json();
+                console.log('✅ Radio-Config geladen');
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
         } catch (error) {
-            console.error('❌ Fehler beim Laden der Radio-Config:', error);
-            return;
+            console.warn('⚠️ Fehler beim Laden der Radio-Config:', error.message);
+            console.log('🔄 Nutze Fallback-Config');
+            this.config = this.getFallbackConfig();
         }
 
-        // Lade FMS-Daten
+        // 🔧 v1.4.0: Lade FMS mit Fallback
         try {
             const response = await fetch('js/data/fms-codes.json');
-            this.fmsData = await response.json();
-            console.log('✅ FMS-Daten geladen');
+            if (response.ok) {
+                this.fmsData = await response.json();
+                console.log('✅ FMS-Daten geladen');
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
         } catch (error) {
-            console.error('❌ Fehler beim Laden der FMS-Daten:', error);
+            console.warn('⚠️ Fehler beim Laden der FMS-Daten:', error.message);
+            console.log('🔄 Nutze Fallback-FMS-Daten');
+            this.fmsData = this.getFallbackFMS();
         }
 
         // Initialisiere Kanäle
@@ -64,7 +190,7 @@ const RadioSystem = {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('radioSystemReady', {
                 detail: {
-                    version: '1.3.0',
+                    version: '1.4.0',
                     channels: Object.keys(this.channels).length,
                     timestamp: Date.now()
                 }
@@ -598,7 +724,7 @@ const RadioSystem = {
         }
 
         // Update UI (mit Debouncing in RadioUI)
-        if (typeof RadioUI !== 'undefined') {
+        if (typeof RadioUI !== 'undefined' && RadioUI.scheduleLogUpdate) {
             RadioUI.scheduleLogUpdate();
         }
     },
@@ -641,7 +767,7 @@ const RadioSystem = {
         this.log = [];
         console.log('🗑️ Funkprotokoll gelöscht');
         
-        if (typeof RadioUI !== 'undefined') {
+        if (typeof RadioUI !== 'undefined' && RadioUI.updateLog) {
             RadioUI.updateLog();
         }
     },
@@ -687,8 +813,12 @@ const RadioSystem = {
 // Auto-Initialize
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', async () => {
-        await RadioSystem.initialize();
-        console.log('✅ RadioSystem bereit');
+        try {
+            await RadioSystem.initialize();
+            console.log('✅ RadioSystem bereit');
+        } catch (error) {
+            console.error('❌ RadioSystem Initialisierung fehlgeschlagen:', error);
+        }
     });
     
     // 🔧 v1.2.0: Cleanup bei Page Unload
@@ -697,6 +827,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-system.js v1.3.0 geladen');
-console.log('🔧 Kritische Fixes: GAME_DATA Safety, Memory Leak Prevention');
+console.log('✅ radio-system.js v1.4.0 geladen');
+console.log('🔧 Fallback-Config aktiviert - funktioniert ohne JSON-Dateien');
 console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
