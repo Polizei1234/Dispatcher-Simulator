@@ -1,7 +1,8 @@
 // =========================
-// RADIO PANEL UI v1.1.0
+// RADIO PANEL UI v1.2.0
 // Benutzerinterface für das Funksystem
 // 🔧 v1.1.0: XSS-Protection + Debouncing
+// 🎯 v1.2.0: Queue-Badge + Sammelruf-UI + Event-Init
 // =========================
 
 const RadioUI = {
@@ -14,9 +15,10 @@ const RadioUI = {
      * Initialisierung
      */
     initialize() {
-        console.log('📺 RadioUI v1.1.0 initialisiert');
+        console.log('📺 RadioUI v1.2.0 initialisiert');
         console.log('🔧 XSS-Protection aktiviert');
         console.log('🔧 Debouncing aktiviert');
+        console.log('🎯 Queue-Badge + Sammelruf-UI aktiviert');
         this.createPanel();
         this.attachEventListeners();
         this.updateAll();
@@ -93,6 +95,21 @@ const RadioUI = {
                     </div>
                 </div>
 
+                <!-- 🆕 v1.2.0: Sammelruf-Sektion -->
+                <div class="radio-broadcast-section" style="margin-bottom: 15px; padding: 15px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: bold;">📢 SAMMELRUF</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="broadcast-channel" class="radio-select" style="flex: 1;">
+                            <!-- Dynamisch generiert -->
+                        </select>
+                        <button id="broadcast-btn" class="btn btn-warning" onclick="RadioUI.showBroadcastDialog()" style="white-space: nowrap;">
+                            📢 Senden
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Funkprotokoll -->
                 <div class="radio-log-section">
                     <div class="radio-log-header">
@@ -146,6 +163,9 @@ const RadioUI = {
         // Generiere Kanal-Buttons
         this.generateChannelButtons();
 
+        // 🆕 v1.2.0: Generiere Broadcast-Kanal-Select
+        this.generateBroadcastChannelSelect();
+
         // Update Fahrzeug-Liste
         this.updateVehicleSelect();
     },
@@ -186,6 +206,41 @@ const RadioUI = {
 
             container.appendChild(button);
         }
+    },
+
+    /**
+     * 🆕 v1.2.0: Generiert Broadcast-Kanal-Select
+     */
+    generateBroadcastChannelSelect() {
+        const select = document.getElementById('broadcast-channel');
+        if (!select || !RadioSystem.channels) return;
+
+        select.innerHTML = '';
+
+        for (const [key, channel] of Object.entries(RadioSystem.channels)) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${channel.icon} ${channel.name}`;
+            select.appendChild(option);
+        }
+    },
+
+    /**
+     * 🆕 v1.2.0: Zeigt Sammelruf-Dialog
+     */
+    showBroadcastDialog() {
+        const channel = document.getElementById('broadcast-channel')?.value;
+        if (!channel) {
+            alert('Bitte Kanal auswählen');
+            return;
+        }
+
+        const message = prompt(`Sammelruf an alle Fahrzeuge auf Kanal "${RadioSystem.channels[channel].name}":\n\nNachricht eingeben:`);
+        if (!message || message.trim() === '') {
+            return;
+        }
+
+        RadioSystem.sendBroadcast(channel, message.trim());
     },
 
     /**
@@ -347,7 +402,7 @@ const RadioUI = {
     },
 
     /**
-     * Update Warteschlange
+     * 🆕 v1.2.0: Update Warteschlange + Header Badge
      */
     updateQueue() {
         const queueList = document.getElementById('radio-queue-list');
@@ -359,6 +414,9 @@ const RadioUI = {
         const queue = RadioSystem.queue;
 
         queueCount.textContent = queue.length;
+
+        // 🆕 v1.2.0: Update Header Badge
+        this.updateHeaderBadge(queue.length);
 
         // Zeige/Verstecke Sektion
         if (queue.length === 0) {
@@ -428,6 +486,21 @@ const RadioUI = {
             
             queueList.appendChild(queueItem);
         });
+    },
+
+    /**
+     * 🆕 v1.2.0: Aktualisiert Queue-Badge im Header
+     */
+    updateHeaderBadge(count) {
+        const badge = document.getElementById('radio-queue-badge');
+        if (!badge) return;
+
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
     },
 
     /**
@@ -704,16 +777,30 @@ const RadioUI = {
     }
 };
 
-// Auto-Initialize
+// 🎯 v1.2.0: Event-basierte Initialisierung
 if (typeof window !== 'undefined') {
+    // Warte auf RadioSystem-Ready-Event
+    window.addEventListener('radioSystemReady', () => {
+        console.log('✅ RadioSystem bereit - initialisiere RadioUI...');
+        RadioUI.initialize();
+        console.log('✅ RadioUI bereit');
+    });
+    
+    // Fallback: DOMContentLoaded mit Timeout
     window.addEventListener('DOMContentLoaded', () => {
-        // Warte bis RadioSystem bereit ist
         setTimeout(() => {
-            RadioUI.initialize();
-            console.log('✅ RadioUI bereit');
-        }, 500);
+            if (!RadioUI.panelElement) {
+                console.warn('⚠️ RadioUI noch nicht initialisiert - starte mit Timeout...');
+                if (typeof RadioSystem !== 'undefined' && RadioSystem.config) {
+                    RadioUI.initialize();
+                } else {
+                    console.error('❌ RadioSystem nicht verfügbar!');
+                }
+            }
+        }, 1000);
     });
 }
 
-console.log('✅ radio-panel.js v1.1.0 geladen');
+console.log('✅ radio-panel.js v1.2.0 geladen');
 console.log('🔧 XSS-Protection + Debouncing aktiviert');
+console.log('🎯 Queue-Badge + Sammelruf-UI + Event-Init aktiviert');
