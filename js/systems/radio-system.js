@@ -1,6 +1,7 @@
 // =========================
-// RADIO SYSTEM v1.0.0
+// RADIO SYSTEM v1.1.0
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
+// 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
 // =========================
 
 const RadioSystem = {
@@ -10,12 +11,13 @@ const RadioSystem = {
     channels: {},
     fmsData: null,
     lastDispatchMessages: {},
+    fmsListenerInstalled: false,
     
     /**
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.0.0 initialisiert');
+        console.log('📡 Radio System v1.1.0 initialisiert');
         
         // Lade Konfiguration
         try {
@@ -39,7 +41,7 @@ const RadioSystem = {
         // Initialisiere Kanäle
         this.initializeChannels();
 
-        // Event-Listener für FMS-Statusänderungen
+        // Event-Listener für FMS-Statusänderungen (warte auf VehicleMovement)
         this.setupFMSListener();
 
         console.log('✅ Radio System bereit');
@@ -61,9 +63,41 @@ const RadioSystem = {
 
     /**
      * Setup FMS Status Change Listener
+     * 🔧 Wartet auf VehicleMovement-Verfügbarkeit
      */
     setupFMSListener() {
-        // Hook in VehicleMovement.setVehicleStatus
+        // Prüfe ob VehicleMovement bereits geladen ist
+        if (typeof VehicleMovement !== 'undefined' && VehicleMovement.setVehicleStatus) {
+            this.installFMSListener();
+        } else {
+            // Warte auf VehicleMovement
+            console.log('⏳ Warte auf VehicleMovement...');
+            const checkInterval = setInterval(() => {
+                if (typeof VehicleMovement !== 'undefined' && VehicleMovement.setVehicleStatus) {
+                    clearInterval(checkInterval);
+                    this.installFMSListener();
+                }
+            }, 100);
+            
+            // Timeout nach 10 Sekunden
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                if (!this.fmsListenerInstalled) {
+                    console.error('❌ VehicleMovement nicht gefunden - FMS-Integration fehlgeschlagen!');
+                }
+            }, 10000);
+        }
+    },
+
+    /**
+     * Installiert den FMS-Listener
+     */
+    installFMSListener() {
+        if (this.fmsListenerInstalled) {
+            console.warn('⚠️ FMS-Listener bereits installiert');
+            return;
+        }
+
         const originalSetStatus = VehicleMovement.setVehicleStatus;
         
         VehicleMovement.setVehicleStatus = (vehicle, fmsCode) => {
@@ -73,10 +107,11 @@ const RadioSystem = {
             originalSetStatus.call(VehicleMovement, vehicle, fmsCode);
             
             // Triggere Radio-Events
-            this.handleFMSStatusChange(vehicle, fmsCode, oldStatus);
+            RadioSystem.handleFMSStatusChange(vehicle, fmsCode, oldStatus);
         };
         
-        console.log('✅ FMS-Listener aktiviert');
+        this.fmsListenerInstalled = true;
+        console.log('✅ FMS-Listener erfolgreich installiert');
     },
 
     /**
@@ -134,8 +169,8 @@ const RadioSystem = {
             icon: icon
         });
 
-        // Zeige Notification
-        if (typeof window.notificationSystem !== 'undefined') {
+        // Zeige Notification (nur bei wichtigen Status)
+        if ([3, 4, 7, 8].includes(newStatus) && typeof window.notificationSystem !== 'undefined') {
             window.notificationSystem.show(message, 'info');
         }
     },
@@ -260,6 +295,22 @@ const RadioSystem = {
         console.log(`🤖 Generiere Fahrzeug-Antwort für ${vehicle.callsign}...`);
 
         try {
+            // Prüfe ob RadioGroq verfügbar ist
+            if (typeof RadioGroq === 'undefined') {
+                console.warn('⚠️ RadioGroq nicht verfügbar - nutze Fallback');
+                const fallbackResponse = this.generateFallbackResponse(vehicle, reason);
+                
+                this.addLogEntry({
+                    type: 'vehicle_to_dispatch',
+                    vehicle: vehicle,
+                    message: fallbackResponse,
+                    direction: 'vehicle_to_dispatch',
+                    ai_generated: false
+                });
+                
+                return;
+            }
+
             const response = await RadioGroq.generateVehicleResponse(vehicle, {
                 reason: reason,
                 incident: context.incident,
@@ -280,7 +331,32 @@ const RadioSystem = {
 
         } catch (error) {
             console.error('❌ Fehler bei Fahrzeug-Antwort:', error);
+            
+            // Fallback-Antwort
+            const fallbackResponse = this.generateFallbackResponse(vehicle, reason);
+            this.addLogEntry({
+                type: 'vehicle_to_dispatch',
+                vehicle: vehicle,
+                message: fallbackResponse,
+                direction: 'vehicle_to_dispatch',
+                ai_generated: false
+            });
         }
+    },
+
+    /**
+     * Generiert Fallback-Antwort ohne KI
+     */
+    generateFallbackResponse(vehicle, reason) {
+        const responses = {
+            'sprechwunsch': `${vehicle.callsign} von Leitstelle, verstanden, Ende`,
+            'sprechwunsch_priorisiert': `${vehicle.callsign}, Anfrage, kommen`,
+            'lagemeldung': `${vehicle.callsign}, Lage unverändert, Patient wird versorgt, Ende`,
+            'transportziel_anfrage': `${vehicle.callsign}, bitte Transportziel durchgeben`,
+            'response_to_dispatch': `${vehicle.callsign} von Leitstelle, verstanden und übernommen, Ende`
+        };
+        
+        return responses[reason] || `${vehicle.callsign} von Leitstelle, verstanden, Ende`;
     },
 
     /**
@@ -529,4 +605,4 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-system.js geladen');
+console.log('✅ radio-system.js v1.1.0 geladen');
