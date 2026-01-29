@@ -1,21 +1,23 @@
 // =========================
-// RADIO PANEL UI v1.2.0
+// RADIO PANEL UI v1.2.1
 // Benutzerinterface für das Funksystem
 // 🔧 v1.1.0: XSS-Protection + Debouncing
 // 🎯 v1.2.0: Queue-Badge + Sammelruf-UI + Event-Init
+// 🔧 v1.2.1: FIX Panel standardmäßig hidden
 // =========================
 
 const RadioUI = {
     panelElement: null,
     currentChannel: 'rettungsdienst',
     isMinimized: false,
+    isVisible: false,
     logUpdateTimeout: null,
 
     /**
      * Initialisierung
      */
     initialize() {
-        console.log('📺 RadioUI v1.2.0 initialisiert');
+        console.log('📺 RadioUI v1.2.1 initialisiert');
         console.log('🔧 XSS-Protection aktiviert');
         console.log('🔧 Debouncing aktiviert');
         console.log('🎯 Queue-Badge + Sammelruf-UI aktiviert');
@@ -60,6 +62,9 @@ const RadioUI = {
         const panel = document.createElement('div');
         panel.id = 'radio-panel';
         panel.className = 'radio-panel';
+        
+        // 🔧 v1.2.1: Standardmäßig versteckt
+        panel.style.display = 'none';
         
         panel.innerHTML = `
             <div class="radio-panel-header">
@@ -168,6 +173,8 @@ const RadioUI = {
 
         // Update Fahrzeug-Liste
         this.updateVehicleSelect();
+        
+        console.log('✅ Radio Panel erstellt (standardmäßig versteckt)');
     },
 
     /**
@@ -744,11 +751,19 @@ const RadioUI = {
     },
 
     /**
-     * Toggle Panel
+     * 🔧 v1.2.1: Toggle Panel (FIX: display statt classList)
      */
     togglePanel() {
-        if (this.panelElement) {
-            this.panelElement.classList.toggle('hidden');
+        if (!this.panelElement) return;
+        
+        if (this.panelElement.style.display === 'none') {
+            this.panelElement.style.display = 'block';
+            this.isVisible = true;
+            console.log('✅ Radio Panel geöffnet');
+        } else {
+            this.panelElement.style.display = 'none';
+            this.isVisible = false;
+            console.log('❌ Radio Panel geschlossen');
         }
     },
 
@@ -801,6 +816,7 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-panel.js v1.2.0 geladen');
+console.log('✅ radio-panel.js v1.2.1 geladen');
 console.log('🔧 XSS-Protection + Debouncing aktiviert');
 console.log('🎯 Queue-Badge + Sammelruf-UI + Event-Init aktiviert');
+console.log('🔧 FIX: Panel standardmäßig versteckt, Toggle korrigiert');
