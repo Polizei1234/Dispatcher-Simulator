@@ -1,6 +1,8 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.1.0
+// CENTRAL VERSION MANAGER v3.2.0
 // SINGLE SOURCE OF TRUTH für Version
+// ✅ v9.2.0: EVENTBRIDGE INTEGRATION!
+// 🔧 v3.2.0: event-bridge.js zur Ladereihenfolge
 // ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
 // 🔧 v3.1.0: Error Handler + Eruda-Fix
 // 🐛 FIX #1: vehicle-status.js hinzugefügt (PHASE 1 Zentrale Status-Funktion)
@@ -21,7 +23,7 @@ if (typeof window !== 'undefined') {
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.1.0',
+    VERSION: '9.2.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -77,6 +79,10 @@ const VERSION_CONFIG = {
     /**
      * JavaScript-Dateien in Ladereihenfolge
      * 
+     * 🌉 v9.2.0: EVENTBRIDGE INTEGRATION!
+     *   - event-bridge.js VOR escalation-system.js
+     *   - Bidirektionale System-Kommunikation
+     * 
      * ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
      * 🐛 FIX #1: vehicle-status.js hinzugefügt (VOR ui.js, map.js, tabs.js)
      * 
@@ -88,7 +94,7 @@ const VERSION_CONFIG = {
      * 
      * ✅ v7.1.0 (Phase 2): AI Integration & Dynamische Systeme
      *   - ai-incident-generator.js v3.0 (nutzt Composer)
-     *   - escalation-system.js v2.0 (Schema-basiert)
+     *   - escalation-system.js v2.1 (EventBridge Integration)
      *   - conversation-engine.js v1.0 (dynamische Fragen)
      */
     JS_FILES: [
@@ -96,6 +102,9 @@ const VERSION_CONFIG = {
         'js/systems/theme-manager.js',
         'js/core/config.js',
         'js/core/incident-manager.js',
+        
+        // 🌉 v9.2.0: EventBridge (VOR allen Systemen!)
+        'js/core/event-bridge.js',
         
         // Utils
         'js/utils/settings-manager.js',
@@ -124,7 +133,7 @@ const VERSION_CONFIG = {
         'js/data/incidents.js',
         'js/data/data.js',
         
-        // Systems
+        // Systems (NACH EventBridge!)
         'js/systems/weather-system.js',
         'js/systems/ai-incident-generator.js',
         'js/systems/escalation-system.js',
@@ -360,6 +369,7 @@ const VERSION_CONFIG = {
         const keysToKeep = [
             'app_version',
             'groq_api_key',
+            'groqApiKey',
             'game_difficulty',
             'dispatcher_theme',
             'ui_theme',
@@ -407,7 +417,7 @@ const VERSION_CONFIG = {
             position: fixed;
             top: 20px;
             right: 20px;
-            max-width: 450px;
+            max-width: 500px;
             background: #2d3748;
             border: 2px solid #4299e1;
             border-radius: 12px;
@@ -421,22 +431,23 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">📡</span>
+                <span style="font-size: 2em;">🌉</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🎉 FUNK-BUTTON JETZT IM HEADER!</strong></p>
+                <p><strong>🎉 EVENTBRIDGE - BIDIREKTIONALE KOMMUNIKATION!</strong></p>
                 <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Neue Features:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>🎯 <strong>Funk-Button im Header (rechts oben)</strong></li>
-                    <li>📢 <strong>Sammelruf-Funktion für alle Fahrzeuge</strong></li>
-                    <li>🔧 <strong>Robuste Fehlerbehandlung</strong></li>
-                    <li>⚡ <strong>Event-basierte Initialisierung</strong></li>
-                    <li>🐞 <strong>Bug-Fixes für iPad Safari</strong></li>
+                    <li>🌉 <strong>EventBridge für System-Kommunikation</strong></li>
+                    <li>📡 <strong>Automatische Funksprüche bei ALLEN Ereignissen</strong></li>
+                    <li>🚑 <strong>NEF-Anforderung über Funk</strong></li>
+                    <li>🚨 <strong>Eskalationen triggern Funksprüche</strong></li>
+                    <li>💉 <strong>Reanimation, Patient kritisch, etc.</strong></li>
+                    <li>🔄 <strong>Bidirektional: Einsatz ↔ Funk</strong></li>
                 </ul>
                 <div style="margin-top: 12px; padding: 10px; background: rgba(66, 153, 225, 0.1); border-left: 3px solid #4299e1; border-radius: 4px;">
                     <p style="margin: 0; font-size: 0.9em; color: #90cdf4;">
-                        <strong>✅ Tipp:</strong> Klicke auf den Funk-Button im Header, um das Radio-Panel zu öffnen!
+                        <strong>✅ Mega-realistisch:</strong> Fahrzeuge melden automatisch kritische Situationen über Funk!
                     </p>
                 </div>
             </div>
@@ -469,13 +480,11 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🎉 NEU IN v9.1.0 - FUNK-BUTTON INTEGRATION!', 'color: #4299e1; font-weight: bold; font-size: 1.1em');
-        console.log('%c   🎯 Funk-Button im Header', 'color: #90cdf4');
-        console.log('%c   📢 Sammelruf-Funktion', 'color: #90cdf4');
-        console.log('%c   🔧 Robuste Fehlerbehandlung', 'color: #90cdf4');
-        console.log('%c   ⚡ Event-basierte Init', 'color: #90cdf4');
-        console.log('%c   ✅ iPad Safari Fixes', 'color: #68d391');
-        console.log('%c   🐛 FIX: vehicle-status.js geladen', 'color: #68d391');
+        console.log('%c🌉 NEU IN v9.2.0 - EVENTBRIDGE INTEGRATION!', 'color: #4299e1; font-weight: bold; font-size: 1.1em');
+        console.log('%c   🔗 Bidirektionale System-Kommunikation', 'color: #90cdf4');
+        console.log('%c   📡 Automatische Funksprüche bei ALLEN Events', 'color: #90cdf4');
+        console.log('%c   🚑 NEF-Anforderung, Eskalationen, Reanimation', 'color: #90cdf4');
+        console.log('%c   ✅ Einsatz ↔ Funk Integration', 'color: #68d391');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
@@ -494,6 +503,6 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.1.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log(`🚀 Central Version Manager v3.2.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('🌉 EventBridge zur Ladereihenfolge hinzugefügt (VOR allen Systemen)');
 console.log('🔧 Fehlertoleranz aktiviert - Scripts laden auch bei Einzelfehlern weiter');
-console.log('🐛 FIX #1: vehicle-status.js zur Ladereihenfolge hinzugefügt');
