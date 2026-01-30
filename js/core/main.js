@@ -1,11 +1,12 @@
 // =========================
-// HAUPTSTEUERUNG v4.14 - BUGFIXES + RADIO INIT
+// HAUPTSTEUERUNG v4.15 - GAME-TIMER + WEATHER + CALL-TEMPLATES!
 // + ✅ VehicleMovement.initialize() wird jetzt aufgerufen
 // + ✅ Fahrzeuge fahren wieder los!
 // + ✅✅✅ PHASE 3.1.1 v4.12: CONDITIONAL UI UPDATES (-80% DOM Operations!)
 // + 🐛 FIX v4.13: Game Loop stoppt bei Pause (CPU-Savings!)
 // + 🐛 FIX v4.13: Null-Checks in updateUI (keine Runtime-Errors!)
 // + 🔧 FIX v4.14: RadioSystem wird in initializeNewSystems() initialisiert
+// + 🌦️⏰📞 FIX v4.15: Game-Timer + Weather + Call-Template-Mapper Integration!
 // =========================
 
 let gamePaused = false;
@@ -150,7 +151,9 @@ window.GAME_DATA = {
 };
 
 // 🆕 NEUE GLOBALE SYSTEME
-window.gameWeatherSystem = null;
+window.gameTimer = null;              // ⏰ Game-Timer
+window.gameWeatherSystem = null;      // 🌦️ Weather-System
+window.gameCallTemplateMapper = null; // 📞 Call-Template-Mapper
 window.gameAIGenerator = null;
 window.gameMissionTimer = null;
 window.gameEscalationSystem = null;
@@ -216,10 +219,19 @@ function startNewGame(mode) {
 
 // 🆕 NEUE SYSTEME INITIALISIEREN
 async function initializeNewSystems() {
-    console.group('🆕 INITIALISIERE NEUE SYSTEME');
+    console.group('🆕 INITIALISIERE NEUE SYSTEME (v9.3.0)');
     
     try {
-        // 1. Weather System
+        // ⏰ 1. GAME-TIMER SYSTEM
+        if (typeof GameTimer !== 'undefined') {
+            window.gameTimer = new GameTimer();
+            window.gameTimer.start();
+            console.log('✅ Game-Timer initialisiert & gestartet');
+        } else {
+            console.warn('⚠️ GameTimer nicht gefunden');
+        }
+        
+        // 🌦️ 2. WEATHER SYSTEM
         if (typeof WeatherSystem !== 'undefined') {
             window.gameWeatherSystem = new WeatherSystem();
             window.gameWeatherSystem.initialize();
@@ -228,14 +240,29 @@ async function initializeNewSystems() {
             console.warn('⚠️ WeatherSystem nicht gefunden');
         }
         
-        // 2. AI Incident Generator
+        // 📞 3. CALL-TEMPLATE-MAPPER
+        if (typeof CallTemplateMapper !== 'undefined') {
+            window.gameCallTemplateMapper = new CallTemplateMapper();
+            console.log('✅ Call-Template-Mapper initialisiert');
+        } else {
+            console.warn('⚠️ CallTemplateMapper nicht gefunden');
+        }
+        
+        // 🤖 4. AI INCIDENT GENERATOR
         if (typeof AIIncidentGenerator !== 'undefined') {
             const apiKey = localStorage.getItem('groqApiKey') || CONFIG.GROQ_API_KEY || '';
             window.gameAIGenerator = new AIIncidentGenerator(apiKey);
             
-            // Verbinde mit Weather System
+            // 🔗 Verbinde mit Weather System
             if (window.gameWeatherSystem) {
                 window.gameAIGenerator.setWeatherSystem(window.gameWeatherSystem);
+                console.log('✅ AI Generator <-> Weather System verbunden');
+            }
+            
+            // 🔗 Verbinde mit Game-Timer
+            if (window.gameTimer) {
+                window.gameAIGenerator.setGameTimer(window.gameTimer);
+                console.log('✅ AI Generator <-> Game-Timer verbunden');
             }
             
             console.log('✅ AI Incident Generator initialisiert');
@@ -243,7 +270,7 @@ async function initializeNewSystems() {
             console.warn('⚠️ AIIncidentGenerator nicht gefunden');
         }
         
-        // 3. Mission Timer
+        // ⏱️ 5. MISSION TIMER
         if (typeof MissionTimer !== 'undefined') {
             window.gameMissionTimer = new MissionTimer();
             console.log('✅ Mission Timer initialisiert');
@@ -251,7 +278,7 @@ async function initializeNewSystems() {
             console.warn('⚠️ MissionTimer nicht gefunden');
         }
         
-        // 4. Escalation System
+        // 😨 6. ESCALATION SYSTEM
         if (typeof EscalationSystem !== 'undefined') {
             window.gameEscalationSystem = new EscalationSystem();
             console.log('✅ Escalation System initialisiert');
@@ -259,7 +286,7 @@ async function initializeNewSystems() {
             console.warn('⚠️ EscalationSystem nicht gefunden');
         }
         
-        // ✅ 5. VEHICLE MOVEMENT SYSTEM - KRITISCH!
+        // ✅ 7. VEHICLE MOVEMENT SYSTEM - KRITISCH!
         if (typeof VehicleMovement !== 'undefined') {
             VehicleMovement.initialize();
             console.log('✅ Vehicle Movement System initialisiert - Fahrzeuge können fahren!');
@@ -267,7 +294,7 @@ async function initializeNewSystems() {
             console.error('❌ VehicleMovement nicht gefunden - Fahrzeuge werden nicht fahren!');
         }
         
-        // 🔧 6. RADIO SYSTEM - KRITISCH FÜR FUNKVERKEHR!
+        // 🔧 8. RADIO SYSTEM - KRITISCH FÜR FUNKVERKEHR!
         if (typeof RadioSystem !== 'undefined') {
             await RadioSystem.initialize();
             console.log('✅ Radio System initialisiert - Funkverkehr bereit!');
@@ -276,6 +303,7 @@ async function initializeNewSystems() {
         }
         
         console.log('✅ Alle neuen Systeme erfolgreich initialisiert!');
+        console.log('🌦️⏰📞 v9.3.0: Game-Timer + Weather + Call-Templates AKTIV!');
         
     } catch (error) {
         console.error('❌ Fehler beim Initialisieren neuer Systeme:', error);
@@ -304,6 +332,11 @@ function togglePause() {
             GameTime.pausedAt = Date.now();
         }
         
+        // ⏰ Pausiere Game-Timer
+        if (window.gameTimer) {
+            window.gameTimer.pause();
+        }
+        
         icon.classList.remove('fa-pause');
         icon.classList.add('fa-play');
         btn.title = 'Fortsetzen';
@@ -323,6 +356,11 @@ function togglePause() {
             
             startGameLoop();
             console.log('▶️ Game Loop neu gestartet');
+        }
+        
+        // ⏰ Setze Game-Timer fort
+        if (window.gameTimer) {
+            window.gameTimer.resume();
         }
         
         icon.classList.remove('fa-play');
@@ -370,9 +408,15 @@ function startGameLoop() {
         // Aktualisiere ZENTRALES Zeitsystem
         GameTime.tick(1000);
         
-        // Aktualisiere Weather System (Tageszeit)
+        // ⏰ Update Game-Timer
+        if (window.gameTimer) {
+            window.gameTimer.update(1000);
+        }
+        
+        // 🌦️ Aktualisiere Weather System (Tageszeit)
         if (window.gameWeatherSystem) {
-            window.gameWeatherSystem.updateTimeOfDay(GameTime.simulated.getHours());
+            const currentHour = window.gameTimer ? window.gameTimer.getHour() : GameTime.simulated.getHours();
+            window.gameWeatherSystem.updateTimeOfDay(currentHour);
         }
         
         if (game) {
@@ -412,8 +456,17 @@ function updateUI() {
         UIUpdateTracker.scheduleVehicleListUpdate();
     }
     
-    // 2. TIME DISPLAY - Nur bei Änderung updaten
-    if (GameTime && GameTime.simulated) {
+    // 2. TIME DISPLAY - Nutze Game-Timer wenn verfügbar
+    if (window.gameTimer) {
+        const timeString = window.gameTimer.getTimeString();
+        
+        if (UIUpdateTracker.hasTimeChanged(timeString)) {
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                timeEl.textContent = timeString;
+            }
+        }
+    } else if (GameTime && GameTime.simulated) {
         const hours = String(GameTime.simulated.getHours()).padStart(2, '0');
         const minutes = String(GameTime.simulated.getMinutes()).padStart(2, '0');
         const seconds = String(GameTime.simulated.getSeconds()).padStart(2, '0');
@@ -613,11 +666,12 @@ function startTutorial() {
 
 // Initialisierung beim Laden
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ILS Waiblingen Simulator v4.14 geladen (BUGFIXES + RADIO INIT)');
+    console.log('🚀 ILS Waiblingen Simulator v4.15 geladen (GAME-TIMER + WEATHER + CALL-TEMPLATES!)');
     console.log('✅✅✅ PHASE 3.1.1: Optimierte UI Updates - Nur bei Änderungen!');
     console.log('🐛 FIX: Game Loop stoppt bei Pause - CPU-Savings!');
     console.log('🐛 FIX: Null-Checks in updateUI - keine Runtime-Errors!');
     console.log('🔧 FIX: RadioSystem wird in initializeNewSystems() initialisiert');
+    console.log('🌦️⏰📞 v9.3.0: Game-Timer + Weather + Call-Templates Integration!');
     
     if (typeof STATIONS !== 'undefined') {
         console.log(`🏥 ${Object.keys(STATIONS).length} Wachen verfügbar`);
@@ -635,4 +689,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-console.log('✅✅✅ main.js v4.14 geladen - RADIO INIT IN initializeNewSystems()! 🔧');
+console.log('✅✅✅ main.js v4.15 geladen - GAME-TIMER + WEATHER + CALL-TEMPLATES INTEGRATION! 🌦️⏰📞');
