@@ -1,7 +1,9 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.2.0
+// CENTRAL VERSION MANAGER v3.3.0
 // SINGLE SOURCE OF TRUTH für Version
+// ✅ v9.3.0: GAME-TIMER + CALL-TEMPLATE-MAPPER!
 // ✅ v9.2.0: EVENTBRIDGE INTEGRATION!
+// 🔧 v3.3.0: game-timer.js + call-template-mapper.js hinzugefügt
 // 🔧 v3.2.0: event-bridge.js zur Ladereihenfolge
 // ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
 // 🔧 v3.1.0: Error Handler + Eruda-Fix
@@ -23,7 +25,7 @@ if (typeof window !== 'undefined') {
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.2.0',
+    VERSION: '9.3.0',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -79,6 +81,11 @@ const VERSION_CONFIG = {
     /**
      * JavaScript-Dateien in Ladereihenfolge
      * 
+     * 🌦️⏰ v9.3.0: GAME-TIMER + WEATHER + CALL-TEMPLATES!
+     *   - game-timer.js für Zeit-System
+     *   - weather-system.js für Wetter
+     *   - call-template-mapper.js für Call-Template Integration
+     * 
      * 🌉 v9.2.0: EVENTBRIDGE INTEGRATION!
      *   - event-bridge.js VOR escalation-system.js
      *   - Bidirektionale System-Kommunikation
@@ -133,8 +140,12 @@ const VERSION_CONFIG = {
         'js/data/incidents.js',
         'js/data/data.js',
         
-        // Systems (NACH EventBridge!)
+        // 🌦️⏰ v9.3.0: Zeit & Wetter Systeme (VOR AI Generator!)
+        'js/systems/game-timer.js',
         'js/systems/weather-system.js',
+        'js/systems/call-template-mapper.js',
+        
+        // Systems (NACH EventBridge!)
         'js/systems/ai-incident-generator.js',
         'js/systems/escalation-system.js',
         'js/systems/groq-validator.js',
@@ -419,7 +430,7 @@ const VERSION_CONFIG = {
             right: 20px;
             max-width: 500px;
             background: #2d3748;
-            border: 2px solid #4299e1;
+            border: 2px solid #f59e0b;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -431,30 +442,30 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🌉</span>
+                <span style="font-size: 2em;">🌦️⏰</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🎉 EVENTBRIDGE - BIDIREKTIONALE KOMMUNIKATION!</strong></p>
+                <p><strong>🎉 ZEIT & WETTER & CALL-TEMPLATES!</strong></p>
                 <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Neue Features:</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>🌉 <strong>EventBridge für System-Kommunikation</strong></li>
-                    <li>📡 <strong>Automatische Funksprüche bei ALLEN Ereignissen</strong></li>
-                    <li>🚑 <strong>NEF-Anforderung über Funk</strong></li>
-                    <li>🚨 <strong>Eskalationen triggern Funksprüche</strong></li>
-                    <li>💉 <strong>Reanimation, Patient kritisch, etc.</strong></li>
-                    <li>🔄 <strong>Bidirektional: Einsatz ↔ Funk</strong></li>
+                    <li>⏰ <strong>Game-Timer - Spielzeit-System</strong></li>
+                    <li>🌦️ <strong>Weather-System - Dynamisches Wetter</strong></li>
+                    <li>📞 <strong>Call-Template-Mapper - 70+ Notrufe</strong></li>
+                    <li>🎯 <strong>17 Einsatztypen mit Gewichtung</strong></li>
+                    <li>📊 <strong>Tageszeit-Abhängigkeit</strong></li>
+                    <li>❄️ <strong>Wetter beeinflusst Einsätze</strong></li>
                 </ul>
-                <div style="margin-top: 12px; padding: 10px; background: rgba(66, 153, 225, 0.1); border-left: 3px solid #4299e1; border-radius: 4px;">
-                    <p style="margin: 0; font-size: 0.9em; color: #90cdf4;">
-                        <strong>✅ Mega-realistisch:</strong> Fahrzeuge melden automatisch kritische Situationen über Funk!
+                <div style="margin-top: 12px; padding: 10px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 0.9em; color: #fbbf24;">
+                        <strong>✅ Mega-realistisch:</strong> Mehr Unfälle bei Schnee, Herzinfarkte nachts, Hitzenotfälle im Sommer!
                     </p>
                 </div>
             </div>
             <button onclick="this.parentElement.remove()" style="
                 width: 100%;
                 padding: 10px;
-                background: #4299e1;
+                background: #f59e0b;
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -473,19 +484,20 @@ const VERSION_CONFIG = {
     },
     
     printInfo: function() {
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
-        console.log('%c🎮 Dispatcher Simulator', 'color: #4299e1; font-size: 1.5em; font-weight: bold');
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
-        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #4299e1; font-weight: bold; font-size: 1.1em');
+        console.log('%c═══════════════════════════════════', 'color: #f59e0b');
+        console.log('%c🎮 Dispatcher Simulator', 'color: #f59e0b; font-size: 1.5em; font-weight: bold');
+        console.log('%c═══════════════════════════════════', 'color: #f59e0b');
+        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #f59e0b; font-weight: bold; font-size: 1.1em');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🌉 NEU IN v9.2.0 - EVENTBRIDGE INTEGRATION!', 'color: #4299e1; font-weight: bold; font-size: 1.1em');
-        console.log('%c   🔗 Bidirektionale System-Kommunikation', 'color: #90cdf4');
-        console.log('%c   📡 Automatische Funksprüche bei ALLEN Events', 'color: #90cdf4');
-        console.log('%c   🚑 NEF-Anforderung, Eskalationen, Reanimation', 'color: #90cdf4');
-        console.log('%c   ✅ Einsatz ↔ Funk Integration', 'color: #68d391');
-        console.log('%c═══════════════════════════════════', 'color: #4299e1');
+        console.log('%c🌦️⏰ NEU IN v9.3.0 - ZEIT & WETTER & CALLS!', 'color: #f59e0b; font-weight: bold; font-size: 1.1em');
+        console.log('%c   ⏰ Game-Timer für Spielzeit-System', 'color: #fbbf24');
+        console.log('%c   🌦️ Weather-System für dynamisches Wetter', 'color: #fbbf24');
+        console.log('%c   📞 Call-Template-Mapper (70+ Notrufe)', 'color: #fbbf24');
+        console.log('%c   🎯 17 Einsatztypen mit Gewichtung', 'color: #68d391');
+        console.log('%c   📊 Tageszeit & Wetter beeinflussen Einsätze', 'color: #68d391');
+        console.log('%c═══════════════════════════════════', 'color: #f59e0b');
     }
 };
 
@@ -503,6 +515,6 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.2.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
-console.log('🌉 EventBridge zur Ladereihenfolge hinzugefügt (VOR allen Systemen)');
+console.log(`🚀 Central Version Manager v3.3.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('🌦️⏰ Game-Timer, Weather-System, Call-Template-Mapper zur Ladereihenfolge hinzugefügt');
 console.log('🔧 Fehlertoleranz aktiviert - Scripts laden auch bei Einzelfehlern weiter');
