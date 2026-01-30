@@ -1,5 +1,5 @@
 // =========================
-// RADIO SYSTEM v2.1.0 - AUTOMATISCHE FUNKSPRÜCHE MIT THROTTLING
+// RADIO SYSTEM v2.2.0 - EVENTBRIDGE INTEGRATION KOMPLETT!
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
@@ -9,6 +9,7 @@
 // 📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!
 // 🤖 v2.0.0: AUTOMATISCHE FUNKSPRÜCHE bei Einsatzevents!
 // ⏱️ v2.1.0: THROTTLING-SYSTEM gegen Funkspruch-Spam!
+// 🌉 v2.2.0: EVENTBRIDGE-LISTENER - Bidirektionale Kommunikation!
 // =========================
 
 const RadioSystem = {
@@ -19,6 +20,7 @@ const RadioSystem = {
     fmsData: null,
     lastDispatchMessages: {},
     fmsListenerInstalled: false,
+    eventBridgeListenersInstalled: false,
     logCleanupInterval: null,
     automaticMessagesConfig: null,
     
@@ -177,6 +179,26 @@ const RadioSystem = {
                     "enabled": true,
                     "delay_ms": 1000,
                     "vehicle_types": ["RTW", "NEF", "KTW"]
+                },
+                "request_nef": {
+                    "enabled": true,
+                    "delay_ms": 1000,
+                    "vehicle_types": ["RTW", "KTW"]
+                },
+                "patient_complications": {
+                    "enabled": true,
+                    "delay_ms": 1500,
+                    "vehicle_types": ["RTW", "NEF", "KTW"]
+                },
+                "critical_patient": {
+                    "enabled": true,
+                    "delay_ms": 1000,
+                    "vehicle_types": ["RTW", "NEF"]
+                },
+                "transport_delay": {
+                    "enabled": true,
+                    "delay_ms": 2000,
+                    "vehicle_types": ["RTW", "KTW"]
                 }
             },
             "throttle": {
@@ -207,7 +229,7 @@ const RadioSystem = {
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v2.1.0 initialisiert');
+        console.log('📡 Radio System v2.2.0 initialisiert');
         
         // 🔧 v1.4.0: Lade Config mit Fallback
         try {
@@ -260,6 +282,9 @@ const RadioSystem = {
         // Event-Listener für FMS-Statusänderungen (warte auf VehicleMovement)
         this.setupFMSListener();
 
+        // 🌉 v2.2.0: Registriere EventBridge-Listener
+        this.setupEventBridgeListeners();
+
         // 🔧 v1.2.0: Auto-Cleanup für Memory Leak Prevention
         this.startLogCleanup();
 
@@ -280,17 +305,178 @@ const RadioSystem = {
     },
 
     /**
+     * 🌉 v2.2.0: KRITISCHER FIX - Registriert EventBridge-Listener
+     */
+    setupEventBridgeListeners() {
+        if (this.eventBridgeListenersInstalled) {
+            console.warn('⚠️ EventBridge-Listener bereits installiert');
+            return;
+        }
+
+        if (!window.eventBridge) {
+            console.warn('⚠️ EventBridge nicht verfügbar - Warte 5s...');
+            setTimeout(() => this.setupEventBridgeListeners(), 5000);
+            return;
+        }
+
+        console.log('🌉 Registriere EventBridge-Listener...');
+
+        // 1️⃣ DISPATCH EVENTS
+        window.eventBridge.on('dispatch:vehicle_dispatched', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'dispatch', {
+                incident: data.incident,
+                urgency: data.urgency
+            });
+        });
+
+        window.eventBridge.on('dispatch:vehicle_arrived', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'arrival', {
+                incident: data.incident
+            });
+        });
+
+        // 2️⃣ ESKALATIONS-EVENTS
+        window.eventBridge.on('escalation:started', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
+                incident: data.incident,
+                oldSeverity: data.oldSeverity,
+                newSeverity: data.newSeverity,
+                reason: data.reason
+            });
+        });
+
+        window.eventBridge.on('escalation:nef_required', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'request_nef', {
+                incident: data.incident,
+                urgency: data.urgency || 'high',
+                needs_nef: true
+            });
+        });
+
+        window.eventBridge.on('escalation:status_worsened', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
+                incident: data.incident,
+                oldStatus: data.oldStatus,
+                newStatus: data.newStatus
+            });
+        });
+
+        window.eventBridge.on('escalation:critical', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
+                incident: data.incident,
+                urgency: 'critical'
+            });
+        });
+
+        // 3️⃣ KOMPLIKATIONS-EVENTS
+        window.eventBridge.on('incident:complication', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'patient_complications', {
+                incident: data.incident,
+                complication: data.complication
+            });
+        });
+
+        window.eventBridge.on('medical:patient_critical', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
+                incident: data.incident,
+                symptoms: data.symptoms
+            });
+        });
+
+        window.eventBridge.on('medical:resuscitation', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
+                incident: data.incident,
+                resuscitation: true
+            });
+        });
+
+        // 4️⃣ TRANSPORT-EVENTS
+        window.eventBridge.on('transport:patient_loaded', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'patient_loaded', {
+                incident: data.incident
+            });
+        });
+
+        window.eventBridge.on('transport:hospital_arrival', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'hospital_arrival', {
+                incident: data.incident,
+                hospital: data.hospital
+            });
+        });
+
+        window.eventBridge.on('transport:delayed', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'transport_delay', {
+                incident: data.incident,
+                reason: data.reason
+            });
+        });
+
+        // 5️⃣ VEHICLE-EVENTS
+        window.eventBridge.on('vehicle:back_available', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'back_available', {
+                previousIncident: data.previousIncident
+            });
+        });
+
+        window.eventBridge.on('vehicle:break_start', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'break_start', {
+                duration: data.duration
+            });
+        });
+
+        window.eventBridge.on('vehicle:shift_end', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'shift_end', {});
+        });
+
+        window.eventBridge.on('vehicle:maintenance_needed', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'maintenance_needed', {
+                reason: data.reason
+            });
+        });
+
+        // 6️⃣ DELAY-EVENTS
+        window.eventBridge.on('incident:on_scene_delay', (data) => {
+            if (!data.vehicle) return;
+            this.sendAutomaticMessage(data.vehicle, 'on_scene_delay', {
+                incident: data.incident,
+                duration: data.duration
+            });
+        });
+
+        this.eventBridgeListenersInstalled = true;
+        console.log('✅ EventBridge-Listener registriert (15 Event-Typen)');
+        console.log('🌉 Bidirektionale Kommunikation AKTIV!');
+    },
+
+    /**
      * 🎯 v1.3.0: Feuert Ready-Event für RadioUI
      */
     fireReadyEvent() {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('radioSystemReady', {
                 detail: {
-                    version: '2.1.0',
+                    version: '2.2.0',
                     channels: Object.keys(this.channels).length,
                     timestamp: Date.now(),
                     automaticMessages: this.automaticMessagesConfig?.enabled || false,
-                    throttling: this.automaticMessagesConfig?.throttle?.enabled || false
+                    throttling: this.automaticMessagesConfig?.throttle?.enabled || false,
+                    eventBridge: this.eventBridgeListenersInstalled
                 }
             }));
             console.log('📡 radioSystemReady Event gefeuert');
@@ -615,6 +801,26 @@ const RadioSystem = {
                 `${vehicle.callsign} an Leitstelle, zurück auf Wache, wieder einsatzbereit, kommen`,
                 `${vehicle.callsign}, sind auf Wache eingetroffen, Status 2, einsatzbereit, kommen`,
                 `${vehicle.callsign} an Funkzentrale, Wache erreicht, sind wieder verfügbar, Ende`
+            ],
+            'request_nef': [
+                `${vehicle.callsign} an Leitstelle, fordern dringend NEF nach, Patient kritisch, kommen`,
+                `${vehicle.callsign}, benötigen NEF, Zustand hat sich verschlechtert, kommen`,
+                `${vehicle.callsign} an Leitstelle, Anforderung NEF, Patient instabil, kommen`
+            ],
+            'patient_complications': [
+                `${vehicle.callsign} an Leitstelle, Komplikationen bei Patient, Lagemeldung, kommen`,
+                `${vehicle.callsign}, Patient hat Komplikationen, Versorgung läuft, kommen`,
+                `${vehicle.callsign} an Leitstelle, Patientenzustand verschlechtert, kommen`
+            ],
+            'critical_patient': [
+                `${vehicle.callsign} an Leitstelle, Patient kritisch, Notarzt erforderlich, kommen`,
+                `${vehicle.callsign}, kritischer Patient, Vitalfunktionen instabil, kommen`,
+                `${vehicle.callsign} an Leitstelle, Patient in kritischem Zustand, kommen`
+            ],
+            'transport_delay': [
+                `${vehicle.callsign} an Leitstelle, Transport verzögert sich, kommen`,
+                `${vehicle.callsign}, Verzögerung beim Transport, informiere gleich, kommen`,
+                `${vehicle.callsign} an Leitstelle, benötigen mehr Zeit, kommen`
             ]
         };
         
@@ -1099,10 +1305,11 @@ const RadioSystem = {
 // 🔧 v1.5.0: KEIN AUTO-INIT MEHR! Wird von main.js in initializeNewSystems() aufgerufen
 // Das löst das Problem, dass DOMContentLoaded zu früh feuert!
 
-console.log('✅ radio-system.js v2.1.0 geladen');
+console.log('✅ radio-system.js v2.2.0 geladen');
 console.log('🔧 Fallback-Config aktiviert - funktioniert ohne JSON-Dateien');
 console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
 console.log('🔧 v1.5.0: Wird von main.js initialisiert (kein Auto-Init)');
 console.log('📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!');
 console.log('🤖 v2.0.0: AUTOMATISCHE FUNKSPRÜCHE bei Einsatzevents!');
 console.log('⏱️ v2.1.0: THROTTLING-SYSTEM gegen Funkspruch-Spam!');
+console.log('🌉 v2.2.0: EVENTBRIDGE-LISTENER - Bidirektionale Kommunikation KOMPLETT!');
