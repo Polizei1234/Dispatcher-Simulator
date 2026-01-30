@@ -1,0 +1,67 @@
+{
+  "enabled": true,
+  "triggers": {
+    "dispatch": {
+      "enabled": true,
+      "delay_ms": 2000,
+      "description": "Fahrzeug wird alarmiert und rückt aus",
+      "vehicle_types": ["RTW", "NEF", "KTW", "Kdow", "GW-San"]
+    },
+    "arrival": {
+      "enabled": true,
+      "delay_ms": 3000,
+      "description": "Fahrzeug kommt am Einsatzort an",
+      "vehicle_types": ["RTW", "NEF", "KTW", "Kdow", "GW-San"]
+    },
+    "on_scene_delay": {
+      "enabled": true,
+      "delay_ms": 180000,
+      "only_critical": true,
+      "description": "Lagemeldung nach 3 Minuten am Einsatzort (nur kritische Einsätze)",
+      "vehicle_types": ["RTW", "NEF"]
+    },
+    "patient_loaded": {
+      "enabled": true,
+      "delay_ms": 2000,
+      "description": "Patient wurde aufgenommen, Transport beginnt",
+      "vehicle_types": ["RTW", "KTW"]
+    },
+    "hospital_arrival": {
+      "enabled": true,
+      "delay_ms": 2000,
+      "description": "Ankunft am Krankenhaus",
+      "vehicle_types": ["RTW", "KTW"]
+    },
+    "back_available": {
+      "enabled": true,
+      "delay_ms": 1000,
+      "description": "Zurück auf Wache, wieder einsatzbereit",
+      "vehicle_types": ["RTW", "NEF", "KTW", "Kdow", "GW-San"]
+    }
+  },
+  "throttle": {
+    "enabled": true,
+    "min_delay_between_messages": 2000,
+    "max_concurrent_messages": 3,
+    "description": "Verhindert Funkspruch-Spam"
+  },
+  "fallback": {
+    "use_templates": true,
+    "templates_per_trigger": 3,
+    "randomize": true,
+    "description": "Falls KI nicht verfügbar, nutze Template-Funksprüche"
+  },
+  "ui": {
+    "show_automatic_badge": true,
+    "automatic_badge_text": "[AUTO]",
+    "highlight_color": "#17a2b8",
+    "enable_notifications": false,
+    "description": "UI-Anzeige für automatische Funksprüche"
+  },
+  "debug": {
+    "log_to_console": true,
+    "show_trigger_details": true,
+    "track_statistics": true,
+    "description": "Debug-Einstellungen"
+  }
+}
