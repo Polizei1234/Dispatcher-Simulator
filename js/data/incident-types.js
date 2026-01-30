@@ -1,12 +1,14 @@
 // =========================
-// INCIDENT TYPES v1.0
-// EINSATZARTEN-DEFINITIONEN
+// INCIDENT TYPES v2.0 - COMPOSITION SYSTEM INTEGRATION!
+// EINSATZARTEN-DEFINITIONEN MIT VOLLSTÄNDIGER COMPOSITION-UNTERSTÜTZUNG
 // =========================
 
 /**
- * INCIDENT TYPES
+ * INCIDENT TYPES v2.0
  * 
  * Definiert die verschiedenen Einsatzarten mit ihren spezifischen Eigenschaften.
+ * 🆕 v2.0: Jetzt mit compositionTemplates für Composition System!
+ * 
  * Diese werden mit SEVERITY_BASES kombiniert um vollständige Einsätze zu erstellen.
  * 
  * KATEGORIEN:
@@ -42,6 +44,25 @@ const INCIDENT_TYPES = {
             MINOR: 'RD 1',
             MODERATE: 'RD 2',
             CRITICAL: 'RD 3'
+        },
+        
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MINOR: {
+                severity: 'MINOR',
+                type: 'medical',
+                modifiers: []
+            },
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'medical',
+                modifiers: ['elderly', 'multiple_symptoms']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'medical',
+                modifiers: ['unconscious', 'cardiac_emergency']
+            }
         },
         
         // Gesprächs-spezifische Kategorien
@@ -125,6 +146,25 @@ const INCIDENT_TYPES = {
             CRITICAL: 'VU P'
         },
         
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MINOR: {
+                severity: 'MINOR',
+                type: 'trauma',
+                modifiers: ['traffic_accident']
+            },
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'trauma',
+                modifiers: ['traffic_accident', 'multi_vehicle', 'head_injury']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'trauma',
+                modifiers: ['trapped', 'traffic_accident', 'multi_vehicle', 'life_threatening']
+            }
+        },
+        
         questionCategories: [
             'vital_signs',
             'accident_details',
@@ -202,6 +242,20 @@ const INCIDENT_TYPES = {
             CRITICAL: 'Geburt Notfall'
         },
         
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'medical',
+                modifiers: ['birth', 'time_critical']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'medical',
+                modifiers: ['birth', 'imminent', 'complications', 'time_critical']
+            }
+        },
+        
         questionCategories: [
             'contractions',
             'urge_to_push',
@@ -272,6 +326,25 @@ const INCIDENT_TYPES = {
             MINOR: 'Kinder 1',
             MODERATE: 'Kinder 2',
             CRITICAL: 'Kinder 3'
+        },
+        
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MINOR: {
+                severity: 'MINOR',
+                type: 'medical',
+                modifiers: ['pediatric']
+            },
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'medical',
+                modifiers: ['pediatric', 'fever', 'respiratory']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'medical',
+                modifiers: ['pediatric', 'unconscious', 'respiratory_failure', 'life_threatening']
+            }
         },
         
         questionCategories: [
@@ -355,6 +428,25 @@ const INCIDENT_TYPES = {
             CRITICAL: 'Psych 3'
         },
         
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MINOR: {
+                severity: 'MINOR',
+                type: 'medical',
+                modifiers: ['psychiatric', 'anxiety']
+            },
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'medical',
+                modifiers: ['psychiatric', 'suicidal', 'crisis']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'medical',
+                modifiers: ['psychiatric', 'suicide_attempt', 'violent', 'police_needed']
+            }
+        },
+        
         questionCategories: [
             'mental_state',
             'suicide_risk',
@@ -432,6 +524,20 @@ const INCIDENT_TYPES = {
             CRITICAL: 'Ertrinken kritisch'
         },
         
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'trauma',
+                modifiers: ['drowning', 'hypothermia', 'water_rescue']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'trauma',
+                modifiers: ['drowning', 'unconscious', 'hypothermia', 'resuscitation', 'water_rescue']
+            }
+        },
+        
         questionCategories: [
             'drowning_details',
             'time_underwater',
@@ -502,6 +608,25 @@ const INCIDENT_TYPES = {
             MINOR: 'Vergiftung',
             MODERATE: 'Vergiftung schwer',
             CRITICAL: 'Vergiftung kritisch'
+        },
+        
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MINOR: {
+                severity: 'MINOR',
+                type: 'medical',
+                modifiers: ['poisoning', 'nausea']
+            },
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'medical',
+                modifiers: ['poisoning', 'vomiting', 'altered_consciousness']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'medical',
+                modifiers: ['poisoning', 'unconscious', 'seizures', 'life_threatening']
+            }
         },
         
         questionCategories: [
@@ -579,6 +704,20 @@ const INCIDENT_TYPES = {
         keywords: {
             MODERATE: 'Allergie',
             CRITICAL: 'Anaphylaxie'
+        },
+        
+        // 🆕 v2.0: COMPOSITION TEMPLATES
+        compositionTemplates: {
+            MODERATE: {
+                severity: 'MODERATE',
+                type: 'medical',
+                modifiers: ['allergic_reaction', 'swelling', 'time_critical']
+            },
+            CRITICAL: {
+                severity: 'CRITICAL',
+                type: 'medical',
+                modifiers: ['anaphylaxis', 'respiratory_distress', 'shock', 'time_critical', 'life_threatening']
+            }
         },
         
         questionCategories: [
@@ -697,6 +836,41 @@ function getKeywordForIncident(typeId, severity) {
     return type.keywords[severity] || null;
 }
 
+/**
+ * 🆕 v2.0: Gibt Composition Template für Type + Severity zurück
+ */
+function getCompositionTemplate(typeId, severity) {
+    const type = INCIDENT_TYPES[typeId];
+    if (!type || !type.compositionTemplates) return null;
+    
+    return type.compositionTemplates[severity] || null;
+}
+
+/**
+ * 🆕 v2.0: Wählt zufälligen Type + Severity und gibt Composition Data zurück
+ */
+function getRandomIncidentComposition(typeWeights = null) {
+    // Wähle Type
+    const typeId = getRandomIncidentType(typeWeights);
+    const type = INCIDENT_TYPES[typeId];
+    
+    if (!type || !type.compositionTemplates) return null;
+    
+    // Wähle zufällige Severity aus verfügbaren
+    const availableSeverities = Object.keys(type.compositionTemplates);
+    if (availableSeverities.length === 0) return null;
+    
+    const severity = availableSeverities[Math.floor(Math.random() * availableSeverities.length)];
+    
+    return {
+        typeId: typeId,
+        typeName: type.name,
+        severity: severity,
+        composition: type.compositionTemplates[severity],
+        keyword: type.keywords[severity]
+    };
+}
+
 // =========================
 // EXPORT
 // =========================
@@ -707,9 +881,20 @@ window.IncidentTypeUtils = {
     getIncidentType,
     getIncidentTypesByCategory,
     getRandomIncidentType,
-    getKeywordForIncident
+    getKeywordForIncident,
+    // 🆕 v2.0
+    getCompositionTemplate,
+    getRandomIncidentComposition
 };
 
-console.log('🎭 Incident Types v1.0 geladen');
+console.log('🎭 Incident Types v2.0 geladen (Composition System Integration!)');
 console.log(`   ✅ ${getAllIncidentTypes().length} Einsatzarten: ${getAllIncidentTypes().join(', ')}`);
 console.log('   📊 MEDICAL, TRAFFIC, BIRTH, PEDIATRIC, PSYCHIATRIC, DROWNING, POISONING, ALLERGIC');
+console.log('   🆕 Alle Types mit compositionTemplates ausgestattet!');
+
+// 🆕 v2.0: Validierung der Composition Templates
+const validationResults = Object.entries(INCIDENT_TYPES).map(([id, type]) => {
+    const templatesCount = type.compositionTemplates ? Object.keys(type.compositionTemplates).length : 0;
+    return `${id}: ${templatesCount} Templates`;
+});
+console.log('   ✅ Composition Templates:', validationResults.join(', '));
