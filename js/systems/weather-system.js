@@ -1,6 +1,7 @@
 // =========================
-// WEATHER SYSTEM v1.0
+// WEATHER SYSTEM v2.0 - ERWEITERT
 // Dynamisches Wetter beeinflusst Einsätze
+// Integration mit incident-types.js
 // =========================
 
 const WEATHER_CONDITIONS = {
@@ -18,13 +19,13 @@ const WEATHER_CONDITIONS = {
         name: 'Regen',
         icon: '🌧️',
         probability: 0.25,
-        incidentMultiplier: 1.3, // 30% mehr Einsätze
-        durationMultiplier: 1.15, // 15% länger
-        speedReduction: 0.85, // 15% langsamer
+        incidentMultiplier: 1.3,
+        durationMultiplier: 1.15,
+        speedReduction: 0.85,
         incidentTypes: {
-            'VU': 2.0,  // Doppelt so viele Unfälle
+            'VU': 2.0,
             'VU P': 1.8,
-            'RD 1': 1.2 // Mehr Stürze
+            'RD 1': 1.2
         }
     },
     SNOW: {
@@ -34,12 +35,26 @@ const WEATHER_CONDITIONS = {
         probability: 0.10,
         incidentMultiplier: 1.6,
         durationMultiplier: 1.4,
-        speedReduction: 0.60, // 40% langsamer
+        speedReduction: 0.60,
         incidentTypes: {
             'VU': 3.0,
             'VU P': 2.5,
             'RD 1': 1.5,
             'THL 1': 1.3
+        }
+    },
+    ICE: {
+        id: 'ice',
+        name: 'Glatteis',
+        icon: '🧊',
+        probability: 0.05,
+        incidentMultiplier: 2.2,
+        durationMultiplier: 1.6,
+        speedReduction: 0.50,
+        incidentTypes: {
+            'VU': 3.5,
+            'VU P': 3.0,
+            'RD 1': 2.0
         }
     },
     STORM: {
@@ -51,7 +66,7 @@ const WEATHER_CONDITIONS = {
         durationMultiplier: 1.25,
         speedReduction: 0.75,
         incidentTypes: {
-            'THL 1': 4.0, // Viele technische Hilfeleistungen
+            'THL 1': 4.0,
             'THL 2': 3.0,
             'B 1': 1.5,
             'VU': 1.6
@@ -69,6 +84,32 @@ const WEATHER_CONDITIONS = {
             'VU': 2.2,
             'VU P': 1.9
         }
+    },
+    HEAT: {
+        id: 'heat',
+        name: 'Hitze',
+        icon: '🌡️',
+        probability: 0.08,
+        incidentMultiplier: 1.4,
+        durationMultiplier: 1.1,
+        speedReduction: 1.0,
+        incidentTypes: {
+            'RD 2': 1.5,
+            'RD 3': 1.3
+        }
+    },
+    COLD: {
+        id: 'cold',
+        name: 'Kälte',
+        icon: '🥶',
+        probability: 0.07,
+        incidentMultiplier: 1.2,
+        durationMultiplier: 1.15,
+        speedReduction: 0.95,
+        incidentTypes: {
+            'RD 2': 1.4,
+            'RD 3': 1.5
+        }
     }
 };
 
@@ -77,11 +118,11 @@ const TIME_OF_DAY_EFFECTS = {
         id: 'night',
         name: 'Nacht',
         hours: [22, 23, 0, 1, 2, 3, 4, 5],
-        incidentMultiplier: 0.7, // Weniger Einsätze nachts
+        incidentMultiplier: 0.7,
         incidentTypes: {
-            'RD 2': 1.4, // Mehr medizinische Notfälle
+            'RD 2': 1.4,
             'RD 3': 1.5,
-            'VU': 0.6, // Weniger Verkehr
+            'VU': 0.6,
             'B 1': 0.5,
             'B 2': 0.4
         }
@@ -121,20 +162,15 @@ class WeatherSystem {
         this.currentWeather = WEATHER_CONDITIONS.CLEAR;
         this.currentTimeOfDay = TIME_OF_DAY_EFFECTS.DAY;
         this.weatherChangeInterval = null;
+        this.season = 'spring';
     }
     
-    /**
-     * Initialisiert Wettersystem
-     */
     initialize() {
         this.selectRandomWeather();
         this.startWeatherCycle();
         console.log(`🌦️ Wetter initialisiert: ${this.currentWeather.name}`);
     }
     
-    /**
-     * Wählt zufälliges Wetter basierend auf Wahrscheinlichkeiten
-     */
     selectRandomWeather() {
         const random = Math.random();
         let cumulative = 0;
@@ -150,21 +186,14 @@ class WeatherSystem {
         this.currentWeather = WEATHER_CONDITIONS.CLEAR;
     }
     
-    /**
-     * Startet automatischen Wetterwechsel
-     */
     startWeatherCycle() {
-        // Wetter ändert sich alle 30-90 Minuten (Spielzeit)
         this.weatherChangeInterval = setInterval(() => {
             this.selectRandomWeather();
             console.log(`🌦️ Wetter geändert: ${this.currentWeather.icon} ${this.currentWeather.name}`);
             this.updateUI();
-        }, (30 + Math.random() * 60) * 60 * 1000); // 30-90 Min
+        }, (30 + Math.random() * 60) * 60 * 1000);
     }
     
-    /**
-     * Aktualisiert Tageszeit basierend auf Spielzeit
-     */
     updateTimeOfDay(currentHour) {
         for (const period of Object.values(TIME_OF_DAY_EFFECTS)) {
             if (period.hours.includes(currentHour)) {
@@ -177,19 +206,23 @@ class WeatherSystem {
         }
     }
     
-    /**
-     * Berechnet Einsatz-Multiplikator für spezifisches Stichwort
-     */
+    setSeason(month) {
+        if (month >= 3 && month <= 5) this.season = 'spring';
+        else if (month >= 6 && month <= 8) this.season = 'summer';
+        else if (month >= 9 && month <= 11) this.season = 'autumn';
+        else this.season = 'winter';
+        
+        console.log(`📅 Jahreszeit: ${this.season}`);
+    }
+    
     getIncidentMultiplier(keyword) {
         let multiplier = 1.0;
         
-        // Wetter-Einfluss
         multiplier *= this.currentWeather.incidentMultiplier;
         if (this.currentWeather.incidentTypes && this.currentWeather.incidentTypes[keyword]) {
             multiplier *= this.currentWeather.incidentTypes[keyword];
         }
         
-        // Tageszeit-Einfluss
         multiplier *= this.currentTimeOfDay.incidentMultiplier;
         if (this.currentTimeOfDay.incidentTypes && this.currentTimeOfDay.incidentTypes[keyword]) {
             multiplier *= this.currentTimeOfDay.incidentTypes[keyword];
@@ -198,37 +231,36 @@ class WeatherSystem {
         return multiplier;
     }
     
-    /**
-     * Berechnet Einsatzdauer-Multiplikator
-     */
+    // 🆕 v2.0: Getter für incident-types.js Integration
+    getWeatherCondition() {
+        return this.currentWeather.id;
+    }
+    
+    getCurrentHour() {
+        if (!window.GameTimer) return 12;
+        return window.GameTimer.getCurrentHour();
+    }
+    
+    getSeason() {
+        return this.season;
+    }
+    
     getDurationMultiplier() {
         return this.currentWeather.durationMultiplier;
     }
     
-    /**
-     * Berechnet Geschwindigkeits-Reduktion für Fahrzeuge
-     */
     getSpeedMultiplier() {
         return this.currentWeather.speedReduction;
     }
     
-    /**
-     * Gibt aktuelles Wetter zurück
-     */
     getCurrentWeather() {
         return this.currentWeather;
     }
     
-    /**
-     * Gibt aktuelle Tageszeit zurück
-     */
     getCurrentTimeOfDay() {
         return this.currentTimeOfDay;
     }
     
-    /**
-     * Aktualisiert Wetter-UI
-     */
     updateUI() {
         const weatherEl = document.getElementById('current-weather');
         if (weatherEl) {
@@ -241,9 +273,6 @@ class WeatherSystem {
         }
     }
     
-    /**
-     * Stoppt Wettersystem
-     */
     stop() {
         if (this.weatherChangeInterval) {
             clearInterval(this.weatherChangeInterval);
@@ -251,9 +280,8 @@ class WeatherSystem {
     }
 }
 
-// Globale Instanz
 window.WeatherSystem = WeatherSystem;
 window.WEATHER_CONDITIONS = WEATHER_CONDITIONS;
 window.TIME_OF_DAY_EFFECTS = TIME_OF_DAY_EFFECTS;
 
-console.log('🌦️ Weather System geladen');
+console.log('🌦️ Weather System v2.0 geladen (Integration mit incident-types.js)');
