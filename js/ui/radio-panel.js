@@ -1,10 +1,11 @@
 // =========================
-// RADIO PANEL UI v1.2.2
+// RADIO PANEL UI v1.3.0
 // Benutzerinterface für das Funksystem
 // 🔧 v1.1.0: XSS-Protection + Debouncing
 // 🎯 v1.2.0: Queue-Badge + Sammelruf-UI + Event-Init
 // 🔧 v1.2.1: FIX Panel standardmäßig hidden
 // 🔧 v1.2.2: FIX Robuste Initialisierung
+// 🎨 v1.3.0: VISUELL - Callsign FETT/GELB, Funkspruch BLAU
 // =========================
 
 const RadioUI = {
@@ -24,10 +25,11 @@ const RadioUI = {
             return;
         }
         
-        console.log('📺 RadioUI v1.2.2 initialisiert');
+        console.log('📺 RadioUI v1.3.0 initialisiert');
         console.log('🔧 XSS-Protection aktiviert');
         console.log('🔧 Debouncing aktiviert');
         console.log('🎯 Queue-Badge + Sammelruf-UI aktiviert');
+        console.log('🎨 Callsign FETT/GELB + Funkspruch BLAU');
         
         this.createPanel();
         this.attachEventListeners();
@@ -64,6 +66,39 @@ const RadioUI = {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    },
+
+    /**
+     * 🎨 v1.3.0: Parst Funkspruch und trennt Callsign vom Text
+     * @returns {callsign: string, text: string}
+     */
+    parseFunkspruch(message) {
+        if (!message || typeof message !== 'string') {
+            return { callsign: '', text: message || '' };
+        }
+
+        // Regex: Sucht nach Callsign am Anfang (bis "an Leitstelle" oder "von Leitstelle")
+        // Beispiel: "RTW 12/83-1 an Leitstelle, FMS 2, einsatzbereit, kommen"
+        const match = message.match(/^([^,]+?)\s*(an|von)\s*Leitstelle[,:]?\s*(.*)$/i);
+        
+        if (match) {
+            return {
+                callsign: match[1].trim(),
+                text: match[3].trim()
+            };
+        }
+
+        // Fallback: Wenn kein Match, nimm ersten Teil bis Komma als Callsign
+        const parts = message.split(',');
+        if (parts.length > 1) {
+            return {
+                callsign: parts[0].trim(),
+                text: parts.slice(1).join(',').trim()
+            };
+        }
+
+        // Wenn nichts passt, gesamte Nachricht als Text
+        return { callsign: '', text: message };
     },
 
     /**
@@ -572,7 +607,7 @@ const RadioUI = {
     },
 
     /**
-     * 🔧 v1.1.0: Erstellt Log-Item Element (XSS-sicher)
+     * 🎨 v1.3.0: Erstellt Log-Item Element mit visueller Trennung Callsign/Text
      */
     createLogItem(entry) {
         const item = document.createElement('div');
@@ -633,9 +668,29 @@ const RadioUI = {
                     header.appendChild(aiSpan);
                 }
                 
+                // 🎨 v1.3.0: PARSE FUNKSPRUCH + VISUELL TRENNEN
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'log-message';
-                messageDiv.textContent = entry.message || '';
+                
+                const parsed = this.parseFunkspruch(entry.message);
+                
+                if (parsed.callsign) {
+                    // Callsign FETT + GELB
+                    const callsignSpan = document.createElement('span');
+                    callsignSpan.className = 'log-message-callsign';
+                    callsignSpan.textContent = parsed.callsign;
+                    messageDiv.appendChild(callsignSpan);
+                    
+                    // Trennzeichen
+                    const separator = document.createTextNode(' → ');
+                    messageDiv.appendChild(separator);
+                }
+                
+                // Funkspruch-Text BLAU
+                const textSpan = document.createElement('span');
+                textSpan.className = 'log-message-text';
+                textSpan.textContent = parsed.text;
+                messageDiv.appendChild(textSpan);
                 
                 item.appendChild(header);
                 item.appendChild(messageDiv);
@@ -848,7 +903,8 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-panel.js v1.2.2 geladen');
+console.log('✅ radio-panel.js v1.3.0 geladen');
 console.log('🔧 XSS-Protection + Debouncing aktiviert');
 console.log('🎯 Queue-Badge + Sammelruf-UI + Event-Init aktiviert');
 console.log('🔧 v1.2.2: Robuste Initialisierung mit 3 Fallback-Methoden');
+console.log('🎨 v1.3.0: Callsign FETT/GELB + Funkspruch BLAU für bessere Lesbarkeit');
