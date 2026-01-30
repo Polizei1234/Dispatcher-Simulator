@@ -1,7 +1,8 @@
 // =========================
-// RADIO GROQ AI INTEGRATION v2.0
+// RADIO GROQ AI INTEGRATION v2.1
 // Generiert realistische Fahrzeug-Funksprüche
 // 🔧 v2.0: Automatischer API-Key Import aus localStorage & Settings
+// 📡 v2.1: Verbesserte Funkdisziplin - KI beantwortet Fragen richtig!
 // =========================
 
 const RadioGroq = {
@@ -12,7 +13,7 @@ const RadioGroq = {
      * Initialisierung
      */
     async initialize() {
-        console.log('🤖 RadioGroq v2.0 initialisiert');
+        console.log('🤖 RadioGroq v2.1 initialisiert');
         
         // Lade Konfiguration
         try {
@@ -98,17 +99,32 @@ const RadioGroq = {
     },
 
     /**
-     * Baut den Prompt für die AI
+     * 📡 v2.1: Verbesserte Prompt-Generierung mit besserer Funkdisziplin
      */
     buildPrompt(vehicle, context) {
         const { reason, incident, lastDispatchMessage, fmsCode } = context;
+
+        // 📡 v2.1: FMS-Status-Namen hinzufügen
+        const fmsStatusNames = {
+            0: 'Notfall',
+            1: 'Einsatzbereit auf Funkwache',
+            2: 'Einsatzbereit auf Wache',
+            3: 'Einsatzfahrt',
+            4: 'Am Einsatzort',
+            5: 'Sprechwunsch',
+            6: 'Nicht einsatzbereit',
+            7: 'Patient aufgenommen',
+            8: 'Transportfahrt'
+        };
+        
+        const currentStatusName = fmsStatusNames[fmsCode || vehicle.currentStatus] || 'Unbekannt';
 
         let basePrompt = `Du bist die Besatzung von ${vehicle.callsign}, einem ${vehicle.type} des Rettungsdienstes.
 
 AKTUELLE SITUATION:
 - Rufname: ${vehicle.callsign}
 - Fahrzeugtyp: ${vehicle.type}
-- FMS-Status: ${fmsCode || vehicle.currentStatus}
+- FMS-Status: ${fmsCode || vehicle.currentStatus} (${currentStatusName})
 `;
 
         if (incident) {
@@ -120,7 +136,7 @@ AKTUELLE SITUATION:
 
         if (lastDispatchMessage) {
             basePrompt += `
-LETZTE NACHRICHT VON LEITSTELLE:
+📡 NACHRICHT VON LEITSTELLE:
 "${lastDispatchMessage}"
 `;
         }
@@ -163,12 +179,23 @@ GENERIERE EINE FUNKMELDUNG zur Transportziel-Anfrage mit:
                 break;
                 
             case 'response_to_dispatch':
+                // 📡 v2.1: VERBESSERTER PROMPT - BEANTWORTE FRAGEN!
                 contextInstructions = `
-Die Leitstelle hat dir gerade eine Nachricht gesendet.
-GENERIERE EINE ANGEMESSENE ANTWORT:
-- Quittiere die Nachricht
-- Bestätige das Verständnis
-- Führe ggf. Rückfragen auf`;
+Die Leitstelle hat dir eine Nachricht gesendet.
+
+⚠️ WICHTIG - FUNKDISZIPLIN:
+- Wenn die Leitstelle eine FRAGE stellt → BEANTWORTE sie präzise!
+- Bei "Frage Status?" → Nenne deinen aktuellen FMS-Status und was du machst
+- Bei "Wo seid ihr?" → Nenne deine Position
+- Bei "Benötigt ihr Unterstützung?" → Antworte JA oder NEIN mit Begründung
+- Bei Anweisungen → Quittiere mit "verstanden" und bestätige Ausführung
+
+BEISPIELE:
+- Frage: "Frage Status?" → "${vehicle.callsign} an Leitstelle, FMS ${fmsCode || vehicle.currentStatus}, ${currentStatusName}, kommen"
+- Frage: "Benötigt ihr weitere Kräfte?" → "${vehicle.callsign} an Leitstelle, negativ, keine weiteren Kräfte erforderlich, kommen"
+- Anweisung: "Fahrt Klinikum an" → "${vehicle.callsign} von Leitstelle, verstanden, fahren Klinikum an, Ende"
+
+GENERIERE JETZT EINE ANGEMESSENE ANTWORT AUF DIE NACHRICHT DER LEITSTELLE!`;
                 break;
 
             default:
@@ -181,17 +208,19 @@ GENERIERE EINE PASSENDE FUNKMELDUNG für die aktuelle Situation.`;
         basePrompt += `
 
 FUNKSPRACHE-REGELN:
-1. Beginne mit "${vehicle.callsign} an Leitstelle" oder "${vehicle.callsign} von Leitstelle"
+1. Beginne mit "${vehicle.callsign} an Leitstelle" (bei eigener Meldung) oder "${vehicle.callsign} von Leitstelle" (bei Quittierung)
 2. Maximal 2-3 kurze Sätze
-3. Verwende Funksprache: "kommen", "verstanden", "Ende"
+3. Verwende Funksprache: "kommen" (bei Fragen/Meldungen), "verstanden", "Ende" (bei Quittierung)
 4. Professionell und sachlich
 5. Keine Umgangssprache
 6. Konkret und präzise
+7. BEANTWORTE FRAGEN DIREKT - nicht nur quittieren!
 
 BEISPIELE GUTER FUNKSPRÜCHE:
 - "RTW 12/83-1 an Leitstelle, am Einsatzort eingetroffen, 1 Patient mit Atemnot angetroffen, beginnen mit Versorgung, kommen"
 - "NEF 71/1 an Leitstelle, Patient stabil, benötigen Transportziel, kommen"
 - "RTW 45/1 von Leitstelle, verstanden, fahren Klinikum Stuttgart an, Ende"
+- "Kdow 1/10-1 an Leitstelle, FMS 2, einsatzbereit auf Wache, kommen"
 
 GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
 
@@ -224,7 +253,7 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
                     messages: [
                         { 
                             role: 'system', 
-                            content: 'Du bist eine professionelle Rettungsdienst-Besatzung. Generiere nur den Funkspruch ohne Zusatztext.' 
+                            content: '📡 Du bist eine professionelle Rettungsdienst-Besatzung mit perfekter Funkdisziplin. Generiere NUR den Funkspruch ohne Zusatztext. BEANTWORTE FRAGEN DIREKT!' 
                         },
                         { 
                             role: 'user', 
@@ -259,10 +288,45 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
     },
 
     /**
-     * Fallback-Funksprüche wenn AI nicht verfügbar
+     * 📡 v2.1: Verbesserte Fallback-Funksprüche
      */
     getFallbackResponse(vehicle, context) {
-        const { reason, fmsCode } = context;
+        const { reason, fmsCode, lastDispatchMessage } = context;
+        
+        // 📡 v2.1: FMS-Status-Namen
+        const fmsStatusNames = {
+            0: 'Notfall',
+            1: 'einsatzbereit auf Funkwache',
+            2: 'einsatzbereit auf Wache',
+            3: 'Einsatzfahrt',
+            4: 'am Einsatzort',
+            5: 'Sprechwunsch',
+            6: 'nicht einsatzbereit',
+            7: 'Patient aufgenommen',
+            8: 'Transportfahrt'
+        };
+        
+        const currentStatusName = fmsStatusNames[fmsCode || vehicle.currentStatus] || 'Status unbekannt';
+
+        // 📡 v2.1: Intelligentere Fallbacks basierend auf Nachricht
+        if (reason === 'response_to_dispatch' && lastDispatchMessage) {
+            const msg = lastDispatchMessage.toLowerCase();
+            
+            // Status-Anfrage
+            if (msg.includes('status') || msg.includes('fms')) {
+                return `${vehicle.callsign} an Leitstelle, FMS ${fmsCode || vehicle.currentStatus}, ${currentStatusName}, kommen`;
+            }
+            
+            // Positions-Anfrage
+            if (msg.includes('wo') || msg.includes('position')) {
+                return `${vehicle.callsign} an Leitstelle, befinden uns ${currentStatusName}, kommen`;
+            }
+            
+            // Unterstützungs-Anfrage
+            if (msg.includes('unterstützung') || msg.includes('kräfte') || msg.includes('hilfe')) {
+                return `${vehicle.callsign} an Leitstelle, negativ, keine weiteren Kräfte erforderlich, kommen`;
+            }
+        }
 
         const fallbacks = {
             'sprechwunsch': `${vehicle.callsign} an Leitstelle, möchte mit der Leitstelle sprechen, kommen`,
@@ -300,8 +364,8 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', async () => {
         await RadioGroq.initialize();
-        console.log('✅ RadioGroq v2.0 bereit');
+        console.log('✅ RadioGroq v2.1 bereit - Perfekte Funkdisziplin!');
     });
 }
 
-console.log('✅ radio-groq.js v2.0 geladen - Automatischer API-Key Import');
+console.log('✅ radio-groq.js v2.1 geladen - Verbesserte Funkdisziplin!');
