@@ -1,5 +1,5 @@
 // =========================
-// RADIO SYSTEM v1.6.0
+// RADIO SYSTEM v2.0.0 - AUTOMATISCHE FUNKSPRÜCHE
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
@@ -7,6 +7,7 @@
 // 🔧 v1.4.0: Fallback-Config (funktioniert ohne JSON)
 // 🔧 v1.5.0: Auto-Init entfernt (wird von main.js aufgerufen)
 // 📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!
+// 🤖 v2.0.0: AUTOMATISCHE FUNKSPRÜCHE bei Einsatzevents!
 // =========================
 
 const RadioSystem = {
@@ -18,6 +19,7 @@ const RadioSystem = {
     lastDispatchMessages: {},
     fmsListenerInstalled: false,
     logCleanupInterval: null,
+    automaticMessagesConfig: null,
     
     /**
      * 🔧 v1.4.0: Fallback-Konfiguration (falls JSON nicht lädt)
@@ -134,6 +136,48 @@ const RadioSystem = {
     },
     
     /**
+     * 🤖 v2.0.0: Fallback-Config für automatische Funksprüche
+     */
+    getFallbackAutomaticConfig() {
+        return {
+            "enabled": true,
+            "triggers": {
+                "dispatch": {
+                    "enabled": true,
+                    "delay_ms": 2000,
+                    "vehicle_types": ["RTW", "NEF", "KTW"]
+                },
+                "arrival": {
+                    "enabled": true,
+                    "delay_ms": 3000,
+                    "vehicle_types": ["RTW", "NEF", "KTW"]
+                },
+                "on_scene_delay": {
+                    "enabled": true,
+                    "delay_ms": 180000,
+                    "only_critical": true,
+                    "vehicle_types": ["RTW", "NEF"]
+                },
+                "patient_loaded": {
+                    "enabled": true,
+                    "delay_ms": 2000,
+                    "vehicle_types": ["RTW", "KTW"]
+                },
+                "hospital_arrival": {
+                    "enabled": true,
+                    "delay_ms": 2000,
+                    "vehicle_types": ["RTW", "KTW"]
+                },
+                "back_available": {
+                    "enabled": true,
+                    "delay_ms": 1000,
+                    "vehicle_types": ["RTW", "NEF", "KTW"]
+                }
+            }
+        };
+    },
+    
+    /**
      * 📡 v1.6.0: Prüft ob Nachricht mit "Ende" abschließt
      */
     endsWithEnde(message) {
@@ -153,7 +197,7 @@ const RadioSystem = {
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.6.0 initialisiert');
+        console.log('📡 Radio System v2.0.0 initialisiert');
         
         // 🔧 v1.4.0: Lade Config mit Fallback
         try {
@@ -185,6 +229,21 @@ const RadioSystem = {
             this.fmsData = this.getFallbackFMS();
         }
 
+        // 🤖 v2.0.0: Lade Automatic-Messages-Config mit Fallback
+        try {
+            const response = await fetch('js/data/automatic-radio-config.json');
+            if (response.ok) {
+                this.automaticMessagesConfig = await response.json();
+                console.log('✅ Automatic-Radio-Config geladen');
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.warn('⚠️ Fehler beim Laden der Automatic-Radio-Config:', error.message);
+            console.log('🔄 Nutze Fallback-Automatic-Config');
+            this.automaticMessagesConfig = this.getFallbackAutomaticConfig();
+        }
+
         // Initialisiere Kanäle
         this.initializeChannels();
 
@@ -197,6 +256,7 @@ const RadioSystem = {
         console.log('✅ Radio System bereit');
         console.log(`📻 Kanäle: ${Object.keys(this.channels).length}`);
         console.log('📡 v1.6.0: Funkdisziplin "Ende"-Erkennung aktiviert');
+        console.log('🤖 v2.0.0: Automatische Funksprüche aktiviert');
         
         // 🎯 v1.3.0: Feuere Ready-Event
         this.fireReadyEvent();
@@ -209,9 +269,10 @@ const RadioSystem = {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('radioSystemReady', {
                 detail: {
-                    version: '1.6.0',
+                    version: '2.0.0',
                     channels: Object.keys(this.channels).length,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    automaticMessages: this.automaticMessagesConfig?.enabled || false
                 }
             }));
             console.log('📡 radioSystemReady Event gefeuert');
@@ -363,6 +424,136 @@ const RadioSystem = {
         if ([3, 4, 7, 8].includes(newStatus) && typeof window.notificationSystem !== 'undefined') {
             window.notificationSystem.show(message, 'info');
         }
+    },
+
+    /**
+     * 🤖 v2.0.0: HAUPTFUNKTION - Sendet automatische Funksprüche bei Einsatzevents
+     * 
+     * @param {Object} vehicle - Das Fahrzeug-Objekt
+     * @param {String} trigger - Event-Typ: 'dispatch', 'arrival', 'on_scene_delay', 'patient_loaded', 'hospital_arrival', 'back_available'
+     * @param {Object} options - Zusätzliche Optionen (incident, urgency, etc.)
+     */
+    async sendAutomaticMessage(vehicle, trigger, options = {}) {
+        console.group(`🤖 AUTOMATISCHER FUNKSPRUCH`);
+        console.log(`📋 Fahrzeug: ${vehicle.callsign}`);
+        console.log(`🎯 Trigger: ${trigger}`);
+        console.log(`⚙️ Options:`, options);
+        
+        // Prüfe ob automatische Funksprüche aktiviert sind
+        if (!this.automaticMessagesConfig?.enabled) {
+            console.log('⚠️ Automatische Funksprüche deaktiviert');
+            console.groupEnd();
+            return;
+        }
+        
+        // Prüfe ob dieser Trigger aktiviert ist
+        const triggerConfig = this.automaticMessagesConfig.triggers[trigger];
+        if (!triggerConfig || !triggerConfig.enabled) {
+            console.log(`⚠️ Trigger "${trigger}" deaktiviert`);
+            console.groupEnd();
+            return;
+        }
+        
+        // Prüfe ob Fahrzeugtyp erlaubt ist
+        if (triggerConfig.vehicle_types && !triggerConfig.vehicle_types.includes(vehicle.type)) {
+            console.log(`⚠️ Fahrzeugtyp ${vehicle.type} nicht für Trigger "${trigger}" konfiguriert`);
+            console.groupEnd();
+            return;
+        }
+        
+        // Verzögerung anwenden
+        const delay = triggerConfig.delay_ms || 0;
+        if (delay > 0) {
+            console.log(`⏱️ Verzögerung: ${delay}ms`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        // Hole Einsatz-Kontext
+        const context = this.buildContext(vehicle, trigger);
+        context.incident = options.incident || context.incident;
+        context.urgency = options.urgency || 'normal';
+        context.needs_nef = options.needs_nef || false;
+        
+        // Generiere Funkspruch
+        let message = '';
+        
+        // Prüfe ob RadioGroq verfügbar ist
+        if (typeof RadioGroq !== 'undefined' && RadioGroq.generateAutomaticMessage) {
+            try {
+                console.log('🤖 Generiere KI-Funkspruch...');
+                message = await RadioGroq.generateAutomaticMessage(vehicle, trigger, context);
+                console.log(`✅ KI-Funkspruch: "${message}"`);
+            } catch (error) {
+                console.error('❌ Fehler bei KI-Generierung:', error);
+                message = this.generateFallbackAutoMessage(vehicle, trigger, context);
+                console.log(`🔄 Fallback-Funkspruch: "${message}"`);
+            }
+        } else {
+            console.log('⚠️ RadioGroq nicht verfügbar - nutze Fallback');
+            message = this.generateFallbackAutoMessage(vehicle, trigger, context);
+            console.log(`🔄 Fallback-Funkspruch: "${message}"`);
+        }
+        
+        // Füge zum Log hinzu
+        this.addLogEntry({
+            type: 'vehicle_to_dispatch',
+            vehicle: vehicle,
+            message: message,
+            direction: 'vehicle_to_dispatch',
+            ai_generated: typeof RadioGroq !== 'undefined',
+            automatic: true,
+            trigger: trigger
+        });
+        
+        console.log('✅ Automatischer Funkspruch gesendet');
+        console.groupEnd();
+    },
+    
+    /**
+     * 🤖 v2.0.0: Generiert Fallback-Funksprüche ohne KI
+     */
+    generateFallbackAutoMessage(vehicle, trigger, context) {
+        const incident = context.incident;
+        const stichwort = incident ? incident.stichwort : 'Einsatz';
+        const ort = incident ? incident.ort : 'Einsatzort';
+        
+        const templates = {
+            'dispatch': [
+                `${vehicle.callsign} an Leitstelle, Einsatz ${stichwort} übernommen, rücken aus, kommen`,
+                `${vehicle.callsign}, Einsatzauftrag erhalten, ausgerückt zu ${stichwort}, kommen`,
+                `${vehicle.callsign} an Funkzentrale, sind ausgerückt, kommen`
+            ],
+            'arrival': [
+                `${vehicle.callsign} an Leitstelle, am Einsatzort eingetroffen, beginnen mit der Versorgung, kommen`,
+                `${vehicle.callsign}, sind vor Ort in ${ort}, Patient wird versorgt, kommen`,
+                `${vehicle.callsign}, Ankunft Einsatzstelle, nehmen Versorgung auf, kommen`
+            ],
+            'on_scene_delay': [
+                `${vehicle.callsign} an Leitstelle, Lagemeldung: Patient wird versorgt, Vitalparameter stabil, kommen`,
+                `${vehicle.callsign}, Patient versorgt, Transportvorbereitung läuft, kommen`,
+                `${vehicle.callsign} an Leitstelle, Versorgung läuft, noch vor Ort, kommen`
+            ],
+            'patient_loaded': [
+                `${vehicle.callsign} an Leitstelle, Patient aufgenommen, beginnen Transport ins Klinikum, kommen`,
+                `${vehicle.callsign}, Patient verladen, Transport zum Krankenhaus, kommen`,
+                `${vehicle.callsign} an Leitstelle, sind transportbereit, Fahrt ins Krankenhaus, kommen`
+            ],
+            'hospital_arrival': [
+                `${vehicle.callsign} an Leitstelle, am Krankenhaus eingetroffen, Patient wird übergeben, kommen`,
+                `${vehicle.callsign}, Ankunft Klinikum, Patientenübergabe erfolgt gleich, kommen`,
+                `${vehicle.callsign} an Leitstelle, am Zielkrankenhaus, übergeben Patient, Ende`
+            ],
+            'back_available': [
+                `${vehicle.callsign} an Leitstelle, zurück auf Wache, wieder einsatzbereit, kommen`,
+                `${vehicle.callsign}, sind auf Wache eingetroffen, Status 2, einsatzbereit, kommen`,
+                `${vehicle.callsign} an Funkzentrale, Wache erreicht, sind wieder verfügbar, Ende`
+            ]
+        };
+        
+        const messagesForTrigger = templates[trigger] || [`${vehicle.callsign} an Leitstelle, kommen`];
+        const randomIndex = Math.floor(Math.random() * messagesForTrigger.length);
+        
+        return messagesForTrigger[randomIndex];
     },
 
     /**
@@ -806,7 +997,9 @@ const RadioSystem = {
             type: entry.type,
             vehicle: entry.vehicle?.callsign || 'Leitstelle',
             message: entry.message,
-            direction: entry.direction
+            direction: entry.direction,
+            automatic: entry.automatic || false,
+            trigger: entry.trigger || null
         }));
 
         const json = JSON.stringify(data, null, 2);
@@ -838,8 +1031,9 @@ const RadioSystem = {
 // 🔧 v1.5.0: KEIN AUTO-INIT MEHR! Wird von main.js in initializeNewSystems() aufgerufen
 // Das löst das Problem, dass DOMContentLoaded zu früh feuert!
 
-console.log('✅ radio-system.js v1.6.0 geladen');
+console.log('✅ radio-system.js v2.0.0 geladen');
 console.log('🔧 Fallback-Config aktiviert - funktioniert ohne JSON-Dateien');
 console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
 console.log('🔧 v1.5.0: Wird von main.js initialisiert (kein Auto-Init)');
 console.log('📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!');
+console.log('🤖 v2.0.0: AUTOMATISCHE FUNKSPRÜCHE bei Einsatzevents!');
