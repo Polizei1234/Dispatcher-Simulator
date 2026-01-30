@@ -1,32 +1,34 @@
 // =========================
-// ESCALATION SYSTEM v2.0
-// PHASE 2 - COMPOSITION SYSTEM INTEGRATION
-// Nutzt komponierte Schemas für intelligente Eskalationen
+// ESCALATION SYSTEM v2.1
+// PHASE 3 - EVENTBRIDGE INTEGRATION
+// Feuert Events für alle kritischen Situationen
 // =========================
 
 /**
- * ESCALATION SYSTEM v2.0
+ * ESCALATION SYSTEM v2.1
  * 
- * 🆕 NEU IN v2.0:
+ * 🆕 NEU IN v2.1 (EventBridge Integration):
+ * - Feuert Events bei Eskalationen
+ * - Feuert Events bei Komplikationen
+ * - Feuert Events bei NEF-Bedarf
+ * - Feuert Events bei Verstärkung
+ * - Triggert automatische Funksprüche über EventBridge
+ * 
+ * 🔄 v2.0 Features:
  * - Nutzt schema.escalation aus Severity Bases
  * - Eskalation: MINOR → MODERATE → CRITICAL
  * - Re-komponiert Schema bei Eskalation
  * - Berücksichtigt Modifier-Effekte
  * - Komplikationen aus Modifiers
- * - Event-System für Eskalations-Trigger
  * 
  * WORKFLOW:
  * 1. Incident wird erstellt mit compositionInfo
  * 2. System prüft schema.escalation.probability
  * 3. Bei Eskalation: Re-komponiere mit neuem Severity
- * 4. Update Incident mit neuen Schema-Eigenschaften
- * 5. Benachrichtige UI
- * 
- * VORTEILE:
- * - Keine festen Regeln mehr (RD 1 → RD 2)
- * - Dynamisch basierend auf Severity
- * - Konsistent mit Composition System
- * - Modifier beeinflussen Eskalation
+ * 4. 🆕 Feuere Events über EventBridge
+ * 5. 🆕 EventBridge triggert automatische Funksprüche
+ * 6. Update Incident mit neuen Schema-Eigenschaften
+ * 7. Benachrichtige UI
  */
 
 class EscalationSystem {
@@ -34,8 +36,9 @@ class EscalationSystem {
         this.activeEscalations = new Map();
         this.complicationTimers = new Map();
         
-        console.log('🚨 Escalation System v2.0 initialisiert');
+        console.log('🚨 Escalation System v2.1 initialisiert');
         console.log('   ✅ Nutzt Composition System');
+        console.log('   🌉 EventBridge Integration aktiviert');
     }
     
     /**
@@ -142,7 +145,7 @@ class EscalationSystem {
     }
     
     /**
-     * 🆕 Führt Eskalation aus
+     * 🆕 v2.1: Führt Eskalation aus + EventBridge Integration
      */
     executeEscalation(incident) {
         if (incident.completed) {
@@ -171,8 +174,11 @@ class EscalationSystem {
             
             if (newSchema) {
                 // Update Incident mit neuem Schema
-                this.updateIncidentFromSchema(incident, newSchema, escalation.reason);
+                this.updateIncidentFromSchema(incident, newSchema, escalation.reason, oldSeverity);
                 console.log(`✅ Schema re-komponiert: ${incident.stichwort}`);
+                
+                // 🌉 v2.1: EVENTBRIDGE - Feuere Eskalations-Event
+                this.fireEscalationEvents(incident, oldSeverity, newSeverity, escalation.reason);
             } else {
                 console.error('❌ Re-Komposition fehlgeschlagen');
             }
@@ -192,7 +198,76 @@ class EscalationSystem {
     }
     
     /**
-     * 🆕 Führt Komplikation aus
+     * 🌉 v2.1: Feuert Eskalations-Events über EventBridge
+     */
+    fireEscalationEvents(incident, oldSeverity, newSeverity, reason) {
+        if (!window.eventBridge) {
+            console.warn('⚠️ EventBridge nicht verfügbar');
+            return;
+        }
+        
+        // Finde zugewiesenes Fahrzeug für Funkspruch
+        const vehicle = this.findPrimaryVehicle(incident);
+        if (!vehicle) {
+            console.warn('⚠️ Kein Fahrzeug gefunden - Event ohne Fahrzeug');
+        }
+        
+        // 1️⃣ ALLGEMEINES ESKALATIONS-EVENT
+        window.eventBridge.emit('escalation:started', {
+            incident: incident,
+            vehicle: vehicle,
+            oldSeverity: oldSeverity,
+            newSeverity: newSeverity,
+            reason: reason
+        });
+        
+        // 2️⃣ CRITICAL → SPEZIAL-EVENTS
+        if (newSeverity === 'CRITICAL') {
+            window.eventBridge.emit('escalation:critical', {
+                incident: incident,
+                vehicle: vehicle,
+                oldSeverity: oldSeverity,
+                newSeverity: newSeverity
+            });
+            
+            // Prüfe ob Status-Verschlechterung
+            window.eventBridge.emit('escalation:status_worsened', {
+                incident: incident,
+                vehicle: vehicle,
+                oldStatus: oldSeverity,
+                newStatus: newSeverity
+            });
+        }
+        
+        // 3️⃣ NEF ERFORDERLICH?
+        const needsNef = this.checkNefRequired(incident);
+        if (needsNef) {
+            console.log('🚑 NEF wird benötigt!');
+            window.eventBridge.emit('escalation:nef_required', {
+                incident: incident,
+                vehicle: vehicle,
+                reason: reason || 'Eskalation auf CRITICAL',
+                urgency: 'high'
+            });
+        }
+        
+        // 4️⃣ VERSTÄRKUNG ERFORDERLICH?
+        const needsBackup = this.checkBackupRequired(incident, oldSeverity);
+        if (needsBackup) {
+            console.log('🚨 Verstärkung wird benötigt!');
+            window.eventBridge.emit('escalation:backup_required', {
+                incident: incident,
+                vehicle: vehicle,
+                reason: 'Zusätzliche Ressourcen durch Eskalation',
+                vehicleType: needsBackup // z.B. 'RTW' oder 'KTW'
+            });
+        }
+        
+        console.log('✅ Eskalations-Events gefeuert');
+    }
+    
+    /**
+     * 🆕 v2.1: Führt Komplikation aus + EventBridge Integration
      */
     executeComplication(incident, complication) {
         if (incident.completed) return;
@@ -211,6 +286,33 @@ class EscalationSystem {
             timestamp: Date.now()
         });
         
+        // 🌉 v2.1: EVENTBRIDGE - Feuere Komplikations-Event
+        if (window.eventBridge) {
+            const vehicle = this.findPrimaryVehicle(incident);
+            
+            window.eventBridge.emit('incident:complication', {
+                incident: incident,
+                vehicle: vehicle,
+                complication: complication
+            });
+            
+            // Spezifische medizinische Events
+            if (complication.type === 'patient_critical' || complication.effect.includes('kritisch')) {
+                window.eventBridge.emit('medical:patient_critical', {
+                    incident: incident,
+                    vehicle: vehicle,
+                    symptoms: complication.effect
+                });
+            }
+            
+            if (complication.type === 'resuscitation' || complication.effect.includes('Reanimation')) {
+                window.eventBridge.emit('medical:resuscitation', {
+                    incident: incident,
+                    vehicle: vehicle
+                });
+            }
+        }
+        
         // Benachrichtige UI
         if (window.notificationSystem) {
             window.notificationSystem.showComplication(incident, complication);
@@ -223,9 +325,9 @@ class EscalationSystem {
     }
     
     /**
-     * 🆕 Updated Incident mit neuem Schema
+     * 🆕 v2.1: Updated Incident mit neuem Schema + EventBridge
      */
-    updateIncidentFromSchema(incident, newSchema, reason) {
+    updateIncidentFromSchema(incident, newSchema, reason, oldSeverity) {
         const oldKeyword = incident.stichwort;
         
         // Update Basis-Properties
@@ -271,6 +373,61 @@ class EscalationSystem {
         if (window.updateIncidentUI) {
             window.updateIncidentUI();
         }
+    }
+    
+    /**
+     * 🆕 v2.1: Prüft ob NEF benötigt wird
+     */
+    checkNefRequired(incident) {
+        // NEF bei CRITICAL + noch nicht vorhanden
+        if (incident.compositionInfo.severity !== 'CRITICAL') {
+            return false;
+        }
+        
+        // Prüfe ob NEF im neuen Schema benötigt wird
+        const schema = incident.composedSchema;
+        if (schema && schema.vehicles && schema.vehicles.required) {
+            return schema.vehicles.required.includes('NEF');
+        }
+        
+        // Fallback: Prüfe benoetigte_fahrzeuge
+        return incident.benoetigte_fahrzeuge && incident.benoetigte_fahrzeuge.NEF > 0;
+    }
+    
+    /**
+     * 🆕 v2.1: Prüft ob Verstärkung benötigt wird
+     */
+    checkBackupRequired(incident, oldSeverity) {
+        const newVehicles = incident.benoetigte_fahrzeuge;
+        
+        // Wenn mehr Fahrzeuge benötigt werden als vorher
+        const totalNew = (newVehicles.RTW || 0) + (newVehicles.KTW || 0) + (newVehicles.NEF || 0);
+        
+        // Bei Eskalation von MINOR zu MODERATE/CRITICAL
+        if (oldSeverity === 'MINOR' && totalNew > 1) {
+            // Mehr als 1 Fahrzeug → Verstärkung nötig
+            if (newVehicles.RTW > 1) return 'RTW';
+            if (newVehicles.KTW > 0) return 'KTW';
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 🆕 v2.1: Findet primäres Fahrzeug für Funkspruch
+     */
+    findPrimaryVehicle(incident) {
+        if (!incident.assignedVehicles || incident.assignedVehicles.length === 0) {
+            return null;
+        }
+        
+        // Finde Fahrzeug-Objekt
+        if (typeof GAME_DATA !== 'undefined' && GAME_DATA.vehicles) {
+            const vehicleId = incident.assignedVehicles[0];
+            return GAME_DATA.vehicles.find(v => v.id === vehicleId);
+        }
+        
+        return null;
     }
     
     /**
@@ -433,4 +590,6 @@ class EscalationSystem {
 // Globale Instanz
 window.EscalationSystem = EscalationSystem;
 
-console.log('🚨 Escalation System v2.0 geladen - ✅ Composition System Integration!');
+console.log('🚨 Escalation System v2.1 geladen');
+console.log('   ✅ Composition System Integration');
+console.log('   🌉 EventBridge Integration - Alle Events triggern Funksprüche!');
