@@ -1,5 +1,5 @@
 // =========================
-// RADIO SYSTEM v2.0.0 - AUTOMATISCHE FUNKSPRÜCHE
+// RADIO SYSTEM v2.1.0 - AUTOMATISCHE FUNKSPRÜCHE MIT THROTTLING
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
@@ -8,6 +8,7 @@
 // 🔧 v1.5.0: Auto-Init entfernt (wird von main.js aufgerufen)
 // 📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!
 // 🤖 v2.0.0: AUTOMATISCHE FUNKSPRÜCHE bei Einsatzevents!
+// ⏱️ v2.1.0: THROTTLING-SYSTEM gegen Funkspruch-Spam!
 // =========================
 
 const RadioSystem = {
@@ -20,6 +21,10 @@ const RadioSystem = {
     fmsListenerInstalled: false,
     logCleanupInterval: null,
     automaticMessagesConfig: null,
+    
+    // ⏱️ v2.1.0: Throttling-Variablen
+    lastAutomaticMessage: 0,
+    automaticMessagesQueue: [],
     
     /**
      * 🔧 v1.4.0: Fallback-Konfiguration (falls JSON nicht lädt)
@@ -173,6 +178,11 @@ const RadioSystem = {
                     "delay_ms": 1000,
                     "vehicle_types": ["RTW", "NEF", "KTW"]
                 }
+            },
+            "throttle": {
+                "enabled": true,
+                "min_delay_between_messages": 2000,
+                "max_concurrent_messages": 3
             }
         };
     },
@@ -197,7 +207,7 @@ const RadioSystem = {
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v2.0.0 initialisiert');
+        console.log('📡 Radio System v2.1.0 initialisiert');
         
         // 🔧 v1.4.0: Lade Config mit Fallback
         try {
@@ -258,6 +268,13 @@ const RadioSystem = {
         console.log('📡 v1.6.0: Funkdisziplin "Ende"-Erkennung aktiviert');
         console.log('🤖 v2.0.0: Automatische Funksprüche aktiviert');
         
+        // ⏱️ v2.1.0: Throttling-Info
+        if (this.automaticMessagesConfig?.throttle?.enabled) {
+            console.log('⏱️ v2.1.0: Throttling-System aktiviert');
+            console.log(`   Min-Delay: ${this.automaticMessagesConfig.throttle.min_delay_between_messages}ms`);
+            console.log(`   Max-Queue: ${this.automaticMessagesConfig.throttle.max_concurrent_messages}`);
+        }
+        
         // 🎯 v1.3.0: Feuere Ready-Event
         this.fireReadyEvent();
     },
@@ -269,10 +286,11 @@ const RadioSystem = {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('radioSystemReady', {
                 detail: {
-                    version: '2.0.0',
+                    version: '2.1.0',
                     channels: Object.keys(this.channels).length,
                     timestamp: Date.now(),
-                    automaticMessages: this.automaticMessagesConfig?.enabled || false
+                    automaticMessages: this.automaticMessagesConfig?.enabled || false,
+                    throttling: this.automaticMessagesConfig?.throttle?.enabled || false
                 }
             }));
             console.log('📡 radioSystemReady Event gefeuert');
@@ -427,7 +445,7 @@ const RadioSystem = {
     },
 
     /**
-     * 🤖 v2.0.0: HAUPTFUNKTION - Sendet automatische Funksprüche bei Einsatzevents
+     * 🤖 v2.0.0 / ⏱️ v2.1.0: HAUPTFUNKTION - Sendet automatische Funksprüche bei Einsatzevents
      * 
      * @param {Object} vehicle - Das Fahrzeug-Objekt
      * @param {String} trigger - Event-Typ: 'dispatch', 'arrival', 'on_scene_delay', 'patient_loaded', 'hospital_arrival', 'back_available'
@@ -461,10 +479,49 @@ const RadioSystem = {
             return;
         }
         
-        // Verzögerung anwenden
+        // ⏱️ v2.1.0: THROTTLING-SYSTEM
+        if (this.automaticMessagesConfig.throttle?.enabled) {
+            const now = Date.now();
+            const lastMessage = this.lastAutomaticMessage || 0;
+            const minDelay = this.automaticMessagesConfig.throttle.min_delay_between_messages || 2000;
+            
+            // Prüfe Min-Delay zwischen Funksprüchen
+            if (now - lastMessage < minDelay) {
+                const waitTime = minDelay - (now - lastMessage);
+                console.log(`⏱️ Throttling: Warte ${waitTime}ms (Min-Delay)`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+            
+            // Prüfe max concurrent messages in Queue
+            const maxConcurrent = this.automaticMessagesConfig.throttle.max_concurrent_messages || 3;
+            if (this.automaticMessagesQueue.length >= maxConcurrent) {
+                console.log(`⏸️ Throttling: Queue voll (${this.automaticMessagesQueue.length}/${maxConcurrent})`);
+                console.log(`   Warte auf freien Slot...`);
+                
+                // Warte bis Queue-Slot frei wird
+                while (this.automaticMessagesQueue.length >= maxConcurrent) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                console.log(`✅ Throttling: Queue-Slot frei`);
+            }
+            
+            // Füge zur Queue hinzu
+            const queueEntry = {
+                vehicle: vehicle.callsign,
+                trigger: trigger,
+                timestamp: Date.now()
+            };
+            this.automaticMessagesQueue.push(queueEntry);
+            console.log(`📥 Throttling: In Queue (${this.automaticMessagesQueue.length}/${maxConcurrent})`);
+            
+            // Update Last-Message-Timestamp
+            this.lastAutomaticMessage = Date.now();
+        }
+        
+        // Verzögerung anwenden (Trigger-spezifisch)
         const delay = triggerConfig.delay_ms || 0;
         if (delay > 0) {
-            console.log(`⏱️ Verzögerung: ${delay}ms`);
+            console.log(`⏱️ Trigger-Verzögerung: ${delay}ms`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
         
@@ -504,6 +561,17 @@ const RadioSystem = {
             automatic: true,
             trigger: trigger
         });
+        
+        // ⏱️ v2.1.0: Entferne aus Throttling-Queue
+        if (this.automaticMessagesConfig?.throttle?.enabled) {
+            const index = this.automaticMessagesQueue.findIndex(e => 
+                e.vehicle === vehicle.callsign && e.trigger === trigger
+            );
+            if (index !== -1) {
+                this.automaticMessagesQueue.splice(index, 1);
+                console.log(`📤 Throttling: Aus Queue entfernt (${this.automaticMessagesQueue.length} verbleibend)`);
+            }
+        }
         
         console.log('✅ Automatischer Funkspruch gesendet');
         console.groupEnd();
@@ -1031,9 +1099,10 @@ const RadioSystem = {
 // 🔧 v1.5.0: KEIN AUTO-INIT MEHR! Wird von main.js in initializeNewSystems() aufgerufen
 // Das löst das Problem, dass DOMContentLoaded zu früh feuert!
 
-console.log('✅ radio-system.js v2.0.0 geladen');
+console.log('✅ radio-system.js v2.1.0 geladen');
 console.log('🔧 Fallback-Config aktiviert - funktioniert ohne JSON-Dateien');
 console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
 console.log('🔧 v1.5.0: Wird von main.js initialisiert (kein Auto-Init)');
 console.log('📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!');
 console.log('🤖 v2.0.0: AUTOMATISCHE FUNKSPRÜCHE bei Einsatzevents!');
+console.log('⏱️ v2.1.0: THROTTLING-SYSTEM gegen Funkspruch-Spam!');
