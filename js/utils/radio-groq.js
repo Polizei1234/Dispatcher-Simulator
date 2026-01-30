@@ -1,8 +1,9 @@
 // =========================
-// RADIO GROQ AI INTEGRATION v2.1
+// RADIO GROQ AI INTEGRATION v2.2
 // Generiert realistische Fahrzeug-Funksprüche
 // 🔧 v2.0: Automatischer API-Key Import aus localStorage & Settings
 // 📡 v2.1: Verbesserte Funkdisziplin - KI beantwortet Fragen richtig!
+// 🐛 v2.2: generateAutomaticMessage() für automatische Funksprüche (FIX #2)
 // =========================
 
 const RadioGroq = {
@@ -13,7 +14,7 @@ const RadioGroq = {
      * Initialisierung
      */
     async initialize() {
-        console.log('🤖 RadioGroq v2.1 initialisiert');
+        console.log('🤖 RadioGroq v2.2 initialisiert');
         
         // Lade Konfiguration
         try {
@@ -67,6 +68,185 @@ const RadioGroq = {
             return true;
         }
         return false;
+    },
+
+    /**
+     * 🐛 v2.2: Generiert automatische Funksprüche basierend auf Event-Triggern
+     * 
+     * @param {Object} vehicle - Fahrzeug-Objekt
+     * @param {string} trigger - Event-Trigger ('dispatch', 'arrival', 'on_scene_delay', 'patient_loaded', 'hospital_arrival', 'back_available')
+     * @param {Object} context - Kontext (incident, hospital, etc.)
+     * @returns {Promise<string>} Generierter Funkspruch
+     */
+    async generateAutomaticMessage(vehicle, trigger, context = {}) {
+        // 🔧 v2.0: Versuche Key nochmal nachzuladen falls nicht vorhanden
+        if (!this.apiKey) {
+            this.reloadApiKey();
+        }
+        
+        if (!this.apiKey) {
+            console.warn('⚠️ Kein API Key - nutze Fallback-Funkspruch');
+            return this.getFallbackAutomaticMessage(vehicle, trigger, context);
+        }
+
+        try {
+            console.log(`🤖 Generiere automatischen KI-Funkspruch für ${vehicle.callsign} [${trigger}]...`);
+            
+            const prompt = this.buildAutomaticPrompt(vehicle, trigger, context);
+            const response = await this.callGroqAPI(prompt);
+            
+            console.log(`✅ Automatischer Funkspruch generiert: "${response}"`);
+            return response;
+            
+        } catch (error) {
+            console.error('❌ Fehler bei automatischer Funkspruch-Generierung:', error);
+            return this.getFallbackAutomaticMessage(vehicle, trigger, context);
+        }
+    },
+
+    /**
+     * 🐛 v2.2: Baut Prompt für automatische Funksprüche
+     */
+    buildAutomaticPrompt(vehicle, trigger, context) {
+        const { incident, hospital } = context;
+        
+        let basePrompt = `Du bist die Besatzung von ${vehicle.callsign}, einem ${vehicle.type} des Rettungsdienstes.
+
+AKTUELLE SITUATION:
+- Rufname: ${vehicle.callsign}
+- Fahrzeugtyp: ${vehicle.type}
+`;
+
+        if (incident) {
+            basePrompt += `- Einsatz: ${incident.stichwort || 'Notfall'}
+- Einsatzort: ${incident.ort || incident.adresse || 'Unbekannt'}
+`;
+        }
+
+        if (hospital) {
+            basePrompt += `- Zielkrankenhaus: ${hospital.name || 'Klinikum'}
+`;
+        }
+
+        // Trigger-spezifische Anweisungen
+        let triggerInstructions = '';
+        
+        switch (trigger) {
+            case 'dispatch':
+                triggerInstructions = `
+EVENT: Du wirst gerade alarmiert und rückst zum Einsatz aus.
+
+GENERIERE EINE FUNKMELDUNG mit:
+- Bestätigung: Einsatz übernommen
+- Aktion: Rücken aus zum Einsatzort
+
+BEISPIEL:
+"${vehicle.callsign} an Leitstelle, Einsatz ${incident?.stichwort || 'Notfall'} übernommen, rücken aus, kommen"`;
+                break;
+                
+            case 'arrival':
+                triggerInstructions = `
+EVENT: Du kommst gerade am Einsatzort an.
+
+GENERIERE EINE FUNKMELDUNG mit:
+- Ankunft bestätigen
+- Nächster Schritt: Versorgung beginnen
+
+BEISPIEL:
+"${vehicle.callsign} an Leitstelle, am Einsatzort ${incident?.ort || 'eingetroffen'}, beginnen mit der Versorgung, kommen"`;
+                break;
+                
+            case 'on_scene_delay':
+                triggerInstructions = `
+EVENT: Du bist bereits 3 Minuten am Einsatzort, Lagemeldung.
+
+GENERIERE EINE LAGEMELDUNG mit:
+- Aktueller Stand der Versorgung
+- Patientenzustand
+- Weitere Maßnahmen
+
+BEISPIEL:
+"${vehicle.callsign} an Leitstelle, Lagemeldung: Patient wird versorgt, Vitalparameter werden stabilisiert, kommen"`;
+                break;
+                
+            case 'patient_loaded':
+                triggerInstructions = `
+EVENT: Patient wurde aufgenommen, Transport beginnt.
+
+GENERIERE EINE FUNKMELDUNG mit:
+- Patient aufgenommen
+- Transport zum Krankenhaus beginnt
+
+BEISPIEL:
+"${vehicle.callsign} an Leitstelle, Patient aufgenommen, beginnen Transport zum ${hospital?.name || 'Klinikum'}, kommen"`;
+                break;
+                
+            case 'hospital_arrival':
+                triggerInstructions = `
+EVENT: Ankunft am Krankenhaus.
+
+GENERIERE EINE FUNKMELDUNG mit:
+- Ankunft am Krankenhaus
+- Patientübergabe
+
+BEISPIEL:
+"${vehicle.callsign} an Leitstelle, am ${hospital?.name || 'Klinikum'} eingetroffen, Patient wird übergeben, kommen"`;
+                break;
+                
+            case 'back_available':
+                triggerInstructions = `
+EVENT: Zurück auf Wache, wieder einsatzbereit.
+
+GENERIERE EINE FUNKMELDUNG mit:
+- Zurück auf Wache
+- Wieder einsatzbereit (FMS 2)
+
+BEISPIEL:
+"${vehicle.callsign} an Leitstelle, zurück auf Wache, wieder einsatzbereit, kommen"`;
+                break;
+
+            default:
+                triggerInstructions = `
+GENERIERE EINE PASSENDE FUNKMELDUNG für die aktuelle Situation.`;
+        }
+
+        basePrompt += triggerInstructions;
+
+        basePrompt += `
+
+FUNKSPRACHE-REGELN:
+1. Beginne IMMER mit "${vehicle.callsign} an Leitstelle"
+2. Maximal 1-2 kurze Sätze
+3. Ende mit "kommen" (bei Meldungen/Anfragen)
+4. Professionell und sachlich
+5. Keine Umgangssprache
+6. Konkret und präzise
+7. Keine Erklärungen, nur Funkspruch
+
+GENERIERE NUR DEN FUNKSPRUCH ohne Zusatztext:`;
+
+        return basePrompt;
+    },
+
+    /**
+     * 🐛 v2.2: Fallback-Funksprüche für automatische Meldungen
+     */
+    getFallbackAutomaticMessage(vehicle, trigger, context) {
+        const { incident, hospital } = context;
+        const einsatzort = incident?.ort || incident?.adresse || 'Einsatzort';
+        const stichwort = incident?.stichwort || 'Einsatz';
+        const krankenhaus = hospital?.name || 'Klinikum';
+
+        const fallbacks = {
+            'dispatch': `${vehicle.callsign} an Leitstelle, ${stichwort} übernommen, rücken aus, kommen`,
+            'arrival': `${vehicle.callsign} an Leitstelle, am ${einsatzort} eingetroffen, beginnen mit Versorgung, kommen`,
+            'on_scene_delay': `${vehicle.callsign} an Leitstelle, Lagemeldung: Patient wird versorgt, Maßnahmen laufen, kommen`,
+            'patient_loaded': `${vehicle.callsign} an Leitstelle, Patient aufgenommen, beginnen Transport zum ${krankenhaus}, kommen`,
+            'hospital_arrival': `${vehicle.callsign} an Leitstelle, am ${krankenhaus} eingetroffen, Patient wird übergeben, kommen`,
+            'back_available': `${vehicle.callsign} an Leitstelle, zurück auf Wache, wieder einsatzbereit, kommen`
+        };
+
+        return fallbacks[trigger] || `${vehicle.callsign} an Leitstelle, kommen`;
     },
 
     /**
@@ -277,7 +457,7 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
             let funkspruch = data.choices[0].message.content.trim();
 
             // Entferne eventuell vorhandene Anführungszeichen
-            funkspruch = funkspruch.replace(/^"|"$/g, '');
+            funkspruch = funkspruch.replace(/^\"|\"$/g, '');
 
             return funkspruch;
 
@@ -364,8 +544,8 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', async () => {
         await RadioGroq.initialize();
-        console.log('✅ RadioGroq v2.1 bereit - Perfekte Funkdisziplin!');
+        console.log('✅ RadioGroq v2.2 bereit - Perfekte Funkdisziplin + Automatische Funksprüche!');
     });
 }
 
-console.log('✅ radio-groq.js v2.1 geladen - Verbesserte Funkdisziplin!');
+console.log('✅ radio-groq.js v2.2 geladen - Automatische Funksprüche implementiert! 🐛');
