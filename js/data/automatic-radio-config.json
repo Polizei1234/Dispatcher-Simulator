@@ -37,6 +37,69 @@
       "delay_ms": 1000,
       "description": "Zurück auf Wache, wieder einsatzbereit",
       "vehicle_types": ["RTW", "NEF", "KTW", "Kdow", "GW-San"]
+    },
+    "nef_requested": {
+      "enabled": true,
+      "delay_ms": 500,
+      "description": "NEF wird dringend nachgefordert",
+      "vehicle_types": ["RTW"],
+      "urgency": "high"
+    },
+    "backup_requested": {
+      "enabled": true,
+      "delay_ms": 500,
+      "description": "Verstärkung wird angefordert",
+      "vehicle_types": ["RTW", "NEF", "KTW", "Kdow"],
+      "urgency": "high"
+    },
+    "status_worsened": {
+      "enabled": true,
+      "delay_ms": 1000,
+      "description": "Zustandsverschlechterung, Eskalation",
+      "vehicle_types": ["RTW", "NEF"],
+      "urgency": "critical"
+    },
+    "patient_critical": {
+      "enabled": true,
+      "delay_ms": 500,
+      "description": "Patient in kritischem Zustand",
+      "vehicle_types": ["RTW", "NEF"],
+      "urgency": "critical"
+    },
+    "resuscitation": {
+      "enabled": true,
+      "delay_ms": 500,
+      "description": "Reanimation läuft",
+      "vehicle_types": ["RTW", "NEF"],
+      "urgency": "critical"
+    },
+    "patient_stabilized": {
+      "enabled": true,
+      "delay_ms": 2000,
+      "description": "Patient wurde stabilisiert",
+      "vehicle_types": ["RTW", "NEF"],
+      "urgency": "normal"
+    },
+    "complication": {
+      "enabled": true,
+      "delay_ms": 1000,
+      "description": "Komplikation am Einsatzort",
+      "vehicle_types": ["RTW", "NEF"],
+      "urgency": "high"
+    },
+    "incident_canceled": {
+      "enabled": true,
+      "delay_ms": 1000,
+      "description": "Einsatz wurde abgebrochen",
+      "vehicle_types": ["RTW", "NEF", "KTW", "Kdow", "GW-San"],
+      "urgency": "normal"
+    },
+    "technical_problem": {
+      "enabled": true,
+      "delay_ms": 1000,
+      "description": "Technisches Problem am Fahrzeug",
+      "vehicle_types": ["RTW", "NEF", "KTW", "Kdow", "GW-San"],
+      "urgency": "high"
     }
   },
   "throttle": {
