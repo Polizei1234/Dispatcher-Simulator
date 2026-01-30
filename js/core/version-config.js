@@ -3,6 +3,7 @@
 // SINGLE SOURCE OF TRUTH für Version
 // ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
 // 🔧 v3.1.0: Error Handler + Eruda-Fix
+// 🐛 FIX #1: vehicle-status.js hinzugefügt (PHASE 1 Zentrale Status-Funktion)
 // =========================
 
 // 🔧 v3.1.0: Unterdrücke Eruda-Fehler (Debug-Tool)
@@ -77,6 +78,7 @@ const VERSION_CONFIG = {
      * JavaScript-Dateien in Ladereihenfolge
      * 
      * ✅ v9.0.0: FUNKSYSTEM WIEDER AKTIVIERT!
+     * 🐛 FIX #1: vehicle-status.js hinzugefügt (VOR ui.js, map.js, tabs.js)
      * 
      * ✅ v7.3.0 (Phase 4): Radio-System Optimierung
      * 
@@ -103,6 +105,9 @@ const VERSION_CONFIG = {
         'js/utils/address-service.js',
         'js/utils/scoring-system.js',
         'js/utils/tutorial.js',
+        
+        // 🐛 FIX #1: Zentrale Status-Utility (VOR ui.js, map.js, tabs.js!)
+        'js/utils/vehicle-status.js',
         
         // 🆕 v9.0.0: Radio System Utils (VOR Data!)
         'js/utils/radio-groq.js',
@@ -470,6 +475,7 @@ const VERSION_CONFIG = {
         console.log('%c   🔧 Robuste Fehlerbehandlung', 'color: #90cdf4');
         console.log('%c   ⚡ Event-basierte Init', 'color: #90cdf4');
         console.log('%c   ✅ iPad Safari Fixes', 'color: #68d391');
+        console.log('%c   🐛 FIX: vehicle-status.js geladen', 'color: #68d391');
         console.log('%c═══════════════════════════════════', 'color: #4299e1');
     }
 };
@@ -490,3 +496,4 @@ if (document.readyState === 'loading') {
 
 console.log(`🚀 Central Version Manager v3.1.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
 console.log('🔧 Fehlertoleranz aktiviert - Scripts laden auch bei Einzelfehlern weiter');
+console.log('🐛 FIX #1: vehicle-status.js zur Ladereihenfolge hinzugefügt');
