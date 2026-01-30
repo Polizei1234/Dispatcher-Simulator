@@ -1,6 +1,7 @@
 // =========================
-// RADIO GROQ AI INTEGRATION
+// RADIO GROQ AI INTEGRATION v2.0
 // Generiert realistische Fahrzeug-Funksprüche
+// 🔧 v2.0: Automatischer API-Key Import aus localStorage & Settings
 // =========================
 
 const RadioGroq = {
@@ -11,7 +12,7 @@ const RadioGroq = {
      * Initialisierung
      */
     async initialize() {
-        console.log('🤖 RadioGroq initialisiert');
+        console.log('🤖 RadioGroq v2.0 initialisiert');
         
         // Lade Konfiguration
         try {
@@ -19,32 +20,75 @@ const RadioGroq = {
             this.config = await response.json();
             console.log('✅ Radio-Config geladen');
         } catch (error) {
-            console.error('❌ Fehler beim Laden der Radio-Config:', error);
+            console.warn('⚠️ Radio-Config nicht gefunden - nutze Defaults');
         }
 
-        // Lade API-Key
+        // 🔧 v2.0: Lade API-Key mit Fallback-Strategie
+        this.loadApiKey();
+    },
+
+    /**
+     * 🔧 v2.0: Lädt API-Key aus verschiedenen Quellen
+     */
+    loadApiKey() {
+        // 1. Versuche localStorage
         this.apiKey = localStorage.getItem('groqApiKey');
-        if (!this.apiKey) {
-            console.warn('⚠️ Kein Groq API Key gefunden - Funkspruch-Generierung deaktiviert');
+        
+        // 2. Versuche CONFIG.GROQ_API_KEY (falls gesetzt)
+        if (!this.apiKey && typeof CONFIG !== 'undefined' && CONFIG.GROQ_API_KEY) {
+            this.apiKey = CONFIG.GROQ_API_KEY;
+            console.log('✅ API-Key aus CONFIG übernommen');
         }
+        
+        // 3. Versuche gameAIGenerator (falls bereits initialisiert)
+        if (!this.apiKey && typeof window.gameAIGenerator !== 'undefined' && window.gameAIGenerator?.apiKey) {
+            this.apiKey = window.gameAIGenerator.apiKey;
+            console.log('✅ API-Key von AIIncidentGenerator übernommen');
+        }
+        
+        if (this.apiKey) {
+            console.log('✅ Groq API Key geladen - KI-Funksprüche aktiviert');
+        } else {
+            console.warn('⚠️ Kein Groq API Key gefunden - Funkspruch-Generierung nutzt Fallbacks');
+            console.warn('💡 API-Key in Einstellungen setzen für KI-generierte Funksprüche');
+        }
+    },
+
+    /**
+     * 🔧 v2.0: Versucht API-Key nachzuladen (falls später gesetzt)
+     */
+    reloadApiKey() {
+        const oldKey = this.apiKey;
+        this.loadApiKey();
+        
+        if (this.apiKey !== oldKey) {
+            console.log('🔄 API-Key neu geladen');
+            return true;
+        }
+        return false;
     },
 
     /**
      * Generiert Fahrzeug-Antwort basierend auf Kontext
      */
     async generateVehicleResponse(vehicle, context) {
+        // 🔧 v2.0: Versuche Key nochmal nachzuladen falls nicht vorhanden
+        if (!this.apiKey) {
+            this.reloadApiKey();
+        }
+        
         if (!this.apiKey) {
             console.warn('⚠️ Kein API Key - keine Funkspruch-Generierung möglich');
             return this.getFallbackResponse(vehicle, context);
         }
 
         try {
-            console.log(`🤖 Generiere Funkspruch für ${vehicle.callsign}...`);
+            console.log(`🤖 Generiere KI-Funkspruch für ${vehicle.callsign}...`);
             
             const prompt = this.buildPrompt(vehicle, context);
             const response = await this.callGroqAPI(prompt);
             
-            console.log(`✅ Funkspruch generiert: "${response}"`);
+            console.log(`✅ KI-Funkspruch generiert: "${response}"`);
             return response;
             
         } catch (error) {
@@ -235,6 +279,10 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
      * Validiert ob API-Key vorhanden ist
      */
     isAvailable() {
+        // 🔧 v2.0: Versuche nachladen falls nicht vorhanden
+        if (!this.apiKey) {
+            this.reloadApiKey();
+        }
         return !!this.apiKey;
     },
 
@@ -252,8 +300,8 @@ GENERIERE NUR DEN FUNKSPRUCH ohne Erklärung oder Kommentar:`;
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', async () => {
         await RadioGroq.initialize();
-        console.log('✅ RadioGroq bereit');
+        console.log('✅ RadioGroq v2.0 bereit');
     });
 }
 
-console.log('✅ radio-groq.js geladen');
+console.log('✅ radio-groq.js v2.0 geladen - Automatischer API-Key Import');
