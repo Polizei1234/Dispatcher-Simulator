@@ -1,5 +1,6 @@
 /* =========================
-   RADIO PANEL STYLING
+   RADIO PANEL STYLING v1.3
+   🎨 v1.3: Bessere visuelle Trennung Fahrzeugname vs. Funkspruch
    ========================= */
 
 .radio-panel {
@@ -343,10 +344,29 @@
     font-weight: 600;
 }
 
+/* 🎨 v1.3: VERBESSERTES MESSAGE STYLING */
 .log-message {
     color: #fff;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.6;
+    margin-top: 5px;
+    padding-left: 4px;
+    border-left: 2px solid rgba(100, 181, 246, 0.3);
+}
+
+/* 🎨 v1.3: Callsign im Funkspruch fett + größer */
+.log-message-callsign {
+    font-weight: 700;
+    font-size: 14px;
+    color: #ffc107;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 🎨 v1.3: Funkspruch-Text in Cyan für bessere Lesbarkeit */
+.log-message-text {
+    color: #64b5f6;
+    font-weight: 400;
 }
 
 .log-content {
@@ -467,6 +487,17 @@
 
 .btn-success:hover {
     background: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #1a1a2e;
+    font-weight: 700;
+}
+
+.btn-warning:hover {
+    background: #ffb300;
     transform: translateY(-2px);
 }
 
