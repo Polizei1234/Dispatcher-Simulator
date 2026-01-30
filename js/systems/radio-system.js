@@ -1,11 +1,12 @@
 // =========================
-// RADIO SYSTEM v1.5.0
+// RADIO SYSTEM v1.6.0
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
 // 🔧 v1.2.0: Kritische Fixes (GAME_DATA Safety, Memory Leak)
 // 🔧 v1.1.0: FMS-Listener wartet auf VehicleMovement
 // 🎯 v1.3.0: Ready-Event für zuverlässige Init
 // 🔧 v1.4.0: Fallback-Config (funktioniert ohne JSON)
 // 🔧 v1.5.0: Auto-Init entfernt (wird von main.js aufgerufen)
+// 📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!
 // =========================
 
 const RadioSystem = {
@@ -133,10 +134,26 @@ const RadioSystem = {
     },
     
     /**
+     * 📡 v1.6.0: Prüft ob Nachricht mit "Ende" abschließt
+     */
+    endsWithEnde(message) {
+        if (!message || typeof message !== 'string') {
+            return false;
+        }
+        
+        const normalized = message.trim().toLowerCase();
+        
+        // Verschiedene Ende-Varianten
+        return normalized.endsWith('ende') || 
+               normalized.endsWith('ende.') ||
+               normalized.endsWith('aus');
+    },
+    
+    /**
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v1.5.0 initialisiert');
+        console.log('📡 Radio System v1.6.0 initialisiert');
         
         // 🔧 v1.4.0: Lade Config mit Fallback
         try {
@@ -179,6 +196,7 @@ const RadioSystem = {
 
         console.log('✅ Radio System bereit');
         console.log(`📻 Kanäle: ${Object.keys(this.channels).length}`);
+        console.log('📡 v1.6.0: Funkdisziplin "Ende"-Erkennung aktiviert');
         
         // 🎯 v1.3.0: Feuere Ready-Event
         this.fireReadyEvent();
@@ -191,7 +209,7 @@ const RadioSystem = {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('radioSystemReady', {
                 detail: {
-                    version: '1.5.0',
+                    version: '1.6.0',
                     channels: Object.keys(this.channels).length,
                     timestamp: Date.now()
                 }
@@ -532,7 +550,7 @@ const RadioSystem = {
     },
 
     /**
-     * 🔧 v1.2.0: Sendet Funkspruch von Leitstelle an Fahrzeug (mit GAME_DATA Safety)
+     * 📡 v1.6.0: Sendet Funkspruch von Leitstelle an Fahrzeug (mit "Ende"-Erkennung)
      */
     async sendDispatchMessage(vehicleId, message) {
         // 🔧 GAME_DATA Safety Check
@@ -560,7 +578,13 @@ const RadioSystem = {
             direction: 'dispatch_to_vehicle'
         });
 
-        // Generiere automatisch Fahrzeug-Antwort
+        // 📡 v1.6.0: Prüfe ob Nachricht mit "Ende" endet
+        if (this.endsWithEnde(message)) {
+            console.log('📡 Nachricht endet mit "Ende" - keine automatische Antwort');
+            return; // STOPP! Keine weitere Kommunikation
+        }
+
+        // Generiere automatisch Fahrzeug-Antwort (nur wenn NICHT mit "Ende")
         const context = this.buildContext(vehicle, 'response_to_dispatch');
         await this.generateAndSendVehicleResponse(vehicle, 'response_to_dispatch', context);
     },
@@ -814,7 +838,8 @@ const RadioSystem = {
 // 🔧 v1.5.0: KEIN AUTO-INIT MEHR! Wird von main.js in initializeNewSystems() aufgerufen
 // Das löst das Problem, dass DOMContentLoaded zu früh feuert!
 
-console.log('✅ radio-system.js v1.5.0 geladen');
+console.log('✅ radio-system.js v1.6.0 geladen');
 console.log('🔧 Fallback-Config aktiviert - funktioniert ohne JSON-Dateien');
 console.log('🎯 Ready-Event für zuverlässige RadioUI-Init');
 console.log('🔧 v1.5.0: Wird von main.js initialisiert (kein Auto-Init)');
+console.log('📡 v1.6.0: FUNKDISZIPLIN - Erkennt "Ende" & stoppt Auto-Antworten!');
