@@ -1,11 +1,12 @@
 // =========================
-// MAIN.JS v9.3.0 - ZENTRALER ENTRY POINT
+// MAIN.JS v9.3.2 - ZENTRALER ENTRY POINT
 // 🌉 EventBridge VOR allen Systemen!
 // 🌦️⏰ Game-Timer, Weather-System, Call-Template-Mapper Integration
 // 🔧 v9.3.1: Radio-System Init Fix (ist Objekt, nicht Konstruktor)
+// 🔧 v9.3.2: KRITISCH - Alle Funktionen zu window exportiert!
 // =========================
 
-console.log('📋 main.js v9.3.1 wird geladen...');
+console.log('📋 main.js v9.3.2 wird geladen...');
 
 /**
  * 🔧 PHASE 1: GAME LOOP GLOBAL
@@ -65,7 +66,7 @@ async function initializeGame() {
             console.error('❌ Game object nicht gefunden!');
         }
 
-        // 🔧 6. LEAFLET MAP
+        // 🔧 6. LEAFLET MAP - KRITISCH!
         console.log('\n🗺️ PHASE 6: Leaflet Map');
         if (typeof L !== 'undefined') {
             await initializeMap();
@@ -89,8 +90,12 @@ async function initializeGame() {
         // 🔧 8. RADIO SYSTEM - KRITISCH FÜR FUNKVERKEHR!
         console.log('\n📡 PHASE 8: Radio System');
         if (typeof RadioSystem !== 'undefined') {
-            await RadioSystem.initialize();
-            console.log('✅ Radio System initialisiert - Funkverkehr bereit!');
+            try {
+                await RadioSystem.initialize();
+                console.log('✅ Radio System initialisiert - Funkverkehr bereit!');
+            } catch (error) {
+                console.error('❌ RadioSystem konnte nicht geladen werden!', error);
+            }
         } else {
             console.error('❌ RadioSystem nicht gefunden - Funkverkehr nicht verfügbar!');
         }
@@ -225,14 +230,42 @@ function updateVersionBadge() {
 }
 
 /**
- * 🗺️ Map Initialisierung
+ * 🗺️ Map Initialisierung - MIT FEHLERBEHANDLUNG!
  */
 async function initializeMap() {
+    console.log('🗺️ Starte Map-Initialisierung...');
+    
+    // Prüfe ob Leaflet geladen ist
+    if (typeof L === 'undefined') {
+        console.error('❌ Leaflet Library nicht geladen!');
+        return;
+    }
+    
+    // Prüfe ob mapInstance existiert
     if (typeof mapInstance !== 'undefined' && mapInstance.initialize) {
-        await mapInstance.initialize();
-        console.log('✅ Map Instance initialisiert');
+        try {
+            await mapInstance.initialize();
+            console.log('✅ Map Instance initialisiert');
+        } catch (error) {
+            console.error('❌ Map Init Fehler:', error);
+        }
     } else {
         console.error('❌ mapInstance nicht gefunden!');
+    }
+    
+    // 🔧 FALLBACK: Direkte Leaflet-Map erstellen wenn mapInstance fehlt
+    const mapElement = document.getElementById('map');
+    if (mapElement && !window.map) {
+        console.log('🔧 Erstelle Fallback-Karte...');
+        try {
+            window.map = L.map('map').setView([48.9515, 9.3597], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(window.map);
+            console.log('✅ Fallback-Karte erstellt');
+        } catch (error) {
+            console.error('❌ Fallback-Karte Fehler:', error);
+        }
     }
 }
 
@@ -355,6 +388,10 @@ function startNewGame(mode) {
     // Initialisiere Game
     if (typeof game !== 'undefined' && game.start) {
         game.start(mode);
+    } else {
+        console.error('❌ game.start() nicht verfügbar!');
+        alert('Spielinitialisierung fehlgeschlagen! Bitte Seite neu laden.');
+        return;
     }
     
     // Starte Game Loop
@@ -448,6 +485,8 @@ function openShop() {
 function centerMap() {
     if (typeof mapInstance !== 'undefined' && mapInstance.centerMap) {
         mapInstance.centerMap();
+    } else if (window.map && window.map.setView) {
+        window.map.setView([48.9515, 9.3597], 11);
     }
 }
 
@@ -480,6 +519,25 @@ function switchTab(tabName) {
     }
 }
 
+// ========================================
+// 🔧 v9.3.2: KRITISCH - EXPORTIERE ALLE FUNKTIONEN ZU WINDOW!
+// ========================================
+window.startNewGame = startNewGame;
+window.startTutorial = startTutorial;
+window.showSettings = showSettings;
+window.closeSettings = closeSettings;
+window.saveSettings = saveSettings;
+window.toggleAPIKeyVisibility = toggleAPIKeyVisibility;
+window.showCareerComingSoon = showCareerComingSoon;
+window.openShop = openShop;
+window.centerMap = centerMap;
+window.toggleStations = toggleStations;
+window.toggleRadioPanel = toggleRadioPanel;
+window.switchTab = switchTab;
+window.togglePause = togglePause;
+
+console.log('✅ Alle Funktionen zu window exportiert!');
+
 /**
  * 📋 DOMContentLoaded Event Handler
  */
@@ -495,4 +553,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✅ main.js Initialisierung abgeschlossen');
 });
 
-console.log('✅ main.js v9.3.1 geladen - 🔧 Radio-System Fix angewendet');
+console.log('✅ main.js v9.3.2 geladen - 🔧 KRITISCHE FIXES: Window-Export + Map-Fallback');
