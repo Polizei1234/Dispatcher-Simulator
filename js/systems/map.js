@@ -1,5 +1,5 @@
 // =========================
-// KARTENLOGIK v7.0 - ZENTRALE STATUS-FUNKTION
+// KARTENLOGIK v7.1 - ZENTRALE STATUS-FUNKTION + mapInstance
 // + Fahrzeuge während Ausrückzeit sichtbar
 // + Fahrzeuge IMMER anklickbar (auch während Fahrt)
 // + Fahrzeuge in Wache unsichtbar
@@ -12,6 +12,7 @@
 // + ✅✅✅ PHASE 3.1.1 v6.0: ICON-CACHING SYSTEM (-90% SVG Generation!)
 // + ✅✅✅ BUG FIX v6.1: Marker Popups jetzt dauerhaft klickbar!
 // + ✅✅✅ v7.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
+// + ✅✅✅ v7.1: mapInstance Objekt für main.js Kompatibilität!
 // =========================
 
 let map = null;
@@ -701,4 +702,27 @@ function addIncidentMarker(incident) {
     addIncidentToMap(incident);
 }
 
-console.log('✅✅✅ map.js v7.0 geladen - ZENTRALE STATUS-FUNKTION aktiv!');
+// ✅✅✅ v7.1: MAP INSTANCE OBJEKT FÜR main.js KOMPATIBILITÄT!
+const mapInstance = {
+    initialize: async function() {
+        console.log('🗺️ mapInstance.initialize() wird aufgerufen...');
+        initMap();
+        console.log('✅ mapInstance initialisiert');
+    },
+    
+    centerMap: centerMap,
+    toggleStations: toggleStations,
+    updateMap: updateMap,
+    addIncidentToMap: addIncidentToMap,
+    removeIncidentFromMap: removeIncidentFromMap,
+    updateVehicleOnMap: updateVehicleOnMap,
+    drawVehicleRoute: drawVehicleRoute,
+    clearVehicleRoute: clearVehicleRoute,
+    removeVehicleFromMap: removeVehicleFromMap
+};
+
+// Exportiere zu window
+window.mapInstance = mapInstance;
+window.map = map; // Für direkte Zugriffe
+
+console.log('✅✅✅ map.js v7.1 geladen - mapInstance erstellt & exportiert!');
