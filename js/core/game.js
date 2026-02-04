@@ -1,9 +1,10 @@
 // =========================
-// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.0.4
+// SPIEL-LOGIK MIT GROQ AI & NEUES CALL SYSTEM v5.1.0
 // Nutzt window.GameTime aus main.js!
 // ✅ FIX: vehicle.status als String für Karten-Kompatibilität
 // ✅ v5.0.3: Nutzt VehicleMovement.setVehicleStatus() für Status-Änderungen
 // ✅ v5.0.4: Radio-System Referenzen entfernt
+// ✅ v5.1.0: initialize() und start() Methoden hinzugefügt
 // =========================
 
 class Game {
@@ -12,9 +13,20 @@ class Game {
         this.vehicles = VEHICLES;
         this.incidents = [];
         this.selectedIncident = null;
-        this.money = CONFIG.GAME_MODE === 'free' ? 999999999 : 50000;
+        this.money = 999999999; // Wird in start() überschrieben
         this.reputation = 100;
         this.apiKey = null;
+        this.isPaused = false;
+        this.gameMode = 'free';
+        
+        console.log('🎮 Game v5.1.0 Konstruktor aufgerufen');
+    }
+    
+    /**
+     * 🆕 v5.1.0: Initialisiert das Spiel (wird von main.js aufgerufen)
+     */
+    async initialize() {
+        console.log('🎮 Game.initialize() wird ausgeführt...');
         
         // Initialisiere Fahrzeuge mit korrektem Status
         this.initializeVehicles();
@@ -22,7 +34,73 @@ class Game {
         // Nächster Anruf (nutzt GameTime.elapsed)
         this.nextIncidentGameTime = this.getRandomIncidentInterval();
         
-        console.log(`🎮 Game v5.0.4 initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
+        console.log(`✅ Game initialisiert | Nächster Einsatz bei ${Math.round(this.nextIncidentGameTime/1000)}s Spielzeit`);
+    }
+    
+    /**
+     * 🆕 v5.1.0: Startet das Spiel (wird von startNewGame() aufgerufen)
+     */
+    start(mode = 'free') {
+        console.log(`🎮 Game.start('${mode}') wird ausgeführt...`);
+        
+        this.gameMode = mode;
+        
+        // Setze Geld basierend auf Modus
+        if (mode === 'free') {
+            this.money = 999999999;
+        } else if (mode === 'career') {
+            this.money = 50000;
+        }
+        
+        // Reset Spielzustand
+        this.incidents = [];
+        this.selectedIncident = null;
+        this.reputation = 100;
+        this.isPaused = false;
+        
+        // Initialisiere Fahrzeuge neu
+        this.initializeVehicles();
+        
+        // Setze nächsten Einsatz
+        if (window.GameTime) {
+            this.nextIncidentGameTime = window.GameTime.elapsed + this.getRandomIncidentInterval();
+        } else {
+            this.nextIncidentGameTime = this.getRandomIncidentInterval();
+        }
+        
+        // Update UI
+        this.updateUI();
+        
+        console.log(`✅ Spiel gestartet im ${mode}-Modus | Geld: ${this.money}€`);
+    }
+    
+    /**
+     * ⏸️ Toggle Pause
+     */
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        console.log(this.isPaused ? '⏸️ Spiel pausiert' : '▶️ Spiel fortgesetzt');
+    }
+    
+    /**
+     * 🎨 Update UI Elements
+     */
+    updateUI() {
+        // Update Fahrzeug-Zähler
+        const activeVehicles = this.vehicles.filter(v => v.status !== 'available').length;
+        const activeVehiclesEl = document.getElementById('active-vehicles');
+        const totalVehiclesEl = document.getElementById('total-vehicles');
+        
+        if (activeVehiclesEl) activeVehiclesEl.textContent = activeVehicles;
+        if (totalVehiclesEl) totalVehiclesEl.textContent = this.vehicles.length;
+        
+        // Update Geld (nur im Karrieremodus sichtbar)
+        if (this.gameMode === 'career') {
+            const creditsEl = document.getElementById('credits');
+            if (creditsEl) {
+                creditsEl.textContent = this.money.toLocaleString();
+            }
+        }
     }
     
     /**
@@ -116,9 +194,12 @@ class Game {
         return interval;
     }
     
-    async update() {
+    async update(deltaTime) {
+        // Pausiert?
+        if (this.isPaused) return;
+        
         // Nutze ZENTRALES Zeitsystem (window.GameTime aus main.js)
-        const currentGameTime = window.GameTime.elapsed;
+        const currentGameTime = window.GameTime?.elapsed || 0;
         
         // Spawne neue Einsätze wenn Spielzeit erreicht ist
         if (currentGameTime >= this.nextIncidentGameTime) {
@@ -139,12 +220,12 @@ class Game {
             const nextInterval = this.getRandomIncidentInterval();
             this.nextIncidentGameTime = currentGameTime + nextInterval;
             
-            const realTimeUntilNext = nextInterval / window.GameTime.speed;
-            console.log(`✅ Nächster Anruf in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${window.GameTime.speed}x)`);
+            const realTimeUntilNext = nextInterval / (window.GameTime?.speed || 1);
+            console.log(`✅ Nächster Anruf in ${Math.round(nextInterval/1000)}s Spielzeit = ${Math.round(realTimeUntilNext/1000)}s Echtzeit (@${window.GameTime?.speed || 1}x)`);
         }
         
         // Verdiene Geld für abgeschlossene Einsätze (Karrieremodus)
-        if (CONFIG.GAME_MODE === 'career') {
+        if (this.gameMode === 'career') {
             this.incidents.filter(i => i.status === 'completed' && !i.rewarded).forEach(incident => {
                 const reward = this.calculateReward(incident.keyword || incident.stichwort);
                 this.money += reward;
@@ -156,6 +237,9 @@ class Game {
                 }
             });
         }
+        
+        // Update UI
+        this.updateUI();
     }
     
     calculateReward(keyword) {
@@ -206,4 +290,11 @@ class Game {
     }
 }
 
-let game = null;
+// 🆕 v5.1.0: Erstelle globale Game-Instanz
+let game = new Game();
+
+// Exportiere zu window
+window.game = game;
+window.Game = Game;
+
+console.log('✅ game.js v5.1.0 geladen - Game-Instanz erstellt & zu window exportiert');
