@@ -1,7 +1,8 @@
 // =========================
-// WEATHER SYSTEM v2.0 - ERWEITERT
+// WEATHER SYSTEM v2.1 - ERWEITERT + UI-FIX
 // Dynamisches Wetter beeinflusst Einsätze
 // Integration mit incident-types.js
+// 🔧 v2.1: updateUI() beim Start aufrufen!
 // =========================
 
 const WEATHER_CONDITIONS = {
@@ -168,7 +169,12 @@ class WeatherSystem {
     initialize() {
         this.selectRandomWeather();
         this.startWeatherCycle();
-        console.log(`🌦️ Wetter initialisiert: ${this.currentWeather.name}`);
+        
+        // 🔧 v2.1: KRITISCHER FIX - UI sofort aktualisieren!
+        this.updateUI();
+        
+        console.log(`🌦️ Wetter initialisiert: ${this.currentWeather.icon} ${this.currentWeather.name}`);
+        console.log('✅ Wetter-UI aktualisiert');
     }
     
     selectRandomWeather() {
@@ -265,6 +271,9 @@ class WeatherSystem {
         const weatherEl = document.getElementById('current-weather');
         if (weatherEl) {
             weatherEl.innerHTML = `${this.currentWeather.icon} ${this.currentWeather.name}`;
+            console.log(`🌦️ UI aktualisiert: ${this.currentWeather.icon} ${this.currentWeather.name}`);
+        } else {
+            console.warn('⚠️ current-weather Element nicht gefunden!');
         }
         
         const timeOfDayEl = document.getElementById('time-of-day');
@@ -284,4 +293,4 @@ window.WeatherSystem = WeatherSystem;
 window.WEATHER_CONDITIONS = WEATHER_CONDITIONS;
 window.TIME_OF_DAY_EFFECTS = TIME_OF_DAY_EFFECTS;
 
-console.log('🌦️ Weather System v2.0 geladen (Integration mit incident-types.js)');
+console.log('🌦️ Weather System v2.1 geladen (UI-Fix: updateUI() beim Start!)');
