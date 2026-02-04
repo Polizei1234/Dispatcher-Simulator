@@ -1,10 +1,11 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v5.1.0 - RADIO REMOVED
+// TAB NAVIGATION & VEHICLE OVERVIEW v6.0 - ZENTRALE STATUS-FUNKTION
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
 // ✅ Kompakte Card-Darstellung
 // 🗑️ v5.1.0: Radio-Tab komplett entfernt
+// ✅✅✅ v6.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
 // =========================
 
 let currentTab = 'map';
@@ -98,36 +99,8 @@ function switchTab(tabName) {
     // Radio-Tab Handling entfernt
 }
 
-// ✅ FIX: Hole FMS Status (nutzt CONFIG.FMS_STATUS)
-function getFMSStatus(vehicle) {
-    const fmsCode = vehicle.currentStatus || vehicle.status || 2;
-    
-    // Hole FMS-Definition aus CONFIG
-    if (typeof CONFIG !== 'undefined' && CONFIG.FMS_STATUS && CONFIG.FMS_STATUS[fmsCode]) {
-        return CONFIG.FMS_STATUS[fmsCode];
-    }
-    
-    // Fallback wenn CONFIG nicht verfügbar
-    const fallbackStatus = {
-        1: { name: 'Einsatzbereit über Funk', color: '#28a745', icon: '🟢' },
-        2: { name: 'Einsatzbereit auf Wache', color: '#28a745', icon: '🟢' },
-        3: { name: 'Einsatz übernommen', color: '#ffc107', icon: '🟡' },
-        4: { name: 'Anfahrt Einsatzstelle', color: '#fd7e14', icon: '🟠' },
-        5: { name: 'Ankunft Einsatzstelle', color: '#dc3545', icon: '🔴' },
-        6: { name: 'Sprechwunsch', color: '#6c757d', icon: '⚪' },
-        7: { name: 'Patient aufgenommen', color: '#17a2b8', icon: '🔵' },
-        8: { name: 'Anfahrt Krankenhaus', color: '#007bff', icon: '🔵' },
-        9: { name: 'Ankunft Krankenhaus', color: '#6f42c1', icon: '🟣' },
-        0: { name: 'Notruf/Hilferuf', color: '#dc3545', icon: '⚠️' },
-        'C': { name: 'Status C', color: '#dc3545', icon: '🛑' }
-    };
-    
-    return fallbackStatus[fmsCode] || {
-        name: 'Unbekannt',
-        color: '#6c757d',
-        icon: '❓'
-    };
-}
+// ❌ ENTFERNT: Alte getFMSStatus() Funktion
+// ✅ Nutze stattdessen: VehicleStatusUtil.getStatus(vehicle)
 
 // ✅ KOMPAKTE FAHRZEUG-ÜBERSICHT
 function updateVehiclesOverview() {
@@ -149,18 +122,12 @@ function updateVehiclesOverview() {
         return;
     }
     
-    // ✅ Filter anwenden
+    // ✅ Filter anwenden (mit VehicleStatusUtil!)
     let filteredVehicles = ownedVehicles;
     if (vehicleFilter === 'available') {
-        filteredVehicles = ownedVehicles.filter(v => {
-            const status = v.currentStatus || v.status || 2;
-            return status === 1 || status === 2;
-        });
+        filteredVehicles = ownedVehicles.filter(v => VehicleStatusUtil.isAvailable(v));
     } else if (vehicleFilter === 'inuse') {
-        filteredVehicles = ownedVehicles.filter(v => {
-            const status = v.currentStatus || v.status || 2;
-            return status !== 1 && status !== 2;
-        });
+        filteredVehicles = ownedVehicles.filter(v => VehicleStatusUtil.isOnMission(v));
     }
     
     // Gruppiere Fahrzeuge nach Wachen
@@ -191,12 +158,9 @@ function updateVehiclesOverview() {
         return stationA.name.localeCompare(stationB.name);
     });
     
-    // Zähle verfügbare Fahrzeuge
+    // Zähle verfügbare Fahrzeuge (mit VehicleStatusUtil!)
     const totalVehicles = ownedVehicles.length;
-    const availableVehicles = ownedVehicles.filter(v => {
-        const status = v.currentStatus || v.status || 2;
-        return status === 2 || status === 1;
-    }).length;
+    const availableVehicles = ownedVehicles.filter(v => VehicleStatusUtil.isAvailable(v)).length;
     
     // ✅ KOMPAKTER HEADER mit Filter-Buttons
     let html = `
@@ -252,11 +216,8 @@ function updateVehiclesOverview() {
             stationIcon = '⚠️';
         }
         
-        // Zähle verfügbare Fahrzeuge dieser Wache
-        const stationAvailable = vehicles.filter(v => {
-            const status = v.currentStatus || v.status || 2;
-            return status === 2 || status === 1;
-        }).length;
+        // Zähle verfügbare Fahrzeuge dieser Wache (mit VehicleStatusUtil!)
+        const stationAvailable = vehicles.filter(v => VehicleStatusUtil.isAvailable(v)).length;
         const availabilityColor = stationAvailable === vehicles.length ? '#28a745' : 
                                   stationAvailable > 0 ? '#ffc107' : '#dc3545';
         
@@ -284,13 +245,10 @@ function updateVehiclesOverview() {
 
 // ✅ KOMPAKTE FAHRZEUG-KARTE (40% weniger Höhe!)
 function createCompactVehicleCard(vehicle) {
-    const fms = getFMSStatus(vehicle);
-    const fmsNumber = getFMSStatusNumber(vehicle);
+    // ✅✅✅ ZENTRALE STATUS-FUNKTION!
+    const fms = VehicleStatusUtil.getStatus(vehicle);
     
-    const statusDisplay = typeof fmsNumber === 'number' ? fmsNumber : fmsNumber;
-    
-    const isAvailable = (vehicle.currentStatus === 1 || vehicle.currentStatus === 2 || 
-                         vehicle.status === 1 || vehicle.status === 2);
+    const isAvailable = VehicleStatusUtil.isAvailable(vehicle);
     
     // Kompaktes Icon
     const icon = getVehicleIconCompact(vehicle.type);
@@ -302,7 +260,7 @@ function createCompactVehicleCard(vehicle) {
                 <div class="vehicle-text">
                     <span class="vehicle-callsign">${vehicle.callsign}</span>
                     <span class="vehicle-status-text" style="color: ${fms.color};">
-                        Status ${statusDisplay}
+                        Status ${fms.code}
                     </span>
                 </div>
             </div>
@@ -341,18 +299,6 @@ function toggleStation(stationId) {
         vehiclesDiv.classList.remove('open');
         icon.classList.remove('open');
     }
-}
-
-function getFMSStatusNumber(vehicle) {
-    const status = vehicle.currentStatus || vehicle.status || 2;
-    
-    const statusMap = {
-        1: 1, 2: 2, 3: 3, 4: 4, 5: 5,
-        6: 6, 7: 7, 8: 8, 9: 9,
-        0: '0', 'C': 'C'
-    };
-    
-    return statusMap[status] !== undefined ? statusMap[status] : status;
 }
 
 // Einsätze-Übersicht
@@ -413,7 +359,7 @@ setInterval(() => {
     }
 }, 3000);
 
-console.log('✅ Tabs v5.1.0 geladen - Kompakte UI mit Shortcuts (Radio entfernt)');
+console.log('✅ Tabs v6.0 geladen - Zentrale Status-Funktion aktiv!');
 
 // Helper functions
 function getVehicleIcon(type) {

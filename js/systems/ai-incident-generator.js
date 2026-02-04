@@ -1,11 +1,20 @@
 // =========================
-// AI INCIDENT GENERATOR v3.0.2
+// AI INCIDENT GENERATOR v3.1.0
+// 🆙 VOLLSTÄNDIGE INTEGRATION: Weather + Timer + Call-Templates!
 // PHASE 2 - COMPOSITION SYSTEM INTEGRATION
 // Nutzt incident-composer.js für flexible Einsatzerstellung
 // =========================
 
 /**
- * AI INCIDENT GENERATOR v3.0.2
+ * AI INCIDENT GENERATOR v3.1.0
+ * 
+ * 🆙 NEU IN v3.1.0:
+ * - ⏰ Game-Timer Integration (getGameTimer())
+ * - 🌦️ Weather-System Integration (getWeatherContext())
+ * - 📞 Call-Template-Mapper Integration (mapToTemplate())
+ * - 📊 Kontext-basierte Einsatzhäufigkeit
+ * - 🌙 Tageszeit-abhängige Einsatztypen
+ * - ❄️ Wetterbedingte Einsätze (Glatteis, Sturm)
  * 
  * 🆕 NEU IN v3.0:
  * - Nutzt incidentComposer.compose() statt feste Templates
@@ -29,9 +38,10 @@
  * 2. Wähle Type (MEDICAL/TRAFFIC/etc.)
  * 3. Optional: Wähle Modifier (ENTRAPMENT/FIRE/etc.)
  * 4. Komponiere Schema mit incidentComposer
- * 5. Erstelle Type-spezifischen Groq-Prompt
- * 6. Generiere Einsatz-Details mit AI
- * 7. Merge AI-Daten mit komponiertem Schema
+ * 5. 🆙 Mappe zu Call-Template (wenn verfügbar)
+ * 6. Erstelle Type-spezifischen Groq-Prompt
+ * 7. Generiere Einsatz-Details mit AI
+ * 8. Merge AI-Daten mit komponiertem Schema
  */
 
 class AIIncidentGenerator {
@@ -39,9 +49,14 @@ class AIIncidentGenerator {
         this.apiKey = apiKey;
         this.locationGenerator = new LocationGenerator();
         this.weatherSystem = null;
+        this.gameTimer = null; // ⏰ NEU: Game-Timer Referenz
+        this.callTemplateMapper = null; // 📞 NEU: Call-Template-Mapper Referenz
         
-        console.log('🤖 AI Incident Generator v3.0.2 initialisiert');
+        console.log('🤖 AI Incident Generator v3.1.0 initialisiert');
         console.log('   ✅ Nutzt Composition System');
+        console.log('   🌦️ Weather-System Integration');
+        console.log('   ⏰ Game-Timer Integration');
+        console.log('   📞 Call-Template-Mapper Integration');
     }
     
     /**
@@ -49,13 +64,30 @@ class AIIncidentGenerator {
      */
     setWeatherSystem(weatherSystem) {
         this.weatherSystem = weatherSystem;
+        console.log('🌦️ Weather-System verbunden');
+    }
+    
+    /**
+     * ⏰ NEU: Setzt Game-Timer Referenz
+     */
+    setGameTimer(gameTimer) {
+        this.gameTimer = gameTimer;
+        console.log('⏰ Game-Timer verbunden');
+    }
+    
+    /**
+     * 📞 NEU: Setzt Call-Template-Mapper Referenz
+     */
+    setCallTemplateMapper(mapper) {
+        this.callTemplateMapper = mapper;
+        console.log('📞 Call-Template-Mapper verbunden');
     }
     
     /**
      * 🆕 HAUPT-FUNKTION: Generiert Einsatz mit Composition System
      */
     async generateIncident(ownedVehicles, gameTime) {
-        console.group('🚑 GENERIERE EINSATZ MIT COMPOSITION SYSTEM v3.0.2');
+        console.group('🚑 GENERIERE EINSATZ MIT COMPOSITION SYSTEM v3.1.0');
         
         try {
             // 1. Prüfe ob Composer verfügbar
@@ -69,10 +101,13 @@ class AIIncidentGenerator {
             const location = await this.locationGenerator.generateIncidentLocation();
             console.log(`📍 Ort: ${location.address}`);
             
-            // 3. Hole Kontext (Zeit, Wetter)
+            // 3. 🆙 Hole erweiterten Kontext (Zeit, Wetter, Game-Timer)
             const context = this.gatherContext(gameTime);
             console.log(`⏰ Zeit: ${context.timeString} (${context.timeOfDay.name})`);
             console.log(`🌦️ Wetter: ${context.weather.name}`);
+            if (context.dayOfWeek) {
+                console.log(`📅 Wochentag: ${context.dayOfWeek}`);
+            }
             
             // 4. 🆕 Wähle Severity intelligent
             const severity = this.selectSeverityLevel(context);
@@ -97,19 +132,28 @@ class AIIncidentGenerator {
             }
             console.log(`🎼 Schema komponiert: ${schema.stichwort}`);
             
-            // 8. Erstelle Type-spezifischen Groq-Prompt
-            const prompt = this.buildTypeSpecificPrompt(schema, location, context);
+            // 8. 📞 NEU: Mappe zu Call-Template (wenn verfügbar)
+            let callTemplate = null;
+            if (this.callTemplateMapper) {
+                callTemplate = this.callTemplateMapper.mapToTemplate(severity, type, modifiers);
+                if (callTemplate) {
+                    console.log(`📞 Call-Template: ${callTemplate.templateName}`);
+                }
+            }
             
-            // 9. Rufe Groq API auf
+            // 9. Erstelle Type-spezifischen Groq-Prompt
+            const prompt = this.buildTypeSpecificPrompt(schema, location, context, callTemplate);
+            
+            // 10. Rufe Groq API auf
             const aiData = await this.callGroqAPI(prompt);
             
             if (!aiData) {
                 console.warn('⚠️ Groq API lieferte keine Daten, nutze Schema-Defaults');
-                return this.createIncidentFromSchema(schema, location, context, {});
+                return this.createIncidentFromSchema(schema, location, context, {}, callTemplate);
             }
             
-            // 10. 🆕 Merge AI-Daten mit Schema
-            const incident = this.mergeAIWithSchema(aiData, schema, location, context);
+            // 11. 🆕 Merge AI-Daten mit Schema & Template
+            const incident = this.mergeAIWithSchema(aiData, schema, location, context, callTemplate);
             
             console.log(`✅ Einsatz generiert: ${incident.stichwort}`);
             console.groupEnd();
@@ -124,13 +168,30 @@ class AIIncidentGenerator {
     }
     
     /**
-     * 🆕 Sammelt Kontext-Daten (Zeit, Wetter)
+     * 🆙 ERWEITERT: Sammelt Kontext-Daten (Zeit, Wetter, Game-Timer)
      */
     gatherContext(gameTime) {
-        const currentHour = gameTime ? gameTime.getHours() : new Date().getHours();
-        const currentMinute = gameTime ? gameTime.getMinutes() : new Date().getMinutes();
+        // ⏰ Nutze Game-Timer wenn verfügbar (sonst Fallback)
+        let currentHour, currentMinute, dayOfWeek;
+        
+        if (this.gameTimer) {
+            currentHour = this.gameTimer.getHour();
+            currentMinute = this.gameTimer.getMinute();
+            dayOfWeek = this.gameTimer.getDayOfWeek();
+        } else if (gameTime) {
+            currentHour = gameTime.getHours();
+            currentMinute = gameTime.getMinutes();
+            dayOfWeek = gameTime.toLocaleDateString('de-DE', { weekday: 'long' });
+        } else {
+            const now = new Date();
+            currentHour = now.getHours();
+            currentMinute = now.getMinutes();
+            dayOfWeek = now.toLocaleDateString('de-DE', { weekday: 'long' });
+        }
+        
         const timeString = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
         
+        // 🌦️ Weather-System nutzen
         const weather = this.weatherSystem ? 
             this.weatherSystem.getCurrentWeather() : { name: 'Trocken', icon: '☀️' };
         const timeOfDay = this.weatherSystem ? 
@@ -140,13 +201,17 @@ class AIIncidentGenerator {
             currentHour,
             currentMinute,
             timeString,
+            dayOfWeek,
             weather,
-            timeOfDay
+            timeOfDay,
+            isWeekend: dayOfWeek === 'Samstag' || dayOfWeek === 'Sonntag',
+            isNight: currentHour >= 22 || currentHour < 6,
+            isRushHour: (currentHour >= 7 && currentHour <= 9) || (currentHour >= 16 && currentHour <= 19)
         };
     }
     
     /**
-     * 🆕 Wählt Severity basierend auf Kontext
+     * 🆙 ERWEITERT: Wählt Severity basierend auf erweiterten Kontext
      */
     selectSeverityLevel(context) {
         const weights = {
@@ -155,32 +220,51 @@ class AIIncidentGenerator {
             CRITICAL: 0.15
         };
         
-        // Nacht = mehr CRITICAL
-        if (context.timeOfDay.name === 'Nacht' || context.timeOfDay.name === 'Später Abend') {
-            weights.CRITICAL += 0.10;
-            weights.MINOR -= 0.05;
+        // 🌙 Nacht = mehr CRITICAL
+        if (context.isNight) {
+            weights.CRITICAL += 0.12;
+            weights.MINOR -= 0.07;
             weights.MODERATE -= 0.05;
         }
         
-        // Schnee/Eis = mehr MODERATE/CRITICAL
+        // 🚗 Rush-Hour = mehr MODERATE (Verkehr)
+        if (context.isRushHour) {
+            weights.MODERATE += 0.08;
+            weights.MINOR -= 0.05;
+            weights.CRITICAL -= 0.03;
+        }
+        
+        // 🍻 Wochenende = andere Verteilung
+        if (context.isWeekend) {
+            weights.MODERATE += 0.05;
+            weights.MINOR -= 0.05;
+        }
+        
+        // ❄️ Schnee/Eis = mehr MODERATE/CRITICAL
         if (context.weather.name === 'Schnee' || context.weather.name === 'Eisregen') {
-            weights.CRITICAL += 0.05;
-            weights.MODERATE += 0.10;
+            weights.CRITICAL += 0.07;
+            weights.MODERATE += 0.12;
+            weights.MINOR -= 0.19;
+        }
+        
+        // ⛈️ Gewitter = mehr CRITICAL
+        if (context.weather.name === 'Gewitter') {
+            weights.CRITICAL += 0.10;
+            weights.MODERATE += 0.05;
             weights.MINOR -= 0.15;
         }
         
-        // Gewitter = mehr CRITICAL
-        if (context.weather.name === 'Gewitter') {
-            weights.CRITICAL += 0.08;
+        // 🔥 Hitze-Welle (Sommer, Mittag-Nachmittag)
+        if (context.currentHour >= 12 && context.currentHour <= 17) {
             weights.MODERATE += 0.05;
-            weights.MINOR -= 0.13;
+            weights.MINOR -= 0.05;
         }
         
         return this.weightedRandom(weights);
     }
     
     /**
-     * 🆕 Wählt Incident Type (kontextabhängig)
+     * 🆙 ERWEITERT: Wählt Incident Type (erweiterte Kontextabhängigkeit)
      */
     selectIncidentType(context, severity) {
         const weights = {
@@ -194,34 +278,48 @@ class AIIncidentGenerator {
             ALLERGIC: 0.03
         };
         
-        // Schnee/Eis = mehr TRAFFIC
+        // ❄️ Schnee/Eis = DEUTLICH mehr TRAFFIC
         if (context.weather.name === 'Schnee' || context.weather.name === 'Eisregen') {
-            weights.TRAFFIC += 0.20;
-            weights.MEDICAL -= 0.10;
-            weights.PEDIATRIC -= 0.05;
-            weights.BIRTH -= 0.05;
+            weights.TRAFFIC += 0.25;
+            weights.MEDICAL -= 0.12;
+            weights.PEDIATRIC -= 0.07;
+            weights.BIRTH -= 0.06;
         }
         
-        // Regen = mehr TRAFFIC
+        // 🌧️ Regen = mehr TRAFFIC
         if (context.weather.name === 'Regen') {
-            weights.TRAFFIC += 0.10;
-            weights.MEDICAL -= 0.05;
-            weights.PEDIATRIC -= 0.05;
+            weights.TRAFFIC += 0.12;
+            weights.MEDICAL -= 0.06;
+            weights.PEDIATRIC -= 0.06;
         }
         
-        // Hitze = mehr MEDICAL (Kreislauf)
+        // ☀️ Hitze = mehr MEDICAL (Kreislauf)
         if (context.weather.name === 'Sonnig' && context.currentHour >= 12 && context.currentHour <= 18) {
-            weights.MEDICAL += 0.10;
-            weights.TRAFFIC -= 0.05;
-            weights.PEDIATRIC -= 0.05;
+            weights.MEDICAL += 0.12;
+            weights.TRAFFIC -= 0.06;
+            weights.PEDIATRIC -= 0.06;
         }
         
-        // Nacht = weniger BIRTH/PEDIATRIC
-        if (context.timeOfDay.name === 'Nacht') {
-            weights.MEDICAL += 0.10;
-            weights.PSYCHIATRIC += 0.05;
-            weights.BIRTH -= 0.05;
+        // 🌙 Nacht = weniger BIRTH/PEDIATRIC, mehr PSYCHIATRIC
+        if (context.isNight) {
+            weights.MEDICAL += 0.08;
+            weights.PSYCHIATRIC += 0.10;
+            weights.BIRTH -= 0.08;
             weights.PEDIATRIC -= 0.10;
+        }
+        
+        // 🚗 Rush-Hour = mehr TRAFFIC
+        if (context.isRushHour) {
+            weights.TRAFFIC += 0.15;
+            weights.MEDICAL -= 0.08;
+            weights.PEDIATRIC -= 0.07;
+        }
+        
+        // 🍻 Wochenende Abend = mehr PSYCHIATRIC (Alkohol)
+        if (context.isWeekend && context.currentHour >= 20) {
+            weights.PSYCHIATRIC += 0.08;
+            weights.MEDICAL -= 0.04;
+            weights.TRAFFIC -= 0.04;
         }
         
         return this.weightedRandom(weights);
@@ -272,18 +370,19 @@ class AIIncidentGenerator {
     }
     
     /**
-     * 🆕 Erstellt Type-spezifischen Groq-Prompt
+     * 📞 ERWEITERT: Erstellt Type-spezifischen Groq-Prompt (mit Call-Template)
      */
-    buildTypeSpecificPrompt(schema, location, context) {
-        const basePrompt = `Du bist ein realistischer Notruf-Generator für die Integrierte Leitstelle Rems-Murr-Kreis.
+    buildTypeSpecificPrompt(schema, location, context, callTemplate) {
+        let basePrompt = `Du bist ein realistischer Notruf-Generator für die Integrierte Leitstelle Rems-Murr-Kreis.
 
 ERSTELLE EINEN HOCHREALISTISCHEN NOTRUF:
 
-RAHMENBEDINGUNGEN:
+RAHMENBEDINGUNGUNGEN:
 Ort: ${location.address}
 Gemeinde: ${location.hotspot}
 Zeit: ${context.timeString} Uhr (${context.timeOfDay.name})
 Wetter: ${context.weather.name}
+Wochentag: ${context.dayOfWeek || 'Werktag'}
 
 EINSATZ-SCHEMA:
 Stichwort: ${schema.stichwort}
@@ -293,8 +392,18 @@ Modifiers: ${schema.compositionInfo.modifiers.join(', ') || 'Keine'}
 
 `;
 
+        // 📞 NEU: Füge Call-Template hinzu (wenn vorhanden)
+        if (callTemplate) {
+            basePrompt += `CALL-TEMPLATE GUIDANCE:
+Template: ${callTemplate.templateName}
+Description: ${callTemplate.description}
+Key Questions: ${callTemplate.keyQuestions.join(', ')}
+
+`;
+        }
+
         // Type-spezifische Anweisungen
-        const typeInstructions = this.getTypeSpecificInstructions(schema.compositionInfo.type, schema);
+        const typeInstructions = this.getTypeSpecificInstructions(schema.compositionInfo.type, schema, context);
         
         const jsonFormat = `
 ANTWORTE NUR ALS JSON (kein Text!):
@@ -312,12 +421,17 @@ ANTWORTE NUR ALS JSON (kein Text!):
     }
     
     /**
-     * 🆕 Type-spezifische Anweisungen
+     * 🆙 ERWEITERT: Type-spezifische Anweisungen (mit Kontext-Infos)
      */
-    getTypeSpecificInstructions(type, schema) {
+    getTypeSpecificInstructions(type, schema, context) {
         const instructions = {
             MEDICAL: `
 TYPE: MEDIZINISCHER NOTFALL
+
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Wetter: ${context.weather.name}
+- Wochentag: ${context.dayOfWeek || 'Werktag'}
 
 FOKUS AUF:
 - Symptome: ${schema.criticalSymptoms ? schema.criticalSymptoms.join(', ') : 'Brustschmerzen, Atemnot, Schwindel'}
@@ -335,6 +449,11 @@ MELDEBILD-BEISPIELE:
             TRAFFIC: `
 TYPE: VERKEHRSUNFALL
 
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Wetter: ${context.weather.name} ${context.weather.name === 'Schnee' || context.weather.name === 'Eisregen' ? '(GLATTEIS!)' : ''}
+- Verkehrslage: ${context.isRushHour ? 'Rush-Hour!' : 'Normal'}
+
 FOKUS AUF:
 - Fahrzeuganzahl: Wie viele Fahrzeuge beteiligt?
 - Verletzte: Wie viele Personen verletzt?
@@ -350,6 +469,10 @@ MELDEBILD-BEISPIELE:
             
             BIRTH: `
 TYPE: GEBURT
+
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Ort-Type: ${location.hotspot}
 
 FOKUS AUF:
 - Wehen: Wie oft kommen die Wehen? Abstände?
@@ -367,6 +490,10 @@ MELDEBILD-BEISPIELE:
             PEDIATRIC: `
 TYPE: KINDERNOTFALL
 
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Wochentag: ${context.dayOfWeek || 'Werktag'}
+
 FOKUS AUF:
 - Alter: Wie alt ist das Kind? (Säugling/Kleinkind/Kind)
 - Symptome: Fieber? Atemnot? Krampfanfall?
@@ -382,6 +509,10 @@ MELDEBILD-BEISPIELE:
             
             PSYCHIATRIC: `
 TYPE: PSYCHIATRISCHER NOTFALL
+
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Wochenende: ${context.isWeekend ? 'JA (Alkohol?)' : 'Nein'}
 
 FOKUS AUF:
 - Suizidalität: Hat die Person Suizidgedanken geäußert?
@@ -399,6 +530,10 @@ MELDEBILD-BEISPIELE:
             DROWNING: `
 TYPE: ERTRINKUNGSNOTFALL
 
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Wetter: ${context.weather.name}
+
 FOKUS AUF:
 - Ort: See? Schwimmbad? Fluss?
 - Gerettet: Wurde die Person schon aus dem Wasser geholt?
@@ -415,6 +550,9 @@ MELDEBILD-BEISPIELE:
             POISONING: `
 TYPE: VERGIFTUNG
 
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+
 FOKUS AUF:
 - Substanz: Was wurde eingenommen? Medikamente? Reinigungsmittel?
 - Menge: Wie viel wurde eingenommen?
@@ -430,6 +568,10 @@ MELDEBILD-BEISPIELE:
             
             ALLERGIC: `
 TYPE: ALLERGISCHE REAKTION
+
+KONTEXT:
+- Tageszeit: ${context.timeOfDay.name}
+- Wetter: ${context.weather.name}
 
 FOKUS AUF:
 - Allergen: Worauf reagiert die Person? Nahrung? Insektenstich?
@@ -528,9 +670,9 @@ MELDEBILD-BEISPIELE:
     }
     
     /**
-     * 🆕 Merged AI-Daten mit komponiertem Schema
+     * 🆙 ERWEITERT: Merged AI-Daten mit komponiertem Schema & Call-Template
      */
-    mergeAIWithSchema(aiData, schema, location, context) {
+    mergeAIWithSchema(aiData, schema, location, context, callTemplate = null) {
         const incidentId = `E${Date.now().toString().slice(-8)}`;
         
         // ✅ FIX: Hospital direkt aus HOSPITALS wählen
@@ -539,7 +681,7 @@ MELDEBILD-BEISPIELE:
             targetHospital = this.selectNearestHospital([location.lat, location.lon]);
         }
         
-        return {
+        const incident = {
             // IDs
             id: incidentId,
             
@@ -580,7 +722,7 @@ MELDEBILD-BEISPIELE:
             // ✅ Dauer & Transport (Schema)
             einsatzdauer_minuten: schema.duration.min + Math.floor(Math.random() * (schema.duration.max - schema.duration.min)),
             transport_notwendig: schema.transport.probability > 0.5,
-            zielkrankenhaus: targetHospital, // ✅ FIX: Direkt Hospital-Object speichern (nicht nur Name)
+            zielkrankenhaus: targetHospital,
             
             // ✅ Fahrzeuge (Schema)
             benoetigte_fahrzeuge: this.convertVehiclesToObject(schema.vehicles),
@@ -602,10 +744,22 @@ MELDEBILD-BEISPIELE:
             },
             conversationHistory: [],
             
-            // ✅ KOMPOSITIONS-INFO (NEU!)
+            // ✅ KOMPOSITIONS-INFO
             compositionInfo: schema.compositionInfo,
-            composedSchema: schema // Vollständiges Schema für spätere Nutzung
+            composedSchema: schema
         };
+        
+        // 📞 NEU: Füge Call-Template hinzu (wenn vorhanden)
+        if (callTemplate) {
+            incident.callTemplate = {
+                templateName: callTemplate.templateName,
+                description: callTemplate.description,
+                keyQuestions: callTemplate.keyQuestions,
+                protocolSteps: callTemplate.protocolSteps
+            };
+        }
+        
+        return incident;
     }
     
     /**
@@ -627,14 +781,14 @@ MELDEBILD-BEISPIELE:
         }
         
         console.log(`🏥 Krankenhaus gewählt: ${hospital.shortName}`);
-        return hospital; // ✅ Gibt vollständiges Hospital-Objekt zurück (mit .location)
+        return hospital;
     }
     
     /**
      * Erstellt Incident direkt aus Schema (ohne AI)
      */
-    createIncidentFromSchema(schema, location, context, aiData) {
-        return this.mergeAIWithSchema(aiData, schema, location, context);
+    createIncidentFromSchema(schema, location, context, aiData, callTemplate = null) {
+        return this.mergeAIWithSchema(aiData, schema, location, context, callTemplate);
     }
     
     /**
@@ -745,4 +899,4 @@ MELDEBILD-BEISPIELE:
 // Globale Instanz
 window.AIIncidentGenerator = AIIncidentGenerator;
 
-console.log('🤖 AI Incident Generator v3.0.2 geladen - ✅ Hospital.location Fix!');
+console.log('🤖 AI Incident Generator v3.1.0 geladen - ✅ VOLLSTÄNDIGE INTEGRATION: Weather + Timer + Call-Templates! 🌦️⏰📞');

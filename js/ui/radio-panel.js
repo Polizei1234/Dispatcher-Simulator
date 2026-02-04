@@ -1,11 +1,12 @@
 // =========================
-// RADIO PANEL UI v1.3.0
+// RADIO PANEL UI v1.4.0
 // Benutzerinterface für das Funksystem
 // 🔧 v1.1.0: XSS-Protection + Debouncing
 // 🎯 v1.2.0: Queue-Badge + Sammelruf-UI + Event-Init
 // 🔧 v1.2.1: FIX Panel standardmäßig hidden
 // 🔧 v1.2.2: FIX Robuste Initialisierung
 // 🎨 v1.3.0: VISUELL - Callsign FETT/GELB, Funkspruch BLAU
+// ✨ v1.4.0: AUTO-BADGES für automatische Funksprüche
 // =========================
 
 const RadioUI = {
@@ -25,11 +26,12 @@ const RadioUI = {
             return;
         }
         
-        console.log('📺 RadioUI v1.3.0 initialisiert');
+        console.log('📺 RadioUI v1.4.0 initialisiert');
         console.log('🔧 XSS-Protection aktiviert');
         console.log('🔧 Debouncing aktiviert');
         console.log('🎯 Queue-Badge + Sammelruf-UI aktiviert');
         console.log('🎨 Callsign FETT/GELB + Funkspruch BLAU');
+        console.log('✨ AUTO-Badges für automatische Funksprüche aktiviert');
         
         this.createPanel();
         this.attachEventListeners();
@@ -607,7 +609,7 @@ const RadioUI = {
     },
 
     /**
-     * 🎨 v1.3.0: Erstellt Log-Item Element mit visueller Trennung Callsign/Text
+     * ✨ v1.4.0: Erstellt Log-Item Element mit AUTO-Badge
      */
     createLogItem(entry) {
         const item = document.createElement('div');
@@ -627,6 +629,15 @@ const RadioUI = {
         let aiTag = '';
         if (entry.ai_generated) {
             aiTag = '🤖';
+        }
+
+        // ✨ v1.4.0: AUTO-Badge für automatische Funksprüche
+        let autoBadge = null;
+        if (entry.automatic) {
+            autoBadge = document.createElement('span');
+            autoBadge.className = 'auto-badge';
+            autoBadge.textContent = '[AUTO]';
+            autoBadge.title = 'Automatisch generierter Funkspruch';
         }
 
         // 🔧 XSS-sicher: createElement + textContent statt innerHTML
@@ -659,6 +670,11 @@ const RadioUI = {
                 
                 header.appendChild(timeSpan);
                 header.appendChild(dirSpan);
+                
+                // ✨ v1.4.0: AUTO-Badge hinzufügen
+                if (autoBadge) {
+                    header.appendChild(autoBadge);
+                }
                 
                 if (aiTag) {
                     const aiSpan = document.createElement('span');
@@ -903,8 +919,9 @@ if (typeof window !== 'undefined') {
     });
 }
 
-console.log('✅ radio-panel.js v1.3.0 geladen');
+console.log('✅ radio-panel.js v1.4.0 geladen');
 console.log('🔧 XSS-Protection + Debouncing aktiviert');
 console.log('🎯 Queue-Badge + Sammelruf-UI + Event-Init aktiviert');
 console.log('🔧 v1.2.2: Robuste Initialisierung mit 3 Fallback-Methoden');
 console.log('🎨 v1.3.0: Callsign FETT/GELB + Funkspruch BLAU für bessere Lesbarkeit');
+console.log('✨ v1.4.0: AUTO-Badges für automatische Funksprüche implementiert');

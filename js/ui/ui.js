@@ -1,7 +1,8 @@
 // =========================
-// UI SYSTEM - v4.0 - Radio System Removed
+// UI SYSTEM - v5.0 - ZENTRALE STATUS-FUNKTION
 // ✅ All radio references removed
 // ✅ Status-Logging via VehicleMovement
+// ✅✅✅ v5.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
 // =========================
 
 const UI = {
@@ -35,7 +36,8 @@ const UI = {
                     ${(incident.vehicles || incident.assignedVehicles || []).map(vId => {
                         const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
                         if (!v) return '';
-                        const fms = this.getFMSStatus(v);
+                        // ✅✅✅ ZENTRALE STATUS-FUNKTION!
+                        const fms = VehicleStatusUtil.getStatus(v);
                         return `<span class="vehicle-chip" style="background: ${fms.color}20; border-left: 3px solid ${fms.color};">${v.callsign}</span>`;
                     }).join('')}
                 </div>
@@ -54,7 +56,8 @@ const UI = {
         const assignedVehicles = vehicleIds.map(vId => {
             const v = GAME_DATA.vehicles.find(vehicle => vehicle.id === vId);
             if (!v) return null;
-            const fms = this.getFMSStatus(v);
+            // ✅✅✅ ZENTRALE STATUS-FUNKTION!
+            const fms = VehicleStatusUtil.getStatus(v);
             return { vehicle: v, fms: fms };
         }).filter(Boolean);
 
@@ -93,7 +96,7 @@ const UI = {
                                     </div>
                                 </div>
                                 <div class="vehicle-detail-status" style="background: ${fms.color}20; color: ${fms.color};">
-                                    <strong>Status ${vehicle.currentStatus || 2}</strong> - ${fms.name}
+                                    <strong>Status ${fms.code}</strong> - ${fms.name}
                                 </div>
                             </div>
                         `).join('') : '<p style="color: #888; font-style: italic;">Noch keine Fahrzeuge alarmiert</p>'}
@@ -178,14 +181,8 @@ const UI = {
         console.log(`✅ Einsatz ${incidentId} abgeschlossen (Fallback)`);
     },
 
-    getFMSStatus(vehicle) {
-        const fmsCode = vehicle.currentStatus || vehicle.status || 2;
-        return CONFIG.FMS_STATUS[fmsCode] || {
-            name: 'Unbekannt',
-            color: '#6c757d',
-            icon: '🚑'
-        };
-    },
+    // ❌ ENTFERNT: Alte getFMSStatus() Funktion
+    // ✅ Nutze stattdessen: VehicleStatusUtil.getStatus(vehicle)
 
     updateVehicleList() {
         if (typeof updateVehicleMarkers === 'function') {
@@ -196,5 +193,5 @@ const UI = {
 
 if (typeof window !== 'undefined') {
     window.UI = UI;
-    console.log('✅ UI v4.0 geladen - Radio System entfernt');
+    console.log('✅ UI v5.0 geladen - Zentrale Status-Funktion aktiv!');
 }
