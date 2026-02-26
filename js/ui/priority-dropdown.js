@@ -1,0 +1,354 @@
+// =========================
+// PRIORITY DROPDOWN v1.1
+// Custom styled dropdown for Prioritätsstufe (RD/MANV)
+// Beautiful design like Keywords Dropdown
+// ✅ v1.0.1: Null check in highlightItem
+// ✅ v1.1: Verhindert doppelte Event Listener beim Neuinitialisieren
+// =========================
+
+const PriorityDropdown = {
+    priorityLevels: [
+        { 
+            id: 'rd0', 
+            keyword: 'RD 0', 
+            label: 'RD 0 - Rettungsdienst',
+            description: 'Krankentransport ohne Sonderrechte - geplanter Transport ohne zeitkritische Notfallsituation',
+            color: '#388e3c',
+            icon: 'ambulance'
+        },
+        { 
+            id: 'rd1', 
+            keyword: 'RD 1', 
+            label: 'RD 1 - Rettungsdienst',
+            description: 'Rettungsdiensteinsatz mit Sonderrechten - verletzte oder erkrankte Person ohne Notarztindikation',
+            color: '#1976d2',
+            icon: 'ambulance'
+        },
+        { 
+            id: 'rd2', 
+            keyword: 'RD 2', 
+            label: 'RD 2 - Rettungsdienst',
+            description: 'Rettungsdiensteinsatz mit Notarzt - verletzte oder erkrankte Person mit Notarztindikation',
+            color: '#f57c00',
+            icon: 'user-md'
+        },
+        { 
+            id: 'rd3', 
+            keyword: 'RD 3', 
+            label: 'RD 3 - Rettungsdienst',
+            description: 'Rettungsdiensteinsatz mit erhöhtem Kräftebedarf - Einsatz mit zwei Rettungswagen und einem Notarzt',
+            color: '#d32f2f',
+            icon: 'exclamation-triangle'
+        },
+        { 
+            id: 'manv1', 
+            keyword: 'MANV 1', 
+            label: 'MANV 1 - Massenanfall von Verletzten',
+            description: '5-10 Verletzte - Organisatorischer Leiter Rettungsdienst',
+            color: '#c62828',
+            icon: 'users'
+        },
+        { 
+            id: 'manv2', 
+            keyword: 'MANV 2', 
+            label: 'MANV 2 - Massenanfall von Verletzten',
+            description: '11-25 Verletzte - Leitender Notarzt',
+            color: '#b71c1c',
+            icon: 'users'
+        },
+        { 
+            id: 'manv3', 
+            keyword: 'MANV 3', 
+            label: 'MANV 3 - Massenanfall von Verletzten',
+            description: '26-50 Verletzte - Technische Einsatzleitung',
+            color: '#7f0000',
+            icon: 'hospital'
+        },
+        { 
+            id: 'manv4', 
+            keyword: 'MANV 4', 
+            label: 'MANV 4 - Massenanfall von Verletzten',
+            description: '>50 Verletzte - Katastrophenfall',
+            color: '#4a0000',
+            icon: 'radiation'
+        }
+    ],
+
+    activeDropdown: null,
+    selectedCallback: null,
+    // ✅ NEU: Speichere aktive Initialisierungen
+    activeInputs: new Map(),
+
+    initialize(inputId, onSelect) {
+        const input = document.getElementById(inputId);
+        if (!input) {
+            console.error(`❌ Priority Input nicht gefunden: ${inputId}`);
+            return;
+        }
+
+        // ✅ FIX: Cleanup wenn bereits initialisiert
+        if (this.activeInputs.has(inputId)) {
+            console.log(`♻️ Priority Dropdown ${inputId} bereits initialisiert, cleanup...`);
+            this.cleanup(inputId);
+        }
+
+        this.selectedCallback = onSelect;
+
+        // ✅ FIX: Wrapper nur erstellen wenn nicht vorhanden
+        let wrapper = input.parentElement;
+        if (!wrapper || !wrapper.dataset.priorityWrapper) {
+            wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.width = '100%';
+            wrapper.dataset.priorityWrapper = inputId;
+            
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+        }
+
+        // ✅ FIX: Event Listener Funktionen speichern
+        const listeners = {
+            focus: () => this.showDropdown(input, wrapper),
+            input: () => this.filterDropdown(input.value),
+            keydown: (e) => this.handleKeyboard(e, input),
+            documentClick: (e) => {
+                if (!wrapper.contains(e.target)) {
+                    this.hideDropdown();
+                }
+            }
+        };
+
+        // Speichere die Konfiguration
+        this.activeInputs.set(inputId, {
+            input,
+            wrapper,
+            listeners
+        });
+
+        // Event Listener anbringen
+        input.addEventListener('focus', listeners.focus);
+        input.addEventListener('input', listeners.input);
+        input.addEventListener('keydown', listeners.keydown);
+        document.addEventListener('click', listeners.documentClick);
+
+        console.log(`✅ Priority Dropdown initialisiert für #${inputId}`);
+    },
+
+    // ✅ NEU: Cleanup Funktion
+    cleanup(inputId) {
+        const config = this.activeInputs.get(inputId);
+        if (!config) return;
+
+        const { input, listeners } = config;
+
+        // Entferne Event Listeners
+        if (listeners) {
+            input.removeEventListener('focus', listeners.focus);
+            input.removeEventListener('input', listeners.input);
+            input.removeEventListener('keydown', listeners.keydown);
+            document.removeEventListener('click', listeners.documentClick);
+        }
+
+        // Entferne Dropdown
+        this.hideDropdown();
+
+        console.log(`🗑️ Priority Dropdown ${inputId} bereinigt`);
+    },
+
+    showDropdown(input, wrapper) {
+        // Entferne alte Dropdown
+        this.hideDropdown();
+
+        // Erstelle Dropdown
+        const dropdown = document.createElement('div');
+        dropdown.className = 'priority-dropdown';
+        dropdown.id = 'priority-dropdown-active';
+
+        this.priorityLevels.forEach((priority, index) => {
+            const item = document.createElement('div');
+            item.className = 'priority-item';
+            item.dataset.index = index;
+            item.dataset.keyword = priority.keyword;
+            
+            item.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-${priority.icon}" style="color: ${priority.color}; font-size: 1.2em; width: 30px; text-align: center;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: ${priority.color}; font-size: 1.05em; margin-bottom: 3px;">
+                            ${priority.label}
+                        </div>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">
+                            ${priority.description}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // ✅ FIX: stopPropagation hinzufügen
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectPriority(priority, input);
+            });
+
+            item.addEventListener('mouseenter', () => {
+                this.highlightItem(item);
+            });
+
+            dropdown.appendChild(item);
+        });
+
+        wrapper.appendChild(dropdown);
+        this.activeDropdown = dropdown;
+
+        // Animation
+        setTimeout(() => {
+            dropdown.style.opacity = '1';
+            dropdown.style.transform = 'translateY(0)';
+        }, 10);
+    },
+
+    filterDropdown(query) {
+        if (!this.activeDropdown) return;
+
+        const items = this.activeDropdown.querySelectorAll('.priority-item');
+        const lowerQuery = query.toLowerCase().trim();
+
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            const keyword = item.dataset.keyword.toLowerCase();
+            const text = item.textContent.toLowerCase();
+
+            if (!query || keyword.includes(lowerQuery) || text.includes(lowerQuery)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // "Keine Ergebnisse" Nachricht
+        let noResults = this.activeDropdown.querySelector('.priority-no-results');
+        
+        if (visibleCount === 0) {
+            if (!noResults) {
+                noResults = document.createElement('div');
+                noResults.className = 'priority-no-results';
+                noResults.innerHTML = `
+                    <i class="fas fa-search" style="font-size: 2em; opacity: 0.5; margin-bottom: 10px;"></i>
+                    <div>Keine Prioritätsstufe gefunden</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 5px;">Versuche: RD 1, RD 2, MANV 1, etc.</div>
+                `;
+                this.activeDropdown.appendChild(noResults);
+            }
+            noResults.style.display = 'block';
+        } else if (noResults) {
+            noResults.style.display = 'none';
+        }
+    },
+
+    selectPriority(priority, input) {
+        input.value = priority.keyword;
+        
+        // Callback aufrufen
+        if (this.selectedCallback) {
+            this.selectedCallback(priority);
+        }
+
+        // Visual Feedback
+        input.style.borderColor = priority.color;
+        input.style.color = priority.color;
+        input.style.fontWeight = '700';
+
+        setTimeout(() => {
+            input.style.borderColor = '';
+        }, 1000);
+
+        this.hideDropdown();
+        console.log(`✅ Priorität ausgewählt: ${priority.keyword}`);
+    },
+
+    highlightItem(item) {
+        // ✅ FIX: Safety check for null dropdown
+        if (!this.activeDropdown) return;
+        
+        // Remove highlight from all items
+        const items = this.activeDropdown.querySelectorAll('.priority-item');
+        items.forEach(i => i.classList.remove('active'));
+        
+        // Add highlight to current item
+        item.classList.add('active');
+    },
+
+    handleKeyboard(e, input) {
+        if (!this.activeDropdown) return;
+
+        const items = Array.from(this.activeDropdown.querySelectorAll('.priority-item')).filter(i => i.style.display !== 'none');
+        if (items.length === 0) return;
+
+        const currentActive = this.activeDropdown.querySelector('.priority-item.active');
+        let currentIndex = currentActive ? items.indexOf(currentActive) : -1;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+                this.highlightItem(items[currentIndex]);
+                items[currentIndex].scrollIntoView({ block: 'nearest' });
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                this.highlightItem(items[currentIndex]);
+                items[currentIndex].scrollIntoView({ block: 'nearest' });
+                break;
+
+            case 'Enter':
+                e.preventDefault();
+                if (currentActive) {
+                    const index = parseInt(currentActive.dataset.index);
+                    this.selectPriority(this.priorityLevels[index], input);
+                } else if (items.length === 1) {
+                    // Auto-select wenn nur 1 Ergebnis
+                    const index = parseInt(items[0].dataset.index);
+                    this.selectPriority(this.priorityLevels[index], input);
+                }
+                break;
+
+            case 'Escape':
+                e.preventDefault();
+                this.hideDropdown();
+                input.blur();
+                break;
+        }
+    },
+
+    hideDropdown() {
+        if (this.activeDropdown) {
+            this.activeDropdown.style.opacity = '0';
+            this.activeDropdown.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                if (this.activeDropdown) {
+                    this.activeDropdown.remove();
+                    this.activeDropdown = null;
+                }
+            }, 200);
+        }
+    },
+
+    // ✅ NEU: Destroy Funktion
+    destroy(inputId) {
+        this.cleanup(inputId);
+        this.activeInputs.delete(inputId);
+        console.log(`🗑️ Priority Dropdown ${inputId} komplett entfernt`);
+    }
+};
+
+// Auto-Initialize
+if (typeof window !== 'undefined') {
+    window.PriorityDropdown = PriorityDropdown;
+}
+
+console.log('✅ Priority Dropdown System v1.1 geladen (FIX: Verhindert doppelte Event Listener)');
