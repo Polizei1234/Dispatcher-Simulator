@@ -1,11 +1,12 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v6.0 - ZENTRALE STATUS-FUNKTION
+// TAB NAVIGATION & VEHICLE OVERVIEW v6.1 - TAB-FIX
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
 // ✅ Kompakte Card-Darstellung
 // 🗑️ v5.1.0: Radio-Tab komplett entfernt
 // ✅✅✅ v6.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
+// 🔧 v6.1: FIX - Tab-Switching funktioniert jetzt!
 // =========================
 
 let currentTab = 'map';
@@ -24,8 +25,7 @@ document.addEventListener('keydown', (e) => {
     const tabMap = {
         '1': 'map',
         '2': 'vehicles',
-        '3': 'incidents',
-        '4': 'stats'
+        '3': 'call'
     };
     
     if (tabMap[e.key]) {
@@ -69,34 +69,60 @@ function toggleAllStations() {
     updateVehiclesOverview();
 }
 
-// Tab wechseln
+// 🔧 v6.1: KOMPLETT ÜBERARBEITET - Tab wechseln
 function switchTab(tabName) {
     console.log(`🔄 Wechsle zu Tab: ${tabName}`);
     
-    // Deaktiviere alle Tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    // 1. Deaktiviere alle Tab-Buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
     
-    // Aktiviere gewählten Tab
-    const tabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => 
-        btn.getAttribute('onclick').includes(tabName)
-    );
-    if (tabBtn) tabBtn.classList.add('active');
+    // 2. Deaktiviere alle Tab-Contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
     
+    // 3. Aktiviere den gewählten Tab-Button
+    // Suche nach Button mit onclick="switchTab('tabName')"
+    const allButtons = document.querySelectorAll('.tab-btn');
+    for (const btn of allButtons) {
+        const onclickAttr = btn.getAttribute('onclick');
+        if (onclickAttr && onclickAttr.includes(`'${tabName}'`)) {
+            btn.classList.add('active');
+            console.log(`✅ Button aktiviert: ${tabName}`);
+            break;
+        }
+    }
+    
+    // 4. Aktiviere den gewählten Tab-Content
     const tabContent = document.getElementById(`tab-${tabName}`);
-    if (tabContent) tabContent.classList.add('active');
+    if (tabContent) {
+        tabContent.classList.add('active');
+        console.log(`✅ Content aktiviert: tab-${tabName}`);
+    } else {
+        console.error(`❌ Tab-Content nicht gefunden: tab-${tabName}`);
+    }
     
+    // 5. Update aktuellen Tab
     currentTab = tabName;
     
-    // Spezielle Aktionen für verschiedene Tabs
-    if (tabName === 'map' && map) {
-        setTimeout(() => map.invalidateSize(), 100);
+    // 6. Spezielle Aktionen für verschiedene Tabs
+    if (tabName === 'map' && typeof map !== 'undefined') {
+        setTimeout(() => {
+            if (map.invalidateSize) {
+                map.invalidateSize();
+                console.log('✅ Map invalidateSize() ausgeführt');
+            }
+        }, 100);
     } else if (tabName === 'vehicles') {
         updateVehiclesOverview();
-    } else if (tabName === 'incidents') {
-        updateIncidentsOverview();
+    } else if (tabName === 'call') {
+        // Call-Tab hat eigene Logik in call-system.js
+        console.log('📞 Call-Tab aktiviert');
     }
-    // Radio-Tab Handling entfernt
+    
+    console.log(`✅ Tab gewechselt zu: ${tabName}`);
 }
 
 // ❌ ENTFERNT: Alte getFMSStatus() Funktion
@@ -193,7 +219,7 @@ function updateVehiclesOverview() {
             </div>
             <div class="shortcuts-hint">
                 <i class="fas fa-keyboard"></i> 
-                <span>Shortcuts: <kbd>1-4</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
+                <span>Shortcuts: <kbd>1-3</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
             </div>
         </div>
     `;
@@ -301,65 +327,26 @@ function toggleStation(stationId) {
     }
 }
 
-// Einsätze-Übersicht
-function updateIncidentsOverview() {
-    if (!game) return;
-    
-    const container = document.getElementById('incidents-overview');
-    if (!container) return;
-    
-    const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
-    
-    if (activeIncidents.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 50px; color: #a0aec0;">
-                <i class="fas fa-clipboard-list" style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;"></i>
-                <h2>Keine aktiven Einsätze</h2>
-                <p>Alle ruhig in Waiblingen!</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '<div style="padding: 20px;">';
-    activeIncidents.forEach(incident => {
-        html += `
-            <div class="panel" style="margin-bottom: 20px;">
-                <div class="panel-header">
-                    <h3>${getIncidentIcon(incident.type)} ${incident.title}</h3>
-                </div>
-                <div class="panel-content">
-                    <p><strong>Ort:</strong> ${incident.location}</p>
-                    <p><strong>Zeit:</strong> ${new Date(incident.timestamp).toLocaleTimeString('de-DE')}</p>
-                    <p><strong>Status:</strong> ${incident.status}</p>
-                    ${incident.assignedVehicles && incident.assignedVehicles.length > 0 ? `
-                        <p><strong>Alarmierte Fahrzeuge:</strong></p>
-                        <ul>
-                            ${incident.assignedVehicles.map(vid => {
-                                const v = game.vehicles.find(vehicle => vehicle.id === vid);
-                                return v ? `<li>${v.callsign}</li>` : '';
-                            }).join('')}
-                        </ul>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    });
-    html += '</div>';
-    
-    container.innerHTML = html;
-}
+// Einsätze-Übersicht (ENTFERNT - nicht mehr benötigt)
 
 // Auto-Update wenn Tab aktiv (Radio entfernt)
 setInterval(() => {
     if (currentTab === 'vehicles') {
         updateVehiclesOverview();
-    } else if (currentTab === 'incidents') {
-        updateIncidentsOverview();
     }
 }, 3000);
 
-console.log('✅ Tabs v6.0 geladen - Zentrale Status-Funktion aktiv!');
+// 🔧 v6.1: Tab-Init Funktion
+function initializeTabs() {
+    console.log('🔧 Initialisiere Tabs...');
+    
+    // Setze initialen Tab
+    switchTab('map');
+    
+    console.log('✅ Tabs initialisiert');
+}
+
+console.log('✅ Tabs v6.1 geladen - Tab-Switching FIX!');
 
 // Helper functions
 function getVehicleIcon(type) {
