@@ -1,6 +1,7 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.3.7
+// CENTRAL VERSION MANAGER v3.3.8
 // SINGLE SOURCE OF TRUTH für Version
+// 🚀 v9.3.8: Tab-Buttons jetzt klickbar! (switchTab global)
 // 🎉 v9.3.7: COMPLETE FIX - Map + Tabs funktionieren perfekt!
 // ✅ v9.3.6: BUGFIX - Tab-Switching funktioniert jetzt!
 // ✅ v9.3.5: BUGFIX - SettingsManager Funktionen korrigiert!
@@ -30,7 +31,7 @@ if (typeof window !== 'undefined') {
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.3.7',
+    VERSION: '9.3.8',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -448,16 +449,16 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🎉</span>
-                <h3 style="margin: 0; font-size: 1.2em;">COMPLETE FIX v${this.VERSION}</h3>
+                <span style="font-size: 2em;">🚀</span>
+                <h3 style="margin: 0; font-size: 1.2em;">Tabs funktionieren! v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🔧 Alles funktioniert jetzt!</strong></p>
+                <p><strong>🔧 Tab-Buttons sind jetzt klickbar!</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>✅ <strong>Karte ist klickbar</strong></li>
-                    <li>✅ <strong>Tabs funktionieren perfekt</strong></li>
-                    <li>✅ <strong>Map rendert korrekt</strong></li>
-                    <li>✅ <strong>Alle Buttons reagieren</strong></li>
+                    <li>✅ <strong>Karte-Tab</strong> funktioniert</li>
+                    <li>✅ <strong>Fahrzeuge-Tab</strong> funktioniert</li>
+                    <li>✅ <strong>Notruf-Tab</strong> funktioniert</li>
+                    <li>✅ <strong>Map rendert perfekt</strong></li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
@@ -470,7 +471,7 @@ const VERSION_CONFIG = {
                 cursor: pointer;
                 font-weight: bold;
                 font-size: 1em;
-            ">Let's go! 🚀</button>
+            ">Perfekt! 🎉</button>
         `;
         
         document.body.appendChild(notification);
@@ -489,11 +490,10 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🎉 COMPLETE FIX v9.3.7!', 'color: #4ade80; font-weight: bold; font-size: 1.2em');
-        console.log('%c   ✅ Karte ist klickbar', 'color: #86efac');
-        console.log('%c   ✅ Tabs wechseln perfekt', 'color: #86efac');
-        console.log('%c   ✅ Map rendert korrekt', 'color: #86efac');
-        console.log('%c   ✅ Alle Buttons reagieren', 'color: #86efac');
+        console.log('%c🚀 TAB-BUTTONS KLICKBAR v9.3.8!', 'color: #4ade80; font-weight: bold; font-size: 1.2em');
+        console.log('%c   ✅ switchTab() ist global', 'color: #86efac');
+        console.log('%c   ✅ Alle Buttons funktionieren', 'color: #86efac');
+        console.log('%c   ✅ Map rendert perfekt', 'color: #86efac');
         console.log('%c═══════════════════════════════════', 'color: #4ade80');
     }
 };
@@ -512,5 +512,5 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.3.7 geladen - Version: ${VERSION_CONFIG.VERSION}`);
-console.log('🎉 COMPLETE FIX: Map + Tabs funktionieren!');
+console.log(`🚀 Central Version Manager v3.3.8 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('👍 Tab-Buttons jetzt klickbar!');
