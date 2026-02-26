@@ -1,14 +1,11 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v6.3 - GLOBAL FIX
+// TAB NAVIGATION & VEHICLE OVERVIEW v6.0 - ZENTRALE STATUS-FUNKTION
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
 // ✅ Kompakte Card-Darstellung
 // 🗑️ v5.1.0: Radio-Tab komplett entfernt
 // ✅✅✅ v6.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
-// 🔧 v6.1: FIX - Tab-Switching funktioniert jetzt!
-// 🔧 v6.2: COMPLETE FIX - Map + Buttons klickbar!
-// 🔧 v6.3: switchTab() als GLOBALE Funktion!
 // =========================
 
 let currentTab = 'map';
@@ -23,11 +20,12 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
-    // Tab-Shortcuts (1-3)
+    // Tab-Shortcuts (1-4) - Radio entfernt
     const tabMap = {
         '1': 'map',
         '2': 'vehicles',
-        '3': 'call'
+        '3': 'incidents',
+        '4': 'stats'
     };
     
     if (tabMap[e.key]) {
@@ -59,8 +57,10 @@ function cycleFilter() {
 // ✅ Alle Wachen auf-/zuklappen
 function toggleAllStations() {
     if (collapsedStations.size > 0) {
+        // Alle öffnen
         collapsedStations.clear();
     } else {
+        // Alle schließen
         if (game && game.vehicles) {
             const stationIds = new Set(game.vehicles.filter(v => v.owned).map(v => v.station));
             collapsedStations = new Set(stationIds);
@@ -69,82 +69,35 @@ function toggleAllStations() {
     updateVehiclesOverview();
 }
 
-// 🔧 v6.3: GLOBALE FUNKTION - Tab wechseln MIT Map-Rendering!
-window.switchTab = function(tabName) {
+// Tab wechseln
+function switchTab(tabName) {
     console.log(`🔄 Wechsle zu Tab: ${tabName}`);
     
-    try {
-        // 1. Deaktiviere alle Tab-Buttons & Contents
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        // 2. Aktiviere den gewählten Tab-Button
-        const allButtons = document.querySelectorAll('.tab-btn');
-        for (const btn of allButtons) {
-            const onclickAttr = btn.getAttribute('onclick');
-            if (onclickAttr && onclickAttr.includes(`'${tabName}'`)) {
-                btn.classList.add('active');
-                console.log(`✅ Button aktiviert: ${tabName}`);
-                break;
-            }
-        }
-        
-        // 3. Aktiviere den gewählten Tab-Content
-        const tabContent = document.getElementById(`tab-${tabName}`);
-        if (tabContent) {
-            tabContent.classList.add('active');
-            console.log(`✅ Content aktiviert: tab-${tabName}`);
-        } else {
-            console.error(`❌ Tab-Content nicht gefunden: tab-${tabName}`);
-            return;
-        }
-        
-        // 4. Update aktuellen Tab
-        currentTab = tabName;
-        
-        // 5. 🔧 CRITICAL FIX: Map Rendering erzwingen!
-        if (tabName === 'map') {
-            console.log('🗺️ Map-Tab aktiviert - erzwinge Rendering...');
-            
-            // Mehrfache Versuche mit verschiedenen Delays
-            if (typeof map !== 'undefined' && map) {
-                // Sofort
-                setTimeout(() => {
-                    if (map && map.invalidateSize) {
-                        map.invalidateSize(true);
-                        console.log('✅ Map invalidateSize() #1 (sofort)');
-                    }
-                }, 0);
-                
-                // Nach 50ms
-                setTimeout(() => {
-                    if (map && map.invalidateSize) {
-                        map.invalidateSize(true);
-                        console.log('✅ Map invalidateSize() #2 (50ms)');
-                    }
-                }, 50);
-                
-                // Nach 150ms (finaler Check)
-                setTimeout(() => {
-                    if (map && map.invalidateSize) {
-                        map.invalidateSize(true);
-                        console.log('✅ Map invalidateSize() #3 (150ms - final)');
-                    }
-                }, 150);
-            } else {
-                console.warn('⚠️ Map-Objekt nicht gefunden!');
-            }
-        } else if (tabName === 'vehicles') {
-            updateVehiclesOverview();
-        } else if (tabName === 'call') {
-            console.log('📞 Call-Tab aktiviert');
-        }
-        
-        console.log(`✅ Tab-Wechsel zu ${tabName} abgeschlossen`);
-    } catch (error) {
-        console.error('❌ Fehler beim Tab-Wechsel:', error);
+    // Deaktiviere alle Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Aktiviere gewählten Tab
+    const tabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => 
+        btn.getAttribute('onclick').includes(tabName)
+    );
+    if (tabBtn) tabBtn.classList.add('active');
+    
+    const tabContent = document.getElementById(`tab-${tabName}`);
+    if (tabContent) tabContent.classList.add('active');
+    
+    currentTab = tabName;
+    
+    // Spezielle Aktionen für verschiedene Tabs
+    if (tabName === 'map' && map) {
+        setTimeout(() => map.invalidateSize(), 100);
+    } else if (tabName === 'vehicles') {
+        updateVehiclesOverview();
+    } else if (tabName === 'incidents') {
+        updateIncidentsOverview();
     }
-};
+    // Radio-Tab Handling entfernt
+}
 
 // ❌ ENTFERNT: Alte getFMSStatus() Funktion
 // ✅ Nutze stattdessen: VehicleStatusUtil.getStatus(vehicle)
@@ -240,7 +193,7 @@ function updateVehiclesOverview() {
             </div>
             <div class="shortcuts-hint">
                 <i class="fas fa-keyboard"></i> 
-                <span>Shortcuts: <kbd>1-3</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
+                <span>Shortcuts: <kbd>1-4</kbd> Tabs | <kbd>F</kbd> Filter | <kbd>C</kbd> Auf/Zu</span>
             </div>
         </div>
     `;
@@ -326,13 +279,12 @@ function createCompactVehicleCard(vehicle) {
     `;
 }
 
-// 🔧 v6.3: GLOBALE Funktionen
-window.setVehicleFilter = function(filter) {
+function setVehicleFilter(filter) {
     vehicleFilter = filter;
     updateVehiclesOverview();
-};
+}
 
-window.toggleStation = function(stationId) {
+function toggleStation(stationId) {
     const vehiclesDiv = document.getElementById(`station-${stationId}`);
     const icon = document.getElementById(`icon-${stationId}`);
     
@@ -347,26 +299,67 @@ window.toggleStation = function(stationId) {
         vehiclesDiv.classList.remove('open');
         icon.classList.remove('open');
     }
-};
+}
 
-// Auto-Update wenn Tab aktiv
+// Einsätze-Übersicht
+function updateIncidentsOverview() {
+    if (!game) return;
+    
+    const container = document.getElementById('incidents-overview');
+    if (!container) return;
+    
+    const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
+    
+    if (activeIncidents.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 50px; color: #a0aec0;">
+                <i class="fas fa-clipboard-list" style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;"></i>
+                <h2>Keine aktiven Einsätze</h2>
+                <p>Alle ruhig in Waiblingen!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div style="padding: 20px;">';
+    activeIncidents.forEach(incident => {
+        html += `
+            <div class="panel" style="margin-bottom: 20px;">
+                <div class="panel-header">
+                    <h3>${getIncidentIcon(incident.type)} ${incident.title}</h3>
+                </div>
+                <div class="panel-content">
+                    <p><strong>Ort:</strong> ${incident.location}</p>
+                    <p><strong>Zeit:</strong> ${new Date(incident.timestamp).toLocaleTimeString('de-DE')}</p>
+                    <p><strong>Status:</strong> ${incident.status}</p>
+                    ${incident.assignedVehicles && incident.assignedVehicles.length > 0 ? `
+                        <p><strong>Alarmierte Fahrzeuge:</strong></p>
+                        <ul>
+                            ${incident.assignedVehicles.map(vid => {
+                                const v = game.vehicles.find(vehicle => vehicle.id === vid);
+                                return v ? `<li>${v.callsign}</li>` : '';
+                            }).join('')}
+                        </ul>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+// Auto-Update wenn Tab aktiv (Radio entfernt)
 setInterval(() => {
     if (currentTab === 'vehicles') {
         updateVehiclesOverview();
+    } else if (currentTab === 'incidents') {
+        updateIncidentsOverview();
     }
 }, 3000);
 
-// 🔧 v6.3: Tab-Init Funktion
-function initializeTabs() {
-    console.log('🔧 Initialisiere Tabs...');
-    
-    // Setze initialen Tab
-    window.switchTab('map');
-    
-    console.log('✅ Tabs initialisiert');
-}
-
-console.log('✅ Tabs v6.3 geladen - GLOBALE switchTab() Funktion!');
+console.log('✅ Tabs v6.0 geladen - Zentrale Status-Funktion aktiv!');
 
 // Helper functions
 function getVehicleIcon(type) {

@@ -1,7 +1,6 @@
 // =========================
-// DEBUG-MENÜ SYSTEM v1.3 - BUG FIX: GameTime → gameTimer
+// DEBUG-MENÜ SYSTEM v1.2 - BUG FIX: Toggle Logic
 // Erweiterte Debug-Funktionen für Entwickler
-// 🐛 v1.3: GameTime-Referenzen durch window.gameTimer ersetzt
 // ✅ FIX: Test-Einsatz startet jetzt Anruf über CallSystem
 // ✅✅✅ BUG FIX v1.2: Menü öffnet jetzt beim ERSTEN Klick!
 // =========================
@@ -143,7 +142,6 @@ class DebugMenu {
 
     /**
      * Rendert Statistiken
-     * 🐛 v1.3: GameTime → window.gameTimer
      */
     renderStats() {
         if (!game) return '<p>Kein Spiel aktiv</p>';
@@ -151,14 +149,6 @@ class DebugMenu {
         const vehicles = game.vehicles || [];
         const incidents = game.incidents || [];
         const uptime = Math.floor((Date.now() - (game.startTime || Date.now())) / 1000);
-        
-        // 🐛 FIX: Nutze window.gameTimer statt GameTime
-        const gameTime = window.gameTimer ? window.gameTimer.getTimeString() : 'N/A';
-        const gameSpeed = game.timeSpeed || 1;
-        const gamePaused = game.isPaused || false;
-        
-        // Weather System Check
-        const weather = window.weatherSystem ? window.weatherSystem.getCurrentWeather() : null;
         
         return `
             <div class="debug-section">
@@ -169,11 +159,11 @@ class DebugMenu {
                 </div>
                 <div class="debug-stat">
                     <span>Spielzeit:</span>
-                    <span>${gameTime} Uhr</span>
+                    <span>${GameTime.simulated.toLocaleTimeString('de-DE')}</span>
                 </div>
                 <div class="debug-stat">
                     <span>Geschwindigkeit:</span>
-                    <span>${gameSpeed}x</span>
+                    <span>${GameTime.speed}x</span>
                 </div>
                 <div class="debug-stat">
                     <span>Pausiert:</span>
@@ -221,11 +211,11 @@ class DebugMenu {
                 <h4>🌡️ Wetter</h4>
                 <div class="debug-stat">
                     <span>Bedingung:</span>
-                    <span>${weather ? weather.name : 'Unbekannt'}</span>
+                    <span>${gameWeatherSystem?.currentWeather?.condition || 'Unbekannt'}</span>
                 </div>
                 <div class="debug-stat">
-                    <span>Icon:</span>
-                    <span>${weather ? weather.icon : '❓'}</span>
+                    <span>Temperatur:</span>
+                    <span>${gameWeatherSystem?.currentWeather?.temperature || 'N/A'}°C</span>
                 </div>
             </div>
         `;
@@ -355,7 +345,7 @@ class DebugMenu {
                     <button class="btn-debug" onclick="debugMenu.setTimeSpeed(1)">1x</button>
                     <button class="btn-debug" onclick="debugMenu.setTimeSpeed(10)">10x</button>
                     <button class="btn-debug" onclick="debugMenu.setTimeSpeed(50)">50x</button>
-                    <button class="btn-debug" onclick="debugMenu.setTimeAcceleration(30)">+1 Stunde Skip</button>
+                    <button class="btn-debug" onclick="debugMenu.skipTime(3600)">+1 Stunde</button>
                 </div>
                 
                 <div class="debug-action-section">
@@ -480,34 +470,21 @@ class DebugMenu {
         this.update();
     }
 
-    /**
-     * 🐛 v1.3: Nutze game.timeSpeed statt GameTime
-     */
     setTimeSpeed(speed) {
-        if (game) {
-            game.timeSpeed = speed;
-            this.log('game', `Geschwindigkeit auf ${speed}x gesetzt`);
-            this.update();
-        }
+        GameTime.updateSpeed(speed);
+        this.log('game', `Geschwindigkeit auf ${speed}x gesetzt`);
+        this.update();
     }
 
-    /**
-     * 🐛 v1.3: Nutze window.gameTimer
-     */
-    setTimeAcceleration(factor) {
-        if (window.gameTimer) {
-            window.gameTimer.setTimeAcceleration(factor);
-            this.log('game', `Zeit-Beschleunigung auf ${factor}x gesetzt`);
-            this.update();
-        }
+    skipTime(seconds) {
+        GameTime.tick(seconds * 1000);
+        this.log('game', `${seconds} Sekunden übersprungen`);
+        this.update();
     }
 
-    /**
-     * 🐛 v1.3: Fix export
-     */
     exportGameState() {
         const state = {
-            time: window.gameTimer ? window.gameTimer.getFullString() : 'N/A',
+            time: GameTime.simulated,
             vehicles: game.vehicles,
             incidents: game.incidents
         };
@@ -781,8 +758,8 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-console.log('✅ Debug-Menü v1.3 geladen - Drücke Strg+Shift+D zum Öffnen');
-console.log('🐛 FIX: GameTime → gameTimer Referenzen korrigiert');
+console.log('✅ Debug-Menü v1.2 geladen - Drücke Strg+Shift+D zum Öffnen');
+console.log('✅✅✅ BUG FIX: Menü öffnet jetzt beim ERSTEN Klick!');
 
 if (typeof window !== 'undefined') {
     window.debugMenu = debugMenu;

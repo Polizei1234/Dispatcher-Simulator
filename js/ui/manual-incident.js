@@ -1,8 +1,5 @@
 // =========================
-// MANUAL INCIDENT CREATION v5.3.0
-// + 🐛 FIX: Meldebild bleibt leer (kein Auto-Fill mehr)
-// + 🐛 FIX: Doppeltes RTW Icon in Modal-Überschrift entfernt
-// + ✨ NEU: Quick-Filter Buttons (RTW, NEF, KTW, OV/Ehrenamt)
+// MANUAL INCIDENT CREATION v5.2.5
 // + Klappbare Abschnitte im Einsatzprotokoll
 // + Separates Fahrzeugauswahl-Modal
 // + Status-Anzeige statt "Verfügbar"
@@ -28,10 +25,9 @@ const ManualIncident = {
     currentCallData: null,
     collapsedSections: {},
     answeredQuestions: {},
-    currentVehicleFilter: 'all', // ✨ NEU: Filter-Status
 
     initialize() {
-        console.log('📋 Manual Incident System v5.3.0 initialisiert (FIX: Meldebild, Icons, Quick-Filter)');
+        console.log('📋 Manual Incident System v5.2.5 initialisiert (FIX: Dynamische Modal-Erstellung)');
         this.ensureVehicleModalExists();
         this.attachEventListeners();
     },
@@ -61,7 +57,7 @@ const ManualIncident = {
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 1000px; height: 80vh;">
                 <div class="modal-header">
-                    <h2 id="vehicle-modal-title">🚑 Fahrzeugdisposition</h2>
+                    <h2><i class="fas fa-ambulance"></i> <span id="vehicle-modal-title">Fahrzeugdisposition</span></h2>
                     <button class="close-btn" onclick="ManualIncident.closeVehicleModal()">&times;</button>
                 </div>
                 <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 120px);">
@@ -70,25 +66,6 @@ const ManualIncident = {
                             <i class="fas fa-map-marker-alt"></i>
                             <span id="vehicle-modal-location">Einsatzort wird geladen...</span>
                         </div>
-                    </div>
-                    
-                    <!-- ✨ NEU: Quick-Filter Buttons -->
-                    <div style="padding: 10px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-small filter-btn active" onclick="ManualIncident.filterVehicles('all')" data-filter="all" style="flex: 1; min-width: 100px;">
-                            <i class="fas fa-th"></i> Alle
-                        </button>
-                        <button class="btn btn-small filter-btn" onclick="ManualIncident.filterVehicles('RTW')" data-filter="RTW" style="flex: 1; min-width: 100px;">
-                            🚑 RTW
-                        </button>
-                        <button class="btn btn-small filter-btn" onclick="ManualIncident.filterVehicles('NEF')" data-filter="NEF" style="flex: 1; min-width: 100px;">
-                            🚨 NEF
-                        </button>
-                        <button class="btn btn-small filter-btn" onclick="ManualIncident.filterVehicles('KTW')" data-filter="KTW" style="flex: 1; min-width: 100px;">
-                            🚐 KTW
-                        </button>
-                        <button class="btn btn-small filter-btn" onclick="ManualIncident.filterVehicles('OV')" data-filter="OV" style="flex: 1; min-width: 100px;">
-                            🤝 Ehrenamt/OV
-                        </button>
                     </div>
                     
                     <div style="flex: 1; overflow-y: auto; padding: 10px;">
@@ -126,44 +103,19 @@ const ManualIncident = {
         });
     },
 
-    // ✨ NEU: Filter-Funktion für Fahrzeuge
-    filterVehicles(filterType) {
-        console.log('🔍 Filter angewendet:', filterType);
-        this.currentVehicleFilter = filterType;
-        
-        // Update Button-Styles
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active');
-            btn.style.background = '';
-            btn.style.borderColor = '';
-        });
-        
-        const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-            activeBtn.style.background = 'var(--accent-color)';
-            activeBtn.style.borderColor = 'var(--accent-color)';
-        }
-        
-        // Reload mit Filter
-        this.loadVehiclesInModal();
-    },
-
     openVehicleModalForReinforcement(incident) {
         console.log('🚑 Verstärkung-Modus aktiviert für:', incident.id);
         
         this.reinforcementMode = true;
         this.currentIncident = incident;
         this.selectedVehicles = [];
-        this.currentVehicleFilter = 'all'; // Reset filter
         
         // ✅ Stelle sicher, dass Modal existiert
         this.ensureVehicleModalExists();
         
         const title = document.getElementById('vehicle-modal-title');
         if (title) {
-            // 🐛 FIX: Nur EIN Icon
-            title.innerHTML = '🚑 Verstärkung anfordern';
+            title.innerHTML = '<i class="fas fa-plus-circle"></i> Verstärkung anfordern';
         }
         
         const locationSpan = document.getElementById('vehicle-modal-location');
@@ -253,9 +205,9 @@ const ManualIncident = {
                     </div>
                     <div class="form-group" style="margin-top: 10px;">
                         <label>Meldebild:</label>
-                        <textarea id="inline-meldebild" rows="3" placeholder="Geben Sie hier die Einsatzbeschreibung ein..."></textarea>
+                        <textarea id="inline-meldebild" rows="3" placeholder="Wird aus Anrufer-Antworten generiert..."></textarea>
                         <small style="color: var(--text-secondary); font-size: 0.85em; display: block; margin-top: 5px;">
-                            ℹ️ Beschreiben Sie die Situation in eigenen Worten
+                            ℹ️ Enthält nur die Informationen, die der Anrufer tatsächlich gegeben hat
                         </small>
                     </div>
                 </div>
@@ -500,7 +452,7 @@ const ManualIncident = {
         // ✅ FIX: Warte auf KeywordsDropdown und initialisiere dann Dropdowns
         await this.initializeKeywordsDropdownsInline();
 
-        console.log('✅ Manual Incident Inline v5.3.0 angezeigt!');
+        console.log('✅ Manual Incident Inline v5.2.5 angezeigt!');
     },
 
     toggleSection(sectionName) {
@@ -529,12 +481,10 @@ const ManualIncident = {
         this.ensureVehicleModalExists();
         
         this.vehicleModalOpen = true;
-        this.currentVehicleFilter = 'all'; // Reset filter
         
         const title = document.getElementById('vehicle-modal-title');
         if (title && !this.reinforcementMode) {
-            // 🐛 FIX: Nur EIN Icon
-            title.innerHTML = '🚑 Fahrzeugdisposition';
+            title.innerHTML = '<i class="fas fa-ambulance"></i> Fahrzeugdisposition';
         }
         
         const locationSpan = document.getElementById('vehicle-modal-location');
@@ -566,7 +516,6 @@ const ManualIncident = {
         this.vehicleModalOpen = false;
         this.reinforcementMode = false;
         this.currentIncident = null;
-        this.currentVehicleFilter = 'all';
         
         const modal = document.getElementById('vehicle-selection-modal');
         if (modal) {
@@ -640,18 +589,7 @@ const ManualIncident = {
             return;
         }
 
-        // ✨ Filter-Logik
-        let vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
-        
-        if (this.currentVehicleFilter !== 'all') {
-            if (this.currentVehicleFilter === 'OV') {
-                // Zeige nur Ehrenamt/OV Fahrzeuge (KTW von Ortsvereinen)
-                vehicleTypes = ['KTW'];
-            } else {
-                vehicleTypes = [this.currentVehicleFilter];
-            }
-        }
-        
+        const vehicleTypes = ['RTW', 'NEF', 'KTW', 'KDOW', 'GW-SAN'];
         grid.innerHTML = '';
 
         const targetCoords = this.reinforcementMode ? this.currentIncident?.koordinaten : this.currentCallData?.einsatz?.koordinaten;
@@ -659,19 +597,7 @@ const ManualIncident = {
         vehicleTypes.forEach(type => {
             let vehicles = GAME_DATA.vehicles.filter(v => {
                 const vType = v.type.toUpperCase();
-                const matches = (vType === type || vType.includes(type)) && v.owned;
-                
-                // ✨ Für OV-Filter: Nur Ortsverein-Fahrzeuge
-                if (this.currentVehicleFilter === 'OV' && type === 'KTW') {
-                    return matches && v.station && (v.station.includes('OV') || v.station.includes('Ortsverein'));
-                }
-                
-                // Für KTW-Filter: Schließe OV aus wenn nicht OV-Filter aktiv
-                if (this.currentVehicleFilter === 'KTW' && type === 'KTW') {
-                    return matches && (!v.station || (!v.station.includes('OV') && !v.station.includes('Ortsverein')));
-                }
-                
-                return matches;
+                return (vType === type || vType.includes(type)) && v.owned;
             });
 
             if (vehicles.length === 0) return;
@@ -744,7 +670,7 @@ const ManualIncident = {
         });
 
         this.updateVehicleModalCount();
-        console.log('✅ Fahrzeug-Grid geladen (Filter:', this.currentVehicleFilter, ')');
+        console.log('✅ Fahrzeug-Grid geladen');
     },
 
     toggleVehicleInModal(id) {
@@ -821,21 +747,84 @@ const ManualIncident = {
         this.answeredQuestions = {};
     },
 
-    // 🐛 FIX: Funktion existiert noch, macht aber NICHTS mehr
     updateFromCallAnswer(key, answer, callData) {
         if (!this.inlineMode) return;
 
         this.answeredQuestions[key] = answer;
         console.log(`✅ Frage beantwortet: ${key} = ${answer}`);
 
-        // 🐛 ENTFERNT: Kein Auto-Fill mehr!
-        // this.regenerateMeldebild();
+        this.regenerateMeldebild();
     },
 
-    // 🐛 FIX: Funktion bleibt für spätere Nutzung, wird aber nicht mehr aufgerufen
     regenerateMeldebild() {
-        // Diese Funktion existiert noch, wird aber nicht mehr automatisch aufgerufen
-        console.log('ℹ️ regenerateMeldebild() wurde aufgerufen, aber macht nichts (Auto-Fill deaktiviert)');
+        const meldebildTextarea = document.getElementById('inline-meldebild');
+        if (!meldebildTextarea) return;
+
+        const parts = [];
+        const answers = this.answeredQuestions;
+
+        if (answers.was_passiert) {
+            parts.push(answers.was_passiert);
+        }
+
+        if (answers.bewusstsein) {
+            parts.push(`Bewusstsein: ${answers.bewusstsein}`);
+        }
+        if (answers.atmung) {
+            parts.push(`Atmung: ${answers.atmung}`);
+        }
+        if (answers.kreislauf) {
+            parts.push(`Kreislauf: ${answers.kreislauf}`);
+        }
+        if (answers.blutung) {
+            parts.push(`Blutung: ${answers.blutung}`);
+        }
+        if (answers.schmerzen) {
+            parts.push(`Schmerzen: ${answers.schmerzen}`);
+        }
+
+        if (answers.wie_viele) {
+            parts.push(`Anzahl: ${answers.wie_viele}`);
+        }
+
+        const medHistory = [];
+        if (answers.vorerkrankungen) medHistory.push(`Vorerkr.: ${answers.vorerkrankungen}`);
+        if (answers.diabetes) medHistory.push(`Diabetes: ${answers.diabetes}`);
+        if (answers.epilepsie) medHistory.push(`Epilepsie: ${answers.epilepsie}`);
+        if (answers.herzerkrankung) medHistory.push(`Herz: ${answers.herzerkrankung}`);
+        if (medHistory.length > 0) {
+            parts.push(medHistory.join(', '));
+        }
+
+        if (answers.sturz_hoehe) {
+            parts.push(`Sturz: ${answers.sturz_hoehe}`);
+        }
+        if (answers.eingeklemmt) {
+            parts.push(`Eingeklemmt: ${answers.eingeklemmt}`);
+        }
+        if (answers.airbag) {
+            parts.push(`Airbag: ${answers.airbag}`);
+        }
+
+        const hazards = [];
+        if (answers.feuer) hazards.push(`Feuer: ${answers.feuer}`);
+        if (answers.gefahrstoffe) hazards.push(`Gefahrstoffe: ${answers.gefahrstoffe}`);
+        if (answers.gewalt) hazards.push(`Gewalt: ${answers.gewalt}`);
+        if (hazards.length > 0) {
+            parts.push(hazards.join(', '));
+        }
+
+        if (answers.erreichbarkeit) {
+            parts.push(`Zugang: ${answers.erreichbarkeit}`);
+        }
+        if (answers.stockwerk) {
+            parts.push(`Stockwerk: ${answers.stockwerk}`);
+        }
+
+        const meldebild = parts.length > 0 ? parts.join('. ') + '.' : 'Notruf 112 - Details werden noch abgefragt';
+        
+        meldebildTextarea.value = meldebild;
+        console.log(`✅ Meldebild aktualisiert mit ${Object.keys(answers).length} Antworten:`, meldebild);
     },
 
     async initializeKeywordsDropdownsInline() {
@@ -1020,4 +1009,4 @@ if (typeof window !== 'undefined') {
     window.ManualIncident = ManualIncident;
 }
 
-console.log('✅ Manual Incident System v5.3.0 geladen (FIX: Meldebild, Icons, Quick-Filter)');
+console.log('✅ Manual Incident System v5.2.5 geladen (FIX: Dynamische Modal-Erstellung)');

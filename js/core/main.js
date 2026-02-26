@@ -1,15 +1,12 @@
 // =========================
-// MAIN.JS v9.3.5 - ZENTRALER ENTRY POINT
+// MAIN.JS v9.3.2 - ZENTRALER ENTRY POINT
 // 🌉 EventBridge VOR allen Systemen!
 // 🌦️⏰ Game-Timer, Weather-System, Call-Template-Mapper Integration
 // 🔧 v9.3.1: Radio-System Init Fix (ist Objekt, nicht Konstruktor)
 // 🔧 v9.3.2: KRITISCH - Alle Funktionen zu window exportiert!
-// 🐛 v9.3.3: FIX - GameTimer Instanz-Namenskonflikt behoben
-// 🐛 v9.3.4: FIX - initializeGame() wird jetzt IMMER aufgerufen!
-// 🐛 v9.3.5: FIX - SettingsManager.load() statt loadSettings()
 // =========================
 
-console.log('📋 main.js v9.3.5 wird geladen...');
+console.log('📋 main.js v9.3.2 wird geladen...');
 
 /**
  * 🔧 PHASE 1: GAME LOOP GLOBAL
@@ -28,9 +25,8 @@ async function initializeGame() {
         // 🔧 1. SETTINGS MANAGER (ERSTE PRIORITÄT!)
         console.log('\n📝 PHASE 1: Settings Manager');
         if (typeof SettingsManager !== 'undefined') {
-            // 🐛 v9.3.5 FIX: SettingsManager initialisiert sich selbst!
-            // Kein manuelles loadSettings() nötig!
-            console.log('✅ Settings Manager bereits initialisiert');
+            await SettingsManager.loadSettings();
+            console.log('✅ Settings Manager initialisiert');
         } else {
             console.error('❌ SettingsManager nicht gefunden!');
         }
@@ -164,7 +160,6 @@ async function initializeGame() {
 
 /**
  * 🌦️⏰ v9.3.0: Initialisiert neue Systeme (Game-Timer, Weather, Call-Template-Mapper)
- * 🐛 v9.3.3: FIX - gameTimer statt GameTimer für Instanz
  */
 async function initializeNewSystems() {
     console.group('🌦️⏰ NEUE SYSTEME INITIALISIERUNG');
@@ -173,12 +168,11 @@ async function initializeNewSystems() {
         // 1️⃣ GAME TIMER - Zeitmanagement
         console.log('⏰ Initialisiere Game Timer...');
         if (typeof GameTimer !== 'undefined') {
-            // 🐛 FIX: Verwende gameTimer (kleingeschrieben) für die Instanz!
-            if (typeof window.gameTimer === 'undefined') {
-                window.gameTimer = new GameTimer();
+            if (typeof window.GameTimer === 'undefined') {
+                window.GameTimer = new GameTimer();
             }
-            window.gameTimer.start();
-            console.log(`✅ Game Timer gestartet: ${window.gameTimer.getTimeString()}`);
+            window.GameTimer.start();
+            console.log(`✅ Game Timer gestartet: ${window.GameTimer.getFormattedTime()}`);
         } else {
             console.error('❌ GameTimer-Klasse nicht gefunden!');
         }
@@ -297,7 +291,6 @@ function showErrorOverlay(title, message) {
 
 /**
  * 🎮 GAME LOOP - Zentrale Update-Schleife
- * 🐛 v9.3.3: FIX - Kein update() mehr, Timer läuft selbstständig
  */
 function startGameLoop() {
     if (gameLoopInterval) {
@@ -312,12 +305,14 @@ function startGameLoop() {
         const deltaTime = (now - lastGameUpdateTime) / 1000; // in Sekunden
         lastGameUpdateTime = now;
 
-        // 🐛 FIX: Game Timer läuft selbstständig (tick() wird intern aufgerufen)
-        // Kein manuelles update() mehr nötig!
+        // 1. Update Game Timer (wenn vorhanden)
+        if (typeof window.GameTimer !== 'undefined') {
+            window.GameTimer.update();
+        }
 
         // 2. Update Weather System (wenn vorhanden)
-        if (typeof window.weatherSystem !== 'undefined' && typeof window.gameTimer !== 'undefined') {
-            const currentHour = window.gameTimer.getCurrentHour();
+        if (typeof window.weatherSystem !== 'undefined') {
+            const currentHour = window.GameTimer?.getCurrentHour() || 12;
             window.weatherSystem.updateTimeOfDay(currentHour);
         }
 
@@ -364,13 +359,9 @@ function togglePause() {
             if (game.isPaused) {
                 pauseIcon.className = 'fas fa-play';
                 stopGameLoop();
-                // 🐛 FIX: Timer auch pausieren
-                if (window.gameTimer) window.gameTimer.stop();
             } else {
                 pauseIcon.className = 'fas fa-pause';
                 startGameLoop();
-                // 🐛 FIX: Timer auch fortsetzen
-                if (window.gameTimer) window.gameTimer.start();
             }
         }
     }
@@ -430,8 +421,8 @@ function showSettings() {
         settingsOverlay.classList.add('active');
         
         // Lade aktuelle Einstellungen
-        if (typeof SettingsManager !== 'undefined' && SettingsManager.writeToUI) {
-            SettingsManager.writeToUI();
+        if (typeof SettingsManager !== 'undefined' && SettingsManager.loadSettingsToUI) {
+            SettingsManager.loadSettingsToUI();
         }
     }
 }
@@ -450,9 +441,8 @@ function closeSettings() {
  * 💾 Speichert Einstellungen
  */
 function saveSettings() {
-    if (typeof SettingsManager !== 'undefined') {
-        SettingsManager.loadFromUI();
-        SettingsManager.save();
+    if (typeof SettingsManager !== 'undefined' && SettingsManager.saveSettingsFromUI) {
+        SettingsManager.saveSettingsFromUI();
     }
     closeSettings();
 }
@@ -550,32 +540,17 @@ console.log('✅ Alle Funktionen zu window exportiert!');
 
 /**
  * 📋 DOMContentLoaded Event Handler
- * 🐛 v9.3.4: FIX - Prüft ob DOM bereits geladen, führt dann sofort aus!
  */
-if (document.readyState === 'loading') {
-    // DOM wird noch geladen - Event-Listener setzen
-    console.log('⏳ DOM wird noch geladen - warte auf DOMContentLoaded...');
-    document.addEventListener('DOMContentLoaded', async () => {
-        console.log('📋 DOM Content Loaded - Starte Initialisierung...');
-        
-        // Warte kurz für externe Libraries
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Starte Initialisierung
-        await initializeGame();
-        
-        console.log('✅ main.js Initialisierung abgeschlossen');
-    });
-} else {
-    // 🐛 FIX: DOM bereits geladen - sofort initialisieren!
-    console.log('⚡ DOM bereits geladen - starte Initialisierung sofort!');
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('📋 DOM Content Loaded - Starte Initialisierung...');
     
     // Warte kurz für externe Libraries
-    setTimeout(async () => {
-        console.log('📋 Starte verzögerte Initialisierung...');
-        await initializeGame();
-        console.log('✅ main.js Initialisierung abgeschlossen');
-    }, 200);
-}
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Starte Initialisierung
+    await initializeGame();
+    
+    console.log('✅ main.js Initialisierung abgeschlossen');
+});
 
-console.log('✅ main.js v9.3.5 geladen - 🐛 FIX: SettingsManager Funktionen korrigiert!');
+console.log('✅ main.js v9.3.2 geladen - 🔧 KRITISCHE FIXES: Window-Export + Map-Fallback');
