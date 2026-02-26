@@ -1,6 +1,7 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.3.3
+// CENTRAL VERSION MANAGER v3.3.4
 // SINGLE SOURCE OF TRUTH für Version
+// ✅ v9.3.4: BUGFIX - Map-Initialisierung läuft jetzt!
 // ✅ v9.3.3: BUGFIX - GameTimer Instanz-Konflikt behoben!
 // ✅ v9.3.0: GAME-TIMER + CALL-TEMPLATE-MAPPER!
 // ✅ v9.2.0: EVENTBRIDGE INTEGRATION!
@@ -26,7 +27,7 @@ if (typeof window !== 'undefined') {
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.3.3',
+    VERSION: '9.3.4',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -443,15 +444,15 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🐛</span>
+                <span style="font-size: 2em;">🗺️</span>
                 <h3 style="margin: 0; font-size: 1.2em;">Bugfix v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
                 <p><strong>🔧 Kritische Fehler behoben!</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>✅ <strong>GameTimer läuft wieder</strong></li>
-                    <li>✅ <strong>Karte lädt korrekt</strong></li>
-                    <li>✅ <strong>Debug-Menu fixed</strong></li>
+                    <li>✅ <strong>Karte lädt jetzt korrekt</strong></li>
+                    <li>✅ <strong>Map-Initialisierung fixed</strong></li>
+                    <li>✅ <strong>Alle Systeme starten</strong></li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
@@ -483,10 +484,10 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🐛 BUGFIX v9.3.3!', 'color: #4ade80; font-weight: bold; font-size: 1.1em');
-        console.log('%c   ✅ GameTimer Instanz-Konflikt behoben', 'color: #86efac');
-        console.log('%c   ✅ Karte lädt wieder korrekt', 'color: #86efac');
-        console.log('%c   ✅ Debug-Menu gameTimer Fix', 'color: #86efac');
+        console.log('%c🗺️ BUGFIX v9.3.4!', 'color: #4ade80; font-weight: bold; font-size: 1.1em');
+        console.log('%c   ✅ Map-Initialisierung läuft jetzt!', 'color: #86efac');
+        console.log('%c   ✅ DOMContentLoaded Fix', 'color: #86efac');
+        console.log('%c   ✅ Alle Systeme starten', 'color: #86efac');
         console.log('%c═══════════════════════════════════', 'color: #4ade80');
     }
 };
@@ -505,5 +506,5 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.3.3 geladen - Version: ${VERSION_CONFIG.VERSION}`);
-console.log('🐛 BUGFIX: GameTimer Instanz-Konflikt behoben!');
+console.log(`🚀 Central Version Manager v3.3.4 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('🗺️ BUGFIX: Map-Initialisierung läuft jetzt!');
