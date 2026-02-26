@@ -1,13 +1,14 @@
 // =========================
-// MAIN.JS v9.3.3 - ZENTRALER ENTRY POINT
-// 🌉 EventBridge VOR allen Systemen!
+// MAIN.JS v9.3.4 - ZENTRALER ENTRY POINT
+// 🎉 EventBridge VOR allen Systemen!
 // 🌦️⏰ Game-Timer, Weather-System, Call-Template-Mapper Integration
 // 🔧 v9.3.1: Radio-System Init Fix (ist Objekt, nicht Konstruktor)
 // 🔧 v9.3.2: KRITISCH - Alle Funktionen zu window exportiert!
 // 🐛 v9.3.3: FIX - GameTimer Instanz-Namenskonflikt behoben
+// 🐛 v9.3.4: FIX - initializeGame() wird jetzt IMMER aufgerufen!
 // =========================
 
-console.log('📋 main.js v9.3.3 wird geladen...');
+console.log('📋 main.js v9.3.4 wird geladen...');
 
 /**
  * 🔧 PHASE 1: GAME LOOP GLOBAL
@@ -479,10 +480,10 @@ function showCareerComingSoon() {
 }
 
 /**
- * 🛒 Öffnet Shop (Karrieremodus)
+ * 🛍️ Öffnet Shop (Karrieremodus)
  */
 function openShop() {
-    alert('🛒 SHOP\n\nDer Shop ist Teil des Karrieremodus und kommt bald!\n\nHier kannst du dann neue Fahrzeuge kaufen, Wachen erweitern und Upgrades freischalten.');
+    alert('🛍️ SHOP\n\nDer Shop ist Teil des Karrieremodus und kommt bald!\n\nHier kannst du dann neue Fahrzeuge kaufen, Wachen erweitern und Upgrades freischalten.');
 }
 
 /**
@@ -546,17 +547,32 @@ console.log('✅ Alle Funktionen zu window exportiert!');
 
 /**
  * 📋 DOMContentLoaded Event Handler
+ * 🐛 v9.3.4: FIX - Prüft ob DOM bereits geladen, führt dann sofort aus!
  */
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📋 DOM Content Loaded - Starte Initialisierung...');
+if (document.readyState === 'loading') {
+    // DOM wird noch geladen - Event-Listener setzen
+    console.log('⏳ DOM wird noch geladen - warte auf DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('📋 DOM Content Loaded - Starte Initialisierung...');
+        
+        // Warte kurz für externe Libraries
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Starte Initialisierung
+        await initializeGame();
+        
+        console.log('✅ main.js Initialisierung abgeschlossen');
+    });
+} else {
+    // 🐛 FIX: DOM bereits geladen - sofort initialisieren!
+    console.log('⚡ DOM bereits geladen - starte Initialisierung sofort!');
     
     // Warte kurz für externe Libraries
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Starte Initialisierung
-    await initializeGame();
-    
-    console.log('✅ main.js Initialisierung abgeschlossen');
-});
+    setTimeout(async () => {
+        console.log('📋 Starte verzögerte Initialisierung...');
+        await initializeGame();
+        console.log('✅ main.js Initialisierung abgeschlossen');
+    }, 200);
+}
 
-console.log('✅ main.js v9.3.3 geladen - 🐛 FIX: GameTimer Instanz-Namenskonflikt behoben');
+console.log('✅ main.js v9.3.4 geladen - 🐛 FIX: initializeGame() wird jetzt IMMER aufgerufen!');
