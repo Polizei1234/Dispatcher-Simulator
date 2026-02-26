@@ -1,5 +1,5 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v6.2 - COMPLETE FIX
+// TAB NAVIGATION & VEHICLE OVERVIEW v6.3 - GLOBAL FIX
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
@@ -8,6 +8,7 @@
 // ✅✅✅ v6.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
 // 🔧 v6.1: FIX - Tab-Switching funktioniert jetzt!
 // 🔧 v6.2: COMPLETE FIX - Map + Buttons klickbar!
+// 🔧 v6.3: switchTab() als GLOBALE Funktion!
 // =========================
 
 let currentTab = 'map';
@@ -68,8 +69,8 @@ function toggleAllStations() {
     updateVehiclesOverview();
 }
 
-// 🔧 v6.2: COMPLETE FIX - Tab wechseln MIT Map-Rendering!
-function switchTab(tabName) {
+// 🔧 v6.3: GLOBALE FUNKTION - Tab wechseln MIT Map-Rendering!
+window.switchTab = function(tabName) {
     console.log(`🔄 Wechsle zu Tab: ${tabName}`);
     
     try {
@@ -143,7 +144,7 @@ function switchTab(tabName) {
     } catch (error) {
         console.error('❌ Fehler beim Tab-Wechsel:', error);
     }
-}
+};
 
 // ❌ ENTFERNT: Alte getFMSStatus() Funktion
 // ✅ Nutze stattdessen: VehicleStatusUtil.getStatus(vehicle)
@@ -325,12 +326,13 @@ function createCompactVehicleCard(vehicle) {
     `;
 }
 
-function setVehicleFilter(filter) {
+// 🔧 v6.3: GLOBALE Funktionen
+window.setVehicleFilter = function(filter) {
     vehicleFilter = filter;
     updateVehiclesOverview();
-}
+};
 
-function toggleStation(stationId) {
+window.toggleStation = function(stationId) {
     const vehiclesDiv = document.getElementById(`station-${stationId}`);
     const icon = document.getElementById(`icon-${stationId}`);
     
@@ -345,7 +347,7 @@ function toggleStation(stationId) {
         vehiclesDiv.classList.remove('open');
         icon.classList.remove('open');
     }
-}
+};
 
 // Auto-Update wenn Tab aktiv
 setInterval(() => {
@@ -354,17 +356,17 @@ setInterval(() => {
     }
 }, 3000);
 
-// 🔧 v6.2: Tab-Init Funktion MIT Map-Fix
+// 🔧 v6.3: Tab-Init Funktion
 function initializeTabs() {
     console.log('🔧 Initialisiere Tabs...');
     
     // Setze initialen Tab
-    switchTab('map');
+    window.switchTab('map');
     
     console.log('✅ Tabs initialisiert');
 }
 
-console.log('✅ Tabs v6.2 geladen - Complete Fix!');
+console.log('✅ Tabs v6.3 geladen - GLOBALE switchTab() Funktion!');
 
 // Helper functions
 function getVehicleIcon(type) {
