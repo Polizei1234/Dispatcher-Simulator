@@ -1,5 +1,5 @@
 // =========================
-// TAB NAVIGATION & VEHICLE OVERVIEW v6.1 - TAB-FIX
+// TAB NAVIGATION & VEHICLE OVERVIEW v6.2 - COMPLETE FIX
 // ✅ Phase 4: Kompakte UI mit Shortcuts
 // ✅ Keyboard Shortcuts für Navigation
 // ✅ Quick Filter für Fahrzeuge
@@ -7,6 +7,7 @@
 // 🗑️ v5.1.0: Radio-Tab komplett entfernt
 // ✅✅✅ v6.0: Nutzt VehicleStatusUtil (Single Source of Truth!)
 // 🔧 v6.1: FIX - Tab-Switching funktioniert jetzt!
+// 🔧 v6.2: COMPLETE FIX - Map + Buttons klickbar!
 // =========================
 
 let currentTab = 'map';
@@ -21,7 +22,7 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
-    // Tab-Shortcuts (1-4) - Radio entfernt
+    // Tab-Shortcuts (1-3)
     const tabMap = {
         '1': 'map',
         '2': 'vehicles',
@@ -57,10 +58,8 @@ function cycleFilter() {
 // ✅ Alle Wachen auf-/zuklappen
 function toggleAllStations() {
     if (collapsedStations.size > 0) {
-        // Alle öffnen
         collapsedStations.clear();
     } else {
-        // Alle schließen
         if (game && game.vehicles) {
             const stationIds = new Set(game.vehicles.filter(v => v.owned).map(v => v.station));
             collapsedStations = new Set(stationIds);
@@ -69,60 +68,81 @@ function toggleAllStations() {
     updateVehiclesOverview();
 }
 
-// 🔧 v6.1: KOMPLETT ÜBERARBEITET - Tab wechseln
+// 🔧 v6.2: COMPLETE FIX - Tab wechseln MIT Map-Rendering!
 function switchTab(tabName) {
     console.log(`🔄 Wechsle zu Tab: ${tabName}`);
     
-    // 1. Deaktiviere alle Tab-Buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // 2. Deaktiviere alle Tab-Contents
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // 3. Aktiviere den gewählten Tab-Button
-    // Suche nach Button mit onclick="switchTab('tabName')"
-    const allButtons = document.querySelectorAll('.tab-btn');
-    for (const btn of allButtons) {
-        const onclickAttr = btn.getAttribute('onclick');
-        if (onclickAttr && onclickAttr.includes(`'${tabName}'`)) {
-            btn.classList.add('active');
-            console.log(`✅ Button aktiviert: ${tabName}`);
-            break;
-        }
-    }
-    
-    // 4. Aktiviere den gewählten Tab-Content
-    const tabContent = document.getElementById(`tab-${tabName}`);
-    if (tabContent) {
-        tabContent.classList.add('active');
-        console.log(`✅ Content aktiviert: tab-${tabName}`);
-    } else {
-        console.error(`❌ Tab-Content nicht gefunden: tab-${tabName}`);
-    }
-    
-    // 5. Update aktuellen Tab
-    currentTab = tabName;
-    
-    // 6. Spezielle Aktionen für verschiedene Tabs
-    if (tabName === 'map' && typeof map !== 'undefined') {
-        setTimeout(() => {
-            if (map.invalidateSize) {
-                map.invalidateSize();
-                console.log('✅ Map invalidateSize() ausgeführt');
+    try {
+        // 1. Deaktiviere alle Tab-Buttons & Contents
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // 2. Aktiviere den gewählten Tab-Button
+        const allButtons = document.querySelectorAll('.tab-btn');
+        for (const btn of allButtons) {
+            const onclickAttr = btn.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes(`'${tabName}'`)) {
+                btn.classList.add('active');
+                console.log(`✅ Button aktiviert: ${tabName}`);
+                break;
             }
-        }, 100);
-    } else if (tabName === 'vehicles') {
-        updateVehiclesOverview();
-    } else if (tabName === 'call') {
-        // Call-Tab hat eigene Logik in call-system.js
-        console.log('📞 Call-Tab aktiviert');
+        }
+        
+        // 3. Aktiviere den gewählten Tab-Content
+        const tabContent = document.getElementById(`tab-${tabName}`);
+        if (tabContent) {
+            tabContent.classList.add('active');
+            console.log(`✅ Content aktiviert: tab-${tabName}`);
+        } else {
+            console.error(`❌ Tab-Content nicht gefunden: tab-${tabName}`);
+            return;
+        }
+        
+        // 4. Update aktuellen Tab
+        currentTab = tabName;
+        
+        // 5. 🔧 CRITICAL FIX: Map Rendering erzwingen!
+        if (tabName === 'map') {
+            console.log('🗺️ Map-Tab aktiviert - erzwinge Rendering...');
+            
+            // Mehrfache Versuche mit verschiedenen Delays
+            if (typeof map !== 'undefined' && map) {
+                // Sofort
+                setTimeout(() => {
+                    if (map && map.invalidateSize) {
+                        map.invalidateSize(true);
+                        console.log('✅ Map invalidateSize() #1 (sofort)');
+                    }
+                }, 0);
+                
+                // Nach 50ms
+                setTimeout(() => {
+                    if (map && map.invalidateSize) {
+                        map.invalidateSize(true);
+                        console.log('✅ Map invalidateSize() #2 (50ms)');
+                    }
+                }, 50);
+                
+                // Nach 150ms (finaler Check)
+                setTimeout(() => {
+                    if (map && map.invalidateSize) {
+                        map.invalidateSize(true);
+                        console.log('✅ Map invalidateSize() #3 (150ms - final)');
+                    }
+                }, 150);
+            } else {
+                console.warn('⚠️ Map-Objekt nicht gefunden!');
+            }
+        } else if (tabName === 'vehicles') {
+            updateVehiclesOverview();
+        } else if (tabName === 'call') {
+            console.log('📞 Call-Tab aktiviert');
+        }
+        
+        console.log(`✅ Tab-Wechsel zu ${tabName} abgeschlossen`);
+    } catch (error) {
+        console.error('❌ Fehler beim Tab-Wechsel:', error);
     }
-    
-    console.log(`✅ Tab gewechselt zu: ${tabName}`);
 }
 
 // ❌ ENTFERNT: Alte getFMSStatus() Funktion
@@ -327,16 +347,14 @@ function toggleStation(stationId) {
     }
 }
 
-// Einsätze-Übersicht (ENTFERNT - nicht mehr benötigt)
-
-// Auto-Update wenn Tab aktiv (Radio entfernt)
+// Auto-Update wenn Tab aktiv
 setInterval(() => {
     if (currentTab === 'vehicles') {
         updateVehiclesOverview();
     }
 }, 3000);
 
-// 🔧 v6.1: Tab-Init Funktion
+// 🔧 v6.2: Tab-Init Funktion MIT Map-Fix
 function initializeTabs() {
     console.log('🔧 Initialisiere Tabs...');
     
@@ -346,7 +364,7 @@ function initializeTabs() {
     console.log('✅ Tabs initialisiert');
 }
 
-console.log('✅ Tabs v6.1 geladen - Tab-Switching FIX!');
+console.log('✅ Tabs v6.2 geladen - Complete Fix!');
 
 // Helper functions
 function getVehicleIcon(type) {
