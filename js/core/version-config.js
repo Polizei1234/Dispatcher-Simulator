@@ -1,6 +1,7 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.3.0
+// CENTRAL VERSION MANAGER v3.3.3
 // SINGLE SOURCE OF TRUTH für Version
+// ✅ v9.3.3: BUGFIX - GameTimer Instanz-Konflikt behoben!
 // ✅ v9.3.0: GAME-TIMER + CALL-TEMPLATE-MAPPER!
 // ✅ v9.2.0: EVENTBRIDGE INTEGRATION!
 // 🔧 v3.3.0: game-timer.js + call-template-mapper.js hinzugefügt
@@ -25,7 +26,7 @@ if (typeof window !== 'undefined') {
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.3.0',
+    VERSION: '9.3.3',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -430,7 +431,7 @@ const VERSION_CONFIG = {
             right: 20px;
             max-width: 500px;
             background: #2d3748;
-            border: 2px solid #f59e0b;
+            border: 2px solid #4ade80;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -442,30 +443,21 @@ const VERSION_CONFIG = {
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2em;">🌦️⏰</span>
-                <h3 style="margin: 0; font-size: 1.2em;">Update auf v${this.VERSION}</h3>
+                <span style="font-size: 2em;">🐛</span>
+                <h3 style="margin: 0; font-size: 1.2em;">Bugfix v${this.VERSION}</h3>
             </div>
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
-                <p><strong>🎉 ZEIT & WETTER & CALL-TEMPLATES!</strong></p>
-                <p style="margin: 8px 0; color: #cbd5e0;">✅ <strong>Neue Features:</strong></p>
+                <p><strong>🔧 Kritische Fehler behoben!</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>⏰ <strong>Game-Timer - Spielzeit-System</strong></li>
-                    <li>🌦️ <strong>Weather-System - Dynamisches Wetter</strong></li>
-                    <li>📞 <strong>Call-Template-Mapper - 70+ Notrufe</strong></li>
-                    <li>🎯 <strong>17 Einsatztypen mit Gewichtung</strong></li>
-                    <li>📊 <strong>Tageszeit-Abhängigkeit</strong></li>
-                    <li>❄️ <strong>Wetter beeinflusst Einsätze</strong></li>
+                    <li>✅ <strong>GameTimer läuft wieder</strong></li>
+                    <li>✅ <strong>Karte lädt korrekt</strong></li>
+                    <li>✅ <strong>Debug-Menu fixed</strong></li>
                 </ul>
-                <div style="margin-top: 12px; padding: 10px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 4px;">
-                    <p style="margin: 0; font-size: 0.9em; color: #fbbf24;">
-                        <strong>✅ Mega-realistisch:</strong> Mehr Unfälle bei Schnee, Herzinfarkte nachts, Hitzenotfälle im Sommer!
-                    </p>
-                </div>
             </div>
             <button onclick="this.parentElement.remove()" style="
                 width: 100%;
                 padding: 10px;
-                background: #f59e0b;
+                background: #4ade80;
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -480,24 +472,22 @@ const VERSION_CONFIG = {
             if (notification.parentElement) {
                 notification.remove();
             }
-        }, 45000);
+        }, 20000);
     },
     
     printInfo: function() {
-        console.log('%c═══════════════════════════════════', 'color: #f59e0b');
-        console.log('%c🎮 Dispatcher Simulator', 'color: #f59e0b; font-size: 1.5em; font-weight: bold');
-        console.log('%c═══════════════════════════════════', 'color: #f59e0b');
-        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #f59e0b; font-weight: bold; font-size: 1.1em');
+        console.log('%c═══════════════════════════════════', 'color: #4ade80');
+        console.log('%c🎮 Dispatcher Simulator', 'color: #4ade80; font-size: 1.5em; font-weight: bold');
+        console.log('%c═══════════════════════════════════', 'color: #4ade80');
+        console.log(`%c📦 Version: ${this.VERSION}`, 'color: #4ade80; font-weight: bold; font-size: 1.1em');
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🌦️⏰ NEU IN v9.3.0 - ZEIT & WETTER & CALLS!', 'color: #f59e0b; font-weight: bold; font-size: 1.1em');
-        console.log('%c   ⏰ Game-Timer für Spielzeit-System', 'color: #fbbf24');
-        console.log('%c   🌦️ Weather-System für dynamisches Wetter', 'color: #fbbf24');
-        console.log('%c   📞 Call-Template-Mapper (70+ Notrufe)', 'color: #fbbf24');
-        console.log('%c   🎯 17 Einsatztypen mit Gewichtung', 'color: #68d391');
-        console.log('%c   📊 Tageszeit & Wetter beeinflussen Einsätze', 'color: #68d391');
-        console.log('%c═══════════════════════════════════', 'color: #f59e0b');
+        console.log('%c🐛 BUGFIX v9.3.3!', 'color: #4ade80; font-weight: bold; font-size: 1.1em');
+        console.log('%c   ✅ GameTimer Instanz-Konflikt behoben', 'color: #86efac');
+        console.log('%c   ✅ Karte lädt wieder korrekt', 'color: #86efac');
+        console.log('%c   ✅ Debug-Menu gameTimer Fix', 'color: #86efac');
+        console.log('%c═══════════════════════════════════', 'color: #4ade80');
     }
 };
 
@@ -515,6 +505,5 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.3.0 geladen - Version: ${VERSION_CONFIG.VERSION}`);
-console.log('🌦️⏰ Game-Timer, Weather-System, Call-Template-Mapper zur Ladereihenfolge hinzugefügt');
-console.log('🔧 Fehlertoleranz aktiviert - Scripts laden auch bei Einzelfehlern weiter');
+console.log(`🚀 Central Version Manager v3.3.3 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('🐛 BUGFIX: GameTimer Instanz-Konflikt behoben!');
