@@ -1,6 +1,7 @@
 // =========================
-// CENTRAL VERSION MANAGER v3.3.5
+// CENTRAL VERSION MANAGER v3.3.6
 // SINGLE SOURCE OF TRUTH für Version
+// ✅ v9.3.6: BUGFIX - Tab-Switching funktioniert jetzt!
 // ✅ v9.3.5: BUGFIX - SettingsManager Funktionen korrigiert!
 // ✅ v9.3.4: BUGFIX - Map-Initialisierung läuft jetzt!
 // ✅ v9.3.3: BUGFIX - GameTimer Instanz-Konflikt behoben!
@@ -28,7 +29,7 @@ if (typeof window !== 'undefined') {
 
 const VERSION_CONFIG = {
     // ✅ VERSION NUR HIER ÄNDERN!
-    VERSION: '9.3.5',
+    VERSION: '9.3.6',
     BUILD_DATE: new Date().toLocaleString('de-DE', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -393,7 +394,8 @@ const VERSION_CONFIG = {
             'game_speed',
             'vehicle_speed_multiplier',
             'incident_frequency',
-            'user_settings'
+            'user_settings',
+            'dispatcher_simulator_settings'
         ];
         
         const keysToDelete = [];
@@ -451,9 +453,9 @@ const VERSION_CONFIG = {
             <div style="margin-bottom: 15px; line-height: 1.6; color: #a0aec0;">
                 <p><strong>🔧 Kritische Fehler behoben!</strong></p>
                 <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.95em;">
-                    <li>✅ <strong>Karte lädt jetzt</strong></li>
-                    <li>✅ <strong>Settings funktionieren</strong></li>
-                    <li>✅ <strong>Alle Systeme starten</strong></li>
+                    <li>✅ <strong>Tab-Switching funktioniert</strong></li>
+                    <li>✅ <strong>Karte lädt korrekt</strong></li>
+                    <li>✅ <strong>Alle Tabs erreichbar</strong></li>
                 </ul>
             </div>
             <button onclick="this.parentElement.remove()" style="
@@ -485,10 +487,10 @@ const VERSION_CONFIG = {
         console.log(`%c📅 Build: ${this.BUILD_DATE}`, 'color: #a0aec0');
         console.log(`%c📂 Dateien: ${this.JS_FILES.length} JS, ${this.CSS_FILES.length} CSS`, 'color: #a0aec0');
         console.log('%c', 'color: #a0aec0');
-        console.log('%c🔧 BUGFIX v9.3.5!', 'color: #4ade80; font-weight: bold; font-size: 1.1em');
-        console.log('%c   ✅ SettingsManager Funktionen korrigiert', 'color: #86efac');
-        console.log('%c   ✅ Map lädt jetzt', 'color: #86efac');
-        console.log('%c   ✅ Alle Systeme starten', 'color: #86efac');
+        console.log('%c🔧 BUGFIX v9.3.6!', 'color: #4ade80; font-weight: bold; font-size: 1.1em');
+        console.log('%c   ✅ Tab-Switching funktioniert jetzt', 'color: #86efac');
+        console.log('%c   ✅ Alle Tabs (Karte, Fahrzeuge, Notruf) erreichbar', 'color: #86efac');
+        console.log('%c   ✅ Map lädt korrekt', 'color: #86efac');
         console.log('%c═══════════════════════════════════', 'color: #4ade80');
     }
 };
@@ -507,5 +509,5 @@ if (document.readyState === 'loading') {
     VERSION_CONFIG.printInfo();
 }
 
-console.log(`🚀 Central Version Manager v3.3.5 geladen - Version: ${VERSION_CONFIG.VERSION}`);
-console.log('🔧 BUGFIX: SettingsManager Funktionen korrigiert!');
+console.log(`🚀 Central Version Manager v3.3.6 geladen - Version: ${VERSION_CONFIG.VERSION}`);
+console.log('🔧 BUGFIX: Tab-Switching funktioniert jetzt!');
