@@ -1,14 +1,15 @@
 // =========================
-// MAIN.JS v9.3.4 - ZENTRALER ENTRY POINT
-// 🎉 EventBridge VOR allen Systemen!
+// MAIN.JS v9.3.5 - ZENTRALER ENTRY POINT
+// 🌉 EventBridge VOR allen Systemen!
 // 🌦️⏰ Game-Timer, Weather-System, Call-Template-Mapper Integration
 // 🔧 v9.3.1: Radio-System Init Fix (ist Objekt, nicht Konstruktor)
 // 🔧 v9.3.2: KRITISCH - Alle Funktionen zu window exportiert!
 // 🐛 v9.3.3: FIX - GameTimer Instanz-Namenskonflikt behoben
 // 🐛 v9.3.4: FIX - initializeGame() wird jetzt IMMER aufgerufen!
+// 🐛 v9.3.5: FIX - SettingsManager.load() statt loadSettings()
 // =========================
 
-console.log('📋 main.js v9.3.4 wird geladen...');
+console.log('📋 main.js v9.3.5 wird geladen...');
 
 /**
  * 🔧 PHASE 1: GAME LOOP GLOBAL
@@ -27,8 +28,9 @@ async function initializeGame() {
         // 🔧 1. SETTINGS MANAGER (ERSTE PRIORITÄT!)
         console.log('\n📝 PHASE 1: Settings Manager');
         if (typeof SettingsManager !== 'undefined') {
-            await SettingsManager.loadSettings();
-            console.log('✅ Settings Manager initialisiert');
+            // 🐛 v9.3.5 FIX: SettingsManager initialisiert sich selbst!
+            // Kein manuelles loadSettings() nötig!
+            console.log('✅ Settings Manager bereits initialisiert');
         } else {
             console.error('❌ SettingsManager nicht gefunden!');
         }
@@ -428,8 +430,8 @@ function showSettings() {
         settingsOverlay.classList.add('active');
         
         // Lade aktuelle Einstellungen
-        if (typeof SettingsManager !== 'undefined' && SettingsManager.loadSettingsToUI) {
-            SettingsManager.loadSettingsToUI();
+        if (typeof SettingsManager !== 'undefined' && SettingsManager.writeToUI) {
+            SettingsManager.writeToUI();
         }
     }
 }
@@ -448,8 +450,9 @@ function closeSettings() {
  * 💾 Speichert Einstellungen
  */
 function saveSettings() {
-    if (typeof SettingsManager !== 'undefined' && SettingsManager.saveSettingsFromUI) {
-        SettingsManager.saveSettingsFromUI();
+    if (typeof SettingsManager !== 'undefined') {
+        SettingsManager.loadFromUI();
+        SettingsManager.save();
     }
     closeSettings();
 }
@@ -480,10 +483,10 @@ function showCareerComingSoon() {
 }
 
 /**
- * 🛍️ Öffnet Shop (Karrieremodus)
+ * 🛒 Öffnet Shop (Karrieremodus)
  */
 function openShop() {
-    alert('🛍️ SHOP\n\nDer Shop ist Teil des Karrieremodus und kommt bald!\n\nHier kannst du dann neue Fahrzeuge kaufen, Wachen erweitern und Upgrades freischalten.');
+    alert('🛒 SHOP\n\nDer Shop ist Teil des Karrieremodus und kommt bald!\n\nHier kannst du dann neue Fahrzeuge kaufen, Wachen erweitern und Upgrades freischalten.');
 }
 
 /**
@@ -575,4 +578,4 @@ if (document.readyState === 'loading') {
     }, 200);
 }
 
-console.log('✅ main.js v9.3.4 geladen - 🐛 FIX: initializeGame() wird jetzt IMMER aufgerufen!');
+console.log('✅ main.js v9.3.5 geladen - 🐛 FIX: SettingsManager Funktionen korrigiert!');
