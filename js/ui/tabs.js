@@ -84,7 +84,11 @@ function switchTab(tabName) {
     if (tabBtn) tabBtn.classList.add('active');
     
     const tabContent = document.getElementById(`tab-${tabName}`);
-    if (tabContent) tabContent.classList.add('active');
+    if (tabContent) {
+        tabContent.classList.add('active');
+    } else {
+        console.warn(`⚠️ Tab-Inhalt nicht gefunden: tab-${tabName}`);
+    }
     
     currentTab = tabName;
     
@@ -107,7 +111,10 @@ function updateVehiclesOverview() {
     if (!game) return;
     
     const container = document.getElementById('vehicles-overview');
-    if (!container) return;
+    if (!container) {
+        console.warn("⚠️ Element nicht gefunden: vehicles-overview");
+        return;
+    }
     
     const ownedVehicles = game.vehicles.filter(v => v.owned);
     
@@ -288,7 +295,14 @@ function toggleStation(stationId) {
     const vehiclesDiv = document.getElementById(`station-${stationId}`);
     const icon = document.getElementById(`icon-${stationId}`);
     
-    if (!vehiclesDiv || !icon) return;
+    if (!vehiclesDiv) {
+        console.warn(`⚠️ Element nicht gefunden: station-${stationId}`);
+        return;
+    }
+    if (!icon) {
+        console.warn(`⚠️ Element nicht gefunden: icon-${stationId}`);
+        return;
+    }
     
     if (collapsedStations.has(stationId)) {
         collapsedStations.delete(stationId);
@@ -306,7 +320,10 @@ function updateIncidentsOverview() {
     if (!game) return;
     
     const container = document.getElementById('incidents-overview');
-    if (!container) return;
+    if (!container) {
+        console.warn("⚠️ Element nicht gefunden: incidents-overview");
+        return;
+    }
     
     const activeIncidents = game.incidents.filter(i => i.status !== 'completed');
     

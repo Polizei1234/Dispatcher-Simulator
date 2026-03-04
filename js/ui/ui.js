@@ -8,7 +8,10 @@
 const UI = {
     updateIncidentList() {
         const container = document.getElementById('incident-list');
-        if (!container) return;
+        if (!container) {
+            console.warn('⚠️ Element nicht gefunden: incident-list');
+            return;
+        }
 
         const incidents = GAME_DATA?.incidents || [];
         const activeIncidents = incidents.filter(i => !i.completed && i.status !== 'completed');
@@ -16,6 +19,8 @@ const UI = {
         
         if (badge) {
             badge.textContent = activeIncidents.length;
+        } else {
+            console.warn('⚠️ Element nicht gefunden: incident-count');
         }
 
         if (activeIncidents.length === 0) {
@@ -50,7 +55,10 @@ const UI = {
         if (!incident) return;
 
         const detailsContainer = document.getElementById('incident-details');
-        if (!detailsContainer) return;
+        if (!detailsContainer) {
+            console.warn('⚠️ Element nicht gefunden: incident-details');
+            return;
+        }
 
         const vehicleIds = incident.vehicles || incident.assignedVehicles || [];
         const assignedVehicles = vehicleIds.map(vId => {
@@ -176,7 +184,12 @@ const UI = {
         });
 
         this.updateIncidentList();
-        document.getElementById('incident-details').innerHTML = '<p class="no-data">Wählen Sie einen Einsatz aus</p>';
+        const detailsContainer = document.getElementById('incident-details');
+        if (detailsContainer) {
+            detailsContainer.innerHTML = '<p class="no-data">Wählen Sie einen Einsatz aus</p>';
+        } else {
+            console.warn("⚠️ Element nicht gefunden: incident-details");
+        }
 
         console.log(`✅ Einsatz ${incidentId} abgeschlossen (Fallback)`);
     },

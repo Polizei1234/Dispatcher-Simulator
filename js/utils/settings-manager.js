@@ -34,6 +34,7 @@ const SettingsManager = {
      */
     load() {
         try {
+            console.log('⚙️ Lade Einstellungen...');
             const stored = localStorage.getItem(this.STORAGE_KEY);
             if (stored) {
                 this.current = { ...this.defaults, ...JSON.parse(stored) };
@@ -45,7 +46,16 @@ const SettingsManager = {
             this.apply();
         } catch (error) {
             console.error('❌ Fehler beim Laden der Einstellungen:', error);
-            this.current = { ...this.defaults };
+            console.warn('⚠️ Verwende Standard-Einstellungen');
+            // Setze Fallback-Werte
+            this.settings = {
+                soundEnabled: true,
+                notificationsEnabled: true,
+                autoZoomEnabled: true,
+                gameSpeed: 1,
+                vehicleSpeedMultiplier: 1,
+                incidentFrequency: 120
+            };
         }
     },
 

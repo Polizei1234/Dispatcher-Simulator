@@ -172,13 +172,19 @@ function initMap() {
         return;
     }
     
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('❌ Map container element with id "map" not found!');
+        return;
+    }
+
     console.log('🗺️ Initialisiere Karte...');
     
     const mapCenter = CONFIG.MAP?.center || [48.8309415, 9.3256194];
     const mapZoom = CONFIG.MAP?.zoom || 11;
     
     try {
-        map = L.map('map', {
+        map = L.map(mapElement, {
             center: mapCenter,
             zoom: mapZoom,
             minZoom: 9,
