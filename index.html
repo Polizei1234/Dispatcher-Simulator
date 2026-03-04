@@ -313,47 +313,41 @@
     }
     
     document.addEventListener('DOMContentLoaded', async () => {
-        // ✅ FIX: Prüfe ob VERSION_CONFIG verfügbar ist
-        if (!window.VERSION_CONFIG) {
-            console.error('❌ VERSION_CONFIG nicht gefunden!');
-            showCriticalError('VERSION_CONFIG konnte nicht geladen werden');
-            return;
-        }
+    if (!window.VERSION_CONFIG) {
+        console.error('❌ VERSION_CONFIG nicht gefunden!');
+        showCriticalError('VERSION_CONFIG konnte nicht geladen werden');
+        return;
+    }
+    
+    try {
+        const versionText = document.getElementById('version-text');
+        const buildDate = document.getElementById('build-date');
+        if (versionText) versionText.textContent = `Version ${VERSION_CONFIG.VERSION}`;
+        if (buildDate) buildDate.innerHTML = `<i class="fas fa-calendar-alt"></i> Build: ${VERSION_CONFIG.BUILD_DATE}`;
         
-        try {
-            // ✅ FIX: Version Badge SOFORT setzen (bevor JS lädt)
-            const versionText = document.getElementById('version-text');
-            const buildDate = document.getElementById('build-date');
-            if (versionText) versionText.textContent = `Version ${VERSION_CONFIG.VERSION}`;
-            if (buildDate) buildDate.innerHTML = `<i class="fas fa-calendar-alt"></i> Build: ${VERSION_CONFIG.BUILD_DATE}`;
-            
-            console.log('🎨 Lade CSS-Dateien...');
-            // ✅ FIX: CSS zuerst laden (blockierend)
-            VERSION_CONFIG.loadCSS();
-            
-            console.log('📋 Lade JavaScript-Dateien sequenziell...');
-            // ✅ FIX: Dann JS sequenziell laden (mit await)
-            await VERSION_CONFIG.loadJS();
-            
-            console.log('✅ Alle Ressourcen erfolgreich geladen!');
-            
-            // ✅ FIX: Explizites Ready-Event feuern
-            window.dispatchEvent(new CustomEvent('appReady', {
-                detail: { 
-                    version: VERSION_CONFIG.VERSION,
-                    timestamp: Date.now()
-                }
-            }));
-            
-            console.log(`✅ index.html initialisiert - Version ${VERSION_CONFIG.VERSION}`);
-            
-        } catch (error) {
-            console.error('❌ Kritischer Fehler beim Laden:', error);
-            
-            // ✅ FIX: Benutzer-freundliche Fehlermeldung
-            showCriticalError(error.message || 'Unbekannter Fehler');
-        }
-    });
+        console.log('🎨 Lade CSS-Dateien...');
+        VERSION_CONFIG.loadCSS();
+        
+        console.log('📋 Lade JavaScript-Dateien sequenziell...');
+        await VERSION_CONFIG.loadJS();
+        
+        console.log('✅ Alle Ressourcen erfolgreich geladen!');
+        
+        // 🔧 FIX #6: Feuere Custom Event NACHDEM alle Scripts geladen sind
+        window.dispatchEvent(new CustomEvent('allScriptsLoaded', {
+            detail: { 
+                version: VERSION_CONFIG.VERSION,
+                timestamp: Date.now()
+            }
+        }));
+        
+        console.log('🎉 allScriptsLoaded Event gefeuert - main.js kann jetzt initialisieren');
+        
+    } catch (error) {
+        console.error('❌ Kritischer Fehler beim Laden:', error);
+        showCriticalError(error.message || 'Unbekannter Fehler');
+    }
+});
     
     // ✅ FIX: Helper-Funktion für kritische Fehler
     function showCriticalError(errorMessage) {
