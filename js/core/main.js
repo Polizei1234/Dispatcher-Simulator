@@ -18,6 +18,37 @@ let lastGameUpdateTime = Date.now();
  * HAUPTINITIALISIERUNG - Wird nach DOM-Load aufgerufen
  */
 async function initializeGame() {
+    console.log('🎮 initializeGame() gestartet');
+    
+    // 🔧 FIX #6: Validiere dass alle kritischen Module geladen sind
+    const requiredModules = {
+        'VERSION_CONFIG': window.VERSION_CONFIG,
+        'GameConfig': window.GameConfig,
+        'SettingsManager': window.SettingsManager,
+        'eventBridge': window.eventBridge,
+        'GameTimer': window.GameTimer,
+        'WeatherSystem': window.WeatherSystem
+    };
+    
+    const missingModules = [];
+    for (const [name, module] of Object.entries(requiredModules)) {
+        if (!module) {
+            missingModules.push(name);
+            console.error(`❌ Kritisches Modul fehlt: ${name}`);
+        } else {
+            console.log(`✅ ${name} verfügbar`);
+        }
+    }
+    
+    if (missingModules.length > 0) {
+        const errorMsg = `Kritische Module fehlen: ${missingModules.join(', ')}`;
+        console.error('❌', errorMsg);
+        if (typeof showCriticalError === 'function') {
+            showCriticalError(errorMsg);
+        }
+        return; // Abbrechen!
+    }
+    
     console.group('🎮 GAME INITIALIZATION');
     console.log('🚀 Starte Initialisierungssequenz...');
     
@@ -538,19 +569,37 @@ window.togglePause = togglePause;
 
 console.log('✅ Alle Funktionen zu window exportiert!');
 
-/**
- * 📋 DOMContentLoaded Event Handler
- */
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📋 DOM Content Loaded - Starte Initialisierung...');
+// 🔧 FIX #6: Warte auf allScriptsLoaded Event statt DOMContentLoaded
+window.addEventListener('allScriptsLoaded', (event) => {
+    console.log('📡 allScriptsLoaded Event empfangen:', event.detail);
+    console.log('🚀 Starte Spiel-Initialisierung...');
     
-    // Warte kurz für externe Libraries
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Starte Initialisierung
-    await initializeGame();
-    
-    console.log('✅ main.js Initialisierung abgeschlossen');
+    try {
+        initializeGame();
+    } catch (error) {
+        console.error('❌ Fehler bei initializeGame():', error);
+        if (typeof showCriticalError === 'function') {
+            showCriticalError(`Initialisierungsfehler: ${error.message}`);
+        }
+    }
 });
+
+// Fallback: Falls Event bereits gefeuert wurde (sollte nicht passieren)
+if (document.readyState === 'complete') {
+    console.warn('⚠️ Document bereits complete - prüfe ob Scripts geladen');
+    // Warte kurz und versuche dann zu initialisieren
+    setTimeout(() => {
+        if (window.VERSION_CONFIG && window.GameConfig) {
+            console.log('✅ Module vorhanden - starte Initialisierung');
+            try {
+                initializeGame();
+            } catch (error) {
+                console.error('❌ Fehler bei initializeGame():', error);
+            }
+        } else {
+            console.error('❌ Module noch nicht geladen nach Timeout');
+        }
+    }, 2000);
+}
 
 console.log('✅ main.js v9.3.2 geladen - 🔧 KRITISCHE FIXES: Window-Export + Map-Fallback');
