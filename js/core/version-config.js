@@ -180,7 +180,10 @@ const VERSION_CONFIG = {
         'js/core/game.js',
         'js/core/main.js',
         'js/core/bridge.js',
-        
+
+        // Startup Test
+        'js/utils/startup-test.js',
+
         // Debug (last)
         'js/systems/debug-menu.js'
     ],
@@ -321,9 +324,26 @@ const VERSION_CONFIG = {
             };
             
             script.onerror = (error) => {
-                console.error(`  ✗ Fehler: ${path}`, error);
-                // 🔧 v3.1.0: Resolve statt reject (Fehlertoleranz)
-                resolve(); // Fahre fort trotz Fehler
+                console.error(`  ✗ Fehler beim Laden: ${path}`, error);
+    
+                // 🔧 FIX #6: Bei kritischen Modulen NICHT weitermachen
+                const criticalModules = [
+                    'js/core/config.js',
+                    'js/core/game.js',
+                    'js/core/main.js',
+                    'js/core/event-bridge.js',
+                    'js/systems/map.js',
+                    'js/ui/ui.js'
+                ];
+                
+                if (criticalModules.includes(path)) {
+                    console.error('❌ KRITISCHES MODUL konnte nicht geladen werden!');
+                    reject(new Error(`Kritisches Modul fehlgeschlagen: ${path}`));
+                } else {
+                    console.warn('⚠️ Nicht-kritisches Modul übersprungen:', path);
+                    this.loadErrors.push({ file: path, error: error.message, critical: false });
+                    resolve(); // Fahre fort bei nicht-kritischen Modulen
+                }
             };
             
             document.body.appendChild(script);
