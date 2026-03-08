@@ -1,0 +1,1397 @@
+/* =====================================================
+   DISPATCHER SIMULATOR v6.1.3 - PROFESSIONAL EDITION
+   ILS Waiblingen - Realistic Dispatch Center Interface
+   + REDESIGNED DROPDOWN STYLING
+   ===================================================== */
+
+:root {
+    /* Professional Color Palette */
+    --primary-red: #d32f2f;           /* Stronger red for emergencies */
+    --secondary-blue: #1976d2;        /* Professional blue */
+    --success-green: #388e3c;         /* Muted success green */
+    --warning-orange: #f57c00;        /* Professional warning */
+    --danger-red: #c62828;            /* Critical alerts */
+    --info-cyan: #0288d1;             /* Information blue */
+    
+    /* Professional Gray Scale */
+    --bg-darkest: #1a1d23;            /* Main background */
+    --bg-dark: #252932;               /* Secondary background */
+    --bg-secondary: #1e2128;          /* Third background level */
+    --panel-bg: #2a2f3a;              /* Panel backgrounds */
+    --panel-header: #1f2329;          /* Panel headers */
+    --input-bg: #1e2128;              /* Input fields */
+    --border-color: #3a3f4b;          /* Border color */
+    
+    /* Text Colors */
+    --text-primary: #e8eaed;          /* Main text */
+    --text-secondary: #9aa0a6;        /* Secondary text */
+    --text-muted: #5f6368;            /* Muted text */
+    
+    /* Borders & Dividers */
+    --border-light: #3a3f4b;          /* Subtle borders */
+    --border-medium: #4a5160;         /* Medium borders */
+    --border-strong: #5a6270;         /* Strong borders */
+    
+    /* Functional Colors */
+    --status-available: #2e7d32;      /* Available/Ready */
+    --status-busy: #f57c00;           /* Busy/En route */
+    --status-offline: #616161;        /* Offline/Unavailable */
+    --status-emergency: #c62828;      /* Emergency status */
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* =====================================================
+   GLOBAL RESET & BASE STYLES
+   ===================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    background: var(--bg-darkest);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.no-data {
+    color: var(--text-muted);
+    text-align: center;
+    padding: var(--spacing-xl);
+    font-style: italic;
+    font-size: 0.95em;
+}
+
+/* =====================================================
+   OVERLAYS (Welcome & Settings)
+   ===================================================== */
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(4px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.overlay.active {
+    display: flex;
+}
+
+.welcome-container,
+.settings-container {
+    background: var(--bg-dark);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-medium);
+    max-width: 650px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.welcome-container h1 {
+    font-size: 2.2em;
+    margin-bottom: 10px;
+    color: var(--primary-red);
+    font-weight: 600;
+}
+
+.welcome-container h2 {
+    font-size: 1.3em;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.welcome-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+/* =====================================================
+   BUTTONS - Professional & Functional
+   ===================================================== */
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    text-transform: none;
+    letter-spacing: 0.3px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: var(--primary-red);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #b71c1c;
+}
+
+.btn-secondary {
+    background: var(--secondary-blue);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #1565c0;
+}
+
+.btn-success {
+    background: var(--success-green);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #2e7d32;
+}
+
+.btn-danger {
+    background: var(--danger-red);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #b71c1c;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+/* =====================================================
+   SETTINGS & FORMS
+   ===================================================== */
+
+.setting-item {
+    margin-bottom: var(--spacing-lg);
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.95em;
+}
+
+.setting-item input[type="text"],
+.setting-item input[type="password"],
+.setting-item select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.setting-item input:focus,
+.setting-item select:focus {
+    outline: none;
+    border-color: var(--info-cyan);
+}
+
+/* =====================================================
+   ✅ PROFESSIONAL DROPDOWN / SELECT STYLING v6.1.3
+   Modern design with proper visual hierarchy
+   ===================================================== */
+
+select {
+    width: 100%;
+    padding: 14px 18px;
+    padding-right: 45px;
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border: 2px solid var(--border-medium);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* Custom Arrow Icon */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%233182ce' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+}
+
+select:hover {
+    border-color: var(--info-cyan);
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--info-cyan);
+    box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.25), 0 4px 16px rgba(49, 130, 206, 0.3);
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+}
+
+select:active {
+    transform: translateY(0);
+}
+
+/* Dropdown Options Styling */
+select option {
+    background: #2d3748;
+    color: var(--text-primary);
+    padding: 14px 18px;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+select option:hover {
+    background: #374151;
+    color: white;
+}
+
+select option:checked,
+select option:focus {
+    background: linear-gradient(135deg, #3182ce 0%, #2563eb 100%);
+    color: white;
+    font-weight: 600;
+}
+
+/* Special styling for disabled options */
+select option:disabled {
+    color: var(--text-muted);
+    font-style: italic;
+    background: #1a202c;
+}
+
+/* Specific styling for Radio Vehicle Dropdown */
+#radio-vehicle-dropdown {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    padding-right: 50px;
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border: 3px solid #3182ce;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(49, 130, 206, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+#radio-vehicle-dropdown:hover {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+#radio-vehicle-dropdown:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 5px rgba(49, 130, 206, 0.3), 0 5px 20px rgba(49, 130, 206, 0.4);
+}
+
+#radio-vehicle-dropdown option {
+    padding: 16px 20px;
+    line-height: 2;
+    background: #2d3748;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+#radio-vehicle-dropdown option:checked {
+    background: linear-gradient(135deg, #3182ce 0%, #2563eb 100%);
+    color: white;
+    font-weight: 700;
+}
+
+/* Settings Dropdowns - Subtle styling */
+.setting-item select {
+    background: linear-gradient(to bottom, #2d3748 0%, #1f2937 100%);
+    border: 2px solid var(--border-medium);
+    border-radius: 8px;
+    padding: 12px 16px;
+    padding-right: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.setting-item select:hover {
+    border-color: var(--info-cyan);
+    background: linear-gradient(to bottom, #374151 0%, #252932 100%);
+}
+
+.setting-item select:focus {
+    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.25);
+}
+
+/* =====================================================
+   HEADER - Compact & Professional
+   ===================================================== */
+
+header {
+    background: var(--panel-header);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--primary-red);
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+    height: 60px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+}
+
+.header-left h1 {
+    font-size: 1.3em;
+    color: var(--primary-red);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.header-subtitle {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 400;
+    padding: 4px 10px;
+    background: var(--panel-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+
+#current-time {
+    font-size: 1.1em;
+    font-weight: 500;
+    font-family: 'Courier New', 'Consolas', monospace;
+    background: var(--panel-bg);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    letter-spacing: 1px;
+}
+
+.header-right {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.header-right span {
+    background: var(--panel-bg);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.95em;
+    border: 1px solid var(--border-light);
+}
+
+/* =====================================================
+   MAIN CONTENT LAYOUT
+   ===================================================== */
+
+.main-content {
+    display: grid;
+    grid-template-columns: 350px 1fr 380px;
+    height: calc(100vh - 200px);
+    gap: 8px;
+    padding: 8px;
+    overflow: hidden;
+}
+
+/* =====================================================
+   PANELS - Clean & Functional
+   ===================================================== */
+
+.panel {
+    background: var(--panel-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    margin-bottom: 8px;
+    height: 100%;
+}
+
+.panel-header {
+    background: var(--panel-header);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.panel-header h3 {
+    font-size: 1em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+}
+
+.badge {
+    background: var(--primary-red);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    min-height: 0;
+}
+
+/* =====================================================
+   SIDEBARS
+   ===================================================== */
+
+.sidebar-left,
+.sidebar-right {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+    gap: 8px;
+}
+
+/* =====================================================
+   MAP CONTAINER
+   ===================================================== */
+
+.map-container {
+    position: relative;
+    background: #000;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    height: 100%;
+    min-height: 500px;
+    border: 1px solid var(--border-light);
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.map-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* =====================================================
+   INCIDENTS - Professional List Style
+   ===================================================== */
+
+.incident-item {
+    background: var(--input-bg);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--danger-red);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
+}
+
+.incident-item:hover {
+    background: var(--panel-bg);
+    border-left-color: var(--primary-red);
+    transform: translateX(2px);
+}
+
+/* =====================================================
+   VEHICLES - Compact Professional Cards
+   ===================================================== */
+
+.vehicle-item {
+    background: var(--input-bg);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-light);
+    transition: background 0.15s;
+}
+
+.vehicle-item:hover {
+    background: var(--panel-bg);
+}
+
+/* =====================================================
+   FOOTER - Radio Log
+   ===================================================== */
+
+footer {
+    height: 140px;
+    padding: 0 8px 8px 8px;
+    flex-shrink: 0;
+}
+
+footer .panel {
+    height: 100%;
+    margin: 0;
+}
+
+.radio-log {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+}
+
+.radio-message {
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border-left: 2px solid var(--info-cyan);
+}
+
+/* =====================================================
+   FORMS
+   ===================================================== */
+
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.95em;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--info-cyan);
+}
+
+/* =====================================================
+   MODALS
+   ===================================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(3px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--bg-dark);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-medium);
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    background: var(--panel-header);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--danger-red);
+}
+
+/* =====================================================
+   SCROLLBARS - Subtle Professional Style
+   ===================================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--panel-header);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}
+
+/* =====================================================
+   ANIMATIONS - Subtle & Professional
+   ===================================================== */
+
+@keyframes pulse-professional {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.75;
+    }
+}
+
+.tab-btn.blinking {
+    animation: pulse-professional 2s infinite;
+    background: var(--danger-red) !important;
+    color: white !important;
+}
+
+/* =====================================================
+   INCOMING CALL CARD
+   ===================================================== */
+
+.incoming-call-card {
+    padding: 12px;
+    background: rgba(211, 47, 47, 0.15);
+    border: 2px solid var(--danger-red);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    animation: pulse-professional 2s infinite;
+    transition: all 0.2s;
+}
+
+.incoming-call-card:hover {
+    background: rgba(211, 47, 47, 0.25);
+    transform: scale(1.02);
+}
+
+/* =====================================================
+   COMPACT VEHICLE OVERVIEW
+   ===================================================== */
+
+.vehicles-header-compact {
+    background: var(--panel-header);
+    padding: 12px 14px;
+    margin: -12px -12px 12px -12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.header-row h2 {
+    font-size: 1.2em;
+    margin: 0;
+    font-weight: 600;
+}
+
+.quick-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.quick-stats .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 7px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.filter-btn:hover {
+    background: var(--panel-bg);
+    border-color: var(--info-cyan);
+}
+
+.filter-btn.active {
+    background: var(--info-cyan);
+    border-color: var(--info-cyan);
+    color: white;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.action-btn {
+    padding: 7px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.action-btn:hover {
+    background: var(--panel-bg);
+    border-color: var(--info-cyan);
+}
+
+.shortcuts-hint {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shortcuts-hint kbd {
+    background: var(--panel-header);
+    padding: 2px 5px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* =====================================================
+   STATION GROUPS
+   ===================================================== */
+
+.stations-container-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.station-group-compact {
+    background: var(--input-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+
+.station-header-compact {
+    padding: 10px 14px;
+    background: var(--panel-header);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.station-header-compact:hover {
+    background: var(--panel-bg);
+}
+
+.station-icon-compact {
+    font-size: 1.1em;
+}
+
+.station-name-compact {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.station-count {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.collapse-icon-compact {
+    font-size: 0.75em;
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+}
+
+.collapse-icon-compact.open {
+    transform: rotate(180deg);
+}
+
+.station-vehicles-compact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.station-vehicles-compact.open {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 6px;
+    padding: 8px;
+    max-height: 2000px;
+}
+
+/* =====================================================
+   COMPACT VEHICLE CARDS
+   ===================================================== */
+
+.vehicle-card-compact {
+    background: var(--panel-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s;
+    min-height: 42px;
+}
+
+.vehicle-card-compact:hover {
+    background: var(--bg-dark);
+    border-color: var(--border-medium);
+    transform: translateX(2px);
+}
+
+.vehicle-info-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.vehicle-icon-compact {
+    font-size: 1.1em;
+    flex-shrink: 0;
+}
+
+.vehicle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.vehicle-callsign {
+    font-weight: 600;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Consolas', 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+.vehicle-status-text {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vehicle-actions-compact {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-icon-compact {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-size: 0.85em;
+    flex-shrink: 0;
+}
+
+.btn-icon-compact:hover {
+    background: var(--panel-bg);
+    border-color: var(--info-cyan);
+}
+
+.btn-icon-compact.btn-primary {
+    background: var(--info-cyan);
+    border-color: var(--info-cyan);
+    color: white;
+}
+
+.btn-icon-compact.btn-primary:hover {
+    background: #0277bd;
+}
+
+/* =====================================================
+   CALL TAB LAYOUT
+   ===================================================== */
+
+.call-tab-container {
+    height: 100%;
+    overflow: hidden;
+}
+
+.call-no-active {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.call-active {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =====================================================
+   IMPROVED VEHICLE CARDS (Assignment)
+   ===================================================== */
+
+.vehicle-cards-improved {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.vehicle-card-large {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.vehicle-card-large:hover {
+    border-color: var(--info-cyan);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.vehicle-card-large.selected {
+    background: var(--success-green);
+    border-color: var(--success-green);
+    color: white;
+}
+
+.vehicle-card-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.vehicle-card-name {
+    font-size: 1em;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.vehicle-card-large.selected .vehicle-card-name {
+    color: white;
+}
+
+.vehicle-card-station {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+}
+
+.vehicle-card-large.selected .vehicle-card-station {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.vehicle-card-type {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    background: var(--input-bg);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.vehicle-card-large.selected .vehicle-card-type {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* =====================================================
+   OLD VEHICLE CARDS (Fallback)
+   ===================================================== */
+
+.vehicle-type-section {
+    margin-bottom: 16px;
+}
+
+.vehicle-type-section h6 {
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.vehicle-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+}
+
+.vehicle-card {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.vehicle-card:hover {
+    border-color: var(--info-cyan);
+    transform: translateY(-1px);
+}
+
+.vehicle-card.selected {
+    background: var(--success-green);
+    border-color: var(--success-green);
+    color: white;
+}
+
+.vehicle-icon {
+    font-size: 22px;
+    margin-bottom: 5px;
+}
+
+.vehicle-name {
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.vehicle-station {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+}
+
+.vehicle-card.selected .vehicle-station {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* =====================================================
+   QUESTION BUTTONS (Call System)
+   ===================================================== */
+
+.question-cat {
+    margin-bottom: 8px;
+}
+
+.cat-header {
+    background: var(--panel-header);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.cat-header:hover {
+    background: var(--panel-bg);
+    border-color: var(--border-medium);
+}
+
+.cat-header .arrow {
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+}
+
+.cat-questions {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding: 0 6px;
+}
+
+.cat-questions.open {
+    max-height: 500px;
+    padding: 8px 6px;
+}
+
+.q-btn {
+    width: 100%;
+    padding: 9px 10px;
+    margin-bottom: 5px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    border-left-width: 3px;
+    border-left-color: var(--info-cyan);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    transition: all 0.15s;
+}
+
+.q-btn:hover {
+    background: var(--panel-bg);
+    border-left-color: var(--primary-red);
+    transform: translateX(3px);
+}
+
+/* =====================================================
+   MESSAGE STYLING (Call Dialog)
+   ===================================================== */
+
+.msg-dispatcher {
+    background: rgba(25, 118, 210, 0.15);
+    padding: 10px 12px;
+    margin: 6px 0;
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--info-cyan);
+    animation: slideIn 0.3s ease-out;
+}
+
+.msg-caller {
+    background: var(--panel-header);
+    padding: 10px 12px;
+    margin: 6px 0;
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--warning-orange);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#caller-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--input-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    margin-bottom: 12px;
+    min-height: 200px;
+    max-height: 400px;
+}
+
+/* =====================================================
+   STICHWORT DROPDOWN
+   ===================================================== */
+
+.stichwort-dropdown {
+    position: absolute;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    width: calc(100% - 30px);
+    margin-top: 4px;
+}
+
+.stichwort-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.15s;
+    font-size: 0.9em;
+}
+
+.stichwort-item:hover {
+    background: var(--bg-dark);
+}
+
+.stichwort-item:last-child {
+    border-bottom: none;
+}

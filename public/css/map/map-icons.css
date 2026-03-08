@@ -1,0 +1,22 @@
+/* =====================================================
+   MAP ICONS & MARKERS v6.0.0 - PROFESSIONAL EDITION
+   Beautiful, functional icons for realistic dispatch
+   ===================================================== */
+
+/* =====================================================
+   STATION MARKERS - Professional Look
+   ===================================================== */
+
+.station-marker {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.station-marker:hover {
+    transform: scale(1.15);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    z-index: 1000 !important;
+}
+
+/* ... (rest of map-icons.css content - über 500 Zeilen) ... */

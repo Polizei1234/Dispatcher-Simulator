@@ -18,9 +18,8 @@ module.exports = (env, argv) => {
         },
         
         output: {
-            filename: isProduction ? 'js/[name].[contenthash:8].bundle.js' : 'js/[name].bundle.js',
+            filename: 'js/[name].bundle.js',
             path: path.resolve(__dirname, 'dist'),
-            clean: true,
             publicPath: '/dist/'
         },
         
@@ -41,7 +40,7 @@ module.exports = (env, argv) => {
         plugins: [
             // CSS Extraktion für Production
             new MiniCssExtractPlugin({
-                filename: isProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css'
+                filename: 'css/[name].css'
             }),
             
             // Bundle Analyzer (nur wenn --env analyze)
