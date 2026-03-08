@@ -403,6 +403,36 @@ function togglePause() {
  */
 function startNewGame(mode) {
     console.log(`🎮 Starte neues Spiel: ${mode}`);
+
+    // 🗑️ Cleanup-Phase: Alle alten Systeme zurücksetzen!
+    console.group('🗑️ CLEANUP PHASE');
+    stopGameLoop(); // Stoppt den alten Game-Loop
+
+    // 1. StateManager zurücksetzen
+    if (typeof window.stateManager !== 'undefined' && window.stateManager.resetState) {
+        window.stateManager.resetState();
+        console.log('✅ StateManager zurückgesetzt');
+    }
+
+    // 2. RadioSystem bereinigen
+    if (typeof RadioSystem !== 'undefined' && RadioSystem.cleanup) {
+        RadioSystem.cleanup();
+        console.log('✅ RadioSystem bereinigt');
+    }
+
+    // 3. EventBridge Listener zurücksetzen (optional, wenn nötig)
+    if (typeof window.eventBridge !== 'undefined' && window.eventBridge.reset) {
+        window.eventBridge.reset();
+        console.log('✅ EventBridge zurückgesetzt');
+    }
+
+    // 4. UI-Elemente zurücksetzen
+    if (typeof UI !== 'undefined' && UI.reset) {
+        UI.reset();
+        console.log('✅ UI zurückgesetzt');
+    }
+
+    console.groupEnd();
     
     // Verstecke Welcome Screen
     const welcomeScreen = document.getElementById('welcome-screen');
@@ -575,6 +605,13 @@ window.addEventListener('allScriptsLoaded', (event) => {
     console.log('🚀 Starte Spiel-Initialisierung...');
     
     try {
+        // StateManager initialisieren
+        if (typeof stateManager !== 'undefined' && typeof GAME_DATA !== 'undefined') {
+            stateManager.initialize(GAME_DATA);
+            window.stateManager = stateManager;
+            console.log('✅ StateManager initialisiert');
+        }
+
         initializeGame();
     } catch (error) {
         console.error('❌ Fehler bei initializeGame():', error);
@@ -592,6 +629,12 @@ if (document.readyState === 'complete') {
         if (window.VERSION_CONFIG && window.GameConfig) {
             console.log('✅ Module vorhanden - starte Initialisierung');
             try {
+                // StateManager initialisieren
+                if (typeof stateManager !== 'undefined' && typeof GAME_DATA !== 'undefined') {
+                    stateManager.initialize(GAME_DATA);
+                    window.stateManager = stateManager;
+                    console.log('✅ StateManager initialisiert');
+                }
                 initializeGame();
             } catch (error) {
                 console.error('❌ Fehler bei initializeGame():', error);

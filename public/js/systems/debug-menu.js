@@ -18,6 +18,8 @@ class DebugMenu {
             radio: true,
             errors: true
         };
+        this.performanceMonitor = new PerformanceMonitor();
+        window.performanceMonitor = this.performanceMonitor;
     }
 
     /**
@@ -64,6 +66,7 @@ class DebugMenu {
             
             <div class="debug-tabs">
                 <button class="debug-tab active" onclick="debugMenu.showTab('stats')">📊 Stats</button>
+                <button class="debug-tab" onclick="debugMenu.showTab('performance')">⚡ Performance</button>
                 <button class="debug-tab" onclick="debugMenu.showTab('vehicles')">🚑 Fahrzeuge</button>
                 <button class="debug-tab" onclick="debugMenu.showTab('incidents')">🚨 Einsätze</button>
                 <button class="debug-tab" onclick="debugMenu.showTab('logs')">📝 Logs</button>
@@ -72,6 +75,7 @@ class DebugMenu {
             
             <div class="debug-content">
                 <div id="debug-tab-stats" class="debug-tab-content active"></div>
+                <div id="debug-tab-performance" class="debug-tab-content"></div>
                 <div id="debug-tab-vehicles" class="debug-tab-content"></div>
                 <div id="debug-tab-incidents" class="debug-tab-content"></div>
                 <div id="debug-tab-logs" class="debug-tab-content"></div>
@@ -108,6 +112,7 @@ class DebugMenu {
         if (!this.isVisible) return;
         
         this.updateTab('stats');
+        this.updateTab('performance');
         this.updateTab('vehicles');
         this.updateTab('incidents');
         this.updateTab('logs');
@@ -124,6 +129,9 @@ class DebugMenu {
         switch(tabName) {
             case 'stats':
                 container.innerHTML = this.renderStats();
+                break;
+            case 'performance':
+                container.innerHTML = this.renderPerformance();
                 break;
             case 'vehicles':
                 container.innerHTML = this.renderVehicles();
@@ -216,6 +224,27 @@ class DebugMenu {
                 <div class="debug-stat">
                     <span>Temperatur:</span>
                     <span>${gameWeatherSystem?.currentWeather?.temperature || 'N/A'}°C</span>
+                </div>
+            </div>
+        `;
+    }
+
+    renderPerformance() {
+        const { fps, memory, entities } = this.performanceMonitor;
+        return `
+            <div class="debug-section">
+                <h4>⚡ Performance</h4>
+                <div class="debug-stat">
+                    <span>FPS:</span>
+                    <span>${fps}</span>
+                </div>
+                <div class="debug-stat">
+                    <span>Memory:</span>
+                    <span>${memory} MB</span>
+                </div>
+                <div class="debug-stat">
+                    <span>Entities:</span>
+                    <span>${entities}</span>
                 </div>
             </div>
         `;
@@ -613,154 +642,4 @@ class DebugMenu {
             
             .debug-content {
                 max-height: calc(80vh - 150px);
-                overflow-y: auto;
-                padding: 15px;
-            }
-            
-            .debug-tab-content {
-                display: none;
-            }
-            
-            .debug-tab-content.active {
-                display: block;
-            }
-            
-            .debug-section {
-                margin-bottom: 20px;
-                padding: 15px;
-                background: rgba(45, 55, 72, 0.5);
-                border-radius: 8px;
-            }
-            
-            .debug-section h4 {
-                margin: 0 0 10px 0;
-                color: #3182ce;
-                font-size: 1em;
-            }
-            
-            .debug-stat {
-                display: flex;
-                justify-content: space-between;
-                padding: 5px 0;
-                color: #a0aec0;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-            }
-            
-            .debug-stat:last-child {
-                border-bottom: none;
-            }
-            
-            .debug-vehicle-card, .debug-incident-card {
-                background: rgba(45, 55, 72, 0.5);
-                padding: 12px;
-                margin-bottom: 10px;
-                border-radius: 8px;
-            }
-            
-            .debug-vehicle-header, .debug-incident-header {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 8px;
-                color: #fff;
-            }
-            
-            .debug-vehicle-info, .debug-incident-info {
-                font-size: 0.9em;
-                color: #a0aec0;
-                margin-bottom: 8px;
-            }
-            
-            .debug-vehicle-actions, .debug-incident-actions {
-                display: flex;
-                gap: 5px;
-            }
-            
-            .btn-debug-small {
-                padding: 4px 8px;
-                background: #3182ce;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.8em;
-            }
-            
-            .btn-debug-small:hover {
-                background: #2563eb;
-            }
-            
-            .btn-debug {
-                width: 100%;
-                padding: 10px;
-                margin: 5px 0;
-                background: #3182ce;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-            }
-            
-            .btn-debug:hover {
-                background: #2563eb;
-            }
-            
-            .debug-actions-grid {
-                display: grid;
-                gap: 15px;
-            }
-            
-            .debug-action-section h4 {
-                margin: 0 0 10px 0;
-                color: #3182ce;
-            }
-            
-            .debug-log-list {
-                max-height: 400px;
-                overflow-y: auto;
-            }
-            
-            .debug-log-entry {
-                padding: 8px;
-                margin-bottom: 5px;
-                background: rgba(45, 55, 72, 0.5);
-                border-radius: 4px;
-                font-size: 0.85em;
-                border-left: 3px solid #3182ce;
-            }
-            
-            .debug-log-time {
-                color: #666;
-                margin-right: 8px;
-            }
-            
-            .debug-log-category {
-                color: #3182ce;
-                margin-right: 8px;
-                font-weight: bold;
-            }
-            
-            .debug-log-message {
-                color: #a0aec0;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-}
-
-// Globale Instanz
-const debugMenu = new DebugMenu();
-
-// Keyboard Shortcut: Strg + Shift + D
-document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        debugMenu.toggle();
-    }
-});
-
-console.log('✅ Debug-Menü v1.2 geladen - Drücke Strg+Shift+D zum Öffnen');
-console.log('✅✅✅ BUG FIX: Menü öffnet jetzt beim ERSTEN Klick!');
-
-if (typeof window !== 'undefined') {
-    window.debugMenu = debugMenu;
-}
+                overflow-y: auto;\n                padding: 15px;\n            }\n            \n            .debug-tab-content {\n                display: none;\n            }\n            \n            .debug-tab-content.active {\n                display: block;\n            }\n            \n            .debug-section {\n                margin-bottom: 20px;\n                padding: 15px;\n                background: rgba(45, 55, 72, 0.5);\n                border-radius: 8px;\n            }\n            \n            .debug-section h4 {\n                margin: 0 0 10px 0;\n                color: #3182ce;\n                font-size: 1em;\n            }\n            \n            .debug-stat {\n                display: flex;\n                justify-content: space-between;\n                padding: 5px 0;\n                color: #a0aec0;\n                border-bottom: 1px solid rgba(255,255,255,0.1);\n            }\n            \n            .debug-stat:last-child {\n                border-bottom: none;\n            }\n            \n            .debug-vehicle-card, .debug-incident-card {\n                background: rgba(45, 55, 72, 0.5);\n                padding: 12px;\n                margin-bottom: 10px;\n                border-radius: 8px;\n            }\n            \n            .debug-vehicle-header, .debug-incident-header {\n                display: flex;\n                justify-content: space-between;\n                margin-bottom: 8px;\n                color: #fff;\n            }\n            \n            .debug-vehicle-info, .debug-incident-info {\n                font-size: 0.9em;\n                color: #a0aec0;\n                margin-bottom: 8px;\n            }\n            \n            .debug-vehicle-actions, .debug-incident-actions {\n                display: flex;\n                gap: 5px;\n            }\n            \n            .btn-debug-small {\n                padding: 4px 8px;\n                background: #3182ce;\n                color: white;\n                border: none;\n                border-radius: 4px;\n                cursor: pointer;\n                font-size: 0.8em;\n            }\n            \n            .btn-debug-small:hover {\n                background: #2563eb;\n            }\n            \n            .btn-debug {\n                width: 100%;\n                padding: 10px;\n                margin: 5px 0;\n                background: #3182ce;\n                color: white;\n                border: none;\n                border-radius: 6px;\n                cursor: pointer;\n            }\n            \n            .btn-debug:hover {\n                background: #2563eb;\n            }\n            \n            .debug-actions-grid {\n                display: grid;\n                gap: 15px;\n            }\n            \n            .debug-action-section h4 {\n                margin: 0 0 10px 0;\n                color: #3182ce;\n            }\n            \n            .debug-log-list {\n                max-height: 400px;\n                overflow-y: auto;\n            }\n            \n            .debug-log-entry {\n                padding: 8px;\n                margin-bottom: 5px;\n                background: rgba(45, 55, 72, 0.5);\n                border-radius: 4px;\n                font-size: 0.85em;\n                border-left: 3px solid #3182ce;\n            }\n            \n            .debug-log-time {\n                color: #666;\n                margin-right: 8px;\n            }\n            \n            .debug-log-category {\n                color: #3182ce;\n                margin-right: 8px;\n                font-weight: bold;\n            }\n            \n            .debug-log-message {\n                color: #a0aec0;\n            }\n        `;\n        document.head.appendChild(style);\n    }\n}\n\n// Globale Instanz\nconst debugMenu = new DebugMenu();\n\n// Keyboard Shortcut: Strg + Shift + D\ndocument.addEventListener('keydown', (e) => {\n    if (e.ctrlKey && e.shiftKey && e.key === 'D') {\n        e.preventDefault();\n        debugMenu.toggle();\n    }\n});\n\nconsole.log('✅ Debug-Menü v1.2 geladen - Drücke Strg+Shift+D zum Öffnen');\nconsole.log('✅✅✅ BUG FIX: Menü öffnet jetzt beim ERSTEN Klick!');\n\nif (typeof window !== 'undefined') {\n    window.debugMenu = debugMenu;\n}
