@@ -38,14 +38,14 @@
                 </ul>
             </div>
             <div class="welcome-buttons" style="margin-top: 20px;">
-                <button class="btn btn-primary" onclick="showCareerComingSoon()" style="position: relative; cursor: not-allowed; opacity: 0.6;" title="Kommt bald!">
+                <button id="start-career-mode" class="btn btn-primary" style="position: relative; cursor: not-allowed; opacity: 0.6;" title="Kommt bald!">
                     <i class="fas fa-lock" style="margin-right: 5px;"></i>
                     <i class="fas fa-trophy"></i> Karrieremodus
                     <span style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; font-weight: bold;">BALD</span>
                 </button>
-                <button class="btn btn-success" onclick="startNewGame('free')"><i class="fas fa-infinity"></i> Freies Spiel</button>
-                <button class="btn btn-secondary" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Tutorial</button>
-                <button class="btn btn-secondary" onclick="showSettings()"><i class="fas fa-cog"></i> Einstellungen</button>
+                <button id="start-free-game" class="btn btn-success"><i class="fas fa-infinity"></i> Freies Spiel</button>
+                <button id="start-tutorial" class="btn btn-secondary"><i class="fas fa-graduation-cap"></i> Tutorial</button>
+                <button id="show-settings" class="btn btn-secondary"><i class="fas fa-cog"></i> Einstellungen</button>
             </div>
             <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
                 <p style="margin: 5px 0;"><strong>🔒 Karrieremodus:</strong> Kommt bald! Starte mit wenigen Fahrzeugen und baue deine Flotte auf.</p>
@@ -72,7 +72,7 @@
                     <label><i class="fas fa-robot"></i> Groq API Key:</label>
                     <div style="display: flex; gap: 5px;">
                         <input type="password" id="groq-api-key" placeholder="gsk_..." style="flex: 1;">
-                        <button class="btn btn-small" onclick="toggleAPIKeyVisibility()" style="padding: 8px 12px;">
+                        <button id="toggle-api-key-visibility" class="btn btn-small" style="padding: 8px 12px;">
                             <i class="fas fa-eye" id="api-key-toggle-icon"></i>
                         </button>
                     </div>
@@ -150,8 +150,8 @@
                 </div>
             </div>
             <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="closeSettings()">Abbrechen</button>
-                <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Speichern</button>
+                <button id="close-settings" class="btn btn-secondary">Abbrechen</button>
+                <button id="save-settings" class="btn btn-primary"><i class="fas fa-save"></i> Speichern</button>
             </div>
         </div>
     </div>
@@ -167,7 +167,7 @@
                 <span id="current-weather" style="margin-left: 15px; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: 0.9em;" title="Aktuelles Wetter">
                     ☀️ Trocken
                 </span>
-                <button id="pause-btn" onclick="togglePause()" class="btn btn-small" style="margin-left: 10px;" title="Pausieren">
+                <button id="pause-btn" class="btn btn-small" style="margin-left: 10px;" title="Pausieren">
                     <i class="fas fa-pause" id="pause-icon"></i>
                 </button>
             </div>
@@ -177,28 +177,28 @@
                 </span>
                 <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
                 <!-- 🆕 v9.1.0: FUNKVERKEHR-BUTTON -->
-                <button id="radio-toggle-btn" class="btn btn-small" onclick="toggleRadioPanel()" style="background: #17a2b8; border-color: #17a2b8;" title="Funkverkehr öffnen">
+                <button id="radio-toggle-btn" class="btn btn-small" style="background: #17a2b8; border-color: #17a2b8;" title="Funkverkehr öffnen">
                     <i class="fas fa-broadcast-tower"></i> Funk
                     <span id="radio-queue-badge" class="badge" style="display: none; position: absolute; top: -5px; right: -5px; background: #dc3545; border-radius: 50%; padding: 2px 6px; font-size: 0.7em;">0</span>
                 </button>
-                <button class="btn btn-small" onclick="debugMenu.toggle()" style="background: #6c757d; border-color: #6c757d;" title="Debug-Menü">
+                <button id="debug-menu-toggle" class="btn btn-small" style="background: #6c757d; border-color: #6c757d;" title="Debug-Menü">
                     <i class="fas fa-bug"></i> Debug
                 </button>
-                <button class="btn btn-small" onclick="openShop()"><i class="fas fa-shopping-cart"></i> Shop</button>
-                <button class="btn btn-small" onclick="showSettings()"><i class="fas fa-cog"></i></button>
+                <button id="open-shop" class="btn btn-small"><i class="fas fa-shopping-cart"></i> Shop</button>
+                <button id="show-settings-ingame" class="btn btn-small"><i class="fas fa-cog"></i></button>
             </div>
         </header>
 
         <nav class="tab-navigation">
-            <button class="tab-btn active" onclick="switchTab('map')">
+            <button class="tab-btn active" data-tab="map">
                 <i class="fas fa-map"></i>
                 <span>Karte</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('vehicles')">
+            <button class="tab-btn" data-tab="vehicles">
                 <i class="fas fa-ambulance"></i>
                 <span>Fahrzeuge</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('call')" id="call-tab-btn">
+            <button class="tab-btn" data-tab="call" id="call-tab-btn">
                 <i class="fas fa-phone"></i>
                 <span>Notruf</span>
             </button>
@@ -212,15 +212,15 @@
                             <h3><i class="fas fa-list"></i> Aktive Einsätze</h3>
                             <span class="badge" id="incident-count">0</span>
                         </div>
-                        <div class="panel-content" id="incident-list" style="height: calc(100% - 60px); overflow-y: auto;"></div>
+                        <div class="panel-content" id="incident-list-container" style="height: calc(100% - 60px); overflow-y: auto;"></div>
                     </div>
                 </aside>
 
                 <main class="map-container" style="flex: 1;">
                     <div id="map"></div>
                     <div class="map-controls">
-                        <button class="btn btn-small" onclick="centerMap()" title="Karte zentrieren"><i class="fas fa-crosshairs"></i></button>
-                        <button class="btn btn-small" onclick="toggleStations()" title="Wachen ein/ausblenden"><i class="fas fa-hospital"></i></button>
+                        <button id="center-map" class="btn btn-small" title="Karte zentrieren"><i class="fas fa-crosshairs"></i></button>
+                        <button id="toggle-stations" class="btn btn-small" title="Wachen ein/ausblenden"><i class="fas fa-hospital"></i></button>
                     </div>
                 </main>
 
@@ -229,7 +229,7 @@
                         <div class="panel-header">
                             <h3><i class="fas fa-info-circle"></i> Einsatzdetails</h3>
                         </div>
-                        <div class="panel-content" id="incident-details" style="overflow-y: auto;">
+                        <div class="panel-content" id="incident-details-container" style="overflow-y: auto;">
                             <p class="no-data">Wählen Sie einen Einsatz aus</p>
                         </div>
                     </div>
@@ -238,7 +238,7 @@
                         <div class="panel-header">
                             <h3><i class="fas fa-phone-volume"></i> Eingehende Anrufe</h3>
                         </div>
-                        <div class="panel-content" id="call-list" style="max-height: 250px; overflow-y: auto;">
+                        <div class="panel-content" id="call-dialog-container" style="max-height: 250px; overflow-y: auto;">
                             <p class="no-data">Keine eingehenden Anrufe</p>
                         </div>
                     </div>
@@ -247,7 +247,7 @@
         </div>
 
         <div id="tab-vehicles" class="tab-content">
-            <div class="vehicles-overview" id="vehicles-overview"></div>
+            <div class="vehicles-overview" id="vehicle-list-container"></div>
         </div>
 
         <div id="tab-call" class="tab-content">
@@ -271,7 +271,7 @@
                         </div>
                     </div>
                     <div style="position: sticky; bottom: 0; left: 0; right: 0; padding: 15px; background: var(--panel-bg); border-top: 2px solid var(--border-color); text-align: right; z-index: 100;">
-                        <button class="btn btn-danger" onclick="CallSystem.hangUp()" style="padding: 12px 30px; font-size: 16px; font-weight: bold;">
+                        <button id="hang-up-call" class="btn btn-danger" style="padding: 12px 30px; font-size: 16px; font-weight: bold;">
                             <i class="fas fa-phone-slash"></i> GESPRÄCH BEENDEN
                         </button>
                     </div>
@@ -282,64 +282,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-
-    <script src="js/core/cleanup-manager.js"></script>
-    <script src="js/systems/theme-manager.js"></script>
-    <script src="js/core/config.js"></script>
-    <script src="js/core/incident-manager.js"></script>
-    <script src="js/core/event-bridge.js"></script>
-    <script src="js/utils/settings-manager.js"></script>
-    <script src="js/utils/location-generator.js"></script>
-    <script src="js/utils/incident-numbering.js"></script>
-    <script src="js/utils/vehicle-analyzer.js"></script>
-    <script src="js/utils/address-service.js"></script>
-    <script src="js/utils/scoring-system.js"></script>
-    <script src="js/utils/tutorial.js"></script>
-    <script src="js/utils/vehicle-status.js"></script>
-    <script src="js/utils/radio-groq.js"></script>
-    <script src="js/data/severity-bases.js"></script>
-    <script src="js/data/incident-types.js"></script>
-    <script src="js/data/incident-modifiers.js"></script>
-    <script src="js/core/incident-composer.js"></script>
-    <script src="js/data/conversation-pools.js"></script>
-    <script src="js/data/hospitals.js"></script>
-    <script src="js/data/incidents.js"></script>
-    <script src="js/data/data.js"></script>
-    <script src="js/systems/game-timer.js"></script>
-    <script src="js/systems/weather-system.js"></script>
-    <script src="js/systems/notification-system.js"></script>
-    <script src="js/systems/call-template-mapper.js"></script>
-    <script src="js/systems/ai-incident-generator.js"></script>
-    <script src="js/systems/escalation-system.js"></script>
-    <script src="js/systems/groq-validator.js"></script>
-    <script src="js/systems/call-system.js"></script>
-    <script src="js/systems/conversation-engine.js"></script>
-    <script src="js/systems/mission-timer.js"></script>
-    <script src="js/systems/vehicle-movement.js"></script>
-    <script src="js/systems/radio-system.js"></script>
-    <script src="js/ui/ui-helpers.js"></script>
-    <script src="js/ui/priority-dropdown.js"></script>
-    <script src="js/ui/universal-dropdown.js"></script>
-    <script src="js/ui/keywords-dropdown.js"></script>
-    <script src="js/ui/protocol-form.js"></script>
-    <script src="js/ui/assignment-ui.js"></script>
-    <script src="js/ui/manual-incident.js"></script>
-    <script src="js/ui/tabs.js"></script>
-    <script src="js/ui/ui.js"></script>
-    <script src="js/ui/draggable.js"></script>
-    <script src="js/ui/radio-panel.js"></script>
-    <script src="js/systems/map.js"></script>
-    <script src="js/systems/ai.js"></script>
-    <script src="js/core/game.js"></script>
-    <script src="js/core/main.js"></script>
-    <script src="js/core/bridge.js"></script>
-    <script src="js/utils/startup-test.js"></script>
-    <script src="js/systems/debug-menu.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            window.dispatchEvent(new CustomEvent('allScriptsLoaded'));
-        });
-    </script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
