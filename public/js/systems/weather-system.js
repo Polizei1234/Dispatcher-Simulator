@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // WEATHER SYSTEM v2.1 - ERWEITERT + UI-FIX
 // Dynamisches Wetter beeinflusst Einsätze
@@ -193,7 +195,7 @@ class WeatherSystem {
     }
     
     startWeatherCycle() {
-        this.weatherChangeInterval = setInterval(() => {
+        this.weatherChangeInterval = cleanupManager.setInterval('weather-system',() => {
             this.selectRandomWeather();
             console.log(`🌦️ Wetter geändert: ${this.currentWeather.icon} ${this.currentWeather.name}`);
             this.updateUI();
@@ -286,6 +288,11 @@ class WeatherSystem {
         if (this.weatherChangeInterval) {
             clearInterval(this.weatherChangeInterval);
         }
+    }
+
+    destroy() {
+        cleanupManager.cleanup('weather-system');
+        console.log('✅ WeatherSystem cleaned up');
     }
 }
 

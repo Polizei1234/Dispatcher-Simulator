@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // ESCALATION SYSTEM v2.1
 // PHASE 3 - EVENTBRIDGE INTEGRATION
@@ -107,7 +109,7 @@ class EscalationSystem {
         console.groupEnd();
         
         // Setze Timer
-        const escalationTimer = setTimeout(() => {
+        const escalationTimer = cleanupManager.setTimeout('escalation-system', () => {
             this.executeEscalation(incident);
         }, delayMs);
         
@@ -135,7 +137,7 @@ class EscalationSystem {
                 
                 console.log(`⚠️ Komplikation geplant: ${complication.type} in ${delayMinutes.toFixed(1)} Min`);
                 
-                const timer = setTimeout(() => {
+                const timer = cleanupManager.setTimeout('escalation-system', () => {
                     this.executeComplication(incident, complication);
                 }, delayMs);
                 
@@ -491,7 +493,7 @@ class EscalationSystem {
         const delayMinutes = rule.time.min + Math.random() * (rule.time.max - rule.time.min);
         const delayMs = delayMinutes * 60 * 1000;
         
-        const timer = setTimeout(() => {
+        const timer = cleanupManager.setTimeout('escalation-system', () => {
             this.executeLegacyEscalation(incident, rule);
         }, delayMs);
         
@@ -584,6 +586,11 @@ class EscalationSystem {
         this.complicationTimers.clear();
         
         console.log('❌ Alle Eskalationen & Komplikationen gestoppt');
+    }
+    
+    destroy() {
+        cleanupManager.cleanup('escalation-system');
+        console.log('✅ EscalationSystem cleaned up');
     }
 }
 

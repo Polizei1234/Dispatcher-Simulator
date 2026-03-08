@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // THEME MANAGER v1.1
 // Dark/Light Mode Toggle System
@@ -104,7 +106,7 @@ class ThemeManager {
         if (themeSelect) {
             // Update bestehenden Select
             themeSelect.value = this.currentTheme;
-            themeSelect.addEventListener('change', (e) => {
+            cleanupManager.addEventListener('theme-manager', themeSelect, 'change', (e) => {
                 this.setTheme(e.target.value);
             });
             return;
@@ -142,7 +144,7 @@ class ThemeManager {
         themeSelect = document.getElementById('theme-select');
         if (themeSelect) {
             themeSelect.value = this.currentTheme;
-            themeSelect.addEventListener('change', (e) => {
+            cleanupManager.addEventListener('theme-manager', themeSelect, 'change', (e) => {
                 this.setTheme(e.target.value);
             });
         }
@@ -185,9 +187,9 @@ class ThemeManager {
         });
         
         // Fade out & remove
-        setTimeout(() => {
+        cleanupManager.setTimeout('theme-manager',() => {
             overlay.style.opacity = '0';
-            setTimeout(() => {
+            cleanupManager.setTimeout('theme-manager',() => {
                 document.body.removeChild(overlay);
             }, 300);
         }, 150);
@@ -203,7 +205,7 @@ class ThemeManager {
             '<i class="fas fa-sun"></i> Light Mode' : 
             '<i class="fas fa-moon"></i> Dark Mode';
         
-        button.addEventListener('click', () => {
+        cleanupManager.addEventListener('theme-manager', button, 'click', () => {
             this.toggleTheme();
             button.innerHTML = this.currentTheme === 'dark' ? 
                 '<i class="fas fa-sun"></i> Light Mode' : 
@@ -222,6 +224,11 @@ class ThemeManager {
             const toggleBtn = this.createToggleButton();
             headerRight.insertBefore(toggleBtn, headerRight.firstChild);
         }
+    }
+
+    destroy() {
+        cleanupManager.cleanup('theme-manager');
+        console.log('✅ ThemeManager cleaned up');
     }
 }
 

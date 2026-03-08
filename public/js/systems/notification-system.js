@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // NOTIFICATION SYSTEM v1.0
 // Browser-Benachrichtigungen & In-App Notifications
@@ -135,16 +137,16 @@ class NotificationSystem {
         container.appendChild(toast);
         
         // Animiere Einblendung
-        setTimeout(() => toast.classList.add('visible'), 10);
+        cleanupManager.setTimeout('notification-system',() => toast.classList.add('visible'), 10);
         
         // Auto-Dismiss nach Duration
         const duration = notification.duration || this.notificationDuration;
-        setTimeout(() => this.dismiss(notification.id), duration);
+        cleanupManager.setTimeout('notification-system',() => this.dismiss(notification.id), duration);
         
         // Click-Handler (falls action definiert)
         if (notification.onClick) {
             toast.style.cursor = 'pointer';
-            toast.addEventListener('click', (e) => {
+            cleanupManager.addEventListener('notification-system', toast, 'click', (e) => {
                 if (!e.target.classList.contains('notification-close')) {
                     notification.onClick();
                     this.dismiss(notification.id);
@@ -183,7 +185,7 @@ class NotificationSystem {
             };
             
             // Auto-Close
-            setTimeout(() => browserNotif.close(), notification.duration || this.notificationDuration);
+            cleanupManager.setTimeout('notification-system',() => browserNotif.close(), notification.duration || this.notificationDuration);
             
         } catch (err) {
             console.warn('⚠️ Browser Notification fehlgeschlagen:', err);
@@ -198,7 +200,7 @@ class NotificationSystem {
         if (toast) {
             toast.classList.remove('visible');
             toast.classList.add('hiding');
-            setTimeout(() => toast.remove(), 300);
+            cleanupManager.setTimeout('notification-system',() => toast.remove(), 300);
         }
         
         // Entferne aus Array
@@ -365,6 +367,11 @@ class NotificationSystem {
         this.dismissAll();
         console.log('🧹 Notification System cleanup');
     }
+
+    destroy() {
+        cleanupManager.cleanup('notification-system');
+        console.log('✅ NotificationSystem cleaned up');
+    }
 }
 
 // CSS Styles direkt einfügen (falls noch nicht vorhanden)
@@ -502,7 +509,7 @@ if (typeof window !== 'undefined') {
     window.NotificationSystem = notificationSystem;
     
     // Cleanup
-    window.addEventListener('beforeunload', () => {
+    cleanupManager.addEventListener('notification-system', window, 'beforeunload', () => {
         if (notificationSystem) notificationSystem.cleanup();
     });
 }

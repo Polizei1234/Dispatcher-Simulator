@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // VEHICLE MOVEMENT SYSTEM v8.0.0 - RADIO SYSTEM REMOVED
 // + SMOOTH POSITION INTERPOLATION
@@ -110,7 +112,7 @@ const VehicleMovement = {
         
         console.log(`💤 Smart Idle Check gestartet (prüft alle ${this.IDLE_CHECK_INTERVAL_MS/1000}s)`);
         
-        this.idleCheckInterval = setInterval(() => {
+        this.idleCheckInterval = cleanupManager.setInterval('vehicle-movement',() => {
             const vehicleCount = Object.keys(this.movingVehicles).length;
             const timerCount = Object.keys(this.onSceneTimers).length;
             const hasPendingUpdates = this.pendingMapUpdates.length > 0;
@@ -139,7 +141,7 @@ const VehicleMovement = {
         this.isLoopActive = true;
         this.lastUpdateCount = 0;
         
-        this.updateInterval = setInterval(() => {
+        this.updateInterval = cleanupManager.setInterval('vehicle-movement',() => {
             this.updateAllVehicles();
             this.processBatchMapUpdates();
             this.lastUpdateCount++;
@@ -195,7 +197,7 @@ const VehicleMovement = {
                 this.startUpdateLoop();
             }
             
-            setTimeout(() => {
+            cleanupManager.setTimeout('vehicle-movement',() => {
                 this.startDriving(vehicleId, targetCoords, incidentId, options);
             }, this.DISPATCH_DELAY_MS);
         } else {
@@ -323,7 +325,7 @@ const VehicleMovement = {
             
             this.routingControls[vehicleId] = routingControl;
             
-            setTimeout(() => {
+            cleanupManager.setTimeout('vehicle-movement',() => {
                 if (!this.movingVehicles[vehicleId]) {
                     console.error('❌ Routing dauert zu lange - Fallback');
                     this.removeVehicleRoute(vehicleId);
@@ -555,7 +557,7 @@ const VehicleMovement = {
                 this.setVehicleStatus(vehicle, 8);
                 delete this.movingVehicles[vehicleId];
 
-                setTimeout(() => {
+                cleanupManager.setTimeout('vehicle-movement',() => {
                     this.returnToStation(vehicleId);
                 }, 5 * 60 * 1000);
                 break;
@@ -648,7 +650,7 @@ const VehicleMovement = {
         
         console.log(`⏱️ ${vehicle.callsign} - Maßnahmen: ${timeInMinutes} Min (${timeSource})`);
         
-        this.onSceneTimers[vehicleId] = setTimeout(() => {
+        this.onSceneTimers[vehicleId] = cleanupManager.setTimeout('vehicle-movement',() => {
             this.completeTreatment(vehicleId);
         }, randomTime * 1000);
         
@@ -711,7 +713,7 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
 }`;
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+            const timeoutId = cleanupManager.setTimeout('vehicle-movement',() => controller.abort(), API_TIMEOUT_MS);
 
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
@@ -801,7 +803,7 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
     },
 
     sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(resolve => cleanupManager.setTimeout('vehicle-movement', resolve, ms));
     },
 
     notifyUser(message, type = 'info') {
@@ -916,11 +918,16 @@ Antworte NUR im folgenden JSON-Format (ohne Markdown!):
             eta: eta,
             minutes: Math.ceil(eta)
         };
+    },
+
+    destroy() {
+        cleanupManager.cleanup('vehicle-movement');
+        console.log('✅ VehicleMovement cleaned up');
     }
 };
 
 if (typeof window !== 'undefined') {
-    window.addEventListener('DOMContentLoaded', () => {
+    cleanupManager.addEventListener('vehicle-movement', window, 'DOMContentLoaded', () => {
         VehicleMovement.initialize();
     });
 }

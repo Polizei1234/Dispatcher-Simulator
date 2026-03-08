@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // KARTENLOGIK v7.1 - ZENTRALE STATUS-FUNKTION + mapInstance
 // + Fahrzeuge während Ausrückzeit sichtbar
@@ -207,14 +209,14 @@ function initMap() {
         tileLayer.addTo(map);
         console.log('✅ TileLayer hinzugefügt');
         
-        map.on('click', function() {
+        cleanupManager.addEventListener('map-system', map, 'click', function() {
             map.closePopup();
         });
         
         // ✅✅✅ PHASE 3.1.1: Initialisiere Icon-Cache VOR Marker-Erstellung!
         ICON_CACHE.initialize();
         
-        setTimeout(() => {
+        cleanupManager.setTimeout('map-system',() => {
             createStationMarkers();
             stationsInitialized = true;
             console.log(`✅ ${stationMarkers.length} Wachen-Marker erstellt!`);
@@ -262,7 +264,7 @@ function createHospitalMarkers() {
             // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
             marker.unbindPopup();
             
-            marker.on('click', function(e) {
+            cleanupManager.addEventListener('map-system', marker, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 
                 const popupContent = generateHospitalPopupContent(hospital);
@@ -354,7 +356,7 @@ function createStationMarkers() {
             // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
             marker.unbindPopup();
             
-            marker.on('click', function(e) {
+            cleanupManager.addEventListener('map-system', marker, 'click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 
                 const popupContent = generateStationPopupContent(station);
@@ -530,7 +532,7 @@ function addIncidentToMap(incident) {
     // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
     marker.unbindPopup();
     
-    marker.on('click', function(e) {
+    cleanupManager.addEventListener('map-system', marker, 'click', function(e) {
         L.DomEvent.stopPropagation(e);
     });
 
@@ -561,7 +563,7 @@ function addIncidentToMap(incident) {
     marker.addTo(map);
     incidentMarkers[incident.id] = marker;
 
-    setTimeout(() => marker.openPopup(), 300);
+    cleanupManager.setTimeout('map-system',() => marker.openPopup(), 300);
 }
 
 function removeIncidentFromMap(incidentId) {
@@ -615,7 +617,7 @@ function updateVehicleOnMap(vehicle) {
     // ✅✅✅ BUG FIX v6.1: Popup UNBIND vor neuem BIND!
     marker.unbindPopup();
     
-    marker.on('click', function(e) {
+    cleanupManager.addEventListener('map-system', marker, 'click', function(e) {
         L.DomEvent.stopPropagation(e);
         
         const popupContent = createVehiclePopupContent(vehicle);
@@ -724,7 +726,12 @@ const mapInstance = {
     updateVehicleOnMap: updateVehicleOnMap,
     drawVehicleRoute: drawVehicleRoute,
     clearVehicleRoute: clearVehicleRoute,
-    removeVehicleFromMap: removeVehicleFromMap
+    removeVehicleFromMap: removeVehicleFromMap,
+
+    destroy() {
+        cleanupManager.cleanup('map-system');
+        console.log('✅ MapSystem cleaned up');
+    }
 };
 
 // Exportiere zu window

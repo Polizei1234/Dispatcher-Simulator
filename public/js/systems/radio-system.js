@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // RADIO SYSTEM v2.2.0 - EVENTBRIDGE INTEGRATION KOMPLETT!
 // Funksystem mit FMS-Integration, Warteschlangen & GroqAI
@@ -229,243 +231,193 @@ const RadioSystem = {
      * Initialisierung
      */
     async initialize() {
-        console.log('📡 Radio System v2.2.0 initialisiert');
-        
-        // 🔧 v1.4.0: Lade Config mit Fallback
         try {
-            const response = await fetch('js/data/radio-config.json');
-            if (response.ok) {
-                this.config = await response.json();
-                console.log('✅ Radio-Config geladen');
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
+            console.log('🎙️ RadioSystem wird initialisiert...');
+            
+            // Config laden
+            await this.loadConfig();
+            console.log('✅ RadioSystem Config geladen');
+            
+            // 🎯 NEU: EventBridge-Listener registrieren
+            this.setupEventBridgeListeners();
+            
+            // Initialisiere Kanäle
+            this.initializeChannels();
+
+            // Event-Listener für FMS-Statusänderungen (warte auf VehicleMovement)
+            this.setupFMSListener();
+
+            // 🔧 v1.2.0: Auto-Cleanup für Memory Leak Prevention
+            this.startLogCleanup();
+            
+            this.initialized = true;
+            console.log('✅ RadioSystem erfolgreich initialisiert');
         } catch (error) {
-            console.warn('⚠️ Fehler beim Laden der Radio-Config:', error.message);
-            console.log('🔄 Nutze Fallback-Config');
-            this.config = this.getFallbackConfig();
+            console.error('❌ RadioSystem Initialisierung fehlgeschlagen:', error);
+            throw error;
         }
-
-        // 🔧 v1.4.0: Lade FMS mit Fallback
-        try {
-            const response = await fetch('js/data/fms-codes.json');
-            if (response.ok) {
-                this.fmsData = await response.json();
-                console.log('✅ FMS-Daten geladen');
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
-        } catch (error) {
-            console.warn('⚠️ Fehler beim Laden der FMS-Daten:', error.message);
-            console.log('🔄 Nutze Fallback-FMS-Daten');
-            this.fmsData = this.getFallbackFMS();
-        }
-
-        // 🤖 v2.0.0: Lade Automatic-Messages-Config mit Fallback
-        try {
-            const response = await fetch('js/data/automatic-radio-config.json');
-            if (response.ok) {
-                this.automaticMessagesConfig = await response.json();
-                console.log('✅ Automatic-Radio-Config geladen');
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
-        } catch (error) {
-            console.warn('⚠️ Fehler beim Laden der Automatic-Radio-Config:', error.message);
-            console.log('🔄 Nutze Fallback-Automatic-Config');
-            this.automaticMessagesConfig = this.getFallbackAutomaticConfig();
-        }
-
-        // Initialisiere Kanäle
-        this.initializeChannels();
-
-        // Event-Listener für FMS-Statusänderungen (warte auf VehicleMovement)
-        this.setupFMSListener();
-
-        // 🌉 v2.2.0: Registriere EventBridge-Listener
-        this.setupEventBridgeListeners();
-
-        // 🔧 v1.2.0: Auto-Cleanup für Memory Leak Prevention
-        this.startLogCleanup();
-
-        console.log('✅ Radio System bereit');
-        console.log(`📻 Kanäle: ${Object.keys(this.channels).length}`);
-        console.log('📡 v1.6.0: Funkdisziplin "Ende"-Erkennung aktiviert');
-        console.log('🤖 v2.0.0: Automatische Funksprüche aktiviert');
-        
-        // ⏱️ v2.1.0: Throttling-Info
-        if (this.automaticMessagesConfig?.throttle?.enabled) {
-            console.log('⏱️ v2.1.0: Throttling-System aktiviert');
-            console.log(`   Min-Delay: ${this.automaticMessagesConfig.throttle.min_delay_between_messages}ms`);
-            console.log(`   Max-Queue: ${this.automaticMessagesConfig.throttle.max_concurrent_messages}`);
-        }
-        
-        // 🎯 v1.3.0: Feuere Ready-Event
-        this.fireReadyEvent();
     },
-
+    
     /**
-     * 🌉 v2.2.0: KRITISCHER FIX - Registriert EventBridge-Listener
+     * 🎯 v2.2.0: Registriert EventBridge-Listener für automatische Funksprüche
+     * 
+     * Diese Methode verbindet das RadioSystem mit dem EventBridge.
+     * Wenn Events gefeuert werden (z.B. von EscalationSystem), 
+     * reagiert RadioSystem automatisch mit passenden Funksprüchen.
      */
     setupEventBridgeListeners() {
-        if (this.eventBridgeListenersInstalled) {
-            console.warn('⚠️ EventBridge-Listener bereits installiert');
-            return;
-        }
-
+        // Safety-Check: EventBridge verfügbar?
         if (!window.eventBridge) {
-            console.warn('⚠️ EventBridge nicht verfügbar - Warte 5s...');
-            setTimeout(() => this.setupEventBridgeListeners(), 5000);
+            console.warn('⚠️ RadioSystem: EventBridge nicht verfügbar - Listener nicht registriert');
             return;
         }
-
-        console.log('🌉 Registriere EventBridge-Listener...');
-
-        // 1️⃣ DISPATCH EVENTS
-        window.eventBridge.on('dispatch:vehicle_dispatched', (data) => {
-            if (!data.vehicle) return;
+        
+        console.log('🌉 RadioSystem: Registriere EventBridge-Listener...');
+        
+        // === 1. DISPATCH EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'dispatch:vehicle_dispatched', (data) => {
+            console.log('📡 RadioSystem: vehicle_dispatched Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'dispatch', {
                 incident: data.incident,
                 urgency: data.urgency
             });
         });
-
-        window.eventBridge.on('dispatch:vehicle_arrived', (data) => {
-            if (!data.vehicle) return;
+        
+        // === 2. ARRIVAL EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'dispatch:vehicle_arrived', (data) => {
+            console.log('📡 RadioSystem: vehicle_arrived Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'arrival', {
                 incident: data.incident
             });
         });
-
-        // 2️⃣ ESKALATIONS-EVENTS
-        window.eventBridge.on('escalation:started', (data) => {
-            if (!data.vehicle) return;
-            this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
+        
+        // === 3. ESKALATIONS-EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'escalation:started', (data) => {
+            console.log('📡 RadioSystem: escalation_started Event empfangen', data);
+            this.sendAutomaticMessage(data.vehicle, 'escalation_started', {
                 incident: data.incident,
                 oldSeverity: data.oldSeverity,
                 newSeverity: data.newSeverity,
                 reason: data.reason
             });
         });
-
-        window.eventBridge.on('escalation:nef_required', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'escalation:nef_required', (data) => {
+            console.log('📡 RadioSystem: nef_required Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'request_nef', {
                 incident: data.incident,
-                urgency: data.urgency || 'high',
+                urgency: data.urgency,
                 needs_nef: true
             });
         });
-
-        window.eventBridge.on('escalation:status_worsened', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'escalation:status_worsened', (data) => {
+            console.log('📡 RadioSystem: status_worsened Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
                 incident: data.incident,
                 oldStatus: data.oldStatus,
                 newStatus: data.newStatus
             });
         });
-
-        window.eventBridge.on('escalation:critical', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'escalation:critical', (data) => {
+            console.log('📡 RadioSystem: escalation_critical Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
                 incident: data.incident,
-                urgency: 'critical'
+                severity: data.newSeverity
             });
         });
-
-        // 3️⃣ KOMPLIKATIONS-EVENTS
-        window.eventBridge.on('incident:complication', (data) => {
-            if (!data.vehicle) return;
+        
+        // === 4. KOMPLIKATIONS-EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'incident:complication', (data) => {
+            console.log('📡 RadioSystem: complication Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'patient_complications', {
                 incident: data.incident,
                 complication: data.complication
             });
         });
-
-        window.eventBridge.on('medical:patient_critical', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'medical:patient_critical', (data) => {
+            console.log('📡 RadioSystem: patient_critical Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
                 incident: data.incident,
                 symptoms: data.symptoms
             });
         });
-
-        window.eventBridge.on('medical:resuscitation', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'medical:resuscitation', (data) => {
+            console.log('📡 RadioSystem: resuscitation Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'critical_patient', {
                 incident: data.incident,
                 resuscitation: true
             });
         });
-
-        // 4️⃣ TRANSPORT-EVENTS
-        window.eventBridge.on('transport:patient_loaded', (data) => {
-            if (!data.vehicle) return;
+        
+        // === 5. TRANSPORT-EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'transport:patient_loaded', (data) => {
+            console.log('📡 RadioSystem: patient_loaded Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'patient_loaded', {
                 incident: data.incident
             });
         });
-
-        window.eventBridge.on('transport:hospital_arrival', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'transport:hospital_arrival', (data) => {
+            console.log('📡 RadioSystem: hospital_arrival Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'hospital_arrival', {
                 incident: data.incident,
                 hospital: data.hospital
             });
         });
-
-        window.eventBridge.on('transport:delayed', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'transport:delayed', (data) => {
+            console.log('📡 RadioSystem: transport_delayed Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'transport_delay', {
                 incident: data.incident,
                 reason: data.reason
             });
         });
-
-        // 5️⃣ VEHICLE-EVENTS
-        window.eventBridge.on('vehicle:back_available', (data) => {
-            if (!data.vehicle) return;
+        
+        // === 6. VEHICLE-EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'vehicle:back_available', (data) => {
+            console.log('📡 RadioSystem: back_available Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'back_available', {
                 previousIncident: data.previousIncident
             });
         });
-
-        window.eventBridge.on('vehicle:break_start', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'vehicle:break_start', (data) => {
+            console.log('📡 RadioSystem: break_start Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'break_start', {
                 duration: data.duration
             });
         });
-
-        window.eventBridge.on('vehicle:shift_end', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'vehicle:shift_end', (data) => {
+            console.log('📡 RadioSystem: shift_end Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'shift_end', {});
         });
-
-        window.eventBridge.on('vehicle:maintenance_needed', (data) => {
-            if (!data.vehicle) return;
+        
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'vehicle:maintenance_needed', (data) => {
+            console.log('📡 RadioSystem: maintenance_needed Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'maintenance_needed', {
                 reason: data.reason
             });
         });
-
-        // 6️⃣ DELAY-EVENTS
-        window.eventBridge.on('incident:on_scene_delay', (data) => {
-            if (!data.vehicle) return;
+        
+        // === 7. DELAY-EVENTS ===
+        cleanupManager.addEventListener('radio-system', window.eventBridge, 'incident:on_scene_delay', (data) => {
+            console.log('📡 RadioSystem: on_scene_delay Event empfangen', data);
             this.sendAutomaticMessage(data.vehicle, 'on_scene_delay', {
                 incident: data.incident,
                 duration: data.duration
             });
         });
-
-        this.eventBridgeListenersInstalled = true;
-        console.log('✅ EventBridge-Listener registriert (15 Event-Typen)');
-        console.log('🌉 Bidirektionale Kommunikation AKTIV!');
+        
+        console.log('✅ RadioSystem: EventBridge-Listener registriert (15 Event-Typen)');
     },
 
     /**
-     * 🎯 v1.3.0: Feuert Ready-Event für RadioUI
+     * 🎯 v1.3.0: Feuere Ready-Event für RadioUI
      */
     fireReadyEvent() {
         if (typeof window !== 'undefined') {
@@ -491,7 +443,7 @@ const RadioSystem = {
             clearInterval(this.logCleanupInterval);
         }
         
-        this.logCleanupInterval = setInterval(() => {
+        this.logCleanupInterval = cleanupManager.setInterval('radio-system',() => {
             const maxEntries = this.config?.ui_settings?.max_log_entries || 100;
             if (this.log.length > maxEntries) {
                 const removed = this.log.length - maxEntries;
@@ -527,7 +479,7 @@ const RadioSystem = {
         } else {
             // Warte auf VehicleMovement
             console.log('⏳ Warte auf VehicleMovement...');
-            const checkInterval = setInterval(() => {
+            const checkInterval = cleanupManager.setInterval('radio-system',() => {
                 if (typeof VehicleMovement !== 'undefined' && VehicleMovement.setVehicleStatus) {
                     clearInterval(checkInterval);
                     this.installFMSListener();
@@ -535,7 +487,7 @@ const RadioSystem = {
             }, 100);
             
             // Timeout nach 10 Sekunden
-            setTimeout(() => {
+            cleanupManager.setTimeout('radio-system',() => {
                 clearInterval(checkInterval);
                 if (!this.fmsListenerInstalled) {
                     console.error('❌ VehicleMovement nicht gefunden - FMS-Integration fehlgeschlagen!');
@@ -675,7 +627,7 @@ const RadioSystem = {
             if (now - lastMessage < minDelay) {
                 const waitTime = minDelay - (now - lastMessage);
                 console.log(`⏱️ Throttling: Warte ${waitTime}ms (Min-Delay)`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
+                await new Promise(resolve => cleanupManager.setTimeout('radio-system', resolve, waitTime));
             }
             
             // Prüfe max concurrent messages in Queue
@@ -686,7 +638,7 @@ const RadioSystem = {
                 
                 // Warte bis Queue-Slot frei wird
                 while (this.automaticMessagesQueue.length >= maxConcurrent) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => cleanupManager.setTimeout('radio-system', resolve, 500));
                 }
                 console.log(`✅ Throttling: Queue-Slot frei`);
             }
@@ -708,7 +660,7 @@ const RadioSystem = {
         const delay = triggerConfig.delay_ms || 0;
         if (delay > 0) {
             console.log(`⏱️ Trigger-Verzögerung: ${delay}ms`);
-            await new Promise(resolve => setTimeout(resolve, delay));
+            await new Promise(resolve => cleanupManager.setTimeout('radio-system', resolve, delay));
         }
         
         // Hole Einsatz-Kontext
@@ -1121,7 +1073,7 @@ const RadioSystem = {
         
         channelVehicles.forEach(vehicle => {
             // Füge Quittierungs-Aufforderung zum Log
-            setTimeout(() => {
+            cleanupManager.setTimeout('radio-system',() => {
                 this.addLogEntry({
                     type: 'vehicle_to_dispatch',
                     vehicle: vehicle,
@@ -1299,6 +1251,11 @@ const RadioSystem = {
             this.logCleanupInterval = null;
         }
         console.log('🗑️ Radio System cleanup ausgeführt');
+    },
+    
+    destroy() {
+        cleanupManager.cleanup('radio-system');
+        console.log('✅ RadioSystem cleaned up');
     }
 };
 

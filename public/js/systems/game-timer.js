@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // GAME TIMER v1.0
 // Spiel-Zeit-System für realistische Tag/Nacht-Zyklen
@@ -27,7 +29,7 @@ class GameTimer {
         if (this.interval) return;
         
         // Jede Sekunde = ~10 Spiel-Sekunden (bei acceleration=10)
-        this.interval = setInterval(() => {
+        this.interval = cleanupManager.setInterval('game-timer',() => {
             this.tick();
         }, 1000);
         
@@ -212,6 +214,11 @@ class GameTimer {
             this.start();
             console.log('⏰ Game Timer fortgesetzt');
         }
+    }
+
+    destroy() {
+        cleanupManager.cleanup('game-timer');
+        console.log('✅ GameTimer cleaned up');
     }
 }
 

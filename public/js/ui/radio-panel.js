@@ -1,3 +1,5 @@
+import cleanupManager from '../core/cleanup-manager.js';
+
 // =========================
 // RADIO PANEL UI v1.4.0
 // Benutzerinterface für das Funksystem
@@ -49,7 +51,7 @@ const RadioUI = {
             clearTimeout(this.logUpdateTimeout);
         }
         
-        this.logUpdateTimeout = setTimeout(() => {
+        this.logUpdateTimeout = cleanupManager.setTimeout('radio-panel',() => {
             this.updateLog();
             this.logUpdateTimeout = null;
         }, 100);
@@ -255,7 +257,7 @@ const RadioUI = {
                 button.classList.add('active');
             }
 
-            button.addEventListener('click', () => {
+            cleanupManager.addEventListener('radio-panel', button, 'click', () => {
                 this.switchChannel(key);
             });
 
@@ -374,44 +376,44 @@ const RadioUI = {
      */
     attachEventListeners() {
         // Minimieren
-        document.getElementById('radio-minimize-btn')?.addEventListener('click', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-minimize-btn'), 'click', () => {
             this.toggleMinimize();
         });
 
         // Schließen
-        document.getElementById('radio-close-btn')?.addEventListener('click', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-close-btn'), 'click', () => {
             this.togglePanel();
         });
 
         // Senden-Button
-        document.getElementById('radio-send-btn')?.addEventListener('click', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-send-btn'), 'click', () => {
             this.sendMessage();
         });
 
         // Input-Änderungen
-        document.getElementById('radio-target-vehicle')?.addEventListener('change', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-target-vehicle'), 'change', () => {
             this.validateSendButton();
         });
 
-        document.getElementById('radio-message-input')?.addEventListener('input', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-message-input'), 'input', () => {
             this.validateSendButton();
         });
 
         // Enter zum Senden (Strg+Enter)
-        document.getElementById('radio-message-input')?.addEventListener('keydown', (e) => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-message-input'), 'keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 this.sendMessage();
             }
         });
 
         // Log-Controls
-        document.getElementById('radio-log-clear-btn')?.addEventListener('click', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-log-clear-btn'), 'click', () => {
             if (confirm('Funkprotokoll wirklich löschen?')) {
                 RadioSystem.clearLog();
             }
         });
 
-        document.getElementById('radio-log-export-btn')?.addEventListener('click', () => {
+        cleanupManager.addEventListener('radio-panel', document.getElementById('radio-log-export-btn'), 'click', () => {
             RadioSystem.exportLog();
         });
     },
@@ -529,7 +531,7 @@ const RadioUI = {
             const btn = document.createElement('button');
             btn.className = 'btn btn-small btn-success';
             btn.textContent = '🗣️ Sprecherlaubnis erteilen';
-            btn.addEventListener('click', () => {
+            cleanupManager.addEventListener('radio-panel', btn, 'click', () => {
                 this.grantPermission(vehicle.id);
             });
             
@@ -752,7 +754,7 @@ const RadioUI = {
                 const triggerBtn = document.createElement('button');
                 triggerBtn.className = 'btn btn-small';
                 triggerBtn.textContent = this.getTriggerText(entry.triggerType);
-                triggerBtn.addEventListener('click', () => {
+                cleanupManager.addEventListener('radio-panel', triggerBtn, 'click', () => {
                     RadioSystem.triggerManualVehicleMessage(entry.vehicle.id, entry.triggerType);
                 });
                 
@@ -871,6 +873,11 @@ const RadioUI = {
         this.updateVehicleSelect();
         this.updateQueue();
         this.updateLog();
+    },
+
+    destroy() {
+        cleanupManager.cleanup('radio-panel');
+        console.log('✅ RadioPanel cleaned up');
     }
 };
 
@@ -879,7 +886,7 @@ if (typeof window !== 'undefined') {
     let initAttempted = false;
     
     // Methode 1: RadioSystem Ready Event
-    window.addEventListener('radioSystemReady', () => {
+    cleanupManager.addEventListener('radio-panel', window, 'radioSystemReady', () => {
         if (initAttempted) return;
         console.log('✅ RadioSystem bereit - initialisiere RadioUI...');
         RadioUI.initialize();
@@ -887,8 +894,8 @@ if (typeof window !== 'undefined') {
     });
     
     // Methode 2: DOMContentLoaded mit Timeout
-    window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
+    cleanupManager.addEventListener('radio-panel', window, 'DOMContentLoaded', () => {
+        cleanupManager.setTimeout('radio-panel',() => {
             if (initAttempted) return;
             
             console.log('⏳ DOMContentLoaded Timeout - versuche RadioUI zu initialisieren...');
@@ -903,8 +910,8 @@ if (typeof window !== 'undefined') {
     });
     
     // Methode 3: Window Load als letzter Fallback
-    window.addEventListener('load', () => {
-        setTimeout(() => {
+    cleanupManager.addEventListener('radio-panel', window, 'load', () => {
+        cleanupManager.setTimeout('radio-panel',() => {
             if (initAttempted) return;
             
             console.log('⏳ Window Load Timeout - letzter Versuch RadioUI zu initialisieren...');
