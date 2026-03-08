@@ -6,10 +6,12 @@
 import store from '../state/index.js';
 import { GameActions, IncidentActions, VehicleActions } from '../state/actions.js';
 import EventBridge from '../event-bridge.js';
+import GameTimer from '../../systems/game-timer.js';
 
 class GameModule {
   constructor() {
     this.nextIncidentTime = 0;
+    this.gameTimer = new GameTimer();
     
     console.log('🎮 GameModule initialized');
   }
@@ -26,6 +28,9 @@ class GameModule {
     // Initialize vehicles
     this.initializeVehicles();
     
+    // Start the game timer
+    this.gameTimer.start();
+
     // Emit event
     EventBridge.emit('game_started', { mode });
     
@@ -39,6 +44,12 @@ class GameModule {
     store.dispatch(GameActions.togglePause());
     
     const isPaused = store.getState('game.isPaused');
+    if (isPaused) {
+      this.gameTimer.stop();
+    } else {
+      this.gameTimer.start();
+    }
+
     EventBridge.emit('game_pause_toggled', { isPaused });
     
     return isPaused;
@@ -47,17 +58,16 @@ class GameModule {
   /**
    * 🔄 UPDATE (Game Loop)
    */
-  update(deltaTime) {
+  update() {
     const gameState = store.getState('game');
     
     if (gameState.isPaused) return;
     
     // Update game time
-    const newGameTime = gameState.gameTime + (deltaTime * gameState.settings.gameSpeed);
-    store.dispatch(GameActions.updateTime(newGameTime, Date.now()));
+    this.gameTimer.update();
     
     // Check for new incidents
-    if (newGameTime >= this.nextIncidentTime) {
+    if (this.gameTimer.getCurrentTime() >= this.nextIncidentTime) {
       this.spawnIncident();
     }
   }
@@ -78,7 +88,7 @@ class GameModule {
     const variance = frequency * 0.25;
     const interval = (frequency - variance) + (Math.random() * variance * 2);
     
-    this.nextIncidentTime = store.getState('game.gameTime') + (interval * 1000);
+    this.nextIncidentTime = this.gameTimer.getCurrentTime() + (interval * 1000);
   }
 
   /**

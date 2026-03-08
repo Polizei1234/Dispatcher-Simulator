@@ -1,23 +1,20 @@
 import cleanupManager from '../core/cleanup-manager.js';
 
 // =========================
-// RADIO PANEL UI v1.4.0
-// Benutzerinterface für das Funksystem
-// 🔧 v1.1.0: XSS-Protection + Debouncing
-// 🎯 v1.2.0: Queue-Badge + Sammelruf-UI + Event-Init
-// 🔧 v1.2.1: FIX Panel standardmäßig hidden
-// 🔧 v1.2.2: FIX Robuste Initialisierung
-// 🎨 v1.3.0: VISUELL - Callsign FETT/GELB, Funkspruch BLAU
-// ✨ v1.4.0: AUTO-BADGES für automatische Funksprüche
+// RADIO PANEL UI v2.0.0
+// Benutzerinterface für das Funksystem (refactored as a class)
 // =========================
 
-const RadioUI = {
-    panelElement: null,
-    currentChannel: 'rettungsdienst',
-    isMinimized: false,
-    isVisible: false,
-    logUpdateTimeout: null,
-    initialized: false,
+class RadioPanel {
+    constructor(radioSystem) {
+        this.radioSystem = radioSystem;
+        this.panelElement = null;
+        this.currentChannel = 'rettungsdienst';
+        this.isMinimized = false;
+        this.isVisible = false;
+        this.logUpdateTimeout = null;
+        this.initialized = false;
+    }
 
     /**
      * Initialisierung
@@ -28,12 +25,7 @@ const RadioUI = {
             return;
         }
         
-        console.log('📺 RadioUI v1.4.0 initialisiert');
-        console.log('🔧 XSS-Protection aktiviert');
-        console.log('🔧 Debouncing aktiviert');
-        console.log('🎯 Queue-Badge + Sammelruf-UI aktiviert');
-        console.log('🎨 Callsign FETT/GELB + Funkspruch BLAU');
-        console.log('✨ AUTO-Badges für automatische Funksprüche aktiviert');
+        console.log('📺 RadioUI v2.0.0 initialisiert');
         
         this.createPanel();
         this.attachEventListeners();
@@ -41,7 +33,7 @@ const RadioUI = {
         this.initialized = true;
         
         console.log('✅ RadioUI vollständig initialisiert');
-    },
+    }
 
     /**
      * 🔧 v1.1.0: Debounced Log Update (max 1x pro 100ms)
@@ -55,7 +47,7 @@ const RadioUI = {
             this.updateLog();
             this.logUpdateTimeout = null;
         }, 100);
-    },
+    }
 
     /**
      * 🔧 v1.1.0: XSS-sichere Text-Escape-Funktion
@@ -70,7 +62,7 @@ const RadioUI = {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-    },
+    }
 
     /**
      * 🎨 v1.3.0: Parst Funkspruch und trennt Callsign vom Text
@@ -103,7 +95,7 @@ const RadioUI = {
 
         // Wenn nichts passt, gesamte Nachricht als Text
         return { callsign: '', text: message };
-    },
+    }
 
     /**
      * Erstellt das Radio-Panel
@@ -159,7 +151,7 @@ const RadioUI = {
                         <select id="broadcast-channel" class="radio-select" style="flex: 1;">
                             <!-- Dynamisch generiert -->
                         </select>
-                        <button id="broadcast-btn" class="btn btn-warning" onclick="RadioUI.showBroadcastDialog()" style="white-space: nowrap;">
+                        <button id="broadcast-btn" class="btn btn-warning" style="white-space: nowrap;">
                             📢 Senden
                         </button>
                     </div>
@@ -225,18 +217,18 @@ const RadioUI = {
         this.updateVehicleSelect();
         
         console.log('✅ Radio Panel erstellt (standardmäßig versteckt)');
-    },
+    }
 
     /**
      * Generiert Kanal-Buttons
      */
     generateChannelButtons() {
         const container = document.getElementById('radio-channels');
-        if (!container || !RadioSystem.channels) return;
+        if (!container || !this.radioSystem.channels) return;
 
         container.innerHTML = '';
 
-        for (const [key, channel] of Object.entries(RadioSystem.channels)) {
+        for (const [key, channel] of Object.entries(this.radioSystem.channels)) {
             const button = document.createElement('button');
             button.className = 'radio-channel-btn';
             button.dataset.channel = key;
@@ -263,24 +255,24 @@ const RadioUI = {
 
             container.appendChild(button);
         }
-    },
+    }
 
     /**
      * 🆕 v1.2.0: Generiert Broadcast-Kanal-Select
      */
     generateBroadcastChannelSelect() {
         const select = document.getElementById('broadcast-channel');
-        if (!select || !RadioSystem.channels) return;
+        if (!select || !this.radioSystem.channels) return;
 
         select.innerHTML = '';
 
-        for (const [key, channel] of Object.entries(RadioSystem.channels)) {
+        for (const [key, channel] of Object.entries(this.radioSystem.channels)) {
             const option = document.createElement('option');
             option.value = key;
             option.textContent = `${channel.icon} ${channel.name}`;
             select.appendChild(option);
         }
-    },
+    }
 
     /**
      * 🆕 v1.2.0: Zeigt Sammelruf-Dialog
@@ -292,13 +284,13 @@ const RadioUI = {
             return;
         }
 
-        const message = prompt(`Sammelruf an alle Fahrzeuge auf Kanal "${RadioSystem.channels[channel].name}":\n\nNachricht eingeben:`);
+        const message = prompt(`Sammelruf an alle Fahrzeuge auf Kanal "${this.radioSystem.channels[channel].name}":\n\nNachricht eingeben:`);
         if (!message || message.trim() === '') {
             return;
         }
 
-        RadioSystem.sendBroadcast(channel, message.trim());
-    },
+        this.radioSystem.sendBroadcast(channel, message.trim());
+    }
 
     /**
      * Wechselt den Funkkanal
@@ -317,7 +309,7 @@ const RadioUI = {
 
         // Update Log (gefiltert nach Kanal)
         this.updateLog();
-    },
+    }
 
     /**
      * 🔧 v1.1.0: Update Fahrzeug-Auswahl (mit GAME_DATA Safety)
@@ -339,7 +331,7 @@ const RadioUI = {
         const channelGroups = {};
 
         GAME_DATA.vehicles.forEach(vehicle => {
-            const channel = RadioSystem.getChannelForVehicle(vehicle);
+            const channel = this.radioSystem.getChannelForVehicle(vehicle);
             if (!channelGroups[channel]) {
                 channelGroups[channel] = [];
             }
@@ -348,7 +340,7 @@ const RadioUI = {
 
         // Erstelle Optgroups
         for (const [channelKey, vehicles] of Object.entries(channelGroups)) {
-            const channel = RadioSystem.channels[channelKey];
+            const channel = this.radioSystem.channels[channelKey];
             if (!channel) continue;
 
             const optgroup = document.createElement('optgroup');
@@ -369,7 +361,7 @@ const RadioUI = {
         if (currentValue) {
             select.value = currentValue;
         }
-    },
+    }
 
     /**
      * Event Listeners
@@ -388,6 +380,11 @@ const RadioUI = {
         // Senden-Button
         cleanupManager.addEventListener('radio-panel', document.getElementById('radio-send-btn'), 'click', () => {
             this.sendMessage();
+        });
+
+        // Broadcast-Button
+        cleanupManager.addEventListener('radio-panel', document.getElementById('broadcast-btn'), 'click', () => {
+            this.showBroadcastDialog();
         });
 
         // Input-Änderungen
@@ -409,14 +406,14 @@ const RadioUI = {
         // Log-Controls
         cleanupManager.addEventListener('radio-panel', document.getElementById('radio-log-clear-btn'), 'click', () => {
             if (confirm('Funkprotokoll wirklich löschen?')) {
-                RadioSystem.clearLog();
+                this.radioSystem.clearLog();
             }
         });
 
         cleanupManager.addEventListener('radio-panel', document.getElementById('radio-log-export-btn'), 'click', () => {
-            RadioSystem.exportLog();
+            this.radioSystem.exportLog();
         });
-    },
+    }
 
     /**
      * Validiert Senden-Button
@@ -432,7 +429,7 @@ const RadioUI = {
         const hasMessage = messageInput.value.trim().length > 0;
 
         sendBtn.disabled = !(hasVehicle && hasMessage);
-    },
+    }
 
     /**
      * Sendet Nachricht
@@ -449,14 +446,14 @@ const RadioUI = {
         if (!vehicleId || !message) return;
 
         // Sende über RadioSystem
-        await RadioSystem.sendDispatchMessage(vehicleId, message);
+        await this.radioSystem.sendDispatchMessage(vehicleId, message);
 
         // Leere Eingabefeld
         messageInput.value = '';
         this.validateSendButton();
 
         console.log(`✅ Nachricht gesendet an ${vehicleId}`);
-    },
+    }
 
     /**
      * 🆕 v1.2.0: Update Warteschlange + Header Badge
@@ -468,7 +465,7 @@ const RadioUI = {
 
         if (!queueList || !queueCount || !queueSection) return;
 
-        const queue = RadioSystem.queue;
+        const queue = this.radioSystem.queue;
 
         queueCount.textContent = queue.length;
 
@@ -486,7 +483,7 @@ const RadioUI = {
 
         queue.forEach(entry => {
             const { vehicle, priority, reason, timestamp } = entry;
-            const priorityInfo = RadioSystem.config.priority_levels[priority];
+            const priorityInfo = this.radioSystem.config.priority_levels[priority];
 
             const queueItem = document.createElement('div');
             queueItem.className = `radio-queue-item priority-${priority}`;
@@ -543,7 +540,7 @@ const RadioUI = {
             
             queueList.appendChild(queueItem);
         });
-    },
+    }
 
     /**
      * 🆕 v1.2.0: Aktualisiert Queue-Badge im Header
@@ -558,14 +555,14 @@ const RadioUI = {
         } else {
             badge.style.display = 'none';
         }
-    },
+    }
 
     /**
      * Erteilt Sprecherlaubnis
      */
     async grantPermission(vehicleId) {
-        await RadioSystem.grantSpeakPermission(vehicleId);
-    },
+        await this.radioSystem.grantSpeakPermission(vehicleId);
+    }
 
     /**
      * Zeigt manuellen Trigger-Button
@@ -579,8 +576,8 @@ const RadioUI = {
             message: `${vehicle.callsign} kann ${this.getTriggerText(triggerType)} senden`
         };
 
-        RadioSystem.addLogEntry(logEntry);
-    },
+        this.radioSystem.addLogEntry(logEntry);
+    }
 
     /**
      * Update Funkprotokoll
@@ -590,7 +587,7 @@ const RadioUI = {
         if (!logElement) return;
 
         // Filtere nach aktuellem Kanal (nur für Fahrzeug-bezogene Einträge)
-        const log = RadioSystem.getLog({ channel: this.currentChannel });
+        const log = this.radioSystem.getLog({ channel: this.currentChannel });
 
         if (log.length === 0) {
             logElement.innerHTML = '<div class="radio-log-empty">💭 Keine Funksprüche</div>';
@@ -605,10 +602,10 @@ const RadioUI = {
         });
 
         // Auto-scroll nach unten (wenn aktiviert)
-        if (RadioSystem.config?.ui_settings?.auto_scroll) {
+        if (this.radioSystem.config?.ui_settings?.auto_scroll) {
             logElement.scrollTop = 0; // Scrollen nach oben da neueste zuerst
         }
-    },
+    }
 
     /**
      * ✨ v1.4.0: Erstellt Log-Item Element mit AUTO-Badge
@@ -755,7 +752,7 @@ const RadioUI = {
                 triggerBtn.className = 'btn btn-small';
                 triggerBtn.textContent = this.getTriggerText(entry.triggerType);
                 cleanupManager.addEventListener('radio-panel', triggerBtn, 'click', () => {
-                    RadioSystem.triggerManualVehicleMessage(entry.vehicle.id, entry.triggerType);
+                    this.radioSystem.triggerManualVehicleMessage(entry.vehicle.id, entry.triggerType);
                 });
                 
                 contentDiv4.appendChild(messageText);
@@ -779,7 +776,7 @@ const RadioUI = {
         }
 
         return item;
-    },
+    }
 
     /**
      * Formatiert Zeitstempel
@@ -791,7 +788,7 @@ const RadioUI = {
             minute: '2-digit',
             second: '2-digit'
         });
-    },
+    }
 
     /**
      * Formatiert Zeit seit
@@ -807,7 +804,7 @@ const RadioUI = {
 
         const minutes = Math.floor(seconds / 60);
         return `${minutes}m`;
-    },
+    }
 
     /**
      * Text für Grund
@@ -821,7 +818,7 @@ const RadioUI = {
             'response_to_dispatch': 'Antwort auf Leitstelle'
         };
         return texts[reason] || reason;
-    },
+    }
 
     /**
      * Text für Trigger
@@ -832,7 +829,7 @@ const RadioUI = {
             'transportziel_anfrage': 'Transportziel anfragen'
         };
         return texts[triggerType] || triggerType;
-    },
+    }
 
     /**
      * 🔧 v1.2.1: Toggle Panel (FIX: display statt classList)
@@ -849,7 +846,7 @@ const RadioUI = {
             this.isVisible = false;
             console.log('❌ Radio Panel geschlossen');
         }
-    },
+    }
 
     /**
      * Toggle Minimize
@@ -864,7 +861,7 @@ const RadioUI = {
                 btn.querySelector('span').textContent = this.isMinimized ? '➕' : '➖';
             }
         }
-    },
+    }
 
     /**
      * Update alle UI-Komponenten
@@ -879,56 +876,6 @@ const RadioUI = {
         cleanupManager.cleanup('radio-panel');
         console.log('✅ RadioPanel cleaned up');
     }
-};
-
-// 🔧 v1.2.2: ROBUSTE INITIALISIERUNG mit mehrfachen Fallbacks
-if (typeof window !== 'undefined') {
-    let initAttempted = false;
-    
-    // Methode 1: RadioSystem Ready Event
-    cleanupManager.addEventListener('radio-panel', window, 'radioSystemReady', () => {
-        if (initAttempted) return;
-        console.log('✅ RadioSystem bereit - initialisiere RadioUI...');
-        RadioUI.initialize();
-        initAttempted = true;
-    });
-    
-    // Methode 2: DOMContentLoaded mit Timeout
-    cleanupManager.addEventListener('radio-panel', window, 'DOMContentLoaded', () => {
-        cleanupManager.setTimeout('radio-panel',() => {
-            if (initAttempted) return;
-            
-            console.log('⏳ DOMContentLoaded Timeout - versuche RadioUI zu initialisieren...');
-            
-            if (typeof RadioSystem !== 'undefined' && RadioSystem.config) {
-                RadioUI.initialize();
-                initAttempted = true;
-            } else {
-                console.warn('⚠️ RadioSystem noch nicht verfügbar - warte weiter...');
-            }
-        }, 2000); // 2 Sekunden warten
-    });
-    
-    // Methode 3: Window Load als letzter Fallback
-    cleanupManager.addEventListener('radio-panel', window, 'load', () => {
-        cleanupManager.setTimeout('radio-panel',() => {
-            if (initAttempted) return;
-            
-            console.log('⏳ Window Load Timeout - letzter Versuch RadioUI zu initialisieren...');
-            
-            if (typeof RadioSystem !== 'undefined' && RadioSystem.config) {
-                RadioUI.initialize();
-                initAttempted = true;
-            } else {
-                console.error('❌ RadioSystem konnte nicht geladen werden!');
-            }
-        }, 3000); // 3 Sekunden warten
-    });
 }
 
-console.log('✅ radio-panel.js v1.4.0 geladen');
-console.log('🔧 XSS-Protection + Debouncing aktiviert');
-console.log('🎯 Queue-Badge + Sammelruf-UI + Event-Init aktiviert');
-console.log('🔧 v1.2.2: Robuste Initialisierung mit 3 Fallback-Methoden');
-console.log('🎨 v1.3.0: Callsign FETT/GELB + Funkspruch BLAU für bessere Lesbarkeit');
-console.log('✨ v1.4.0: AUTO-Badges für automatische Funksprüche implementiert');
+export default RadioPanel;

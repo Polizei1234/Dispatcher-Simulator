@@ -5,13 +5,24 @@
 
 import container from './core/services/ServiceContainer.js';
 import uiModule from './core/modules/ui.module.js';
+import gameModule from './core/modules/game.module.js';
 import initializeEventHandlers from './core/event-handlers.js';
+import RadioSystem from './systems/radio-system.js';
+import RadioPanel from './ui/radio-panel.js';
+import './core/config.js';
+import './core/version-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🚀 DOMContentLoaded: Initializing application...');
 
+  // Initialize core systems
+  RadioSystem.initialize();
+
   // Initialize UI
   uiModule.initialize();
+
+  const radioPanel = new RadioPanel(RadioSystem);
+  radioPanel.initialize();
 
   // Initialize event handlers
   initializeEventHandlers();
@@ -26,11 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 5000);
 
   // Start the game loop
-  const gameLoop = () => {
-    // The game logic will be driven by events and state changes
-    // and updated in the respective modules.
-    requestAnimationFrame(gameLoop);
-  };
-
-  gameLoop();
+  setInterval(() => {
+    gameModule.update();
+  }, 1000);
 });
