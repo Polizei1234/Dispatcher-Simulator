@@ -1,34 +1,43 @@
-import store from './core/state/index.js';
-import { IncidentActions } from './core/state/actions.js';
-import IncidentList from './core/components/incidents/IncidentList.js';
+/**
+ * 🚀 MAIN.JS (REFACTORED)
+ * The new entry point of the application.
+ */
 
-// Test Store
-store.dispatch({ type: 'GAME_STARTED', payload: { mode: 'free' } });
-console.log("Initial game state:", store.getState('game'));
+import container from './core/services/ServiceContainer.js';
+import uiModule from './core/modules/ui.module.js';
+import gameModule from './core/modules/game.module.js';
+import initializeEventHandlers from './core/event-handlers.js';
+import RadioSystem from './systems/radio-system.js';
+import RadioPanel from './ui/radio-panel.js';
+import './core/config.js';
+import './core/version-config.js';
 
-// Add some incidents to the store for testing
-store.dispatch(IncidentActions.add({ id: 'I-1', stichwort: 'Brandmeldeanlage' }));
-store.dispatch(IncidentActions.add({ id: 'I-2', stichwort: 'Verkehrsunfall' }));
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 DOMContentLoaded: Initializing application...');
 
-console.log("Incidents in store:", store.getState('incidents'));
+  // Initialize core systems
+  RadioSystem.initialize();
 
+  // Initialize UI
+  uiModule.initialize();
 
-// Test Component
-const incidentListElement = document.getElementById('incident-list');
-if (incidentListElement) {
-  const list = new IncidentList();
-  list.mount(incidentListElement);
-  console.log("IncidentList component mounted.");
-} else {
-    console.error("Element with id 'incident-list' not found. Can't mount IncidentList component.");
-}
+  const radioPanel = new RadioPanel(RadioSystem);
+  radioPanel.initialize();
 
+  // Initialize event handlers
+  initializeEventHandlers();
 
-// Test Undo/Redo
-if (typeof window !== 'undefined' && window.__STORE_DEBUG__) {
-  console.log("Testing Undo/Redo...");
-  window.__STORE_DEBUG__.undo();
-  console.log("After undo, incidents:", store.getState('incidents'));
-  window.__STORE_DEBUG__.redo();
-  console.log("After redo, incidents:", store.getState('incidents'));
-}
+  // Get services from container
+  const gameService = container.get('game');
+  const incidentService = container.get('incidents');
+
+  // Example: Create a new incident after 5 seconds
+  setTimeout(() => {
+    incidentService.createIncident({ /* incident data */ });
+  }, 5000);
+
+  // Start the game loop
+  setInterval(() => {
+    gameModule.update();
+  }, 1000);
+});
