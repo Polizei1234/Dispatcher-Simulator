@@ -2,6 +2,7 @@ const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin'); // Import CopyPlugin
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 module.exports = (env, argv) => {
@@ -10,22 +11,19 @@ module.exports = (env, argv) => {
 
     return {
         entry: {
-            // Hauptbundle: Core + Game Logic
-            main: './js/main-bundle.js',
-            
-            // Styles Bundle
+            main: './js/main.js',
             styles: './css/styles-bundle.css'
         },
         
         output: {
             filename: 'js/[name].bundle.js',
             path: path.resolve(__dirname, 'dist'),
-            publicPath: '/dist/'
+            publicPath: '/', // Set publicPath to root
+            clean: true, // Clean the dist folder before each build
         },
         
         module: {
             rules: [
-                // CSS Handling
                 {
                     test: /\.css$/i,
                     use: [
@@ -33,28 +31,29 @@ module.exports = (env, argv) => {
                         'css-loader'
                     ]
                 }
-                // Babel entfernt - nicht benötigt für moderne Browser
             ]
         },
         
         plugins: [
-            // CSS Extraktion für Production
+            // Copy index.html to dist
+            new CopyPlugin({
+                patterns: [
+                    { from: 'index.html', to: 'index.html' }
+                ],
+            }),
             new MiniCssExtractPlugin({
                 filename: 'css/[name].css'
             }),
-            
-            // Bundle Analyzer (nur wenn --env analyze)
             ...(shouldAnalyze ? [new BundleAnalyzerPlugin()] : [])
         ],
         
         optimization: {
             minimize: isProduction,
             minimizer: [
-                // JavaScript Minification
                 new TerserPlugin({
                     terserOptions: {
                         compress: {
-                            drop_console: isProduction, // Entfernt console.logs in Production
+                            drop_console: isProduction,
                             passes: 2
                         },
                         mangle: {
@@ -66,58 +65,27 @@ module.exports = (env, argv) => {
                     },
                     extractComments: false
                 }),
-                
-                // CSS Minification
                 new CssMinimizerPlugin()
             ],
-            
-            // Code Splitting
-            splitChunks: {
-                chunks: 'all',
-                cacheGroups: {
-                    // Vendor Bundle für externe Libraries
-                    vendor: {
-                        test: /[\\/]node_modules[\\/]/,
-                        name: 'vendor',
-                        priority: 10
-                    },
-                    
-                    // Common Code zwischen Bundles
-                    common: {
-                        minChunks: 2,
-                        priority: 5,
-                        reuseExistingChunk: true,
-                        enforce: true
-                    }
-                }
-            },
-            
-            // Runtime Chunk für besseres Caching
             runtimeChunk: 'single'
         },
         
-        // Source Maps für Debugging
-        devtool: isProduction ? 'source-map' : 'eval-source-map',
+        devtool: isProduction ? false : 'eval-source-map',
         
-        // Performance Hints
         performance: {
-            hints: isProduction ? 'warning' : false,
-            maxEntrypointSize: 512000, // 500 KB
-            maxAssetSize: 512000
+            hints: false,
         },
         
-        // Dev Server Config (falls benötigt)
         devServer: {
-            static: {
-                directory: path.join(__dirname, './')
+            static: { 
+                directory: path.join(__dirname, 'dist') // Serve from dist
             },
             compress: true,
-            port: 8080,
+            port: 8081, // Changed port to 8081
             hot: true,
             open: true
         },
         
-        // Resolve Config
         resolve: {
             extensions: ['.js', '.json'],
             alias: {
@@ -128,23 +96,5 @@ module.exports = (env, argv) => {
                 '@data': path.resolve(__dirname, 'js/data')
             }
         },
-        
-        // Stats Output
-        stats: {
-            colors: true,
-            hash: false,
-            version: false,
-            timings: true,
-            assets: true,
-            chunks: false,
-            modules: false,
-            reasons: false,
-            children: false,
-            source: false,
-            errors: true,
-            errorDetails: true,
-            warnings: true,
-            publicPath: false
-        }
     };
 };
