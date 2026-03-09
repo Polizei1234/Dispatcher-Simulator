@@ -81,7 +81,7 @@ module.exports = (env, argv) => {
                 directory: path.join(__dirname, 'dist') // Serve from dist
             },
             compress: true,
-            port: 8081, // Changed port to 8081
+            port: 8088, // Changed port to 8088
             hot: true,
             open: true
         },
