@@ -9,8 +9,8 @@
 
 class Game {
     constructor() {
-        this.stations = STATIONS;
-        this.vehicles = VEHICLES;
+        this.stations = window.STATIONS || [];
+        this.vehicles = window.VEHICLES || [];
         this.incidents = [];
         this.selectedIncident = null;
         this.money = 999999999; // Wird in start() überschrieben
@@ -109,8 +109,8 @@ class Game {
     initializeVehicles() {
         this.vehicles.forEach(v => {
             // Setze Position auf Wache wenn nicht vorhanden
-            if (!v.position && v.station && STATIONS[v.station]) {
-                v.position = STATIONS[v.station].position;
+            if (!v.position && v.station && this.stations[v.station]) {
+                v.position = this.stations[v.station].position;
             }
             
             // Prüfe ob Fahrzeug auf Wache steht
@@ -151,7 +151,7 @@ class Game {
     isVehicleOnStation(vehicle) {
         if (!vehicle.station || !vehicle.position) return false;
         
-        const station = STATIONS[vehicle.station];
+        const station = this.stations[vehicle.station];
         if (!station || !station.position) return false;
         
         // Prüfe ob Position identisch ist (oder sehr nah)
@@ -290,11 +290,6 @@ class Game {
     }
 }
 
-// 🆕 v5.1.0: Erstelle globale Game-Instanz
-let game = new Game();
-
-// Exportiere zu window
-window.game = game;
-window.Game = Game;
-
-console.log('✅ game.js v5.1.0 geladen - Game-Instanz erstellt & zu window exportiert');
+// Bereinigt: Keine globale Instanz-Erstellung mehr hier.
+// Die Instanz wird in main.js kontrolliert erstellt.
+export default Game;

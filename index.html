@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dispatcher Simulator - ILS Waiblingen</title>
     
-    <!-- Externe Libraries (später via Webpack/npm managen) -->
+    <!-- Externe Libraries -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Gebündeltes App-CSS -->
-    <link rel="stylesheet" href="dist/css/styles.css">
+    <!-- Direkt geladenes App-CSS für die Entwicklung -->
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
     <!-- Welcome Screen -->
@@ -51,8 +51,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-    <!-- Gebündeltes App-JS -->
-    <script src="dist/js/main.bundle.js"></script>
+    <!-- Direkt geladenes App-JS für die Entwicklung (mit Modul-Unterstützung) -->
+    <script type="module" src="/js/main.js"></script>
 
 </body>
 </html>

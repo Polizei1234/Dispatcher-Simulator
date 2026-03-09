@@ -4,8 +4,8 @@
   "description": "ILS Waiblingen Dispatcher Simulator - Realistische Leitstellensimulation",
   "main": "index.html",
   "scripts": {
-    "start": "webpack serve --mode development",
-    "dev": "webpack --mode development --watch",
+    "start": "vite",
+    "dev": "vite",
     "build": "webpack --mode production",
     "build:analyze": "webpack --mode production --analyze"
   },
@@ -25,6 +25,7 @@
     "mini-css-extract-plugin": "^2.8.0",
     "style-loader": "^3.3.4",
     "terser-webpack-plugin": "^5.3.10",
+    "vite": "^5.2.0",
     "webpack": "^5.90.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.1.4",
