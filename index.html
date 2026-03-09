@@ -4,55 +4,266 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dispatcher Simulator - ILS Waiblingen</title>
-    
+
     <!-- Externe Libraries -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Direkt geladenes App-CSS für die Entwicklung -->
-    <link rel="stylesheet" href="/css/styles.css">
+    <!-- App CSS -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Welcome Screen -->
+
+    <!-- ===================== WELCOME SCREEN ===================== -->
     <div id="welcome-screen" class="overlay active">
         <div class="welcome-container">
             <h1><i class="fas fa-headset"></i> Dispatcher Simulator</h1>
             <h2>ILS Waiblingen - Rems-Murr-Kreis</h2>
-            <div class="welcome-buttons" style="margin-top: 20px;">
-                <button id="start-free-game" class="btn btn-success"><i class="fas fa-infinity"></i> Freies Spiel</button>
+            <p class="welcome-subtitle">Realistische Leitstellensimulation für den Rems-Murr-Kreis</p>
+            <div class="welcome-buttons">
+                <button id="start-free-game" class="btn btn-success btn-large">
+                    <i class="fas fa-infinity"></i> Freies Spiel
+                </button>
+                <button id="open-settings-btn" class="btn btn-secondary">
+                    <i class="fas fa-cog"></i> Einstellungen
+                </button>
             </div>
-            <div id="version-badge" style="position: absolute; bottom: 15px; right: 20px; padding: 8px 15px; background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); border-radius: 20px; font-size: 0.85em; color: #66bb6a;">
+            <div id="version-badge">
                 <i class="fas fa-code-branch"></i> <strong id="version-text">v10.0.0</strong>
             </div>
         </div>
     </div>
 
-    <!-- Main Game Container (initial versteckt) -->
+    <!-- ===================== MAIN GAME CONTAINER ===================== -->
     <div id="game-container" class="hidden">
-         <header>
+
+        <!-- HEADER -->
+        <header id="main-header">
             <div class="header-left">
                 <h1><i class="fas fa-headset"></i> Dispatcher Simulator</h1>
                 <span id="current-time">00:00:00</span>
             </div>
+            <div class="header-center">
+                <span id="weather-display"><i class="fas fa-sun"></i> <span id="weather-text">Sonnig</span></span>
+                <span id="game-speed-display"><i class="fas fa-tachometer-alt"></i> <span id="speed-text">1x</span></span>
+            </div>
             <div class="header-right">
-                <span><i class="fas fa-ambulance"></i> <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span></span>
+                <span id="vehicles-counter">
+                    <i class="fas fa-ambulance"></i>
+                    <span id="active-vehicles">0</span>/<span id="total-vehicles">0</span>
+                </span>
+                <span id="incidents-counter">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="active-incidents-count">0</span>
+                </span>
                 <button id="radio-toggle-btn" class="btn btn-small" title="Funkverkehr öffnen">
                     <i class="fas fa-broadcast-tower"></i> Funk
+                    <span id="radio-badge" class="badge hidden">0</span>
+                </button>
+                <button id="pause-btn" class="btn btn-small" title="Pause">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button id="settings-btn" class="btn btn-small" title="Einstellungen">
+                    <i class="fas fa-cog"></i>
                 </button>
             </div>
         </header>
-        <div id="map"></div>
-        <div id="incident-list"></div>
-        <!-- ... weitere UI-Elemente wie Funkpanel etc. -->
+
+        <!-- TAB NAVIGATION -->
+        <nav id="tab-nav">
+            <button class="tab-btn active" data-tab="map" title="Karte (1)">
+                <i class="fas fa-map"></i> Karte
+            </button>
+            <button class="tab-btn" data-tab="vehicles" title="Fahrzeuge (2)">
+                <i class="fas fa-ambulance"></i> Fahrzeuge
+            </button>
+            <button class="tab-btn" data-tab="incidents" title="Einsätze (3)">
+                <i class="fas fa-exclamation-triangle"></i> Einsätze
+            </button>
+            <button class="tab-btn" data-tab="stats" title="Statistik (4)">
+                <i class="fas fa-chart-bar"></i> Statistik
+            </button>
+        </nav>
+
+        <!-- MAIN CONTENT AREA -->
+        <main id="main-content">
+
+            <!-- TAB: KARTE -->
+            <div id="tab-map" class="tab-content active">
+                <div id="map-container">
+                    <div id="map"></div>
+                    <!-- Map Controls -->
+                    <div id="map-controls">
+                        <button id="center-map-btn" class="map-btn" title="Karte zentrieren">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button id="toggle-stations-map-btn" class="map-btn" title="Wachen anzeigen">
+                            <i class="fas fa-home"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Incident Sidebar auf der Karte -->
+                <div id="incident-sidebar">
+                    <div id="incident-sidebar-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Aktive Einsätze</h3>
+                        <button id="new-incident-btn" class="btn btn-small btn-warning">
+                            <i class="fas fa-plus"></i> Neu
+                        </button>
+                    </div>
+                    <div id="incident-list"></div>
+                </div>
+                <!-- Incident Detail Panel -->
+                <div id="incident-detail-panel" class="hidden">
+                    <div id="incident-detail-header">
+                        <h3 id="incident-detail-title">Einsatzdetails</h3>
+                        <button id="close-incident-detail" class="btn btn-small">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="incident-detail-content"></div>
+                    <div id="incident-detail-actions"></div>
+                </div>
+            </div>
+
+            <!-- TAB: FAHRZEUGE -->
+            <div id="tab-vehicles" class="tab-content">
+                <div id="vehicles-overview"></div>
+            </div>
+
+            <!-- TAB: EINSÄTZE -->
+            <div id="tab-incidents" class="tab-content">
+                <div id="incidents-overview"></div>
+            </div>
+
+            <!-- TAB: STATISTIK -->
+            <div id="tab-stats" class="tab-content">
+                <div id="stats-overview">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Abgeschlossene Einsätze</h3>
+                            <span id="stat-completed">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Durchschn. Reaktionszeit</h3>
+                            <span id="stat-response-time">--</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Reputation</h3>
+                            <span id="stat-reputation">100</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Spielzeit</h3>
+                            <span id="stat-gametime">00:00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+    </div><!-- Ende #game-container -->
+
+    <!-- ===================== CALL SIDEBAR (Notruf) ===================== -->
+    <div id="call-sidebar" class="sidebar hidden">
+        <div id="call-sidebar-header">
+            <h3><i class="fas fa-phone-alt"></i> Notruf</h3>
+            <span id="call-badge" class="badge hidden">0</span>
+        </div>
+        <div id="incoming-calls-list"></div>
+        <div id="active-call-container" class="hidden">
+            <div id="call-info-header">
+                <span id="call-caller-name">Anrufer</span>
+                <span id="call-timer">00:00</span>
+            </div>
+            <div id="call-conversation-area">
+                <div id="call-caller-text"></div>
+                <div id="call-question-buttons"></div>
+            </div>
+            <div id="call-actions">
+                <button id="hangup-btn" class="btn btn-danger">
+                    <i class="fas fa-phone-slash"></i> Auflegen
+                </button>
+                <button id="create-incident-from-call-btn" class="btn btn-warning">
+                    <i class="fas fa-plus"></i> Einsatz anlegen
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- Externe Libraries -->
+    <!-- ===================== RADIO PANEL (Funk) ===================== -->
+    <div id="radio-panel" class="panel hidden">
+        <div id="radio-panel-header">
+            <h3><i class="fas fa-broadcast-tower"></i> Funkverkehr</h3>
+            <button id="close-radio-panel" class="btn btn-small">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="radio-messages-container">
+            <div id="radio-messages-list"></div>
+        </div>
+        <div id="radio-input-area">
+            <input type="text" id="radio-input" placeholder="Funkspruch eingeben..." />
+            <button id="radio-send-btn" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================== MANUAL INCIDENT PANEL ===================== -->
+    <div id="manual-incident-panel" class="panel hidden">
+        <div id="manual-incident-header">
+            <h3><i class="fas fa-plus-circle"></i> Einsatz anlegen</h3>
+            <button id="close-manual-incident" class="btn btn-small">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="manual-incident-form-container"></div>
+    </div>
+
+    <!-- ===================== ASSIGNMENT PANEL ===================== -->
+    <div id="assignment-panel" class="panel hidden">
+        <div id="assignment-header">
+            <h3><i class="fas fa-ambulance"></i> Fahrzeug disponieren</h3>
+            <button id="close-assignment-panel" class="btn btn-small">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="assignment-content"></div>
+    </div>
+
+    <!-- ===================== SETTINGS PANEL ===================== -->
+    <div id="settings-panel" class="panel hidden">
+        <div id="settings-header">
+            <h3><i class="fas fa-cog"></i> Einstellungen</h3>
+            <button id="close-settings-panel" class="btn btn-small">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="settings-content"></div>
+    </div>
+
+    <!-- ===================== NOTIFICATIONS ===================== -->
+    <div id="notification-container"></div>
+
+    <!-- ===================== OVERLAY / MODAL ===================== -->
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-container">
+            <div id="modal-header">
+                <h3 id="modal-title">Modal</h3>
+                <button id="close-modal" class="btn btn-small"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modal-body"></div>
+            <div id="modal-footer"></div>
+        </div>
+    </div>
+
+    <!-- ===================== EXTERNE LIBRARIES ===================== -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-    <!-- Direkt geladenes App-JS für die Entwicklung (mit Modul-Unterstützung) -->
-    <script type="module" src="/js/main.js"></script>
+    <!-- ===================== APP BOOTSTRAP (ES Module) ===================== -->
+    <script type="module" src="js/main.js"></script>
 
 </body>
 </html>
